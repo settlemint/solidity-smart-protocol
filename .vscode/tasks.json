@@ -1,0 +1,124 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "deployment-module",
+      "description": "Hardhat Ignition Module",
+      "type": "promptString",
+      "default": "ignition/modules/main.ts"
+    },
+    {
+      "id": "extra-deployment",
+      "description": "Extra commandline arguments, e.g. --verify",
+      "type": "promptString",
+      "default": ""
+    },
+  ],
+  "tasks": [
+    {
+      "label": "SettleMint - Login",
+      "type": "shell",
+      "command": "bunx settlemint login --accept-defaults",
+    },
+    {
+      "label": "Foundry - Build",
+      "type": "shell",
+      "command": "bunx settlemint scs foundry build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Hardhat - Build",
+      "type": "shell",
+      "command": "bunx settlemint scs hardhat build",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Foundry - Test",
+      "type": "shell",
+      "command": "bunx settlemint scs foundry test",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Hardhat - Test",
+      "type": "shell",
+      "command": "bunx settlemint scs hardhat test",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Foundry - Format",
+      "type": "shell",
+      "command": "bunx settlemint scs foundry format",
+      "problemMatcher": []
+    },
+    {
+      "label": "Foundry - Start network",
+      "type": "shell",
+      "command": "bunx settlemint scs foundry network",
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Hardhat - Start network",
+      "type": "shell",
+      "command": "bunx settlemint scs hardhat network",
+      "problemMatcher": [],
+      "isBackground": true,
+    },
+    {
+      "label": "Hardhat - Deploy to local network",
+      "type": "shell",
+      "command": "bunx settlemint scs hardhat deploy local ${input:extra-deployment} -m ${input:deployment-module}",
+      "problemMatcher": []
+    },
+    {
+      "label": "Hardhat - Reset & Deploy to local network",
+      "type": "shell",
+      "command": "bunx settlemint scs hardhat deploy local --reset ${input:extra-deployment} -m ${input:deployment-module}",
+      "problemMatcher": []
+    },
+    {
+      "label": "Hardhat - Deploy to platform network",
+      "type": "shell",
+      "command": "bunx settlemint scs hardhat deploy remote ${input:extra-deployment} -m ${input:deployment-module}",
+      "problemMatcher": []
+    },
+    {
+      "label": "Hardhat - Reset & Deploy to platform network",
+      "type": "shell",
+      "command": "bunx settlemint scs hardhat deploy remote --reset ${input:extra-deployment} -m ${input:deployment-module}",
+      "problemMatcher": []
+    },
+    {
+      "label": "The Graph - Codegen the subgraph types",
+      "type": "shell",
+      "command": "bunx settlemint scs subgraph codegen",
+      "problemMatcher": []
+    },
+    {
+      "label": "The Graph - Build the subgraph",
+      "type": "shell",
+      "command": "bunx settlemint scs subgraph build",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+    },
+    {
+      "label": "The Graph - Deploy or update the subgraph",
+      "type": "shell",
+      "command": "bunx settlemint scs subgraph deploy",
+      "problemMatcher": []
+    }
+  ],
+}

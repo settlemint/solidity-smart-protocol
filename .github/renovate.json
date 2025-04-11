@@ -1,0 +1,39 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":automergeMinor",
+    ":automergePr",
+    ":automergeRequireAllStatusChecks",
+    ":gitSignOff",
+    ":pinVersions",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":enableVulnerabilityAlerts",
+    ":combinePatchMinorReleases",
+    ":prConcurrentLimitNone",
+    ":prHourlyLimitNone",
+    "security:openssf-scorecard"
+  ],
+  "labels": ["dependencies"],
+  "rebaseWhen": "auto",
+  "packageRules": [
+    {
+      "groupName": "OpenZeppelin packages",
+      "matchPackageNames": ["/^@openzeppelin//"]
+    },
+    {
+      "groupName": "Hardhat packages",
+      "matchPackageNames": ["/hardhat/"]
+    },
+    {
+      "groupName": "The Graph packages",
+      "matchPackageNames": ["/graphprotocol/"]
+    }
+  ],
+  "hostRules": [
+    {
+      "timeout": 3000000
+    }
+  ]
+}

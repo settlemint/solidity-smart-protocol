@@ -1,0 +1,42 @@
+node_modules
+.env
+
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# Compiler files
+cache_forge/
+out/
+
+# Ignores development broadcast logs
+!/broadcast
+/broadcast/*/31337/
+/broadcast/**/dry-run/
+
+# Dotenv file
+.env
+
+# Local env file
+**/.env.local
+
+# Subgraphs
+generated
+build
+
+.pnpm
+lcov.info
+
+# Hardhat Ignition
+ignition/deployments/chain-*
+
+# Soldeer
+/dependencies
