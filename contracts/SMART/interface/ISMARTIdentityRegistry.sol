@@ -5,11 +5,6 @@ import { IIdentity } from "../onchainid/interface/IIdentity.sol";
 import { IERC3643IdentityRegistryStorage } from "./../IERC2643/IERC3643IdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./../IERC2643/IERC3643TrustedIssuersRegistry.sol";
 
-/// Changes from ERC-3643
-
-/// - remove claims topics registry, since we don't use it anymore
-/// - added _token to the isVerified function
-
 /// Events
 
 /// @dev This event is emitted when the IdentityRegistryStorage has been set for the IdentityRegistry.

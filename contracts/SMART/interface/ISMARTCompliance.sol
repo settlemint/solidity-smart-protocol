@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-/// Changes from ERC-3643
-
-/// - remove bindToken and unbindToken, since compliance is not tied to a specific token anymore
-/// - added _token parameter to all functions
-///   - other solution would be to use msg.sender as _token, but this makes it more complicated to use.
-
 /// Events
 
 interface ISMARTCompliance {
