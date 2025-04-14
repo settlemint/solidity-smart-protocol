@@ -63,8 +63,8 @@ interface ISMARTCompliance {
      *  @param _to The address of the receiver
      *  @param _amount The amount of tokens involved in the transfer
      *  This function will call moduleCheck() on every module bound to the compliance
-     *  If each of the module checks return TRUE, this function will return TRUE as well
-     *  returns FALSE otherwise
+     *  If any module check fails, it will revert with the error message from that module
+     *  Returns true if all module checks pass
      */
     function canTransfer(address _token, address _from, address _to, uint256 _amount) external view returns (bool);
 }

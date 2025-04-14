@@ -59,8 +59,10 @@ contract SMARTCompliance is ISMARTCompliance, Ownable {
     {
         for (uint256 i = 0; i < _modules.length; i++) {
             if (_complianceModules[_modules[i]]) {
-                if (!ISMARTComplianceModule(_modules[i]).moduleCheck(_token, _from, _to, _amount)) {
-                    return false;
+                (bool isCompliant, string memory errorMessage) =
+                    ISMARTComplianceModule(_modules[i]).moduleCheck(_token, _from, _to, _amount);
+                if (!isCompliant) {
+                    revert(errorMessage);
                 }
             }
         }

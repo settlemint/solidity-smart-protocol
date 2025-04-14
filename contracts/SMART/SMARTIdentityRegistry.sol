@@ -5,6 +5,7 @@ import { ISmartIdentityRegistry } from "./interface/ISmartIdentityRegistry.sol";
 import { IIdentity } from "./onchainid/interface/IIdentity.sol";
 import { IERC3643IdentityRegistryStorage } from "../contracts/ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "../contracts/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { ISMART } from "./interface/ISMART.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title SMARTIdentityRegistry
@@ -106,21 +107,74 @@ contract SMARTIdentityRegistry is ISmartIdentityRegistry, Ownable {
 
     /// @inheritdoc ISmartIdentityRegistry
     function isVerified(address _userAddress, address _token) external view override returns (bool) {
+        // Check if identity exists
         if (!_identityStorage.contains(_userAddress)) return false;
 
+        // Get the identity and required claim topics
         IIdentity identity = IIdentity(_identityStorage.getStoredIdentity(_userAddress));
+        uint256[] memory requiredClaimTopics = ISMART(_token).getRequiredClaimTopics();
+
+        // If no required claims, identity is verified
+        if (requiredClaimTopics.length == 0) return true;
+
+        // Get all trusted issuers
         address[] memory issuers = _trustedIssuersRegistry.getTrustedIssuers();
 
-        for (uint256 i = 0; i < issuers.length; i++) {
-            uint256[] memory claimTopics = _trustedIssuersRegistry.getTrustedIssuerClaimTopics(issuers[i]);
-            for (uint256 j = 0; j < claimTopics.length; j++) {
-                if (identity.hasClaim(issuers[i], claimTopics[j])) {
-                    return true;
-                }
-            }
+        // Cache issuer claim topics
+        mapping(address => uint256[]) memory issuerClaimTopicsCache;
+        for (uint256 j = 0; j < issuers.length; j++) {
+            issuerClaimTopicsCache[issuers[j]] = _trustedIssuersRegistry.getTrustedIssuerClaimTopics(issuers[j]);
         }
 
-        return false;
+        // For each required claim topic
+        for (uint256 i = 0; i < requiredClaimTopics.length; i++) {
+            bool hasRequiredClaim = false;
+
+            // Check each trusted issuer
+            for (uint256 j = 0; j < issuers.length; j++) {
+                // Get cached claim topics for this issuer
+                uint256[] memory issuerClaimTopics = issuerClaimTopicsCache[issuers[j]];
+
+                // Check if this issuer is allowed to issue this claim topic
+                bool issuerCanIssueClaim = false;
+                for (uint256 k = 0; k < issuerClaimTopics.length; k++) {
+                    if (issuerClaimTopics[k] == requiredClaimTopics[i]) {
+                        issuerCanIssueClaim = true;
+                        break;
+                    }
+                }
+
+                if (issuerCanIssueClaim) {
+                    // Calculate the claimId
+                    bytes32 claimId = keccak256(abi.encode(issuers[j], requiredClaimTopics[i]));
+
+                    // Try to get the claim
+                    try identity.getClaim(claimId) returns (
+                        uint256 topic,
+                        uint256 scheme,
+                        address issuer,
+                        bytes memory signature,
+                        bytes memory data,
+                        string memory
+                    ) {
+                        // If we got here, the claim exists
+                        // Verify the claim is valid
+                        if (identity.isClaimValid(identity, topic, signature, data)) {
+                            hasRequiredClaim = true;
+                            break;
+                        }
+                    } catch {
+                        // Claim doesn't exist, continue to next issuer
+                        continue;
+                    }
+                }
+            }
+
+            // If any required claim is missing, identity is not verified
+            if (!hasRequiredClaim) return false;
+        }
+
+        return true;
     }
 
     /// @inheritdoc ISmartIdentityRegistry

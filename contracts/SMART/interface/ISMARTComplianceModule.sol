@@ -37,8 +37,17 @@ interface ISMARTComplianceModule {
      * @param _to Address of the transfer receiver
      * @param _value Amount of tokens sent
      * @return bool Whether the transfer is allowed
+     * @return string Error message if the transfer is not allowed, empty string if allowed
      */
-    function moduleCheck(address _token, address _from, address _to, uint256 _value) external view returns (bool);
+    function moduleCheck(
+        address _token,
+        address _from,
+        address _to,
+        uint256 _value
+    )
+        external
+        view
+        returns (bool, string memory);
 
     /**
      * @dev Getter for the name of the module
