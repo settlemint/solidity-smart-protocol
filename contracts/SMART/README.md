@@ -8,6 +8,7 @@
 - Token doesn't need to be bound to compliance contract, added _token parameter to all functions
 - Removed the need to a separate claims topics registry, since we don't use it anymore
 - Token will be passed in isVerified function to check if the identity has all the necessary claim topics
+- Simplified the identity factory using proxy 1967 pattern.
 
 ## TODO
 - Integrate OpenZeppelin AccessControl
