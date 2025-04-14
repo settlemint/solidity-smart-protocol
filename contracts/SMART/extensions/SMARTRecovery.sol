@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { ISMARTRecovery } from "../interface/ISMARTRecovery.sol";
 import { ISMART } from "../interface/ISMART.sol";
-import { ISMARTFreezable } from "../interface/ISMARTFreezable.sol";
 
 /// @title SMARTRecovery
 /// @notice Extension that adds recovery functionality to SMART tokens
-abstract contract SMARTRecovery is ISMARTRecovery, ISMARTFreezable {
+abstract contract SMARTRecovery is ISMART {
     /// @inheritdoc ISMARTRecovery
     function recoveryAddress(
         address _lostWallet,

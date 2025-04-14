@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { ISMARTFreezable } from "../interface/ISMARTFreezable.sol";
 import { ISMART } from "../interface/ISMART.sol";
 
 /// @title SMARTFreezable
 /// @notice Extension that adds freezing functionality to SMART tokens
-abstract contract SMARTFreezable is ISMARTFreezable {
+abstract contract SMARTFreezable is ISMART {
     mapping(address => bool) private _frozen;
     mapping(address => uint256) private _frozenTokens;
 

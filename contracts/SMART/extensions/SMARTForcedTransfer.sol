@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { ISMARTForcedTransfer } from "../interface/ISMARTForcedTransfer.sol";
 import { ISMART } from "../interface/ISMART.sol";
-import { ISMARTFreezable } from "../interface/ISMARTFreezable.sol";
 
 /// @title SMARTForcedTransfer
 /// @notice Extension that adds forced transfer functionality to SMART tokens
-abstract contract SMARTForcedTransfer is ISMARTForcedTransfer, ISMARTFreezable {
+abstract contract SMARTForcedTransfer is ISMART {
     /// @inheritdoc ISMARTForcedTransfer
     function forcedTransfer(address _from, address _to, uint256 _amount) public virtual override returns (bool) {
         uint256 frozenTokens = getFrozenTokens(_from);

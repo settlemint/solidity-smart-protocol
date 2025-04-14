@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { IERC3643TrustedIssuersRegistry } from "../contracts/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { IERC3643TrustedIssuersRegistry } from "../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title SMARTTrustedIssuersRegistry

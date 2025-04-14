@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { ISmartIdentityRegistry } from "./interface/ISmartIdentityRegistry.sol";
-import { IIdentity } from "./onchainid/interface/IIdentity.sol";
-import { IERC3643IdentityRegistryStorage } from "../contracts/ERC-3643/IERC3643IdentityRegistryStorage.sol";
-import { IERC3643TrustedIssuersRegistry } from "../contracts/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { ISMARTIdentityRegistry } from "./interface/ISmartIdentityRegistry.sol";
+import { IIdentity } from "./../onchainid/interface/IIdentity.sol";
+import { IERC3643IdentityRegistryStorage } from "./../ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { IERC3643TrustedIssuersRegistry } from "./../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 import { ISMART } from "./interface/ISMART.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title SMARTIdentityRegistry
 /// @notice Registry for managing investor identities
-contract SMARTIdentityRegistry is ISmartIdentityRegistry, Ownable {
+contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
     /// Storage
     IERC3643IdentityRegistryStorage private _identityStorage;
     IERC3643TrustedIssuersRegistry private _trustedIssuersRegistry;

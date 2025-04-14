@@ -2,12 +2,12 @@
 pragma solidity ^0.8.27;
 
 import { ERC20Pausable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
-import { ISMARTPausable } from "../interface/ISMARTPausable.sol";
+
 import { ISMART } from "../interface/ISMART.sol";
 
 /// @title SMARTPausable
 /// @notice Extension that adds pausable functionality to SMART tokens
-abstract contract SMARTPausable is ERC20Pausable, ISMARTPausable {
+abstract contract SMARTPausable is ERC20Pausable, ISMART {
     /// @inheritdoc ISMARTPausable
     function pause() public virtual override {
         _pause();

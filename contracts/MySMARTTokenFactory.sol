@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { MySMARTToken } from "./MySMARTToken.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title MySMARTTokenFactory
 /// @notice Factory contract for deploying MySMARTToken instances

@@ -3,23 +3,14 @@ pragma solidity ^0.8.27;
 
 import { SMART } from "./SMART/extensions/SMART.sol";
 import { SMARTPausable } from "./SMART/extensions/SMARTPausable.sol";
-import { SMARTFrozen } from "./SMART/extensions/SMARTFrozen.sol";
+import { SMARTFreezable } from "./SMART/extensions/SMARTFreezable.sol";
 import { SMARTBurnable } from "./SMART/extensions/SMARTBurnable.sol";
-import { SMARTBatch } from "./SMART/extensions/SMARTBatch.sol";
 import { SMARTForcedTransfer } from "./SMART/extensions/SMARTForcedTransfer.sol";
 import { SMARTRecovery } from "./SMART/extensions/SMARTRecovery.sol";
 
 /// @title MySMARTToken
 /// @notice A complete implementation of a SMART token with all available extensions
-contract MySMARTToken is
-    SMART,
-    SMARTPausable,
-    SMARTFrozen,
-    SMARTBurnable,
-    SMARTBatch,
-    SMARTForcedTransfer,
-    SMARTRecovery
-{
+contract MySMARTToken is SMART, SMARTPausable, SMARTFreezable, SMARTBurnable, SMARTForcedTransfer, SMARTRecovery {
     constructor(
         string memory name_,
         string memory symbol_,

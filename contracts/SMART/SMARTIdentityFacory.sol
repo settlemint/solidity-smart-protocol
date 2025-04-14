@@ -20,7 +20,7 @@ error WalletInManagementKeys();
 error TokenAlreadyLinked();
 error OnlyFactoryOrOwnerCanCall();
 
-contract SMARTIdentityFacory is Ownable {
+contract SMARTIdentityFactory is Ownable {
     address private immutable _identityImplementation;
 
     mapping(string => bool) private _saltTaken;
