@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ISMART } from "../interface/ISMART.sol";
 import { ISMARTIdentityRegistry } from "../interface/ISmartIdentityRegistry.sol";
 import { ISMARTCompliance } from "../interface/ISmartCompliance.sol";
@@ -110,7 +111,7 @@ abstract contract SMART is SMARTHooks, ISMART {
     }
 
     /// @inheritdoc ISMART
-    function transfer(address to, uint256 amount) public virtual override returns (bool) {
+    function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
         _validateTransfer(msg.sender, to, amount);
         _transfer(msg.sender, to, amount);
         _afterTransfer(msg.sender, to, amount);
@@ -118,7 +119,16 @@ abstract contract SMART is SMARTHooks, ISMART {
     }
 
     /// @inheritdoc ISMART
-    function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    )
+        public
+        virtual
+        override(ERC20, IERC20)
+        returns (bool)
+    {
         _validateTransfer(from, to, amount);
         _spendAllowance(from, msg.sender, amount);
         _transfer(from, to, amount);

@@ -4,17 +4,12 @@ pragma solidity ^0.8.27;
 import { ISMART } from "../interface/ISMART.sol";
 import { SMARTHooks } from "./SMARTHooks.sol";
 import { ERC20Pausable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /// @title SMARTPausable
 /// @notice Extension that adds pausable functionality to SMART tokens
 abstract contract SMARTPausable is ERC20Pausable, SMARTHooks, ISMART {
     bool private _paused;
-
-    /// @dev Emitted when the pause is triggered by `account`.
-    event Paused(address account);
-
-    /// @dev Emitted when the pause is lifted by `account`.
-    event Unpaused(address account);
 
     /// @dev Initializes the contract in unpaused state.
     constructor() {
