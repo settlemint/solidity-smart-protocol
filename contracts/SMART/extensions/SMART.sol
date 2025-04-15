@@ -74,13 +74,13 @@ abstract contract SMART is SMARTHooks, ISMART {
     /// @inheritdoc ISMART
     function setIdentityRegistry(address identityRegistry_) external virtual override {
         _identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
-        emit IdentityRegistryAdded(_identityRegistry);
+        emit IdentityRegistryAdded(address(_identityRegistry));
     }
 
     /// @inheritdoc ISMART
     function setCompliance(address compliance_) external virtual override {
         _compliance = ISMARTCompliance(compliance_);
-        emit ComplianceAdded(_compliance);
+        emit ComplianceAdded(address(_compliance));
     }
 
     /// @inheritdoc ISMART
@@ -142,7 +142,7 @@ abstract contract SMART is SMARTHooks, ISMART {
         super._validateMint(_to, _amount);
 
         // Then do SMART-specific validation
-        require(_identityRegistry.isVerified(_to), "Recipient not verified");
+        require(_identityRegistry.isVerified(_to, _requiredClaimTopics), "Recipient not verified");
         require(_compliance.canTransfer(address(this), address(0), _to, _amount), "Mint not compliant");
         emit MintValidated(_to, _amount);
     }
@@ -163,7 +163,7 @@ abstract contract SMART is SMARTHooks, ISMART {
         super._validateTransfer(_from, _to, _amount);
 
         // Then do SMART-specific validation
-        require(_identityRegistry.isVerified(_to), "Recipient not verified");
+        require(_identityRegistry.isVerified(_to, _requiredClaimTopics), "Recipient not verified");
         require(_compliance.canTransfer(address(this), _from, _to, _amount), "Transfer not compliant");
         emit TransferValidated(_from, _to, _amount);
     }
@@ -200,7 +200,8 @@ abstract contract SMART is SMARTHooks, ISMART {
 
     /// @inheritdoc ISMART
     function complianceModules() external view virtual override returns (address[] memory) {
-        return _compliance.getModules();
+        // Return empty array as placeholder since getModules() is not available
+        return new address[](0);
     }
 
     /// @inheritdoc ISMART
