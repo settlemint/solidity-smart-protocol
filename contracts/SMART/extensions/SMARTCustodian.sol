@@ -5,6 +5,7 @@ import { ISMART } from "../interface/ISMART.sol";
 import { SMARTHooks } from "./SMARTHooks.sol";
 import { ISMARTIdentityRegistry } from "./../interface/ISmartIdentityRegistry.sol";
 import { ERC20Custodian } from "@openzeppelin-community/contracts/token/ERC20/extensions/ERC20Custodian.sol";
+import { IIdentity } from "../../onchainid/interface/IIdentity.sol";
 
 /// @title SMARTFreezable
 /// @notice Extension that adds freezing functionality to SMART tokens
@@ -210,6 +211,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     }
 
     function identityRegistry() public view virtual override returns (ISMARTIdentityRegistry);
+    function requiredClaimTopics() public view virtual override returns (uint256[] memory);
 
     function recoveryAddress(
         address _lostWallet,
@@ -231,6 +233,9 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
         uint256 frozenTokens = getFrozenTokens(_lostWallet);
         bool walletFrozen = isFrozen(_lostWallet);
 
+        // Get the country from the old wallet
+        uint16 country = identityRegistry().investorCountry(_lostWallet);
+
         // Transfer tokens
         _transfer(_lostWallet, _newWallet, balance);
 
@@ -247,11 +252,9 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
         }
 
         // Update identity registry
-        if (identityRegistry().isVerified(_lostWallet)) {
-            identityRegistry().unregisterIdentity(_lostWallet);
-            if (!identityRegistry().isVerified(_newWallet)) {
-                identityRegistry().registerIdentity(_newWallet, _investorOnchainID);
-            }
+        if (!identityRegistry().isVerified(_newWallet, requiredClaimTopics())) {
+            identityRegistry().registerIdentity(_newWallet, IIdentity(_investorOnchainID), country);
+            identityRegistry().deleteIdentity(_lostWallet);
         }
 
         emit RecoverySuccess(_lostWallet, _newWallet, _investorOnchainID);
