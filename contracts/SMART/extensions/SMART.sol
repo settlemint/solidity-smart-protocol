@@ -6,16 +6,23 @@ import { ISMART } from "../interface/ISMART.sol";
 import { ISMARTIdentityRegistry } from "../interface/ISmartIdentityRegistry.sol";
 import { ISMARTCompliance } from "../interface/ISmartCompliance.sol";
 import { ISMARTComplianceModule } from "../interface/ISMARTComplianceModule.sol";
+import { SMARTHooks } from "./SMARTHooks.sol";
 
 /// @title SMART
 /// @notice Base extension that implements the core SMART token functionality
-abstract contract SMART is ERC20, ISMART {
+abstract contract SMART is SMARTHooks, ISMART {
     /// Storage
     address private _onchainID;
     ISMARTIdentityRegistry private _identityRegistry;
     ISMARTCompliance private _compliance;
     mapping(address => bool) private _registeredModules;
     uint256[] private _requiredClaimTopics;
+
+    /// Events
+    event TransferValidated(address indexed from, address indexed to, uint256 amount);
+    event TransferCompleted(address indexed from, address indexed to, uint256 amount);
+    event MintValidated(address indexed to, uint256 amount);
+    event MintCompleted(address indexed to, uint256 amount);
 
     /// Constructor
     constructor(
@@ -77,16 +84,18 @@ abstract contract SMART is ERC20, ISMART {
 
     /// @inheritdoc ISMART
     function mint(address _to, uint256 _amount) external virtual override {
+        _validateMint(_to, _amount);
         _mint(_to, _amount);
-        _compliance.created(address(this), _to, _amount);
+        _afterMint(_to, _amount);
     }
 
     /// @inheritdoc ISMART
     function batchMint(address[] calldata _toList, uint256[] calldata _amounts) external virtual override {
         require(_toList.length == _amounts.length, "Length mismatch");
         for (uint256 i = 0; i < _toList.length; i++) {
+            _validateMint(_toList[i], _amounts[i]);
             _mint(_toList[i], _amounts[i]);
-            _compliance.created(address(this), _toList[i], _amounts[i]);
+            _afterMint(_toList[i], _amounts[i]);
         }
     }
 
@@ -94,8 +103,69 @@ abstract contract SMART is ERC20, ISMART {
     function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external virtual override {
         require(_toList.length == _amounts.length, "Length mismatch");
         for (uint256 i = 0; i < _toList.length; i++) {
-            transfer(_toList[i], _amounts[i]);
+            _validateTransfer(msg.sender, _toList[i], _amounts[i]);
+            _transfer(msg.sender, _toList[i], _amounts[i]);
+            _afterTransfer(msg.sender, _toList[i], _amounts[i]);
         }
+    }
+
+    /// @inheritdoc ISMART
+    function transfer(address to, uint256 amount) public virtual override returns (bool) {
+        _validateTransfer(msg.sender, to, amount);
+        _transfer(msg.sender, to, amount);
+        _afterTransfer(msg.sender, to, amount);
+        return true;
+    }
+
+    /// @inheritdoc ISMART
+    function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
+        _validateTransfer(from, to, amount);
+        _spendAllowance(from, msg.sender, amount);
+        _transfer(from, to, amount);
+        _afterTransfer(from, to, amount);
+        return true;
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _validateMint(address _to, uint256 _amount) internal virtual override {
+        // Call base validation first
+        super._validateMint(_to, _amount);
+
+        // Then do SMART-specific validation
+        require(_identityRegistry.isVerified(_to), "Recipient not verified");
+        require(_compliance.canTransfer(address(this), address(0), _to, _amount), "Mint not compliant");
+        emit MintValidated(_to, _amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterMint(address _to, uint256 _amount) internal virtual override {
+        // Call base after-mint first
+        super._afterMint(_to, _amount);
+
+        // Then do SMART-specific after-mint
+        _compliance.created(address(this), _to, _amount);
+        emit MintCompleted(_to, _amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _validateTransfer(address _from, address _to, uint256 _amount) internal virtual override {
+        // Call base validation first
+        super._validateTransfer(_from, _to, _amount);
+
+        // Then do SMART-specific validation
+        require(_identityRegistry.isVerified(_to), "Recipient not verified");
+        require(_compliance.canTransfer(address(this), _from, _to, _amount), "Transfer not compliant");
+        emit TransferValidated(_from, _to, _amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterTransfer(address _from, address _to, uint256 _amount) internal virtual override {
+        // Call base after-transfer first
+        super._afterTransfer(_from, _to, _amount);
+
+        // Then do SMART-specific after-transfer
+        _compliance.transferred(address(this), _from, _to, _amount);
+        emit TransferCompleted(_from, _to, _amount);
     }
 
     /// @inheritdoc ISMART
@@ -188,21 +258,6 @@ abstract contract SMART is ERC20, ISMART {
             }
         } catch {
             return false;
-        }
-    }
-
-    /// Override ERC20 functions to add compliance checks
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        super._beforeTokenTransfer(from, to, amount);
-        if (from != address(0) && to != address(0)) {
-            require(_compliance.canTransfer(address(this), from, to, amount), "Transfer not compliant");
-        }
-    }
-
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        super._afterTokenTransfer(from, to, amount);
-        if (from != address(0) && to != address(0)) {
-            _compliance.transferred(address(this), from, to, amount);
         }
     }
 }

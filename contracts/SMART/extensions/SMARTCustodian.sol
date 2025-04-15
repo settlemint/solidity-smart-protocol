@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { ISMART } from "./../interface/ISMART.sol";
+import { ISMART } from "../interface/ISMART.sol";
+import { SMARTHooks } from "./SMARTHooks.sol";
 import { ISMARTIdentityRegistry } from "./../interface/ISmartIdentityRegistry.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Custodian } from "@openzeppelin-community/contracts/token/ERC20/extensions/ERC20Custodian.sol";
 
 /// @title SMARTFreezable
 /// @notice Extension that adds freezing functionality to SMART tokens
 /// @dev This contract implements the freezing functionality as defined in the ERC3643 standard.
 /// It allows for both address-level freezing and partial token freezing.
-abstract contract SMARTCustodian is ERC20Custodian, ISMART {
+abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @dev This event is emitted when the wallet of an investor is frozen or unfrozen.
     /// @param _userAddress is the wallet of the investor that is concerned by the freezing status.
     /// @param _isFrozen is the freezing status of the wallet.
@@ -167,11 +167,18 @@ abstract contract SMARTCustodian is ERC20Custodian, ISMART {
     /// Also emits a `Transfer` event.
     /// @notice The function can only be called when the contract is not already paused.
     function forcedTransfer(address _from, address _to, uint256 _amount) public virtual override returns (bool) {
-        uint256 frozenTokens = getFrozenTokens(_from);
+        require(!_frozen[_to], "Recipient address is frozen");
+
+        uint256 frozenTokens = _frozenTokens[_from];
         if (frozenTokens > 0) {
-            unfreezePartialTokens(_from, frozenTokens);
+            _frozenTokens[_from] = 0;
+            emit TokensUnfrozen(_from, frozenTokens);
         }
+
+        _validateTransfer(_from, _to, _amount);
         _transfer(_from, _to, _amount);
+        _afterTransfer(_from, _to, _amount);
+
         return true;
     }
 
@@ -249,5 +256,34 @@ abstract contract SMARTCustodian is ERC20Custodian, ISMART {
 
         emit RecoverySuccess(_lostWallet, _newWallet, _investorOnchainID);
         return true;
+    }
+
+    /// @notice Override validation hooks to include freezing checks
+    function _validateMint(address _to, uint256 _amount) internal virtual override {
+        require(!_frozen[_to], "Recipient address is frozen");
+        super._validateMint(_to, _amount);
+    }
+
+    function _validateTransfer(address _from, address _to, uint256 _amount) internal virtual override {
+        require(!_frozen[_from], "Sender address is frozen");
+        require(!_frozen[_to], "Recipient address is frozen");
+
+        // Check if sender has enough unfrozen tokens
+        uint256 frozenTokens = _frozenTokens[_from];
+        require(balanceOf(_from) - frozenTokens >= _amount, "Insufficient unfrozen tokens");
+
+        super._validateTransfer(_from, _to, _amount);
+    }
+
+    /// @notice Override transfer functions to handle frozen tokens
+    function _transfer(address _from, address _to, uint256 _amount) internal virtual override {
+        require(!_frozen[_from], "Sender address is frozen");
+        require(!_frozen[_to], "Recipient address is frozen");
+
+        // Check if sender has enough unfrozen tokens
+        uint256 frozenTokens = _frozenTokens[_from];
+        require(balanceOf(_from) - frozenTokens >= _amount, "Insufficient unfrozen tokens");
+
+        super._transfer(_from, _to, _amount);
     }
 }
