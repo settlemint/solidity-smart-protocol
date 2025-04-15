@@ -71,20 +71,20 @@ abstract contract SMART is ERC20, ISMART {
     }
 
     /// @inheritdoc ISMART
-    function setOnchainID(address _onchainID) external virtual override {
-        _onchainID = _onchainID;
+    function setOnchainID(address onchainID_) external virtual override {
+        _onchainID = onchainID_;
         emit UpdatedTokenInformation(name(), symbol(), decimals(), "1.0", _onchainID);
     }
 
     /// @inheritdoc ISMART
-    function setIdentityRegistry(address _identityRegistry) external virtual override {
-        _identityRegistry = ISMARTIdentityRegistry(_identityRegistry);
+    function setIdentityRegistry(address identityRegistry_) external virtual override {
+        _identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
         emit IdentityRegistryAdded(_identityRegistry);
     }
 
     /// @inheritdoc ISMART
-    function setCompliance(address _compliance) external virtual override {
-        _compliance = ISMARTCompliance(_compliance);
+    function setCompliance(address compliance_) external virtual override {
+        _compliance = ISMARTCompliance(compliance_);
         emit ComplianceAdded(_compliance);
     }
 
@@ -98,7 +98,8 @@ abstract contract SMART is ERC20, ISMART {
     function batchMint(address[] calldata _toList, uint256[] calldata _amounts) external virtual override {
         require(_toList.length == _amounts.length, "Length mismatch");
         for (uint256 i = 0; i < _toList.length; i++) {
-            mint(_toList[i], _amounts[i]);
+            _mint(_toList[i], _amounts[i]);
+            _compliance.created(address(this), _toList[i], _amounts[i]);
         }
     }
 
@@ -126,12 +127,12 @@ abstract contract SMART is ERC20, ISMART {
     }
 
     /// @inheritdoc ISMART
-    function getRequiredClaimTopics() external view virtual override returns (uint256[] memory) {
+    function requiredClaimTopics() external view virtual override returns (uint256[] memory) {
         return _requiredClaimTopics;
     }
 
     /// @inheritdoc ISMART
-    function getComplianceModules() external view virtual override returns (address[] memory) {
+    function complianceModules() external view virtual override returns (address[] memory) {
         return _compliance.getModules();
     }
 

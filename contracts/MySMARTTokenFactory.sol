@@ -64,7 +64,7 @@ contract MySMARTTokenFactory is ReentrancyGuard {
 
         // Check if address is already deployed
         address predicted =
-            predictAddress(_msgSender(), name, symbol, decimals, onchainID, requiredClaimTopics, initialModules);
+            predictAddress(msg.sender, name, symbol, decimals, onchainID, requiredClaimTopics, initialModules);
         if (isAddressDeployed(predicted)) revert AddressAlreadyDeployed();
 
         bytes32 salt = _calculateSalt(name, symbol, decimals, identityRegistry, compliance);
@@ -76,7 +76,7 @@ contract MySMARTTokenFactory is ReentrancyGuard {
         token = address(newToken);
         isFactoryToken[token] = true;
 
-        emit SMARTTokenCreated(token, _msgSender());
+        emit SMARTTokenCreated(token, msg.sender);
     }
 
     /// @notice Predicts the address where a token would be deployed

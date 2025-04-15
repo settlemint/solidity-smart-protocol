@@ -3,14 +3,12 @@ pragma solidity ^0.8.27;
 
 import { SMART } from "./SMART/extensions/SMART.sol";
 import { SMARTPausable } from "./SMART/extensions/SMARTPausable.sol";
-import { SMARTFreezable } from "./SMART/extensions/SMARTFreezable.sol";
 import { SMARTBurnable } from "./SMART/extensions/SMARTBurnable.sol";
-import { SMARTForcedTransfer } from "./SMART/extensions/SMARTForcedTransfer.sol";
-import { SMARTRecovery } from "./SMART/extensions/SMARTRecovery.sol";
+import { SMARTCustodian } from "./SMART/extensions/SMARTCustodian.sol";
 
 /// @title MySMARTToken
 /// @notice A complete implementation of a SMART token with all available extensions
-contract MySMARTToken is SMART, SMARTPausable, SMARTFreezable, SMARTBurnable, SMARTForcedTransfer, SMARTRecovery {
+contract MySMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
     constructor(
         string memory name_,
         string memory symbol_,
@@ -32,7 +30,7 @@ contract MySMARTToken is SMART, SMARTPausable, SMARTFreezable, SMARTBurnable, SM
     )
         internal
         virtual
-        override(SMART, SMARTPausable)
+        override(SMART, SMARTPausable, SMARTCustodian)
     {
         super._beforeTokenTransfer(from, to, amount);
 
@@ -55,7 +53,7 @@ contract MySMARTToken is SMART, SMARTPausable, SMARTFreezable, SMARTBurnable, SM
     )
         internal
         virtual
-        override(SMART, SMARTPausable)
+        override(SMART, SMARTPausable, SMARTCustodian)
     {
         super._afterTokenTransfer(from, to, amount);
     }

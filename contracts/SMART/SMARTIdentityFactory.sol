@@ -8,6 +8,7 @@ import { IERC734 } from "../onchainid/interface/IERC734.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 error ZeroAddressNotAllowed();
 error AlreadyAFactory();
@@ -36,6 +37,7 @@ contract SMARTIdentityFactory is Ownable {
 
     function createIdentity(address _wallet, bytes32[] memory _managementKeys) external onlyOwner returns (address) {
         if (_wallet == address(0)) revert ZeroAddressNotAllowed();
+        if (_identities[_wallet] != address(0)) revert WalletAlreadyLinked();
 
         string memory salt = string.concat("OID", Strings.toHexString(_wallet));
         if (_saltTaken[salt]) revert SaltAlreadyTaken();
@@ -53,7 +55,7 @@ contract SMARTIdentityFactory is Ownable {
             }
         }
 
-        _tokenIdentities[_wallet] = identity;
+        _identities[_wallet] = identity;
 
         emit IdentityCreated(identity, _wallet);
         return identity;
@@ -62,21 +64,21 @@ contract SMARTIdentityFactory is Ownable {
     function createTokenIdentity(address _token, address _tokenOwner) external onlyOwner returns (address) {
         if (_token == address(0)) revert ZeroAddressNotAllowed();
         if (_tokenOwner == address(0)) revert ZeroAddressNotAllowed();
-        if (_tokenIdentity[_token] != address(0)) revert TokenAlreadyLinked();
+        if (_tokenIdentities[_token] != address(0)) revert TokenAlreadyLinked();
 
         string memory salt = string.concat("Token", Strings.toHexString(_token));
         if (_saltTaken[salt]) revert SaltAlreadyTaken();
 
         address identity = _deployIdentity(salt, _tokenOwner);
         _saltTaken[salt] = true;
-        _tokenIdentity[_token] = identity;
+        _tokenIdentities[_token] = identity;
 
         emit TokenIdentityCreated(identity, _token);
         return identity;
     }
 
     function getTokenIdentity(address _token) external view returns (address) {
-        return _tokenIdentity[_token];
+        return _tokenIdentities[_token];
     }
 
     function getAddress(string memory _salt, address _wallet) public view returns (address) {

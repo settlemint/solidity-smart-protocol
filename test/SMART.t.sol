@@ -4,11 +4,12 @@ pragma solidity ^0.8.24;
 import { Test } from "forge-std/Test.sol";
 import { MySMARTTokenFactory } from "../contracts/MySMARTTokenFactory.sol";
 import { Identity } from "../contracts/onchainid/Identity.sol";
+import { IIdentity } from "../contracts/onchainid/interface/IIdentity.sol";
 import { SMARTIdentityRegistryStorage } from "../contracts/SMART/SMARTIdentityRegistryStorage.sol";
 import { SMARTTrustedIssuersRegistry } from "../contracts/SMART/SMARTTrustedIssuersRegistry.sol";
 import { SMARTIdentityRegistry } from "../contracts/SMART/SMARTIdentityRegistry.sol";
 import { SMARTCompliance } from "../contracts/SMART/SMARTCompliance.sol";
-import { SMARTIdentityFactory } from "../contracts/SMART/SMARTIdentityFacory.sol";
+import { SMARTIdentityFactory } from "../contracts/SMART/SMARTIdentityFactory.sol";
 
 contract CounterTest is Test {
     address public platformAdmin = makeAddr("Platform Admin");

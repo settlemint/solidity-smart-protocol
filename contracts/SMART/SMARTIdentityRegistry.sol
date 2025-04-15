@@ -7,6 +7,7 @@ import { IERC3643IdentityRegistryStorage } from "./../ERC-3643/IERC3643IdentityR
 import { IERC3643TrustedIssuersRegistry } from "./../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 import { ISMART } from "./interface/ISMART.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IClaimIssuer } from "./../onchainid/interface/IClaimIssuer.sol";
 
 /// @title SMARTIdentityRegistry
 /// @notice Registry for managing investor identities
@@ -28,41 +29,36 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
         _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
-    function setIdentityRegistryStorage(address _identityStorage) external override onlyOwner {
-        require(_identityStorage != address(0), "Invalid storage address");
-        _identityStorage = IERC3643IdentityRegistryStorage(_identityStorage);
+    /// @inheritdoc ISMARTIdentityRegistry
+    function setIdentityRegistryStorage(address identityStorage_) external override onlyOwner {
+        require(identityStorage_ != address(0), "Invalid storage address");
+        _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
         emit IdentityStorageSet(_identityStorage);
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
-    function setTrustedIssuersRegistry(address _trustedIssuersRegistry) external override onlyOwner {
-        require(_trustedIssuersRegistry != address(0), "Invalid registry address");
-        _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(_trustedIssuersRegistry);
+    /// @inheritdoc ISMARTIdentityRegistry
+    function setTrustedIssuersRegistry(address trustedIssuersRegistry_) external override onlyOwner {
+        require(trustedIssuersRegistry_ != address(0), "Invalid registry address");
+        _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
         emit TrustedIssuersRegistrySet(_trustedIssuersRegistry);
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @inheritdoc ISMARTIdentityRegistry
     function registerIdentity(address _userAddress, IIdentity _identity, uint16 _country) external override onlyOwner {
-        require(_userAddress != address(0), "Invalid user address");
-        require(address(_identity) != address(0), "Invalid identity address");
-        require(!_identityStorage.contains(_userAddress), "Identity already registered");
-
-        _identityStorage.addIdentityToStorage(_userAddress, address(_identity), _country);
-        emit IdentityRegistered(_userAddress, _identity);
+        _registerIdentity(_userAddress, _identity, _country);
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @inheritdoc ISMARTIdentityRegistry
     function deleteIdentity(address _userAddress) external override onlyOwner {
         require(_identityStorage.contains(_userAddress), "Identity not registered");
 
-        IIdentity identity = IIdentity(_identityStorage.getStoredIdentity(_userAddress));
+        IIdentity identityToDelete = IIdentity(_identityStorage.getStoredIdentity(_userAddress));
         _identityStorage.removeIdentityFromStorage(_userAddress);
 
-        emit IdentityRemoved(_userAddress, identity);
+        emit IdentityRemoved(_userAddress, identityToDelete);
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @inheritdoc ISMARTIdentityRegistry
     function updateCountry(address _userAddress, uint16 _country) external override onlyOwner {
         require(_identityStorage.contains(_userAddress), "Identity not registered");
 
@@ -70,18 +66,18 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
         emit CountryUpdated(_userAddress, _country);
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @inheritdoc ISMARTIdentityRegistry
     function updateIdentity(address _userAddress, IIdentity _identity) external override onlyOwner {
         require(_identityStorage.contains(_userAddress), "Identity not registered");
         require(address(_identity) != address(0), "Invalid identity address");
 
-        IIdentity oldIdentity = IIdentity(_identityStorage.getStoredIdentity(_userAddress));
+        IIdentity oldInvestorIdentity = IIdentity(_identityStorage.getStoredIdentity(_userAddress));
         _identityStorage.modifyStoredIdentity(_userAddress, address(_identity));
 
-        emit IdentityUpdated(oldIdentity, _identity);
+        emit IdentityUpdated(oldInvestorIdentity, _identity);
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @inheritdoc ISMARTIdentityRegistry
     function batchRegisterIdentity(
         address[] calldata _userAddresses,
         IIdentity[] calldata _identities,
@@ -96,22 +92,35 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
         );
 
         for (uint256 i = 0; i < _userAddresses.length; i++) {
-            registerIdentity(_userAddresses[i], _identities[i], _countries[i]);
+            _registerIdentity(_userAddresses[i], _identities[i], _countries[i]);
         }
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @notice Internal function to register an identity
+    /// @param _userAddress The address of the user
+    /// @param _identity The identity contract
+    /// @param _country The country code
+    function _registerIdentity(address _userAddress, IIdentity _identity, uint16 _country) internal {
+        require(_userAddress != address(0), "Invalid user address");
+        require(address(_identity) != address(0), "Invalid identity address");
+        require(!_identityStorage.contains(_userAddress), "Identity already registered");
+
+        _identityStorage.addIdentityToStorage(_userAddress, address(_identity), _country);
+        emit IdentityRegistered(_userAddress, _identity);
+    }
+
+    /// @inheritdoc ISMARTIdentityRegistry
     function contains(address _userAddress) external view override returns (bool) {
         return _identityStorage.contains(_userAddress);
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @inheritdoc ISMARTIdentityRegistry
     function isVerified(address _userAddress, address _token) external view override returns (bool) {
         // Check if identity exists
         if (!_identityStorage.contains(_userAddress)) return false;
 
         // Get the identity and required claim topics
-        IIdentity identity = IIdentity(_identityStorage.getStoredIdentity(_userAddress));
+        IIdentity identityToVerify = IIdentity(_identityStorage.getStoredIdentity(_userAddress));
         uint256[] memory requiredClaimTopics = ISMART(_token).getRequiredClaimTopics();
 
         // If no required claims, identity is verified
@@ -149,7 +158,7 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
                     bytes32 claimId = keccak256(abi.encode(issuers[j], requiredClaimTopics[i]));
 
                     // Try to get the claim
-                    try identity.getClaim(claimId) returns (
+                    try identityToVerify.getClaim(claimId) returns (
                         uint256 topic,
                         uint256 scheme,
                         address issuer,
@@ -158,8 +167,8 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
                         string memory
                     ) {
                         // If we got here, the claim exists
-                        // Verify the claim is valid
-                        if (identity.isClaimValid(identity, topic, signature, data)) {
+                        // Verify the claim is valid by calling the issuer's contract
+                        if (IClaimIssuer(issuer).isClaimValid(identityToVerify, topic, signature, data)) {
                             hasRequiredClaim = true;
                             break;
                         }
@@ -177,24 +186,24 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
         return true;
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @inheritdoc ISMARTIdentityRegistry
     function identity(address _userAddress) external view override returns (IIdentity) {
         require(_identityStorage.contains(_userAddress), "Identity not registered");
         return IIdentity(_identityStorage.getStoredIdentity(_userAddress));
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @inheritdoc ISMARTIdentityRegistry
     function investorCountry(address _userAddress) external view override returns (uint16) {
         require(_identityStorage.contains(_userAddress), "Identity not registered");
         return _identityStorage.getStoredInvestorCountry(_userAddress);
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @inheritdoc ISMARTIdentityRegistry
     function identityStorage() external view override returns (IERC3643IdentityRegistryStorage) {
         return _identityStorage;
     }
 
-    /// @inheritdoc ISmartIdentityRegistry
+    /// @inheritdoc ISMARTIdentityRegistry
     function issuersRegistry() external view override returns (IERC3643TrustedIssuersRegistry) {
         return _trustedIssuersRegistry;
     }
