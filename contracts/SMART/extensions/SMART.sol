@@ -14,21 +14,8 @@ abstract contract SMART is ERC20, ISMART {
     address private _onchainID;
     ISMARTIdentityRegistry private _identityRegistry;
     ISMARTCompliance private _compliance;
-    mapping(address => bool) private _validatedModules;
+    mapping(address => bool) private _registeredModules;
     uint256[] private _requiredClaimTopics;
-
-    /// Events
-    event IdentityRegistryAdded(address indexed _identityRegistry);
-    event ComplianceAdded(address indexed _compliance);
-    event ModuleValidated(address indexed _module);
-    event ModuleInvalidated(address indexed _module);
-    event UpdatedTokenInformation(
-        string indexed _newName,
-        string indexed _newSymbol,
-        uint8 _newDecimals,
-        string _newVersion,
-        address indexed _newOnchainID
-    );
 
     /// Constructor
     constructor(
@@ -51,12 +38,12 @@ abstract contract SMART is ERC20, ISMART {
         _compliance = ISMARTCompliance(compliance_);
         _requiredClaimTopics = requiredClaimTopics_;
 
-        // Validate and store initial modules
+        // Register initial modules
         for (uint256 i = 0; i < initialModules_.length; i++) {
             require(initialModules_[i] != address(0), "Invalid module address");
-            require(this.isValidModule(initialModules_[i]), "Invalid module implementation");
-            _validatedModules[initialModules_[i]] = true;
-            emit ModuleValidated(initialModules_[i]);
+            require(_isValidModule(initialModules_[i]), "Invalid module implementation");
+            _registeredModules[initialModules_[i]] = true;
+            emit ComplianceModuleAdded(initialModules_[i]);
         }
     }
 
@@ -138,8 +125,52 @@ abstract contract SMART is ERC20, ISMART {
 
     /// @inheritdoc ISMART
     function isValidModule(address _module) external view virtual override returns (bool) {
+        return _isValidModule(_module);
+    }
+
+    /// @inheritdoc ISMART
+    function areValidModules(address[] calldata _modules) external view virtual override returns (bool) {
+        for (uint256 i = 0; i < _modules.length; i++) {
+            if (!_isValidModule(_modules[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// @inheritdoc ISMART
+    function addComplianceModule(address _module) external virtual override {
+        require(_module != address(0), "Invalid module address");
+        require(_isValidModule(_module), "Invalid module implementation");
+        require(!_registeredModules[_module], "Module already added");
+
+        _registeredModules[_module] = true;
+        emit ComplianceModuleAdded(_module);
+    }
+
+    /// @inheritdoc ISMART
+    function removeComplianceModule(address _module) external virtual override {
+        require(_module != address(0), "Invalid module address");
+        require(_registeredModules[_module], "Module not found");
+
+        _registeredModules[_module] = false;
+        emit ComplianceModuleRemoved(_module);
+    }
+
+    /// Internal functions
+    function _setName(string memory _name) internal virtual {
+        _name = _name;
+        emit UpdatedTokenInformation(_name, symbol(), decimals(), "1.0", _onchainID);
+    }
+
+    function _setSymbol(string memory _symbol) internal virtual {
+        _symbol = _symbol;
+        emit UpdatedTokenInformation(name(), _symbol, decimals(), "1.0", _onchainID);
+    }
+
+    /// @dev Internal function to validate a module
+    function _isValidModule(address _module) internal view returns (bool) {
         if (_module == address(0)) return false;
-        if (_validatedModules[_module]) return true;
 
         try ISMARTComplianceModule(_module).moduleCheck(address(0), address(0), address(0), 0) {
             try ISMARTComplianceModule(_module).moduleTransferAction(address(0), address(0), address(0), 0) {
@@ -158,27 +189,6 @@ abstract contract SMART is ERC20, ISMART {
         } catch {
             return false;
         }
-    }
-
-    /// @inheritdoc ISMART
-    function areValidModules(address[] calldata _modules) external view virtual override returns (bool) {
-        for (uint256 i = 0; i < _modules.length; i++) {
-            if (!this.isValidModule(_modules[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /// Internal functions
-    function _setName(string memory _name) internal virtual {
-        _name = _name;
-        emit UpdatedTokenInformation(_name, symbol(), decimals(), "1.0", _onchainID);
-    }
-
-    function _setSymbol(string memory _symbol) internal virtual {
-        _symbol = _symbol;
-        emit UpdatedTokenInformation(name(), _symbol, decimals(), "1.0", _onchainID);
     }
 
     /// Override ERC20 functions to add compliance checks

@@ -20,6 +20,8 @@ interface ISMART is IERC20, IERC20Metadata {
         string _newVersion,
         address indexed _newOnchainID
     );
+    event ComplianceModuleAdded(address indexed _module);
+    event ComplianceModuleRemoved(address indexed _module);
 
     /// Setters
     function setName(string calldata _name) external;
@@ -44,10 +46,18 @@ interface ISMART is IERC20, IERC20Metadata {
     /// @return bool Whether all modules are valid
     function areValidModules(address[] calldata _modules) external view returns (bool);
 
+    /// @notice Adds a new compliance module
+    /// @param _module The address of the module to add
+    function addComplianceModule(address _module) external;
+
+    /// @notice Removes a compliance module
+    /// @param _module The address of the module to remove
+    function removeComplianceModule(address _module) external;
+
     /// Getters
     function onchainID() external view returns (address);
     function identityRegistry() external view returns (ISMARTIdentityRegistry);
     function compliance() external view returns (ISMARTCompliance);
-    function getRequiredClaimTopics() external view returns (uint256[] memory);
-    function getComplianceModules() external view returns (address[] memory);
+    function requiredClaimTopics() external view returns (uint256[] memory);
+    function complianceModules() external view returns (address[] memory);
 }
