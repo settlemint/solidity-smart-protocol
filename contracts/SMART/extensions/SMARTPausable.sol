@@ -14,11 +14,6 @@ error TokenPaused();
 /// @notice Extension that adds pausable functionality to SMART tokens using OpenZeppelin's Pausable
 abstract contract SMARTPausable is ERC20Pausable, SMARTHooks, ISMART, Ownable {
     // --- Constructor ---
-    constructor() {
-        // No need to initialize _paused, Pausable constructor does it.
-        // Add initializer for Ownable (or your access control) if needed, e.g.:
-        // constructor(address initialOwner) Ownable(initialOwner) {}
-    }
 
     // --- Modifiers ---
     // Modifiers whenNotPaused and whenPaused are inherited from Pausable
