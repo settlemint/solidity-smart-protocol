@@ -8,78 +8,267 @@ import { ERC20Custodian } from "@openzeppelin-community/contracts/token/ERC20/ex
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IIdentity } from "../../onchainid/interface/IIdentity.sol";
 
-/// @title SMARTFreezable
-/// @notice Extension that adds freezing functionality to SMART tokens
-/// @dev This contract implements the freezing functionality as defined in the ERC3643 standard.
-/// It allows for both address-level freezing and partial token freezing.
+/// @title SMARTCustodian
+/// @notice Extension that adds custodian features like freezing, forced transfer, and recovery to SMART tokens.
+/// @dev This contract implements functionality similar to aspects of ERC3643 standard.
+/// It allows for address-level freezing, partial token freezing, forced transfers, and wallet recovery.
 abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
+    // --- Storage Variables ---
+
+    mapping(address => bool) private _frozen;
+    mapping(address => uint256) private _frozenTokens;
+
+    // --- Errors ---
+
+    /// @dev Error triggered when attempting to freeze more tokens than are available (balance - already frozen).
+    /// @param available The available, non-frozen balance.
+    /// @param requested The amount requested to be frozen.
+    error FreezeAmountExceedsAvailableBalance(uint256 available, uint256 requested);
+    /// @dev Error triggered when attempting to unfreeze more tokens than are currently frozen.
+    /// @param frozenBalance The currently frozen balance.
+    /// @param requested The amount requested to be unfrozen.
+    error InsufficientFrozenTokens(uint256 frozenBalance, uint256 requested);
+    /// @dev Error triggered when batch operation arrays have different lengths.
+    error LengthMismatch();
+    /// @dev Error triggered during forced transfer if the sender does not have enough total balance.
+    /// @param balance The total balance of the sender.
+    /// @param requested The amount requested to be transferred.
+    error InsufficientTotalBalance(uint256 balance, uint256 requested);
+    /// @dev Error triggered during forced transfer if an inconsistent state is detected (should not happen).
+    error InconsistentForcedTransferState();
+    /// @dev Error triggered when attempting recovery on a wallet with zero balance.
+    error NoTokensToRecover();
+    /// @dev Error triggered during recovery if neither the lost nor the new wallet is verified for required topics.
+    error RecoveryWalletsNotVerified();
+    /// @dev Error triggered when attempting recovery to a new wallet that is currently frozen.
+    error RecoveryTargetAddressFrozen();
+    /// @dev Error triggered when attempting an operation where the recipient address is frozen.
+    error RecipientAddressFrozen(); // Used in _validateMint
+    /// @dev Error triggered when attempting an operation where the sender address is frozen.
+    error SenderAddressFrozen(); // Used in _validateTransfer, _validateBurn
+    /// @dev Error triggered when attempting a transfer or burn without sufficient unfrozen tokens.
+    /// @param available The available unfrozen balance.
+    /// @param requested The amount requested for the operation.
+    error InsufficientUnfrozenTokens(uint256 available, uint256 requested);
+
+    // --- Events ---
+
     /// @dev This event is emitted when the wallet of an investor is frozen or unfrozen.
     /// @param _userAddress is the wallet of the investor that is concerned by the freezing status.
     /// @param _isFrozen is the freezing status of the wallet.
     /// @param _isFrozen equals `true` the wallet is frozen after emission of the event.
     /// @param _isFrozen equals `false` the wallet is unfrozen after emission of the event.
-    /// @param _owner is the address of the agent who called the function to freeze the wallet.
-    event AddressFrozen(address indexed _userAddress, bool indexed _isFrozen, address indexed _owner);
+    // Removed _owner to align with IERC3643 concept, assuming msg.sender implicitly identifies caller
+    event AddressFrozen(address indexed _userAddress, bool indexed _isFrozen);
 
     /// @dev Emitted when a wallet recovery is successful
     event RecoverySuccess(address indexed _lostWallet, address indexed _newWallet, address indexed _investorOnchainID);
 
-    /// @dev This event is emitted when some tokens of an investor are frozen.
-    /// @param _userAddress is the wallet of the investor that is concerned by the freezing.
-    /// @param _amount is the amount of tokens that were frozen.
-    /// @param _owner is the address of the agent who called the function to freeze the tokens.
-    event TokensFrozen(address indexed _userAddress, uint256 _amount, address indexed _owner);
+    // Inherited from ERC20Custodian:
+    // event TokensFrozen(address indexed userAddress, uint256 amount);
+    // event TokensUnfrozen(address indexed userAddress, uint256 amount);
 
-    /// @dev This event is emitted when some tokens of an investor are unfrozen.
-    /// @param _userAddress is the wallet of the investor that is concerned by the unfreezing.
-    /// @param _amount is the amount of tokens that were unfrozen.
-    /// @param _owner is the address of the agent who called the function to unfreeze the tokens.
-    event TokensUnfrozen(address indexed _userAddress, uint256 _amount, address indexed _owner);
+    // --- Constructor ---
 
-    mapping(address => bool) private _frozen;
-    mapping(address => uint256) private _frozenTokens;
+    // No constructor needed currently.
 
-    /// @dev Sets an address's frozen status for this token,
-    /// either freezing or unfreezing the address based on the provided boolean value.
-    /// This function can be called by an agent of the token, assuming the agent is not restricted from freezing
-    /// addresses.
+    // --- State-Changing Functions ---
+
+    /// @dev Sets an address's frozen status for this token.
     /// @param _userAddress The address for which to update the frozen status.
     /// @param _freeze The frozen status to be applied: `true` to freeze, `false` to unfreeze.
-    /// @notice To change an address's frozen status, the calling agent must have the capability to freeze addresses
-    /// enabled.
-    /// If the agent is disabled from freezing addresses, the function call will fail.
     function setAddressFrozen(address _userAddress, bool _freeze) public virtual {
         _frozen[_userAddress] = _freeze;
-        emit AddressFrozen(_userAddress, _freeze, msg.sender);
+        emit AddressFrozen(_userAddress, _freeze);
     }
 
-    /// @dev Freezes a specified token amount for a given address, preventing those tokens from being transferred.
-    /// This function can be called by an agent of the token, provided the agent is not restricted from freezing tokens.
+    /// @dev Freezes a specified token amount for a given address.
     /// @param _userAddress The address for which to freeze tokens.
     /// @param _amount The amount of tokens to be frozen.
-    /// @notice To freeze tokens for an address, the calling agent must have the capability to freeze tokens enabled.
-    /// If the agent is disabled from freezing tokens, the function call will fail.
-    /// @notice The function will revert if the user's balance is less than the amount to be frozen.
     function freezePartialTokens(address _userAddress, uint256 _amount) public virtual {
-        require(balanceOf(_userAddress) >= _amount, "Insufficient balance");
-        _frozenTokens[_userAddress] += _amount;
-        emit TokensFrozen(_userAddress, _amount, msg.sender);
+        uint256 currentFrozen = _frozenTokens[_userAddress];
+        uint256 availableBalance = balanceOf(_userAddress) - currentFrozen;
+        if (availableBalance < _amount) {
+            revert FreezeAmountExceedsAvailableBalance(availableBalance, _amount);
+        }
+        _frozenTokens[_userAddress] = currentFrozen + _amount;
+        emit TokensFrozen(_userAddress, _amount);
     }
 
-    /// @dev Unfreezes a specified token amount for a given address, allowing those tokens to be transferred again.
-    /// This function can be called by an agent of the token, assuming the agent is not restricted from unfreezing
-    /// tokens.
+    /// @dev Unfreezes a specified token amount for a given address.
     /// @param _userAddress The address for which to unfreeze tokens.
     /// @param _amount The amount of tokens to be unfrozen.
-    /// @notice To unfreeze tokens for an address, the calling agent must have the capability to unfreeze tokens
-    /// enabled.
-    /// If the agent is disabled from unfreezing tokens, the function call will fail.
-    /// @notice The function will revert if the user has insufficient frozen tokens.
     function unfreezePartialTokens(address _userAddress, uint256 _amount) public virtual {
-        require(_frozenTokens[_userAddress] >= _amount, "Insufficient frozen tokens");
-        _frozenTokens[_userAddress] -= _amount;
-        emit TokensUnfrozen(_userAddress, _amount, msg.sender);
+        uint256 currentFrozen = _frozenTokens[_userAddress];
+        if (currentFrozen < _amount) {
+            revert InsufficientFrozenTokens(currentFrozen, _amount);
+        }
+        _frozenTokens[_userAddress] = currentFrozen - _amount;
+        emit TokensUnfrozen(_userAddress, _amount);
     }
+
+    /// @dev Initiates setting of frozen status for addresses in batch.
+    /// @param _userAddresses The addresses for which to update frozen status.
+    /// @param _freeze Frozen status of the corresponding address.
+    function batchSetAddressFrozen(address[] calldata _userAddresses, bool[] calldata _freeze) public virtual {
+        if (_userAddresses.length != _freeze.length) revert LengthMismatch();
+        for (uint256 i = 0; i < _userAddresses.length; i++) {
+            setAddressFrozen(_userAddresses[i], _freeze[i]);
+        }
+    }
+
+    /// @dev Initiates partial freezing of tokens in batch.
+    /// @param _userAddresses The addresses on which tokens need to be partially frozen.
+    /// @param _amounts The amount of tokens to freeze on the corresponding address.
+    function batchFreezePartialTokens(address[] calldata _userAddresses, uint256[] calldata _amounts) public virtual {
+        if (_userAddresses.length != _amounts.length) revert LengthMismatch();
+        for (uint256 i = 0; i < _userAddresses.length; i++) {
+            freezePartialTokens(_userAddresses[i], _amounts[i]);
+        }
+    }
+
+    /// @dev Initiates partial unfreezing of tokens in batch.
+    /// @param _userAddresses The addresses on which tokens need to be partially unfrozen.
+    /// @param _amounts The amount of tokens to unfreeze on the corresponding address.
+    function batchUnfreezePartialTokens(
+        address[] calldata _userAddresses,
+        uint256[] calldata _amounts
+    )
+        public
+        virtual
+    {
+        if (_userAddresses.length != _amounts.length) revert LengthMismatch();
+        for (uint256 i = 0; i < _userAddresses.length; i++) {
+            unfreezePartialTokens(_userAddresses[i], _amounts[i]);
+        }
+    }
+
+    /// @dev Initiates a forced transfer of tokens between two wallets, bypassing some standard checks.
+    /// If the `from` address does not have sufficient free tokens (unfrozen tokens)
+    /// but possesses a total balance equal to or greater than the specified `amount`,
+    /// the frozen token amount is reduced only by the amount needed to cover the transfer.
+    /// It is imperative that the `to` address is a verified and whitelisted address.
+    /// @param _from The address of the sender.
+    /// @param _to The address of the receiver.
+    /// @param _amount The number of tokens to be transferred.
+    /// @return bool `true` if the transfer was successful.
+    /// @notice Emits a `TokensUnfrozen` event if frozen tokens need to be used for the transfer.
+    /// Also emits a `Transfer` event.
+    function forcedTransfer(address _from, address _to, uint256 _amount) public virtual returns (bool) {
+        _validateTransfer(_from, _to, _amount); // Initial validation (checks frozen status, basic rules)
+
+        uint256 currentFrozen = _frozenTokens[_from];
+        uint256 currentBalance = balanceOf(_from);
+        uint256 freeBalance = currentBalance - currentFrozen;
+
+        if (currentBalance < _amount) revert InsufficientTotalBalance(currentBalance, _amount);
+
+        if (_amount > freeBalance) {
+            uint256 neededFromFrozen = _amount - freeBalance;
+            // This check should be implicitly covered by the balance require above
+            if (currentFrozen < neededFromFrozen) revert InconsistentForcedTransferState();
+
+            _frozenTokens[_from] = currentFrozen - neededFromFrozen;
+            emit TokensUnfrozen(_from, neededFromFrozen); // Emit event only for the amount actually unfrozen
+        }
+
+        // We bypass the standard _transfer's internal checks as we've already handled frozen logic
+        // We directly call the ERC20Custodian _update which calls ERC20 _update
+        super._update(_from, _to, _amount); // Use super._update to bypass local _transfer override
+        _afterTransfer(_from, _to, _amount); // Call hooks if necessary
+
+        return true;
+    }
+
+    /// @dev Initiates forced transfers in batch.
+    /// @param _fromList The addresses of the senders.
+    /// @param _toList The addresses of the receivers.
+    /// @param _amounts The number of tokens to transfer to the corresponding receiver.
+    function batchForcedTransfer(
+        address[] calldata _fromList,
+        address[] calldata _toList,
+        uint256[] calldata _amounts
+    )
+        public
+        virtual
+    {
+        if (!(_fromList.length == _toList.length && _toList.length == _amounts.length)) {
+            revert LengthMismatch();
+        }
+        for (uint256 i = 0; i < _fromList.length; i++) {
+            forcedTransfer(_fromList[i], _toList[i], _amounts[i]); // forcedTransfer now handles partial unfreeze
+        }
+    }
+
+    /// @dev Recovers tokens and state from a lost wallet to a new one.
+    /// @param _lostWallet The wallet address the user lost access to.
+    /// @param _newWallet The new wallet address for the user.
+    /// @param _investorOnchainID The OnchainID address of the investor.
+    function recoveryAddress(
+        address _lostWallet,
+        address _newWallet,
+        address _investorOnchainID
+    )
+        public
+        virtual
+        returns (bool)
+    {
+        if (balanceOf(_lostWallet) == 0) revert NoTokensToRecover();
+
+        ISMARTIdentityRegistry registry = this.identityRegistry(); // Cache the registry
+        uint256[] memory topics = this.requiredClaimTopics(); // Cache the topics
+        if (!(registry.isVerified(_lostWallet, topics) || registry.isVerified(_newWallet, topics))) {
+            revert RecoveryWalletsNotVerified();
+        }
+        if (_frozen[_newWallet]) revert RecoveryTargetAddressFrozen();
+
+        uint256 balance = balanceOf(_lostWallet);
+        uint256 frozenTokens = _frozenTokens[_lostWallet]; // Use internal state directly
+        bool walletFrozen = _frozen[_lostWallet]; // Use internal state directly
+
+        // Get the country from the old wallet if needed by registry logic
+        uint16 country = registry.investorCountry(_lostWallet); // Cache country
+
+        // Directly update balances and state, bypassing standard transfer hooks/checks
+        // as this is a special recovery operation.
+        super._update(_lostWallet, address(0), balance); // Burn from old wallet (semantically)
+        super._update(address(0), _newWallet, balance); // Mint to new wallet (semantically)
+
+        // Transfer frozen tokens state
+        if (frozenTokens > 0) {
+            emit TokensUnfrozen(_lostWallet, frozenTokens);
+            _frozenTokens[_lostWallet] = 0;
+            _frozenTokens[_newWallet] = frozenTokens; // Assign frozen amount to new wallet
+            emit TokensFrozen(_newWallet, frozenTokens);
+        }
+
+        // Transfer frozen status state
+        if (walletFrozen) {
+            _frozen[_newWallet] = true; // Assign frozen status to new wallet
+            _frozen[_lostWallet] = false; // Ensure old wallet is unfrozen
+            emit AddressFrozen(_newWallet, true);
+            emit AddressFrozen(_lostWallet, false);
+        } else {
+            // Ensure new wallet isn't incorrectly marked frozen if old wasn't
+            _frozen[_newWallet] = false;
+        }
+
+        // Update identity registry if the new wallet isn't already verified
+        // This check prevents unnecessary registry writes if the user already setup the new wallet
+        if (!registry.isVerified(_newWallet, topics)) {
+            // Use cached topics
+            registry.registerIdentity(_newWallet, IIdentity(_investorOnchainID), country);
+        }
+        // Always attempt deletion from the old wallet if it was verified
+        if (registry.isVerified(_lostWallet, topics)) {
+            registry.deleteIdentity(_lostWallet);
+        }
+
+        emit RecoverySuccess(_lostWallet, _newWallet, _investorOnchainID);
+        return true;
+    }
+
+    // --- View Functions ---
 
     /// @dev Returns the freezing status of a wallet.
     /// @param _userAddress The address of the wallet to check.
@@ -98,204 +287,51 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
         return _frozenTokens[_userAddress];
     }
 
-    /// @dev Initiates setting of frozen status for addresses in batch.
-    /// @param _userAddresses The addresses for which to update frozen status.
-    /// @param _freeze Frozen status of the corresponding address.
-    /// @notice IMPORTANT: THIS TRANSACTION COULD EXCEED GAS LIMIT IF `_userAddresses.length` IS TOO HIGH.
-    /// USE WITH CARE TO AVOID "OUT OF GAS" TRANSACTIONS AND POTENTIAL LOSS OF TX FEES.
-    function batchSetAddressFrozen(address[] calldata _userAddresses, bool[] calldata _freeze) public virtual {
-        require(_userAddresses.length == _freeze.length, "Length mismatch");
-        for (uint256 i = 0; i < _userAddresses.length; i++) {
-            setAddressFrozen(_userAddresses[i], _freeze[i]);
-        }
-    }
-
-    /// @dev Initiates partial freezing of tokens in batch.
-    /// @param _userAddresses The addresses on which tokens need to be partially frozen.
-    /// @param _amounts The amount of tokens to freeze on the corresponding address.
-    /// @notice IMPORTANT: THIS TRANSACTION COULD EXCEED GAS LIMIT IF `_userAddresses.length` IS TOO HIGH.
-    /// USE WITH CARE TO AVOID "OUT OF GAS" TRANSACTIONS AND POTENTIAL LOSS OF TX FEES.
-    function batchFreezePartialTokens(address[] calldata _userAddresses, uint256[] calldata _amounts) public virtual {
-        require(_userAddresses.length == _amounts.length, "Length mismatch");
-        for (uint256 i = 0; i < _userAddresses.length; i++) {
-            freezePartialTokens(_userAddresses[i], _amounts[i]);
-        }
-    }
-
-    /// @dev Initiates partial unfreezing of tokens in batch.
-    /// @param _userAddresses The addresses on which tokens need to be partially unfrozen.
-    /// @param _amounts The amount of tokens to unfreeze on the corresponding address.
-    /// @notice IMPORTANT: THIS TRANSACTION COULD EXCEED GAS LIMIT IF `_userAddresses.length` IS TOO HIGH.
-    /// USE WITH CARE TO AVOID "OUT OF GAS" TRANSACTIONS AND POTENTIAL LOSS OF TX FEES.
-    function batchUnfreezePartialTokens(
-        address[] calldata _userAddresses,
-        uint256[] calldata _amounts
-    )
-        public
-        virtual
-    {
-        require(_userAddresses.length == _amounts.length, "Length mismatch");
-        for (uint256 i = 0; i < _userAddresses.length; i++) {
-            unfreezePartialTokens(_userAddresses[i], _amounts[i]);
-        }
-    }
-
-    /// @dev Initiates a forced transfer of tokens between two whitelisted wallets.
-    /// If the `from` address does not have sufficient free tokens (unfrozen tokens)
-    /// but possesses a total balance equal to or greater than the specified `amount`,
-    /// the frozen token amount is reduced to ensure enough free tokens for the transfer.
-    /// In such cases, the remaining balance in the `from` account consists entirely of frozen tokens post-transfer.
-    /// It is imperative that the `to` address is a verified and whitelisted address.
-    /// @param _from The address of the sender.
-    /// @param _to The address of the receiver.
-    /// @param _amount The number of tokens to be transferred.
-    /// @return bool `true` if the transfer was successful.
-    /// @notice This function can only be invoked by a wallet designated as an agent of the token,
-    /// provided the agent is not restricted from initiating forced transfers of the token.
-    /// @notice Emits a `TokensUnfrozen` event if `_amount` is higher than the free balance of `_from`.
-    /// Also emits a `Transfer` event.
-    /// @notice The function can only be called when the contract is not already paused.
-    function forcedTransfer(address _from, address _to, uint256 _amount) public virtual returns (bool) {
-        require(!_frozen[_to], "Recipient address is frozen");
-
-        uint256 frozenTokens = _frozenTokens[_from];
-        if (frozenTokens > 0) {
-            emit TokensUnfrozen(_from, frozenTokens, msg.sender);
-            _frozenTokens[_from] = 0;
-        }
-
-        _validateTransfer(_from, _to, _amount);
-        _transfer(_from, _to, _amount);
-        _afterTransfer(_from, _to, _amount);
-
-        return true;
-    }
-
-    /// @dev Initiates forced transfers in batch.
-    /// Requires that each _amounts[i] does not exceed the available balance of _fromList[i].
-    /// Requires that the _toList addresses are all verified and whitelisted addresses.
-    /// @param _fromList The addresses of the senders.
-    /// @param _toList The addresses of the receivers.
-    /// @param _amounts The number of tokens to transfer to the corresponding receiver.
-    /// @notice IMPORTANT: THIS TRANSACTION COULD EXCEED GAS LIMIT IF _fromList.length IS TOO HIGH.
-    /// USE WITH CARE TO AVOID "OUT OF GAS" TRANSACTIONS AND POTENTIAL LOSS OF TX FEES.
-    /// @notice This function can only be called by a wallet designated as an agent of the token,
-    /// provided the agent is not restricted from initiating forced transfers in batch.
-    /// @notice Emits `TokensUnfrozen` events for each `_amounts[i]` that exceeds the free balance of `_fromList[i]`.
-    /// Also emits _fromList.length `Transfer` events upon successful batch transfer.
-    function batchForcedTransfer(
-        address[] calldata _fromList,
-        address[] calldata _toList,
-        uint256[] calldata _amounts
-    )
-        public
-        virtual
-    {
-        require(_fromList.length == _toList.length && _toList.length == _amounts.length, "Length mismatch");
-        for (uint256 i = 0; i < _fromList.length; i++) {
-            forcedTransfer(_fromList[i], _toList[i], _amounts[i]);
-        }
-    }
-
-    function recoveryAddress(
-        address _lostWallet,
-        address _newWallet,
-        address _investorOnchainID
-    )
-        public
-        virtual
-        returns (bool)
-    {
-        require(balanceOf(_lostWallet) > 0, "No tokens to recover");
-        ISMARTIdentityRegistry registry = this.identityRegistry(); // Cache the registry
-        uint256[] memory topics = this.requiredClaimTopics(); // Cache the topics
-        require(
-            registry.isVerified(_lostWallet, topics) || registry.isVerified(_newWallet, topics),
-            "Neither wallet is verified"
-        );
-
-        uint256 balance = balanceOf(_lostWallet);
-        uint256 frozenTokens = getFrozenTokens(_lostWallet);
-        bool walletFrozen = isFrozen(_lostWallet);
-
-        // Get the country from the old wallet
-        uint16 country = this.identityRegistry().investorCountry(_lostWallet);
-
-        // Transfer tokens
-        _transfer(_lostWallet, _newWallet, balance);
-
-        // Transfer frozen tokens
-        if (frozenTokens > 0) {
-            emit TokensUnfrozen(_lostWallet, frozenTokens, msg.sender);
-            _frozenTokens[_lostWallet] = 0;
-            _frozenTokens[_newWallet] = frozenTokens;
-            emit TokensFrozen(_newWallet, frozenTokens, msg.sender);
-        }
-
-        // Transfer frozen status
-        if (walletFrozen) {
-            _frozen[_newWallet] = true;
-            _frozen[_lostWallet] = false;
-        }
-
-        // Update identity registry
-        if (!this.identityRegistry().isVerified(_newWallet, topics)) {
-            // Use cached topics
-            this.identityRegistry().registerIdentity(_newWallet, IIdentity(_investorOnchainID), country);
-            this.identityRegistry().deleteIdentity(_lostWallet);
-        }
-
-        emit RecoverySuccess(_lostWallet, _newWallet, _investorOnchainID);
-        return true;
-    }
+    // --- Internal Functions ---
 
     /// @notice Override validation hooks to include freezing checks
-    function _validateMint(address _to, uint256 _amount) internal virtual override {
-        require(!_frozen[_to], "Recipient address is frozen");
+    function _validateMint(address _to, uint256 _amount) internal view virtual override {
+        if (_frozen[_to]) revert RecipientAddressFrozen();
         super._validateMint(_to, _amount);
     }
 
-    function _validateTransfer(address _from, address _to, uint256 _amount) internal virtual override {
-        require(!_frozen[_from], "Sender address is frozen");
-        require(!_frozen[_to], "Recipient address is frozen");
+    function _validateTransfer(address _from, address _to, uint256 _amount) internal view virtual override {
+        if (_frozen[_from]) revert SenderAddressFrozen();
+        if (_frozen[_to]) revert RecipientAddressFrozen();
 
         // Check if sender has enough unfrozen tokens
         uint256 frozenTokens = _frozenTokens[_from];
-        require(balanceOf(_from) - frozenTokens >= _amount, "Insufficient unfrozen tokens");
+        uint256 availableUnfrozen = balanceOf(_from) - frozenTokens;
+        if (availableUnfrozen < _amount) {
+            revert InsufficientUnfrozenTokens(availableUnfrozen, _amount);
+        }
 
         super._validateTransfer(_from, _to, _amount);
     }
 
-    /// @notice Override transfer functions to handle frozen tokens
+    /// @notice Override transfer functions to ensure validation occurs.
+    /// Redundant checks removed, relying on _validateTransfer hook called by ERC20Custodian._beforeTokenTransfer
     function _transfer(address _from, address _to, uint256 _amount) internal virtual override(ERC20) {
-        require(!_frozen[_from], "Sender address is frozen");
-        require(!_frozen[_to], "Recipient address is frozen");
-
-        // Check if sender has enough unfrozen tokens
-        uint256 frozenTokens = _frozenTokens[_from];
-        require(balanceOf(_from) - frozenTokens >= _amount, "Insufficient unfrozen tokens");
-
+        // No explicit checks needed here, _beforeTokenTransfer (via _update) handles validation (_validateTransfer)
         super._transfer(_from, _to, _amount);
     }
 
-    /// @notice Override _update function to handle frozen tokens
+    /// @notice Override _update function to ensure validation occurs.
+    /// Redundant checks removed, relying on _validateTransfer hook called by ERC20Custodian._beforeTokenTransfer
     function _update(address from, address to, uint256 value) internal virtual override(ERC20, ERC20Custodian) {
-        require(!_frozen[from], "Sender address is frozen");
-        require(!_frozen[to], "Recipient address is frozen");
-
-        // Check if sender has enough unfrozen tokens
-        uint256 frozenTokens = _frozenTokens[from];
-        require(balanceOf(from) - frozenTokens >= value, "Insufficient unfrozen tokens");
-
+        // No explicit checks needed here, _beforeTokenTransfer handles validation (_validateTransfer)
         super._update(from, to, value);
     }
 
-    function _validateBurn(address _from, uint256 _amount) internal virtual override {
-        require(!_frozen[_from], "Sender address is frozen");
+    function _validateBurn(address _from, uint256 _amount) internal view virtual override {
+        if (_frozen[_from]) revert SenderAddressFrozen();
 
         // Check if sender has enough unfrozen tokens
         uint256 frozenTokens = _frozenTokens[_from];
-        require(balanceOf(_from) - frozenTokens >= _amount, "Insufficient unfrozen tokens");
+        uint256 availableUnfrozen = balanceOf(_from) - frozenTokens;
+        if (availableUnfrozen < _amount) {
+            revert InsufficientUnfrozenTokens(availableUnfrozen, _amount);
+        }
 
         super._validateBurn(_from, _amount);
     }

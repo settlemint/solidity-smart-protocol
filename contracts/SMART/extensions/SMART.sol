@@ -37,7 +37,6 @@ abstract contract SMART is SMARTHooks, ISMART {
     uint256[] internal _requiredClaimTopics;
 
     // --- Events ---
-    event TransferValidated(address indexed from, address indexed to, uint256 amount);
     event TransferCompleted(address indexed from, address indexed to, uint256 amount);
     event MintValidated(address indexed to, uint256 amount);
     event MintCompleted(address indexed to, uint256 amount);
@@ -128,6 +127,15 @@ abstract contract SMART is SMARTHooks, ISMART {
         }
     }
 
+    /// @inheritdoc ERC20
+    function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
+        address sender = msg.sender; // Cache msg.sender
+        _validateTransfer(sender, to, amount);
+        _transfer(sender, to, amount);
+        _afterTransfer(sender, to, amount);
+        return true;
+    }
+
     /// @inheritdoc ISMART
     function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external virtual override {
         if (_toList.length != _amounts.length) revert LengthMismatch();
@@ -137,15 +145,6 @@ abstract contract SMART is SMARTHooks, ISMART {
             _transfer(sender, _toList[i], _amounts[i]);
             _afterTransfer(sender, _toList[i], _amounts[i]);
         }
-    }
-
-    /// @inheritdoc ERC20
-    function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
-        address sender = msg.sender; // Cache msg.sender
-        _validateTransfer(sender, to, amount);
-        _transfer(sender, to, amount);
-        _afterTransfer(sender, to, amount);
-        return true;
     }
 
     /// @inheritdoc ERC20
@@ -275,7 +274,6 @@ abstract contract SMART is SMARTHooks, ISMART {
         // Then do SMART-specific validation
         if (!_identityRegistry.isVerified(_to, _requiredClaimTopics)) revert RecipientNotVerified();
         if (!_compliance.canTransfer(address(this), _from, _to, _amount)) revert TransferNotCompliant();
-        emit TransferValidated(_from, _to, _amount);
     }
 
     /// @inheritdoc SMARTHooks
@@ -293,9 +291,7 @@ abstract contract SMART is SMARTHooks, ISMART {
         // Call base after-burn first
         super._afterBurn(_from, _amount);
 
-        // Then do SMART-specific after-burn if needed (e.g., notify compliance if applicable)
-        // Currently, ISMARTCompliance doesn't have a specific burn/redeem function to call here.
-        // emit BurnCompleted(_from, _amount); // Optional: Define and emit a specific event if needed
+        _compliance.destroyed(address(this), _from, _amount);
     }
 
     /// @dev Internal function to set the token name
