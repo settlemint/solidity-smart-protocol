@@ -11,7 +11,7 @@ import { SMARTIdentityRegistry } from "../contracts/SMART/SMARTIdentityRegistry.
 import { SMARTCompliance } from "../contracts/SMART/SMARTCompliance.sol";
 import { SMARTIdentityFactory } from "../contracts/SMART/SMARTIdentityFactory.sol";
 
-contract CounterTest is Test {
+contract SMARTTest is Test {
     address public platformAdmin = makeAddr("Platform Admin");
     address public client1 = makeAddr("Client 1");
 
@@ -30,11 +30,14 @@ contract CounterTest is Test {
         identityRegistryStorage = new SMARTIdentityRegistryStorage();
         trustedIssuersRegistry = new SMARTTrustedIssuersRegistry();
         identityRegistry = new SMARTIdentityRegistry(address(identityRegistryStorage), address(trustedIssuersRegistry));
+        // This is part of the ERC3643 standard. Not sure if we want to keep this?
+        // It is to allow the identity registry to execute functions on the storage contract.
+        identityRegistryStorage.bindIdentityRegistry(address(identityRegistry));
+
         compliance = new SMARTCompliance();
+        identityFactory = new SMARTIdentityFactory();
 
         factory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
-
-        identityFactory = new SMARTIdentityFactory();
 
         vm.stopPrank();
     }
@@ -52,11 +55,7 @@ contract CounterTest is Test {
     }
 
     function test_Mint() public {
-        vm.startPrank(platformAdmin);
-
         // Create the client identity
         createClientIdentity(client1, 56);
-
-        vm.stopPrank();
     }
 }

@@ -13,6 +13,7 @@ error IdentityDoesNotExist(address userAddress);
 error InvalidIdentityRegistryAddress();
 error IdentityRegistryAlreadyBound(address registryAddress);
 error IdentityRegistryNotBound(address registryAddress);
+error UnauthorizedCaller();
 
 /// @title SMARTIdentityRegistryStorage
 /// @notice Storage contract for identity registry data
@@ -44,12 +45,26 @@ contract SMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage, Ownabl
     event IdentityRegistryBound(address indexed _identityRegistry);
     event IdentityRegistryUnbound(address indexed _identityRegistry);
 
+    // --- Modifiers ---
+    // TODO: Can this be done with AccessControl?
+    modifier onlyOwnerOrBoundRegistry() {
+        if (msg.sender != owner() && !_identityRegistryBound[msg.sender]) revert UnauthorizedCaller();
+        _;
+    }
+
     // --- Constructor ---
     constructor() Ownable(msg.sender) { }
 
     // --- State-Changing Functions ---
     /// @inheritdoc IERC3643IdentityRegistryStorage
-    function addIdentityToStorage(address _userAddress, IIdentity _identity, uint16 _country) external onlyOwner {
+    function addIdentityToStorage(
+        address _userAddress,
+        IIdentity _identity,
+        uint16 _country
+    )
+        external
+        onlyOwnerOrBoundRegistry
+    {
         if (_userAddress == address(0)) revert InvalidInvestorAddress();
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
         if (_identities[_userAddress].exists) revert IdentityAlreadyExists(_userAddress);
@@ -63,7 +78,7 @@ contract SMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage, Ownabl
     }
 
     /// @inheritdoc IERC3643IdentityRegistryStorage
-    function removeIdentityFromStorage(address _userAddress) external onlyOwner {
+    function removeIdentityFromStorage(address _userAddress) external onlyOwnerOrBoundRegistry {
         if (!_identities[_userAddress].exists) revert IdentityDoesNotExist(_userAddress);
         IIdentity oldIdentity = IIdentity(_identities[_userAddress].identityContract);
 
@@ -87,7 +102,7 @@ contract SMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage, Ownabl
     }
 
     /// @inheritdoc IERC3643IdentityRegistryStorage
-    function modifyStoredIdentity(address _userAddress, IIdentity _identity) external onlyOwner {
+    function modifyStoredIdentity(address _userAddress, IIdentity _identity) external onlyOwnerOrBoundRegistry {
         if (!_identities[_userAddress].exists) revert IdentityDoesNotExist(_userAddress);
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
 
@@ -98,7 +113,7 @@ contract SMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage, Ownabl
     }
 
     /// @inheritdoc IERC3643IdentityRegistryStorage
-    function modifyStoredInvestorCountry(address _userAddress, uint16 _country) external onlyOwner {
+    function modifyStoredInvestorCountry(address _userAddress, uint16 _country) external onlyOwnerOrBoundRegistry {
         if (!_identities[_userAddress].exists) revert IdentityDoesNotExist(_userAddress);
 
         _identities[_userAddress].country = _country;

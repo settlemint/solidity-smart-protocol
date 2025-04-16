@@ -113,10 +113,16 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
 
     /// @inheritdoc ISMARTIdentityRegistry
     function contains(address _userAddress) external view override returns (bool) {
-        if (address(this.identity(_userAddress)) == address(0)) {
+        // Attempt to retrieve the identity.
+        // If storedIdentity reverts (e.g., IdentityDoesNotExist), the catch block executes.
+        try _identityStorage.storedIdentity(_userAddress) {
+            /* returns (IIdentity memory) */
+            // Successfully retrieved the identity, so it exists.
+            return true;
+        } catch {
+            // Failed to retrieve the identity (likely because it doesn't exist).
             return false;
         }
-        return true;
     }
 
     /// @inheritdoc ISMARTIdentityRegistry

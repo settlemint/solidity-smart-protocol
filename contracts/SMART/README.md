@@ -12,4 +12,5 @@
 
 ## TODO
 - Integrate OpenZeppelin AccessControl
+  - Also check that identityRegistry has access to the storage and the issuers registry
 - Make implementations Upgradable
