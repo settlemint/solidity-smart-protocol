@@ -11,6 +11,7 @@ import { SMARTIdentityRegistry } from "../contracts/SMART/SMARTIdentityRegistry.
 import { SMARTCompliance } from "../contracts/SMART/SMARTCompliance.sol";
 import { SMARTIdentityFactory } from "../contracts/SMART/SMARTIdentityFactory.sol";
 import { IClaimIssuer } from "../contracts/onchainid/interface/IClaimIssuer.sol";
+import { console } from "forge-std/console.sol";
 
 contract SMARTTest is Test {
     address public platformAdmin = makeAddr("Platform Admin");
@@ -113,12 +114,26 @@ contract SMARTTest is Test {
     {
         data = abi.encode(claimDataString);
         bytes32 dataHash = keccak256(abi.encode(clientIdentityAddr, claimTopic, data));
-        bytes32 prefixedHash = keccak256(abi.encodePacked("\\x19Ethereum Signed Message:\\n32", dataHash));
+        bytes32 prefixedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", dataHash));
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(issuerPrivateKey_, prefixedHash);
         signature = abi.encodePacked(r, s, v);
 
         return (data, signature);
+    }
+
+    function _verifyClaim(
+        IClaimIssuer claimIssuer,
+        IIdentity clientIdentity,
+        uint256 claimTopic,
+        bytes memory signature,
+        bytes memory data
+    )
+        internal
+        view
+        returns (bool)
+    {
+        return claimIssuer.isClaimValid(clientIdentity, claimTopic, signature, data);
     }
 
     function _issueClaim(
@@ -141,8 +156,15 @@ contract SMARTTest is Test {
 
         // 3. Client adds the claim to their identity
         vm.startPrank(clientWalletAddress_);
+
+        bool isValid =
+            _verifyClaim(IClaimIssuer(address(issuerIdentityAddr_)), clientIdentity, claimTopic, signature, data);
+
+        require(isValid, "Claim not valid with issuer");
+
         // Pass the issuer's *identity contract address* as the issuer
         clientIdentity.addClaim(claimTopic, ECDSA_TYPE, issuerIdentityAddr_, signature, data, "");
+
         vm.stopPrank();
     }
 
