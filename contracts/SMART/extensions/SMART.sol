@@ -10,10 +10,11 @@ import { ISMARTComplianceModule } from "../interface/ISMARTComplianceModule.sol"
 import { SMARTHooks } from "./SMARTHooks.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title SMART
 /// @notice Base extension that implements the core SMART token functionality
-abstract contract SMART is SMARTHooks, ISMART {
+abstract contract SMART is SMARTHooks, ISMART, Ownable {
     // --- Custom Errors ---
     error InvalidComplianceAddress();
     error InvalidIdentityRegistryAddress();
@@ -81,44 +82,44 @@ abstract contract SMART is SMARTHooks, ISMART {
 
     // --- State-Changing Functions ---
     /// @inheritdoc ISMART
-    function setName(string calldata _name) external virtual override {
+    function setName(string calldata _name) external virtual override onlyOwner {
         _setName(_name);
     }
 
     /// @inheritdoc ISMART
-    function setSymbol(string calldata _symbol) external virtual override {
+    function setSymbol(string calldata _symbol) external virtual override onlyOwner {
         _setSymbol(_symbol);
     }
 
     /// @inheritdoc ISMART
-    function setOnchainID(address onchainID_) external virtual override {
+    function setOnchainID(address onchainID_) external virtual override onlyOwner {
         _onchainID = onchainID_;
         emit UpdatedTokenInformation(name(), symbol(), decimals(), "1.0", _onchainID);
     }
 
     /// @inheritdoc ISMART
-    function setIdentityRegistry(address identityRegistry_) external virtual override {
+    function setIdentityRegistry(address identityRegistry_) external virtual override onlyOwner {
         if (identityRegistry_ == address(0)) revert InvalidIdentityRegistryAddress(); // Added check for consistency
         _identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
         emit IdentityRegistryAdded(address(_identityRegistry));
     }
 
     /// @inheritdoc ISMART
-    function setCompliance(address compliance_) external virtual override {
+    function setCompliance(address compliance_) external virtual override onlyOwner {
         if (compliance_ == address(0)) revert InvalidComplianceAddress(); // Added check for consistency
         _compliance = ISMARTCompliance(compliance_);
         emit ComplianceAdded(address(_compliance));
     }
 
     /// @inheritdoc ISMART
-    function mint(address _to, uint256 _amount) external virtual override {
+    function mint(address _to, uint256 _amount) external virtual override onlyOwner {
         _validateMint(_to, _amount);
         _mint(_to, _amount);
         _afterMint(_to, _amount);
     }
 
     /// @inheritdoc ISMART
-    function batchMint(address[] calldata _toList, uint256[] calldata _amounts) external virtual override {
+    function batchMint(address[] calldata _toList, uint256[] calldata _amounts) external virtual override onlyOwner {
         if (_toList.length != _amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < _toList.length; i++) {
             _validateMint(_toList[i], _amounts[i]);
@@ -167,7 +168,7 @@ abstract contract SMART is SMARTHooks, ISMART {
     }
 
     /// @inheritdoc ISMART
-    function addComplianceModule(address _module) external virtual override {
+    function addComplianceModule(address _module) external virtual override onlyOwner {
         if (_module == address(0)) revert InvalidModuleAddress();
         if (!_isValidModule(_module)) revert InvalidModuleImplementation();
         if (_moduleIndex[_module] != 0) revert ModuleAlreadyAdded();
@@ -178,7 +179,7 @@ abstract contract SMART is SMARTHooks, ISMART {
     }
 
     /// @inheritdoc ISMART
-    function removeComplianceModule(address _module) external virtual override {
+    function removeComplianceModule(address _module) external virtual override onlyOwner {
         if (_module == address(0)) revert InvalidModuleAddress();
         uint256 index = _moduleIndex[_module];
         if (index == 0) revert ModuleNotFound();

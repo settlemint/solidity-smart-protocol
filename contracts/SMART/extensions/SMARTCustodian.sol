@@ -6,6 +6,7 @@ import { SMARTHooks } from "./SMARTHooks.sol";
 import { ISMARTIdentityRegistry } from "./../interface/ISMARTIdentityRegistry.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // Still needed for override specifiers
 import { IIdentity } from "../../onchainid/interface/IIdentity.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title SMARTCustodian
 /// @notice Extension that adds custodian features like freezing, forced transfer, and recovery to SMART tokens.
@@ -16,7 +17,7 @@ import { IIdentity } from "../../onchainid/interface/IIdentity.sol";
 ///      whereas this contract requires both a boolean address-level freeze and an additive/subtractive partial freeze
 /// amount.
 ///      Leveraging ERC20Custodian's state and logic would be overly complex and less efficient for these requirements.
-abstract contract SMARTCustodian is SMARTHooks, ISMART {
+abstract contract SMARTCustodian is SMARTHooks, ISMART, Ownable {
     // --- Storage Variables ---
 
     mapping(address => bool) private _frozen;
@@ -84,7 +85,7 @@ abstract contract SMARTCustodian is SMARTHooks, ISMART {
     /// @dev Sets an address's frozen status for this token.
     /// @param _userAddress The address for which to update the frozen status.
     /// @param _freeze The frozen status to be applied: `true` to freeze, `false` to unfreeze.
-    function setAddressFrozen(address _userAddress, bool _freeze) public virtual {
+    function setAddressFrozen(address _userAddress, bool _freeze) public virtual onlyOwner {
         _frozen[_userAddress] = _freeze;
         emit AddressFrozen(_userAddress, _freeze);
     }
@@ -92,7 +93,7 @@ abstract contract SMARTCustodian is SMARTHooks, ISMART {
     /// @dev Freezes a specified token amount for a given address.
     /// @param _userAddress The address for which to freeze tokens.
     /// @param _amount The amount of tokens to be frozen.
-    function freezePartialTokens(address _userAddress, uint256 _amount) public virtual {
+    function freezePartialTokens(address _userAddress, uint256 _amount) public virtual onlyOwner {
         uint256 currentFrozen = _frozenTokens[_userAddress];
         uint256 availableBalance = balanceOf(_userAddress) - currentFrozen;
         if (availableBalance < _amount) {
@@ -105,7 +106,7 @@ abstract contract SMARTCustodian is SMARTHooks, ISMART {
     /// @dev Unfreezes a specified token amount for a given address.
     /// @param _userAddress The address for which to unfreeze tokens.
     /// @param _amount The amount of tokens to be unfrozen.
-    function unfreezePartialTokens(address _userAddress, uint256 _amount) public virtual {
+    function unfreezePartialTokens(address _userAddress, uint256 _amount) public virtual onlyOwner {
         uint256 currentFrozen = _frozenTokens[_userAddress];
         if (currentFrozen < _amount) {
             revert InsufficientFrozenTokens(currentFrozen, _amount);
@@ -117,7 +118,14 @@ abstract contract SMARTCustodian is SMARTHooks, ISMART {
     /// @dev Initiates setting of frozen status for addresses in batch.
     /// @param _userAddresses The addresses for which to update frozen status.
     /// @param _freeze Frozen status of the corresponding address.
-    function batchSetAddressFrozen(address[] calldata _userAddresses, bool[] calldata _freeze) public virtual {
+    function batchSetAddressFrozen(
+        address[] calldata _userAddresses,
+        bool[] calldata _freeze
+    )
+        public
+        virtual
+        onlyOwner
+    {
         if (_userAddresses.length != _freeze.length) revert LengthMismatch();
         for (uint256 i = 0; i < _userAddresses.length; i++) {
             setAddressFrozen(_userAddresses[i], _freeze[i]);
@@ -127,7 +135,14 @@ abstract contract SMARTCustodian is SMARTHooks, ISMART {
     /// @dev Initiates partial freezing of tokens in batch.
     /// @param _userAddresses The addresses on which tokens need to be partially frozen.
     /// @param _amounts The amount of tokens to freeze on the corresponding address.
-    function batchFreezePartialTokens(address[] calldata _userAddresses, uint256[] calldata _amounts) public virtual {
+    function batchFreezePartialTokens(
+        address[] calldata _userAddresses,
+        uint256[] calldata _amounts
+    )
+        public
+        virtual
+        onlyOwner
+    {
         if (_userAddresses.length != _amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < _userAddresses.length; i++) {
             freezePartialTokens(_userAddresses[i], _amounts[i]);
@@ -143,6 +158,7 @@ abstract contract SMARTCustodian is SMARTHooks, ISMART {
     )
         public
         virtual
+        onlyOwner
     {
         if (_userAddresses.length != _amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < _userAddresses.length; i++) {
@@ -161,7 +177,7 @@ abstract contract SMARTCustodian is SMARTHooks, ISMART {
     /// @return bool `true` if the transfer was successful.
     /// @notice Emits a `TokensUnfrozen` event if frozen tokens need to be used for the transfer.
     /// Also emits a `Transfer` event.
-    function forcedTransfer(address _from, address _to, uint256 _amount) public virtual returns (bool) {
+    function forcedTransfer(address _from, address _to, uint256 _amount) public virtual onlyOwner returns (bool) {
         _validateTransfer(_from, _to, _amount); // Initial validation (checks frozen status, basic rules)
 
         uint256 currentFrozen = _frozenTokens[_from];
@@ -198,6 +214,7 @@ abstract contract SMARTCustodian is SMARTHooks, ISMART {
     )
         public
         virtual
+        onlyOwner
     {
         if (!(_fromList.length == _toList.length && _toList.length == _amounts.length)) {
             revert LengthMismatch();
@@ -218,6 +235,7 @@ abstract contract SMARTCustodian is SMARTHooks, ISMART {
     )
         public
         virtual
+        onlyOwner
         returns (bool)
     {
         if (balanceOf(_lostWallet) == 0) revert NoTokensToRecover();
