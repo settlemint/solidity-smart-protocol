@@ -6,6 +6,10 @@ import { SMARTPausable } from "./SMART/extensions/SMARTPausable.sol";
 import { SMARTBurnable } from "./SMART/extensions/SMARTBurnable.sol";
 import { SMARTCustodian } from "./SMART/extensions/SMARTCustodian.sol";
 import { ISMARTIdentityRegistry } from "./SMART/interface/ISMARTIdentityRegistry.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { SMARTHooks } from "./SMART/extensions/SMARTHooks.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title MySMARTToken
 /// @notice A complete implementation of a SMART token with all available extensions
@@ -18,81 +22,27 @@ contract MySMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        address[] memory initialModules_
+        address[] memory initialModules_,
+        address initialOwner_
     )
         SMART(name_, symbol_, decimals_, onchainID_, identityRegistry_, compliance_, requiredClaimTopics_, initialModules_)
+        Ownable(initialOwner_)
     { }
 
-    /// @notice Override _update to handle all extension updates
-    function _update(
-        address from,
-        address to,
-        uint256 value
-    )
-        internal
-        virtual
-        override(SMART, SMARTCustodian, SMARTPausable)
-    {
-        super._update(from, to, value);
+    // --- Overrides for Conflicting Functions ---
+
+    /// @inheritdoc ERC20
+    function decimals() public view virtual override(SMART, ERC20, IERC20Metadata) returns (uint8) {
+        return super.decimals(); // Use SMART implementation
     }
 
-    /// @notice Override _validateMint to include all extension validations
-    function _validateMint(
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMART, SMARTCustodian, SMARTPausable)
-    {
-        super._validateMint(to, amount);
+    /// @inheritdoc ERC20
+    function transfer(address to, uint256 amount) public virtual override(SMART, ERC20, IERC20) returns (bool) {
+        // Explicitly call SMART implementation which handles hooks
+        return SMART.transfer(to, amount);
     }
 
-    /// @notice Override _validateTransfer to include all extension validations
-    function _validateTransfer(
-        address from,
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMART, SMARTCustodian, SMARTPausable)
-    {
-        super._validateTransfer(from, to, amount);
-    }
-
-    /// @notice Override _afterMint to include all extension hooks
-    function _afterMint(address to, uint256 amount) internal virtual override(SMART, SMARTCustodian, SMARTPausable) {
-        super._afterMint(to, amount);
-    }
-
-    /// @notice Override _afterTransfer to include all extension hooks
-    function _afterTransfer(
-        address from,
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMART, SMARTCustodian, SMARTPausable)
-    {
-        super._afterTransfer(from, to, amount);
-    }
-
-    /// @notice Override transfer to include all extension checks
-    function transfer(
-        address to,
-        uint256 amount
-    )
-        public
-        virtual
-        override(SMART, SMARTCustodian, SMARTPausable)
-        returns (bool)
-    {
-        return super.transfer(to, amount);
-    }
-
-    /// @notice Override transferFrom to include all extension checks
+    /// @inheritdoc ERC20
     function transferFrom(
         address from,
         address to,
@@ -100,20 +50,75 @@ contract MySMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
     )
         public
         virtual
-        override(SMART, SMARTCustodian, SMARTPausable)
+        override(SMART, ERC20, IERC20)
         returns (bool)
     {
-        return super.transferFrom(from, to, amount);
+        // Explicitly call SMART implementation which handles hooks and allowance
+        return SMART.transferFrom(from, to, amount);
     }
 
-    /// @notice Override identityRegistry to resolve inheritance conflict
-    function identityRegistry() external view override(SMART) returns (ISMARTIdentityRegistry) {
-        return super.identityRegistry();
+    /**
+     * @dev Overrides required due to diamond inheritance involving ERC20Pausable and SMARTHooks/ERC20.
+     * We explicitly call the Pausable implementation which includes the `whenNotPaused` check.
+     */
+    function _update(address from, address to, uint256 value) internal virtual override(SMARTPausable, ERC20) {
+        // Call the Pausable implementation, which should correctly call super._update
+        // which eventually reaches the SMARTHooks implementation used by SMART.
+        SMARTPausable._update(from, to, value);
     }
 
-    /// @notice Override _isCustodian to implement required function
-    function _isCustodian(address user) internal view virtual override returns (bool) {
-        // Implement custodian check logic here
-        return false; // Default implementation
+    // --- Overrides for Hook Functions ---
+    // These overrides ensure that hooks from all relevant extensions are called in a defined order.
+
+    /// @inheritdoc SMARTHooks
+    function _validateMint(
+        address to,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMART, SMARTPausable, SMARTCustodian, SMARTHooks)
+    {
+        super._validateMint(to, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _validateTransfer(
+        address from,
+        address to,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMART, SMARTPausable, SMARTCustodian, SMARTHooks)
+    {
+        super._validateTransfer(from, to, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _validateBurn(
+        address from,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMARTBurnable, SMARTCustodian, SMARTHooks)
+    {
+        super._validateBurn(from, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterMint(address to, uint256 amount) internal virtual override(SMART, SMARTHooks) {
+        super._afterMint(to, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMART, SMARTHooks) {
+        super._afterTransfer(from, to, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterBurn(address from, uint256 amount) internal virtual override(SMART, SMARTHooks) {
+        super._afterBurn(from, amount);
     }
 }
