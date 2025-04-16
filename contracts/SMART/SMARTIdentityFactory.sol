@@ -10,40 +10,36 @@ import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
+// --- Errors ---
 error ZeroAddressNotAllowed();
-error AlreadyAFactory();
-error NotAFactory();
-error EmptyString();
 error SaltAlreadyTaken();
 error WalletAlreadyLinked();
-error EmptyKeysList();
 error WalletInManagementKeys();
 error TokenAlreadyLinked();
-error OnlyFactoryOrOwnerCanCall();
 
 contract SMARTIdentityFactory is Ownable {
+    // --- Storage Variables ---
     address private immutable _identityImplementation;
 
     mapping(string => bool) private _saltTaken;
-    mapping(address => bool) private _identities;
+    mapping(address => address) private _identities; // Changed bool to address
     mapping(address => address) private _tokenIdentities;
 
+    // --- Events ---
     event IdentityCreated(address indexed identity, address indexed wallet);
     event TokenIdentityCreated(address indexed identity, address indexed token);
 
+    // --- Constructor ---
     constructor() Ownable(_msgSender()) {
         _identityImplementation = address(new Identity(address(0), true));
     }
 
+    // --- State-Changing Functions ---
     function createIdentity(address _wallet, bytes32[] memory _managementKeys) external onlyOwner returns (address) {
         if (_wallet == address(0)) revert ZeroAddressNotAllowed();
-        if (_identities[_wallet] != address(0)) revert WalletAlreadyLinked();
+        if (_identities[_wallet] != address(0)) revert WalletAlreadyLinked(); // Comparison with address(0)
 
-        string memory salt = string.concat("OID", Strings.toHexString(_wallet));
-        if (_saltTaken[salt]) revert SaltAlreadyTaken();
-
-        address identity = _deployIdentity(salt, _wallet);
-        _saltTaken[salt] = true;
+        address identity = _createIdentityInternal("OID", _wallet, _wallet);
 
         // Add management keys if provided
         if (_managementKeys.length > 0) {
@@ -55,7 +51,7 @@ contract SMARTIdentityFactory is Ownable {
             }
         }
 
-        _identities[_wallet] = identity;
+        _identities[_wallet] = identity; // Assign identity address
 
         emit IdentityCreated(identity, _wallet);
         return identity;
@@ -66,17 +62,15 @@ contract SMARTIdentityFactory is Ownable {
         if (_tokenOwner == address(0)) revert ZeroAddressNotAllowed();
         if (_tokenIdentities[_token] != address(0)) revert TokenAlreadyLinked();
 
-        string memory salt = string.concat("Token", Strings.toHexString(_token));
-        if (_saltTaken[salt]) revert SaltAlreadyTaken();
+        address identity = _createIdentityInternal("Token", _token, _tokenOwner);
 
-        address identity = _deployIdentity(salt, _tokenOwner);
-        _saltTaken[salt] = true;
         _tokenIdentities[_token] = identity;
 
         emit TokenIdentityCreated(identity, _token);
         return identity;
     }
 
+    // --- View Functions ---
     function getTokenIdentity(address _token) external view returns (address) {
         return _tokenIdentities[_token];
     }
@@ -93,6 +87,32 @@ contract SMARTIdentityFactory is Ownable {
         );
     }
 
+    // --- Internal Functions ---
+
+    /**
+     * @dev Internal function to handle common identity creation logic.
+     */
+    function _createIdentityInternal(
+        string memory _saltPrefix,
+        address _entityAddress,
+        address _ownerAddress
+    )
+        private
+        returns (address)
+    {
+        string memory salt = string.concat(_saltPrefix, Strings.toHexString(_entityAddress));
+        if (_saltTaken[salt]) revert SaltAlreadyTaken();
+
+        address identity = _deployIdentity(salt, _ownerAddress);
+        _saltTaken[salt] = true;
+        return identity;
+    }
+
+    /**
+     * @dev Deploys an ERC1967 proxy pointing to the identity implementation.
+     * Uses Create2 for deterministic address calculation.
+     * Returns the existing address if already deployed.
+     */
     function _deployIdentity(string memory _salt, address _wallet) private returns (address) {
         address addr = getAddress(_salt, _wallet);
 
