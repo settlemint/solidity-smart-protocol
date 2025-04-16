@@ -12,8 +12,9 @@ abstract contract SMARTBurnable is ERC20Burnable, SMARTHooks, ISMART {
     /// @param _userAddress The address to burn tokens from
     /// @param _amount The amount of tokens to burn
     function burn(address _userAddress, uint256 _amount) public virtual {
-        require(balanceOf(_userAddress) >= _amount, "Insufficient balance");
+        _validateBurn(_userAddress, _amount);
         _burn(_userAddress, _amount);
+        _afterBurn(_userAddress, _amount);
     }
 
     /// @notice Burns tokens from multiple addresses in a single transaction
@@ -22,8 +23,14 @@ abstract contract SMARTBurnable is ERC20Burnable, SMARTHooks, ISMART {
     function batchBurn(address[] calldata _userAddresses, uint256[] calldata _amounts) public virtual {
         require(_userAddresses.length == _amounts.length, "Length mismatch");
         for (uint256 i = 0; i < _userAddresses.length; i++) {
-            require(balanceOf(_userAddresses[i]) >= _amounts[i], "Insufficient balance");
-            burn(_userAddresses[i], _amounts[i]);
+            _validateBurn(_userAddresses[i], _amounts[i]);
+            _burn(_userAddresses[i], _amounts[i]);
+            _afterBurn(_userAddresses[i], _amounts[i]);
         }
+    }
+
+    /// @dev Internal validation hook for burning tokens.
+    function _validateBurn(address _from, uint256 _amount) internal virtual override {
+        super._validateBurn(_from, _amount);
     }
 }

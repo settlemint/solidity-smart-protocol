@@ -27,4 +27,14 @@ abstract contract SMARTHooks is ERC20 {
     function _afterTransfer(address _from, address _to, uint256 _amount) internal virtual {
         // Base after-transfer logic can be added here if needed
     }
+
+    /// @dev These functions should be called first in any override implementation
+    function _validateBurn(address _from, uint256 _amount) internal virtual {
+        // Base validation logic can be added here if needed
+    }
+
+    /// @dev These functions should be called first in any override implementation
+    function _afterBurn(address _from, uint256 _amount) internal virtual {
+        // Base after-burn logic can be added here if needed
+    }
 }

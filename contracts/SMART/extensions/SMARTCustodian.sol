@@ -192,9 +192,10 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
         returns (bool)
     {
         require(balanceOf(_lostWallet) > 0, "No tokens to recover");
+        ISMARTIdentityRegistry registry = this.identityRegistry(); // Cache the registry
+        uint256[] memory topics = this.requiredClaimTopics(); // Cache the topics
         require(
-            this.identityRegistry().isVerified(_lostWallet, address(this))
-                || this.identityRegistry().isVerified(_newWallet, address(this)),
+            registry.isVerified(_lostWallet, topics) || registry.isVerified(_newWallet, topics),
             "Neither wallet is verified"
         );
 
@@ -221,7 +222,8 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
         }
 
         // Update identity registry
-        if (!this.identityRegistry().isVerified(_newWallet, address(this))) {
+        if (!this.identityRegistry().isVerified(_newWallet, topics)) {
+            // Use cached topics
             this.identityRegistry().registerIdentity(_newWallet, IIdentity(_investorOnchainID), country);
             this.identityRegistry().deleteIdentity(_lostWallet);
         }
@@ -271,11 +273,13 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
         super._update(from, to, value);
     }
 
-    function _validateBurn(address _from, uint256 _amount) internal virtual {
+    function _validateBurn(address _from, uint256 _amount) internal virtual override {
         require(!_frozen[_from], "Sender address is frozen");
 
         // Check if sender has enough unfrozen tokens
         uint256 frozenTokens = _frozenTokens[_from];
         require(balanceOf(_from) - frozenTokens >= _amount, "Insufficient unfrozen tokens");
+
+        super._validateBurn(_from, _amount);
     }
 }

@@ -8,24 +8,44 @@ import { ISMARTIdentityRegistry } from "../interface/ISMARTIdentityRegistry.sol"
 import { ISMARTCompliance } from "../interface/ISMARTCompliance.sol";
 import { ISMARTComplianceModule } from "../interface/ISMARTComplianceModule.sol";
 import { SMARTHooks } from "./SMARTHooks.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title SMART
 /// @notice Base extension that implements the core SMART token functionality
 abstract contract SMART is SMARTHooks, ISMART {
-    /// Storage
+    // --- Custom Errors ---
+    error InvalidComplianceAddress();
+    error InvalidIdentityRegistryAddress();
+    error InvalidModuleAddress();
+    error InvalidModuleImplementation();
+    error ModuleAlreadyAddedOnInit();
+    error LengthMismatch();
+    error RecipientNotVerified();
+    error MintNotCompliant();
+    error TransferNotCompliant();
+    error ModuleAlreadyAdded();
+    error ModuleNotFound();
+
+    // --- Storage Variables ---
+    uint8 private immutable _decimals;
     address private _onchainID;
     ISMARTIdentityRegistry private _identityRegistry;
     ISMARTCompliance private _compliance;
-    mapping(address => bool) private _registeredModules;
-    uint256[] private _requiredClaimTopics;
+    mapping(address => uint256) private _moduleIndex; // Store index + 1 for existence check
+    address[] private _complianceModuleList;
+    uint256[] internal _requiredClaimTopics;
 
-    /// Events
+    // --- Events ---
     event TransferValidated(address indexed from, address indexed to, uint256 amount);
     event TransferCompleted(address indexed from, address indexed to, uint256 amount);
     event MintValidated(address indexed to, uint256 amount);
     event MintCompleted(address indexed to, uint256 amount);
+    // Note: UpdatedTokenInformation, IdentityRegistryAdded, ComplianceAdded,
+    // ComplianceModuleAdded, ComplianceModuleRemoved are emitted but defined elsewhere (likely interfaces/base
+    // contracts)
 
-    /// Constructor
+    // --- Constructor ---
     constructor(
         string memory name_,
         string memory symbol_,
@@ -38,9 +58,10 @@ abstract contract SMART is SMARTHooks, ISMART {
     )
         ERC20(name_, symbol_)
     {
-        require(compliance_ != address(0), "Invalid compliance address");
-        require(identityRegistry_ != address(0), "Invalid identity registry address");
+        if (compliance_ == address(0)) revert InvalidComplianceAddress();
+        if (identityRegistry_ == address(0)) revert InvalidIdentityRegistryAddress();
 
+        _decimals = decimals_;
         _onchainID = onchainID_;
         _identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
         _compliance = ISMARTCompliance(compliance_);
@@ -48,13 +69,18 @@ abstract contract SMART is SMARTHooks, ISMART {
 
         // Register initial modules
         for (uint256 i = 0; i < initialModules_.length; i++) {
-            require(initialModules_[i] != address(0), "Invalid module address");
-            require(_isValidModule(initialModules_[i]), "Invalid module implementation");
-            _registeredModules[initialModules_[i]] = true;
-            emit ComplianceModuleAdded(initialModules_[i]);
+            address module = initialModules_[i];
+            if (module == address(0)) revert InvalidModuleAddress();
+            if (!_isValidModule(module)) revert InvalidModuleImplementation();
+            if (_moduleIndex[module] != 0) revert ModuleAlreadyAddedOnInit();
+
+            _complianceModuleList.push(module);
+            _moduleIndex[module] = _complianceModuleList.length; // Store index + 1
+            emit ComplianceModuleAdded(module);
         }
     }
 
+    // --- State-Changing Functions ---
     /// @inheritdoc ISMART
     function setName(string calldata _name) external virtual override {
         _setName(_name);
@@ -73,12 +99,14 @@ abstract contract SMART is SMARTHooks, ISMART {
 
     /// @inheritdoc ISMART
     function setIdentityRegistry(address identityRegistry_) external virtual override {
+        if (identityRegistry_ == address(0)) revert InvalidIdentityRegistryAddress(); // Added check for consistency
         _identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
         emit IdentityRegistryAdded(address(_identityRegistry));
     }
 
     /// @inheritdoc ISMART
     function setCompliance(address compliance_) external virtual override {
+        if (compliance_ == address(0)) revert InvalidComplianceAddress(); // Added check for consistency
         _compliance = ISMARTCompliance(compliance_);
         emit ComplianceAdded(address(_compliance));
     }
@@ -92,7 +120,7 @@ abstract contract SMART is SMARTHooks, ISMART {
 
     /// @inheritdoc ISMART
     function batchMint(address[] calldata _toList, uint256[] calldata _amounts) external virtual override {
-        require(_toList.length == _amounts.length, "Length mismatch");
+        if (_toList.length != _amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < _toList.length; i++) {
             _validateMint(_toList[i], _amounts[i]);
             _mint(_toList[i], _amounts[i]);
@@ -102,21 +130,25 @@ abstract contract SMART is SMARTHooks, ISMART {
 
     /// @inheritdoc ISMART
     function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external virtual override {
-        require(_toList.length == _amounts.length, "Length mismatch");
+        if (_toList.length != _amounts.length) revert LengthMismatch();
+        address sender = msg.sender; // Cache msg.sender
         for (uint256 i = 0; i < _toList.length; i++) {
-            _validateTransfer(msg.sender, _toList[i], _amounts[i]);
-            _transfer(msg.sender, _toList[i], _amounts[i]);
-            _afterTransfer(msg.sender, _toList[i], _amounts[i]);
+            _validateTransfer(sender, _toList[i], _amounts[i]);
+            _transfer(sender, _toList[i], _amounts[i]);
+            _afterTransfer(sender, _toList[i], _amounts[i]);
         }
     }
 
+    /// @inheritdoc ERC20
     function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
-        _validateTransfer(msg.sender, to, amount);
-        _transfer(msg.sender, to, amount);
-        _afterTransfer(msg.sender, to, amount);
+        address sender = msg.sender; // Cache msg.sender
+        _validateTransfer(sender, to, amount);
+        _transfer(sender, to, amount);
+        _afterTransfer(sender, to, amount);
         return true;
     }
 
+    /// @inheritdoc ERC20
     function transferFrom(
         address from,
         address to,
@@ -127,53 +159,50 @@ abstract contract SMART is SMARTHooks, ISMART {
         override(ERC20, IERC20)
         returns (bool)
     {
+        address spender = msg.sender; // Cache msg.sender
         _validateTransfer(from, to, amount);
-        _spendAllowance(from, msg.sender, amount);
+        _spendAllowance(from, spender, amount);
         _transfer(from, to, amount);
         _afterTransfer(from, to, amount);
         return true;
     }
 
-    /// @inheritdoc SMARTHooks
-    function _validateMint(address _to, uint256 _amount) internal virtual override {
-        // Call base validation first
-        super._validateMint(_to, _amount);
+    /// @inheritdoc ISMART
+    function addComplianceModule(address _module) external virtual override {
+        if (_module == address(0)) revert InvalidModuleAddress();
+        if (!_isValidModule(_module)) revert InvalidModuleImplementation();
+        if (_moduleIndex[_module] != 0) revert ModuleAlreadyAdded();
 
-        // Then do SMART-specific validation
-        require(_identityRegistry.isVerified(_to, _requiredClaimTopics), "Recipient not verified");
-        require(_compliance.canTransfer(address(this), address(0), _to, _amount), "Mint not compliant");
-        emit MintValidated(_to, _amount);
+        _complianceModuleList.push(_module);
+        _moduleIndex[_module] = _complianceModuleList.length; // Store index + 1
+        emit ComplianceModuleAdded(_module);
     }
 
-    /// @inheritdoc SMARTHooks
-    function _afterMint(address _to, uint256 _amount) internal virtual override {
-        // Call base after-mint first
-        super._afterMint(_to, _amount);
+    /// @inheritdoc ISMART
+    function removeComplianceModule(address _module) external virtual override {
+        if (_module == address(0)) revert InvalidModuleAddress();
+        uint256 index = _moduleIndex[_module];
+        if (index == 0) revert ModuleNotFound();
 
-        // Then do SMART-specific after-mint
-        _compliance.created(address(this), _to, _amount);
-        emit MintCompleted(_to, _amount);
+        // Remove from array using swap and pop
+        uint256 listIndex = index - 1;
+        uint256 lastIndex = _complianceModuleList.length - 1;
+        if (listIndex != lastIndex) {
+            // Avoid self-assignment if removing the last element
+            address lastModule = _complianceModuleList[lastIndex];
+            _complianceModuleList[listIndex] = lastModule; // Swap with last element
+            _moduleIndex[lastModule] = listIndex + 1; // Update index of moved module
+        }
+        _complianceModuleList.pop();
+        delete _moduleIndex[_module]; // Remove from mapping
+
+        emit ComplianceModuleRemoved(_module);
     }
 
-    /// @inheritdoc SMARTHooks
-    function _validateTransfer(address _from, address _to, uint256 _amount) internal virtual override {
-        // Call base validation first
-        super._validateTransfer(_from, _to, _amount);
-
-        // Then do SMART-specific validation
-        require(_identityRegistry.isVerified(_to, _requiredClaimTopics), "Recipient not verified");
-        require(_compliance.canTransfer(address(this), _from, _to, _amount), "Transfer not compliant");
-        emit TransferValidated(_from, _to, _amount);
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _afterTransfer(address _from, address _to, uint256 _amount) internal virtual override {
-        // Call base after-transfer first
-        super._afterTransfer(_from, _to, _amount);
-
-        // Then do SMART-specific after-transfer
-        _compliance.transferred(address(this), _from, _to, _amount);
-        emit TransferCompleted(_from, _to, _amount);
+    // --- View Functions ---
+    /// @inheritdoc ERC20
+    function decimals() public view virtual override(ERC20, IERC20Metadata) returns (uint8) {
+        return _decimals;
     }
 
     /// @inheritdoc ISMART
@@ -198,8 +227,7 @@ abstract contract SMART is SMARTHooks, ISMART {
 
     /// @inheritdoc ISMART
     function complianceModules() external view virtual override returns (address[] memory) {
-        // Return empty array as placeholder since getModules() is not available
-        return new address[](0);
+        return _complianceModuleList;
     }
 
     /// @inheritdoc ISMART
@@ -217,56 +245,84 @@ abstract contract SMART is SMARTHooks, ISMART {
         return true;
     }
 
-    /// @inheritdoc ISMART
-    function addComplianceModule(address _module) external virtual override {
-        require(_module != address(0), "Invalid module address");
-        require(_isValidModule(_module), "Invalid module implementation");
-        require(!_registeredModules[_module], "Module already added");
+    // --- Internal Functions ---
+    /// @inheritdoc SMARTHooks
+    function _validateMint(address _to, uint256 _amount) internal virtual override {
+        // Call base validation first
+        super._validateMint(_to, _amount);
 
-        _registeredModules[_module] = true;
-        emit ComplianceModuleAdded(_module);
+        // Then do SMART-specific validation
+        if (!_identityRegistry.isVerified(_to, _requiredClaimTopics)) revert RecipientNotVerified();
+        if (!_compliance.canTransfer(address(this), address(0), _to, _amount)) revert MintNotCompliant();
+        emit MintValidated(_to, _amount);
     }
 
-    /// @inheritdoc ISMART
-    function removeComplianceModule(address _module) external virtual override {
-        require(_module != address(0), "Invalid module address");
-        require(_registeredModules[_module], "Module not found");
+    /// @inheritdoc SMARTHooks
+    function _afterMint(address _to, uint256 _amount) internal virtual override {
+        // Call base after-mint first
+        super._afterMint(_to, _amount);
 
-        _registeredModules[_module] = false;
-        emit ComplianceModuleRemoved(_module);
+        // Then do SMART-specific after-mint
+        _compliance.created(address(this), _to, _amount);
+        emit MintCompleted(_to, _amount);
     }
 
-    /// Internal functions
+    /// @inheritdoc SMARTHooks
+    function _validateTransfer(address _from, address _to, uint256 _amount) internal virtual override {
+        // Call base validation first
+        super._validateTransfer(_from, _to, _amount);
+
+        // Then do SMART-specific validation
+        if (!_identityRegistry.isVerified(_to, _requiredClaimTopics)) revert RecipientNotVerified();
+        if (!_compliance.canTransfer(address(this), _from, _to, _amount)) revert TransferNotCompliant();
+        emit TransferValidated(_from, _to, _amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterTransfer(address _from, address _to, uint256 _amount) internal virtual override {
+        // Call base after-transfer first
+        super._afterTransfer(_from, _to, _amount);
+
+        // Then do SMART-specific after-transfer
+        _compliance.transferred(address(this), _from, _to, _amount);
+        emit TransferCompleted(_from, _to, _amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterBurn(address _from, uint256 _amount) internal virtual override {
+        // Call base after-burn first
+        super._afterBurn(_from, _amount);
+
+        // Then do SMART-specific after-burn if needed (e.g., notify compliance if applicable)
+        // Currently, ISMARTCompliance doesn't have a specific burn/redeem function to call here.
+        // emit BurnCompleted(_from, _amount); // Optional: Define and emit a specific event if needed
+    }
+
+    /// @dev Internal function to set the token name
     function _setName(string memory _name) internal virtual {
-        _name = _name;
+        // Note: The original implementation did not update the state variable. Assuming intent was to emit only.
+        // If the name should be updatable, the ERC20 internal _name variable needs to be handled appropriately,
+        // which is not directly exposed. This might require overriding ERC20's name() and symbol() or a different
+        // approach.
+        // For now, preserving the original behavior of only emitting.
         emit UpdatedTokenInformation(_name, symbol(), decimals(), "1.0", _onchainID);
     }
 
+    /// @dev Internal function to set the token symbol
     function _setSymbol(string memory _symbol) internal virtual {
-        _symbol = _symbol;
+        // Note: Similar to _setName, the original implementation did not update the state variable.
+        // Preserving the original behavior of only emitting.
         emit UpdatedTokenInformation(name(), _symbol, decimals(), "1.0", _onchainID);
     }
 
-    /// @dev Internal function to validate a module
+    /// @dev Internal function to validate a module's interface support
     function _isValidModule(address _module) internal view returns (bool) {
         if (_module == address(0)) return false;
 
-        try ISMARTComplianceModule(_module).moduleCheck(address(0), address(0), address(0), 0) {
-            try ISMARTComplianceModule(_module).moduleTransferAction(address(0), address(0), address(0), 0) {
-                try ISMARTComplianceModule(_module).moduleMintAction(address(0), address(0), 0) {
-                    try ISMARTComplianceModule(_module).moduleBurnAction(address(0), address(0), 0) {
-                        return true;
-                    } catch {
-                        return false;
-                    }
-                } catch {
-                    return false;
-                }
-            } catch {
-                return false;
-            }
+        try IERC165(_module).supportsInterface(type(ISMARTComplianceModule).interfaceId) returns (bool supported) {
+            return supported;
         } catch {
-            return false;
+            return false; // Catches revert or other errors during the interface check
         }
     }
 }
