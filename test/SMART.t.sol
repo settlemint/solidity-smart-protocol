@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
 import { MySMARTTokenFactory } from "../contracts/MySMARTTokenFactory.sol";
+import { MySMARTToken } from "../contracts/MySMARTToken.sol";
 import { Identity } from "../contracts/onchainid/Identity.sol";
 import { IIdentity } from "../contracts/onchainid/interface/IIdentity.sol";
 import { SMARTIdentityRegistryStorage } from "../contracts/SMART/SMARTIdentityRegistryStorage.sol";
@@ -15,10 +16,11 @@ import { console } from "forge-std/console.sol";
 
 contract SMARTTest is Test {
     address public platformAdmin = makeAddr("Platform Admin");
+    address public tokenIssuer = makeAddr("Token issuer");
     address public client1 = makeAddr("Client 1");
 
-    uint256 private issuer1PrivateKey = 0x12345;
-    address public issuer1 = vm.addr(issuer1PrivateKey);
+    uint256 private claimIssuer1PrivateKey = 0x12345;
+    address public claimIssuer1 = vm.addr(claimIssuer1PrivateKey);
 
     uint256 public constant CLAIM_TOPIC_KYC = 1;
     uint256 public constant CLAIM_TOPIC_AML = 2;
@@ -30,7 +32,7 @@ contract SMARTTest is Test {
     SMARTCompliance compliance;
     SMARTIdentityFactory identityFactory;
 
-    MySMARTTokenFactory factory;
+    MySMARTTokenFactory tokenFactory;
 
     function setUp() public {
         vm.startPrank(platformAdmin);
@@ -45,7 +47,7 @@ contract SMARTTest is Test {
         compliance = new SMARTCompliance();
         identityFactory = new SMARTIdentityFactory();
 
-        factory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
+        tokenFactory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
 
         vm.stopPrank();
     }
@@ -137,8 +139,8 @@ contract SMARTTest is Test {
     }
 
     function _issueClaim(
+        address issuerIdentityAddr_,
         uint256 issuerPrivateKey_,
-        address issuerIdentityAddr_, // Changed parameter name for clarity
         address clientWalletAddress_,
         uint256 claimTopic,
         string memory claimData
@@ -168,7 +170,32 @@ contract SMARTTest is Test {
         vm.stopPrank();
     }
 
+    function _createToken(
+        string memory name,
+        string memory symbol,
+        uint256[] memory claimTopics,
+        address[] memory initialModules,
+        address tokenIssuer_
+    )
+        public
+        returns (address)
+    {
+        vm.prank(tokenIssuer_);
+        address tokenAddress = tokenFactory.create(name, symbol, 18, claimTopics, initialModules);
+
+        vm.prank(platformAdmin); // TODO does this make sense? that only platform admin can create the token identity?
+        address tokenIdentityAddress = identityFactory.createTokenIdentity(tokenAddress, tokenIssuer_);
+
+        vm.prank(tokenIssuer_);
+        MySMARTToken(tokenAddress).setOnchainID(tokenIdentityAddress);
+
+        return tokenAddress;
+    }
+
     function test_Mint() public {
+        // Create the token issuer identity
+        _createClientIdentity(tokenIssuer, 56);
+
         // Create the client identity
         _createClientIdentity(client1, 56);
 
@@ -177,13 +204,15 @@ contract SMARTTest is Test {
         claimTopics[0] = CLAIM_TOPIC_KYC;
         claimTopics[1] = CLAIM_TOPIC_AML;
         // Store the issuer's identity contract address
-        address issuer1Identity = _createIssuerIdentity(issuer1, claimTopics);
+        address issuer1Identity = _createIssuerIdentity(claimIssuer1, claimTopics);
 
         // Issue claims from issuer1 to client1
         // Pass the issuer's identity address, not wallet address
-        _issueClaim(issuer1PrivateKey, issuer1Identity, client1, CLAIM_TOPIC_KYC, "Verified KYC by Issuer 1");
-        _issueClaim(issuer1PrivateKey, issuer1Identity, client1, CLAIM_TOPIC_AML, "Verified AML by Issuer 1");
+        _issueClaim(issuer1Identity, claimIssuer1PrivateKey, client1, CLAIM_TOPIC_KYC, "Verified KYC by Issuer 1");
+        _issueClaim(issuer1Identity, claimIssuer1PrivateKey, client1, CLAIM_TOPIC_AML, "Verified AML by Issuer 1");
 
-        // TODO: Add assertions to verify claims exist on client1's identity
+        // Create empty array for modules
+        address[] memory emptyModules = new address[](0);
+        _createToken("Test Token", "TEST", claimTopics, emptyModules, tokenIssuer);
     }
 }

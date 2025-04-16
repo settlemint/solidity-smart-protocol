@@ -94,7 +94,7 @@ abstract contract SMART is SMARTHooks, ISMART, Ownable {
     /// @inheritdoc ISMART
     function setOnchainID(address onchainID_) external virtual override onlyOwner {
         _onchainID = onchainID_;
-        emit UpdatedTokenInformation(name(), symbol(), decimals(), "1.0", _onchainID);
+        emit UpdatedTokenInformation(name(), symbol(), decimals(), _onchainID);
     }
 
     /// @inheritdoc ISMART
@@ -302,14 +302,14 @@ abstract contract SMART is SMARTHooks, ISMART, Ownable {
         // which is not directly exposed. This might require overriding ERC20's name() and symbol() or a different
         // approach.
         // For now, preserving the original behavior of only emitting.
-        emit UpdatedTokenInformation(_name, symbol(), decimals(), "1.0", _onchainID);
+        emit UpdatedTokenInformation(_name, symbol(), decimals(), _onchainID);
     }
 
     /// @dev Internal function to set the token symbol
     function _setSymbol(string memory _symbol) internal virtual {
         // Note: Similar to _setName, the original implementation did not update the state variable.
         // Preserving the original behavior of only emitting.
-        emit UpdatedTokenInformation(name(), _symbol, decimals(), "1.0", _onchainID);
+        emit UpdatedTokenInformation(name(), _symbol, decimals(), _onchainID);
     }
 
     /// @dev Internal function to validate a module's interface support

@@ -14,11 +14,7 @@ interface ISMART is IERC20, IERC20Metadata {
     event IdentityRegistryAdded(address indexed _identityRegistry);
     event ComplianceAdded(address indexed _compliance);
     event UpdatedTokenInformation(
-        string indexed _newName,
-        string indexed _newSymbol,
-        uint8 _newDecimals,
-        string _newVersion,
-        address indexed _newOnchainID
+        string indexed _newName, string indexed _newSymbol, uint8 _newDecimals, address indexed _newOnchainID
     );
     event ComplianceModuleAdded(address indexed _module);
     event ComplianceModuleRemoved(address indexed _module);

@@ -43,7 +43,6 @@ contract MySMARTTokenFactory is ReentrancyGuard {
     /// @param name The name of the token
     /// @param symbol The symbol of the token
     /// @param decimals The number of decimals for the token
-    /// @param onchainID The address of the OnchainID contract
     /// @param requiredClaimTopics The array of required claim topics
     /// @param initialModules The array of initial module addresses
     /// @return token The address of the newly created token
@@ -51,7 +50,6 @@ contract MySMARTTokenFactory is ReentrancyGuard {
         string memory name,
         string memory symbol,
         uint8 decimals,
-        address onchainID,
         uint256[] memory requiredClaimTopics,
         address[] memory initialModules
     )
@@ -59,12 +57,8 @@ contract MySMARTTokenFactory is ReentrancyGuard {
         nonReentrant
         returns (address token)
     {
-        // Validate input parameters
-        if (onchainID == address(0)) revert InvalidOnchainID();
-
         // Check if address is already deployed
-        address predicted =
-            predictAddress(msg.sender, name, symbol, decimals, onchainID, requiredClaimTopics, initialModules);
+        address predicted = predictAddress(msg.sender, name, symbol, decimals, requiredClaimTopics, initialModules);
         if (isAddressDeployed(predicted)) revert AddressAlreadyDeployed();
 
         bytes32 salt = _calculateSalt(name, symbol, decimals, identityRegistry, compliance);
@@ -73,7 +67,7 @@ contract MySMARTTokenFactory is ReentrancyGuard {
             name,
             symbol,
             decimals,
-            onchainID,
+            address(0), // needs to be set later
             identityRegistry,
             compliance,
             requiredClaimTopics,
@@ -92,7 +86,6 @@ contract MySMARTTokenFactory is ReentrancyGuard {
     /// @param name The name of the token
     /// @param symbol The symbol of the token
     /// @param decimals The number of decimals for the token
-    /// @param onchainID The address of the OnchainID contract
     /// @param requiredClaimTopics The array of required claim topics
     /// @param initialModules The array of initial module addresses
     /// @return predicted The address where the token would be deployed
@@ -101,7 +94,6 @@ contract MySMARTTokenFactory is ReentrancyGuard {
         string memory name,
         string memory symbol,
         uint8 decimals,
-        address onchainID,
         uint256[] memory requiredClaimTopics,
         address[] memory initialModules
     )
@@ -126,7 +118,6 @@ contract MySMARTTokenFactory is ReentrancyGuard {
                                         name,
                                         symbol,
                                         decimals,
-                                        onchainID,
                                         identityRegistry,
                                         compliance,
                                         requiredClaimTopics,
