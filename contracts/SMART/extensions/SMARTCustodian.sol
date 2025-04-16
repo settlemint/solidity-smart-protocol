@@ -4,15 +4,19 @@ pragma solidity ^0.8.27;
 import { ISMART } from "../interface/ISMART.sol";
 import { SMARTHooks } from "./SMARTHooks.sol";
 import { ISMARTIdentityRegistry } from "./../interface/ISMARTIdentityRegistry.sol";
-import { ERC20Custodian } from "@openzeppelin-community/contracts/token/ERC20/extensions/ERC20Custodian.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // Still needed for override specifiers
 import { IIdentity } from "../../onchainid/interface/IIdentity.sol";
 
 /// @title SMARTCustodian
 /// @notice Extension that adds custodian features like freezing, forced transfer, and recovery to SMART tokens.
 /// @dev This contract implements functionality similar to aspects of ERC3643 standard.
 /// It allows for address-level freezing, partial token freezing, forced transfers, and wallet recovery.
-abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
+/// @dev This contract intentionally does NOT inherit from OpenZeppelin Community's ERC20Custodian.
+///      The reason is that ERC20Custodian implements a different freezing mechanism (setting a total frozen amount)
+///      whereas this contract requires both a boolean address-level freeze and an additive/subtractive partial freeze
+/// amount.
+///      Leveraging ERC20Custodian's state and logic would be overly complex and less efficient for these requirements.
+abstract contract SMARTCustodian is SMARTHooks, ISMART {
     // --- Storage Variables ---
 
     mapping(address => bool) private _frozen;
@@ -56,17 +60,20 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @dev This event is emitted when the wallet of an investor is frozen or unfrozen.
     /// @param _userAddress is the wallet of the investor that is concerned by the freezing status.
     /// @param _isFrozen is the freezing status of the wallet.
-    /// @param _isFrozen equals `true` the wallet is frozen after emission of the event.
-    /// @param _isFrozen equals `false` the wallet is unfrozen after emission of the event.
-    // Removed _owner to align with IERC3643 concept, assuming msg.sender implicitly identifies caller
     event AddressFrozen(address indexed _userAddress, bool indexed _isFrozen);
 
     /// @dev Emitted when a wallet recovery is successful
     event RecoverySuccess(address indexed _lostWallet, address indexed _newWallet, address indexed _investorOnchainID);
 
-    // Inherited from ERC20Custodian:
-    // event TokensFrozen(address indexed userAddress, uint256 amount);
-    // event TokensUnfrozen(address indexed userAddress, uint256 amount);
+    /// @dev Emitted when tokens are partially frozen for a user via freezePartialTokens.
+    /// @param user The address of the user whose tokens were frozen.
+    /// @param amount The amount of tokens that were frozen in this operation.
+    event TokensFrozen(address indexed user, uint256 amount);
+
+    /// @dev Emitted when tokens are partially unfrozen for a user via unfreezePartialTokens or forcedTransfer.
+    /// @param user The address of the user whose tokens were unfrozen.
+    /// @param amount The amount of tokens that were unfrozen in this operation.
+    event TokensUnfrozen(address indexed user, uint256 amount);
 
     // --- Constructor ---
 
@@ -92,7 +99,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
             revert FreezeAmountExceedsAvailableBalance(availableBalance, _amount);
         }
         _frozenTokens[_userAddress] = currentFrozen + _amount;
-        emit TokensFrozen(_userAddress, _amount);
+        emit TokensFrozen(_userAddress, _amount); // Emit locally defined event
     }
 
     /// @dev Unfreezes a specified token amount for a given address.
@@ -104,7 +111,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
             revert InsufficientFrozenTokens(currentFrozen, _amount);
         }
         _frozenTokens[_userAddress] = currentFrozen - _amount;
-        emit TokensUnfrozen(_userAddress, _amount);
+        emit TokensUnfrozen(_userAddress, _amount); // Emit locally defined event
     }
 
     /// @dev Initiates setting of frozen status for addresses in batch.
@@ -169,11 +176,11 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
             if (currentFrozen < neededFromFrozen) revert InconsistentForcedTransferState();
 
             _frozenTokens[_from] = currentFrozen - neededFromFrozen;
-            emit TokensUnfrozen(_from, neededFromFrozen); // Emit event only for the amount actually unfrozen
+            emit TokensUnfrozen(_from, neededFromFrozen); // Emit locally defined event
         }
 
         // We bypass the standard _transfer's internal checks as we've already handled frozen logic
-        // We directly call the ERC20Custodian _update which calls ERC20 _update
+        // We directly call the parent's _update which calls ERC20 _update
         super._update(_from, _to, _amount); // Use super._update to bypass local _transfer override
         _afterTransfer(_from, _to, _amount); // Call hooks if necessary
 
@@ -236,10 +243,10 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
 
         // Transfer frozen tokens state
         if (frozenTokens > 0) {
-            emit TokensUnfrozen(_lostWallet, frozenTokens);
+            emit TokensUnfrozen(_lostWallet, frozenTokens); // Emit locally defined event
             _frozenTokens[_lostWallet] = 0;
             _frozenTokens[_newWallet] = frozenTokens; // Assign frozen amount to new wallet
-            emit TokensFrozen(_newWallet, frozenTokens);
+            emit TokensFrozen(_newWallet, frozenTokens); // Emit locally defined event
         }
 
         // Transfer frozen status state
@@ -290,12 +297,12 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     // --- Internal Functions ---
 
     /// @notice Override validation hooks to include freezing checks
-    function _validateMint(address _to, uint256 _amount) internal view virtual override {
+    function _validateMint(address _to, uint256 _amount) internal virtual override {
         if (_frozen[_to]) revert RecipientAddressFrozen();
         super._validateMint(_to, _amount);
     }
 
-    function _validateTransfer(address _from, address _to, uint256 _amount) internal view virtual override {
+    function _validateTransfer(address _from, address _to, uint256 _amount) internal virtual override {
         if (_frozen[_from]) revert SenderAddressFrozen();
         if (_frozen[_to]) revert RecipientAddressFrozen();
 
@@ -309,21 +316,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
         super._validateTransfer(_from, _to, _amount);
     }
 
-    /// @notice Override transfer functions to ensure validation occurs.
-    /// Redundant checks removed, relying on _validateTransfer hook called by ERC20Custodian._beforeTokenTransfer
-    function _transfer(address _from, address _to, uint256 _amount) internal virtual override(ERC20) {
-        // No explicit checks needed here, _beforeTokenTransfer (via _update) handles validation (_validateTransfer)
-        super._transfer(_from, _to, _amount);
-    }
-
-    /// @notice Override _update function to ensure validation occurs.
-    /// Redundant checks removed, relying on _validateTransfer hook called by ERC20Custodian._beforeTokenTransfer
-    function _update(address from, address to, uint256 value) internal virtual override(ERC20, ERC20Custodian) {
-        // No explicit checks needed here, _beforeTokenTransfer handles validation (_validateTransfer)
-        super._update(from, to, value);
-    }
-
-    function _validateBurn(address _from, uint256 _amount) internal view virtual override {
+    function _validateBurn(address _from, uint256 _amount) internal virtual override {
         if (_frozen[_from]) revert SenderAddressFrozen();
 
         // Check if sender has enough unfrozen tokens
