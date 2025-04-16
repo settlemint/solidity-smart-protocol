@@ -131,10 +131,10 @@ interface ISMARTIdentityRegistry {
      *  corresponding to the provided user address has the required claims or not based
      *  on the data fetched from trusted issuers registry and from the claim topics registry
      *  @param _userAddress The address of the user to be verified.
-     *  @param _token The address of the token
+     *  @param requiredClaimTopics The array of required claim topics to verify
      *  @return 'True' if the address is verified, 'false' if not.
      */
-    function isVerified(address _userAddress, address _token) external view returns (bool);
+    function isVerified(address _userAddress, uint256[] memory requiredClaimTopics) external view returns (bool);
 
     /**
      *  @dev Returns the onchainID of an investor.

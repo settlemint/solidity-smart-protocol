@@ -3,8 +3,8 @@ pragma solidity ^0.8.27;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { ISMARTIdentityRegistry } from "./ISmartIdentityRegistry.sol";
-import { ISMARTCompliance } from "./ISmartCompliance.sol";
+import { ISMARTIdentityRegistry } from "./ISMARTIdentityRegistry.sol";
+import { ISMARTCompliance } from "./ISMARTCompliance.sol";
 import { ISMARTComplianceModule } from "./ISMARTComplianceModule.sol";
 
 /// @title ISMART

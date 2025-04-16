@@ -3,8 +3,9 @@ pragma solidity ^0.8.27;
 
 import { ISMART } from "../interface/ISMART.sol";
 import { SMARTHooks } from "./SMARTHooks.sol";
-import { ISMARTIdentityRegistry } from "./../interface/ISmartIdentityRegistry.sol";
+import { ISMARTIdentityRegistry } from "./../interface/ISMARTIdentityRegistry.sol";
 import { ERC20Custodian } from "@openzeppelin-community/contracts/token/ERC20/extensions/ERC20Custodian.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IIdentity } from "../../onchainid/interface/IIdentity.sol";
 
 /// @title SMARTFreezable
@@ -19,16 +20,6 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @param _isFrozen equals `false` the wallet is unfrozen after emission of the event.
     /// @param _owner is the address of the agent who called the function to freeze the wallet.
     event AddressFrozen(address indexed _userAddress, bool indexed _isFrozen, address indexed _owner);
-
-    /// @dev This event is emitted when a certain amount of tokens is frozen on a wallet.
-    /// @param _userAddress is the wallet of the investor that is concerned by the freezing status.
-    /// @param _amount is the amount of tokens that are frozen.
-    event TokensFrozen(address indexed _userAddress, uint256 _amount);
-
-    /// @dev This event is emitted when a certain amount of tokens is unfrozen on a wallet.
-    /// @param _userAddress is the wallet of the investor that is concerned by the freezing status.
-    /// @param _amount is the amount of tokens that are unfrozen.
-    event TokensUnfrozen(address indexed _userAddress, uint256 _amount);
 
     /// @dev Emitted when a wallet recovery is successful
     event RecoverySuccess(address indexed _lostWallet, address indexed _newWallet, address indexed _investorOnchainID);
@@ -45,7 +36,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @notice To change an address's frozen status, the calling agent must have the capability to freeze addresses
     /// enabled.
     /// If the agent is disabled from freezing addresses, the function call will fail.
-    function setAddressFrozen(address _userAddress, bool _freeze) public virtual override {
+    function setAddressFrozen(address _userAddress, bool _freeze) public virtual {
         _frozen[_userAddress] = _freeze;
         emit AddressFrozen(_userAddress, _freeze, msg.sender);
     }
@@ -57,10 +48,9 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @notice To freeze tokens for an address, the calling agent must have the capability to freeze tokens enabled.
     /// If the agent is disabled from freezing tokens, the function call will fail.
     /// @notice The function will revert if the user's balance is less than the amount to be frozen.
-    function freezePartialTokens(address _userAddress, uint256 _amount) public virtual override {
+    function freezePartialTokens(address _userAddress, uint256 _amount) public virtual {
         require(balanceOf(_userAddress) >= _amount, "Insufficient balance");
         _frozenTokens[_userAddress] += _amount;
-        emit TokensFrozen(_userAddress, _amount);
     }
 
     /// @dev Unfreezes a specified token amount for a given address, allowing those tokens to be transferred again.
@@ -72,10 +62,9 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// enabled.
     /// If the agent is disabled from unfreezing tokens, the function call will fail.
     /// @notice The function will revert if the user has insufficient frozen tokens.
-    function unfreezePartialTokens(address _userAddress, uint256 _amount) public virtual override {
+    function unfreezePartialTokens(address _userAddress, uint256 _amount) public virtual {
         require(_frozenTokens[_userAddress] >= _amount, "Insufficient frozen tokens");
         _frozenTokens[_userAddress] -= _amount;
-        emit TokensUnfrozen(_userAddress, _amount);
     }
 
     /// @dev Returns the freezing status of a wallet.
@@ -83,7 +72,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @return bool `true` if the wallet is frozen, `false` otherwise.
     /// @notice A return value of `true` doesn't mean that the balance is free, tokens could be blocked by
     /// a partial freeze or the whole token could be blocked by pause.
-    function isFrozen(address _userAddress) public view virtual override returns (bool) {
+    function isFrozen(address _userAddress) public view virtual returns (bool) {
         return _frozen[_userAddress];
     }
 
@@ -91,7 +80,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @param _userAddress The address of the wallet to check.
     /// @return uint256 The amount of frozen tokens.
     /// @notice The amount of frozen tokens is always <= to the total balance of the wallet.
-    function getFrozenTokens(address _userAddress) public view virtual override returns (uint256) {
+    function getFrozenTokens(address _userAddress) public view virtual returns (uint256) {
         return _frozenTokens[_userAddress];
     }
 
@@ -100,14 +89,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @param _freeze Frozen status of the corresponding address.
     /// @notice IMPORTANT: THIS TRANSACTION COULD EXCEED GAS LIMIT IF `_userAddresses.length` IS TOO HIGH.
     /// USE WITH CARE TO AVOID "OUT OF GAS" TRANSACTIONS AND POTENTIAL LOSS OF TX FEES.
-    function batchSetAddressFrozen(
-        address[] calldata _userAddresses,
-        bool[] calldata _freeze
-    )
-        public
-        virtual
-        override
-    {
+    function batchSetAddressFrozen(address[] calldata _userAddresses, bool[] calldata _freeze) public virtual {
         require(_userAddresses.length == _freeze.length, "Length mismatch");
         for (uint256 i = 0; i < _userAddresses.length; i++) {
             setAddressFrozen(_userAddresses[i], _freeze[i]);
@@ -119,14 +101,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @param _amounts The amount of tokens to freeze on the corresponding address.
     /// @notice IMPORTANT: THIS TRANSACTION COULD EXCEED GAS LIMIT IF `_userAddresses.length` IS TOO HIGH.
     /// USE WITH CARE TO AVOID "OUT OF GAS" TRANSACTIONS AND POTENTIAL LOSS OF TX FEES.
-    function batchFreezePartialTokens(
-        address[] calldata _userAddresses,
-        uint256[] calldata _amounts
-    )
-        public
-        virtual
-        override
-    {
+    function batchFreezePartialTokens(address[] calldata _userAddresses, uint256[] calldata _amounts) public virtual {
         require(_userAddresses.length == _amounts.length, "Length mismatch");
         for (uint256 i = 0; i < _userAddresses.length; i++) {
             freezePartialTokens(_userAddresses[i], _amounts[i]);
@@ -144,7 +119,6 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     )
         public
         virtual
-        override
     {
         require(_userAddresses.length == _amounts.length, "Length mismatch");
         for (uint256 i = 0; i < _userAddresses.length; i++) {
@@ -167,13 +141,12 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @notice Emits a `TokensUnfrozen` event if `_amount` is higher than the free balance of `_from`.
     /// Also emits a `Transfer` event.
     /// @notice The function can only be called when the contract is not already paused.
-    function forcedTransfer(address _from, address _to, uint256 _amount) public virtual override returns (bool) {
+    function forcedTransfer(address _from, address _to, uint256 _amount) public virtual returns (bool) {
         require(!_frozen[_to], "Recipient address is frozen");
 
         uint256 frozenTokens = _frozenTokens[_from];
         if (frozenTokens > 0) {
             _frozenTokens[_from] = 0;
-            emit TokensUnfrozen(_from, frozenTokens);
         }
 
         _validateTransfer(_from, _to, _amount);
@@ -202,16 +175,12 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     )
         public
         virtual
-        override
     {
         require(_fromList.length == _toList.length && _toList.length == _amounts.length, "Length mismatch");
         for (uint256 i = 0; i < _fromList.length; i++) {
             forcedTransfer(_fromList[i], _toList[i], _amounts[i]);
         }
     }
-
-    function identityRegistry() public view virtual override returns (ISMARTIdentityRegistry);
-    function requiredClaimTopics() public view virtual override returns (uint256[] memory);
 
     function recoveryAddress(
         address _lostWallet,
@@ -220,12 +189,12 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     )
         public
         virtual
-        override
         returns (bool)
     {
         require(balanceOf(_lostWallet) > 0, "No tokens to recover");
         require(
-            identityRegistry().isVerified(_lostWallet) || identityRegistry().isVerified(_newWallet),
+            this.identityRegistry().isVerified(_lostWallet, address(this))
+                || this.identityRegistry().isVerified(_newWallet, address(this)),
             "Neither wallet is verified"
         );
 
@@ -234,7 +203,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
         bool walletFrozen = isFrozen(_lostWallet);
 
         // Get the country from the old wallet
-        uint16 country = identityRegistry().investorCountry(_lostWallet);
+        uint16 country = this.identityRegistry().investorCountry(_lostWallet);
 
         // Transfer tokens
         _transfer(_lostWallet, _newWallet, balance);
@@ -252,9 +221,9 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
         }
 
         // Update identity registry
-        if (!identityRegistry().isVerified(_newWallet, requiredClaimTopics())) {
-            identityRegistry().registerIdentity(_newWallet, IIdentity(_investorOnchainID), country);
-            identityRegistry().deleteIdentity(_lostWallet);
+        if (!this.identityRegistry().isVerified(_newWallet, address(this))) {
+            this.identityRegistry().registerIdentity(_newWallet, IIdentity(_investorOnchainID), country);
+            this.identityRegistry().deleteIdentity(_lostWallet);
         }
 
         emit RecoverySuccess(_lostWallet, _newWallet, _investorOnchainID);
@@ -279,7 +248,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     }
 
     /// @notice Override transfer functions to handle frozen tokens
-    function _transfer(address _from, address _to, uint256 _amount) internal virtual override {
+    function _transfer(address _from, address _to, uint256 _amount) internal virtual override(ERC20) {
         require(!_frozen[_from], "Sender address is frozen");
         require(!_frozen[_to], "Recipient address is frozen");
 
@@ -288,5 +257,25 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
         require(balanceOf(_from) - frozenTokens >= _amount, "Insufficient unfrozen tokens");
 
         super._transfer(_from, _to, _amount);
+    }
+
+    /// @notice Override _update function to handle frozen tokens
+    function _update(address from, address to, uint256 value) internal virtual override(ERC20, ERC20Custodian) {
+        require(!_frozen[from], "Sender address is frozen");
+        require(!_frozen[to], "Recipient address is frozen");
+
+        // Check if sender has enough unfrozen tokens
+        uint256 frozenTokens = _frozenTokens[from];
+        require(balanceOf(from) - frozenTokens >= value, "Insufficient unfrozen tokens");
+
+        super._update(from, to, value);
+    }
+
+    function _validateBurn(address _from, uint256 _amount) internal virtual {
+        require(!_frozen[_from], "Sender address is frozen");
+
+        // Check if sender has enough unfrozen tokens
+        uint256 frozenTokens = _frozenTokens[_from];
+        require(balanceOf(_from) - frozenTokens >= _amount, "Insufficient unfrozen tokens");
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { ISMARTIdentityRegistry } from "./interface/ISmartIdentityRegistry.sol";
+import { ISMARTIdentityRegistry } from "./interface/ISMARTIdentityRegistry.sol";
 import { IIdentity } from "./../onchainid/interface/IIdentity.sol";
 import { IERC3643IdentityRegistryStorage } from "./../ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
@@ -26,21 +26,23 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
 
     constructor(address identityStorage_, address trustedIssuersRegistry_) Ownable(msg.sender) {
         _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
+        emit IdentityStorageSet(address(_identityStorage));
         _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
+        emit TrustedIssuersRegistrySet(address(_trustedIssuersRegistry));
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
     function setIdentityRegistryStorage(address identityStorage_) external override onlyOwner {
         require(identityStorage_ != address(0), "Invalid storage address");
         _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
-        emit IdentityStorageSet(_identityStorage);
+        emit IdentityStorageSet(address(_identityStorage));
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
     function setTrustedIssuersRegistry(address trustedIssuersRegistry_) external override onlyOwner {
         require(trustedIssuersRegistry_ != address(0), "Invalid registry address");
         _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
-        emit TrustedIssuersRegistrySet(_trustedIssuersRegistry);
+        emit TrustedIssuersRegistrySet(address(_trustedIssuersRegistry));
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
@@ -50,9 +52,9 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
 
     /// @inheritdoc ISMARTIdentityRegistry
     function deleteIdentity(address _userAddress) external override onlyOwner {
-        require(_identityStorage.contains(_userAddress), "Identity not registered");
+        require(this.contains(_userAddress), "Identity not registered");
 
-        IIdentity identityToDelete = IIdentity(_identityStorage.getStoredIdentity(_userAddress));
+        IIdentity identityToDelete = IIdentity(_identityStorage.storedIdentity(_userAddress));
         _identityStorage.removeIdentityFromStorage(_userAddress);
 
         emit IdentityRemoved(_userAddress, identityToDelete);
@@ -60,7 +62,7 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
 
     /// @inheritdoc ISMARTIdentityRegistry
     function updateCountry(address _userAddress, uint16 _country) external override onlyOwner {
-        require(_identityStorage.contains(_userAddress), "Identity not registered");
+        require(this.contains(_userAddress), "Identity not registered");
 
         _identityStorage.modifyStoredInvestorCountry(_userAddress, _country);
         emit CountryUpdated(_userAddress, _country);
@@ -68,11 +70,11 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
 
     /// @inheritdoc ISMARTIdentityRegistry
     function updateIdentity(address _userAddress, IIdentity _identity) external override onlyOwner {
-        require(_identityStorage.contains(_userAddress), "Identity not registered");
+        require(this.contains(_userAddress), "Identity not registered");
         require(address(_identity) != address(0), "Invalid identity address");
 
-        IIdentity oldInvestorIdentity = IIdentity(_identityStorage.getStoredIdentity(_userAddress));
-        _identityStorage.modifyStoredIdentity(_userAddress, address(_identity));
+        IIdentity oldInvestorIdentity = IIdentity(_identityStorage.storedIdentity(_userAddress));
+        _identityStorage.modifyStoredIdentity(_userAddress, _identity);
 
         emit IdentityUpdated(oldInvestorIdentity, _identity);
     }
@@ -103,48 +105,53 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
     function _registerIdentity(address _userAddress, IIdentity _identity, uint16 _country) internal {
         require(_userAddress != address(0), "Invalid user address");
         require(address(_identity) != address(0), "Invalid identity address");
-        require(!_identityStorage.contains(_userAddress), "Identity already registered");
+        require(!this.contains(_userAddress), "Identity already registered");
 
-        _identityStorage.addIdentityToStorage(_userAddress, address(_identity), _country);
+        _identityStorage.addIdentityToStorage(_userAddress, _identity, _country);
         emit IdentityRegistered(_userAddress, _identity);
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
     function contains(address _userAddress) external view override returns (bool) {
-        return _identityStorage.contains(_userAddress);
+        if (address(this.identity(_userAddress)) == address(0)) {
+            return false;
+        }
+        return true;
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
-    function isVerified(address _userAddress, address _token) external view override returns (bool) {
+    function isVerified(
+        address _userAddress,
+        uint256[] memory requiredClaimTopics
+    )
+        external
+        view
+        override
+        returns (bool)
+    {
         // Check if identity exists
-        if (!_identityStorage.contains(_userAddress)) return false;
+        if (!this.contains(_userAddress)) return false;
 
         // Get the identity and required claim topics
-        IIdentity identityToVerify = IIdentity(_identityStorage.getStoredIdentity(_userAddress));
-        uint256[] memory requiredClaimTopics = ISMART(_token).getRequiredClaimTopics();
+        IIdentity identityToVerify = IIdentity(_identityStorage.storedIdentity(_userAddress));
 
         // If no required claims, identity is verified
         if (requiredClaimTopics.length == 0) return true;
 
         // Get all trusted issuers
-        address[] memory issuers = _trustedIssuersRegistry.getTrustedIssuers();
+        IClaimIssuer[] memory issuers = _trustedIssuersRegistry.getTrustedIssuers();
 
-        // Cache issuer claim topics
-        mapping(address => uint256[]) memory issuerClaimTopicsCache;
+        // For each trusted issuer
         for (uint256 j = 0; j < issuers.length; j++) {
-            issuerClaimTopicsCache[issuers[j]] = _trustedIssuersRegistry.getTrustedIssuerClaimTopics(issuers[j]);
-        }
+            // Get claim topics for this issuer
+            uint256[] memory issuerClaimTopics = _trustedIssuersRegistry.getTrustedIssuerClaimTopics(issuers[j]);
 
-        // For each required claim topic
-        for (uint256 i = 0; i < requiredClaimTopics.length; i++) {
-            bool hasRequiredClaim = false;
+            // For each required claim topic
+            for (uint256 i = 0; i < requiredClaimTopics.length; i++) {
+                // Skip if we already found this claim
+                if (requiredClaimTopics[i] == 0) continue;
 
-            // Check each trusted issuer
-            for (uint256 j = 0; j < issuers.length; j++) {
-                // Get cached claim topics for this issuer
-                uint256[] memory issuerClaimTopics = issuerClaimTopicsCache[issuers[j]];
-
-                // Check if this issuer is allowed to issue this claim topic
+                // Check if this issuer can issue this claim topic
                 bool issuerCanIssueClaim = false;
                 for (uint256 k = 0; k < issuerClaimTopics.length; k++) {
                     if (issuerClaimTopics[k] == requiredClaimTopics[i]) {
@@ -169,7 +176,8 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
                         // If we got here, the claim exists
                         // Verify the claim is valid by calling the issuer's contract
                         if (IClaimIssuer(issuer).isClaimValid(identityToVerify, topic, signature, data)) {
-                            hasRequiredClaim = true;
+                            // Mark this claim as found
+                            requiredClaimTopics[i] = 0;
                             break;
                         }
                     } catch {
@@ -178,24 +186,25 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
                     }
                 }
             }
+        }
 
-            // If any required claim is missing, identity is not verified
-            if (!hasRequiredClaim) return false;
+        // Check if all required claims were found
+        for (uint256 i = 0; i < requiredClaimTopics.length; i++) {
+            if (requiredClaimTopics[i] != 0) return false;
         }
 
         return true;
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
-    function identity(address _userAddress) external view override returns (IIdentity) {
-        require(_identityStorage.contains(_userAddress), "Identity not registered");
-        return IIdentity(_identityStorage.getStoredIdentity(_userAddress));
+    function identity(address _userAddress) public view override returns (IIdentity) {
+        return IIdentity(_identityStorage.storedIdentity(_userAddress));
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
     function investorCountry(address _userAddress) external view override returns (uint16) {
-        require(_identityStorage.contains(_userAddress), "Identity not registered");
-        return _identityStorage.getStoredInvestorCountry(_userAddress);
+        require(this.contains(_userAddress), "Identity not registered");
+        return _identityStorage.storedInvestorCountry(_userAddress);
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
