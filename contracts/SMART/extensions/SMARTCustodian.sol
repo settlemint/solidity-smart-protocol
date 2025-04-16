@@ -24,6 +24,18 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     /// @dev Emitted when a wallet recovery is successful
     event RecoverySuccess(address indexed _lostWallet, address indexed _newWallet, address indexed _investorOnchainID);
 
+    /// @dev This event is emitted when some tokens of an investor are frozen.
+    /// @param _userAddress is the wallet of the investor that is concerned by the freezing.
+    /// @param _amount is the amount of tokens that were frozen.
+    /// @param _owner is the address of the agent who called the function to freeze the tokens.
+    event TokensFrozen(address indexed _userAddress, uint256 _amount, address indexed _owner);
+
+    /// @dev This event is emitted when some tokens of an investor are unfrozen.
+    /// @param _userAddress is the wallet of the investor that is concerned by the unfreezing.
+    /// @param _amount is the amount of tokens that were unfrozen.
+    /// @param _owner is the address of the agent who called the function to unfreeze the tokens.
+    event TokensUnfrozen(address indexed _userAddress, uint256 _amount, address indexed _owner);
+
     mapping(address => bool) private _frozen;
     mapping(address => uint256) private _frozenTokens;
 
@@ -51,6 +63,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     function freezePartialTokens(address _userAddress, uint256 _amount) public virtual {
         require(balanceOf(_userAddress) >= _amount, "Insufficient balance");
         _frozenTokens[_userAddress] += _amount;
+        emit TokensFrozen(_userAddress, _amount, msg.sender);
     }
 
     /// @dev Unfreezes a specified token amount for a given address, allowing those tokens to be transferred again.
@@ -65,6 +78,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
     function unfreezePartialTokens(address _userAddress, uint256 _amount) public virtual {
         require(_frozenTokens[_userAddress] >= _amount, "Insufficient frozen tokens");
         _frozenTokens[_userAddress] -= _amount;
+        emit TokensUnfrozen(_userAddress, _amount, msg.sender);
     }
 
     /// @dev Returns the freezing status of a wallet.
@@ -146,6 +160,7 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
 
         uint256 frozenTokens = _frozenTokens[_from];
         if (frozenTokens > 0) {
+            emit TokensUnfrozen(_from, frozenTokens, msg.sender);
             _frozenTokens[_from] = 0;
         }
 
@@ -211,8 +226,10 @@ abstract contract SMARTCustodian is ERC20Custodian, SMARTHooks, ISMART {
 
         // Transfer frozen tokens
         if (frozenTokens > 0) {
-            _frozenTokens[_newWallet] = frozenTokens;
+            emit TokensUnfrozen(_lostWallet, frozenTokens, msg.sender);
             _frozenTokens[_lostWallet] = 0;
+            _frozenTokens[_newWallet] = frozenTokens;
+            emit TokensFrozen(_newWallet, frozenTokens, msg.sender);
         }
 
         // Transfer frozen status

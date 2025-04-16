@@ -63,23 +63,6 @@ abstract contract SMARTPausable is ERC20Pausable, SMARTHooks, ISMART {
     }
 
     // --- Internal Functions ---
-    /**
-     * @dev See {ERC20Pausable-_beforeTokenTransfer}.
-     * Overridden to use this contract's `paused` state.
-     */
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(ERC20Pausable) // Specify override target
-    {
-        super._beforeTokenTransfer(from, to, amount); // Call OZ implementation first
-        if (paused()) revert TokenPaused(); // Check this contract's pause state
-    }
-
     /// @notice Override validation hooks to include pausing checks
     function _validateMint(address _to, uint256 _amount) internal virtual override {
         if (paused()) revert TokenPaused();
