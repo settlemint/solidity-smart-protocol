@@ -7,6 +7,7 @@ import { ISMARTIdentityRegistry } from "./../interface/ISMARTIdentityRegistry.so
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // Still needed for override specifiers
 import { IIdentity } from "../../onchainid/interface/IIdentity.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { LengthMismatch } from "./common/CommonErrors.sol";
 
 /// @title SMARTCustodian
 /// @notice Extension that adds custodian features like freezing, forced transfer, and recovery to SMART tokens.
@@ -33,8 +34,6 @@ abstract contract SMARTCustodian is SMARTHooks, ISMART, Ownable {
     /// @param frozenBalance The currently frozen balance.
     /// @param requested The amount requested to be unfrozen.
     error InsufficientFrozenTokens(uint256 frozenBalance, uint256 requested);
-    /// @dev Error triggered when batch operation arrays have different lengths.
-    error LengthMismatch();
     /// @dev Error triggered during forced transfer if the sender does not have enough total balance.
     /// @param balance The total balance of the sender.
     /// @param requested The amount requested to be transferred.

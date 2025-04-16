@@ -153,11 +153,11 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
                 // 6. Attempt to retrieve and validate the claim from the identity
                 try identityToVerify.getClaim(claimId) returns (
                     uint256 topic, // Claim's topic
-                    uint256 scheme, // Claim's scheme
+                    uint256, // Claim's scheme
                     address issuer, // Issuer address stored within the claim
                     bytes memory signature, // Claim signature
                     bytes memory data, // Claim data
-                    string memory // Claim URI (unused)
+                    string memory // Claim URI
                 ) {
                     // 6a. Verify the claim details match and the claim is valid
                     if (

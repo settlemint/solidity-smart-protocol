@@ -5,6 +5,7 @@ import { ISMART } from "../interface/ISMART.sol";
 import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { SMARTHooks } from "./SMARTHooks.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { LengthMismatch } from "./common/CommonErrors.sol";
 
 /// @title SMARTBurnable
 /// @notice Extension that adds burnable functionality to SMART tokens
@@ -22,7 +23,7 @@ abstract contract SMARTBurnable is ERC20Burnable, SMARTHooks, ISMART, Ownable {
     /// @param _userAddresses The addresses to burn tokens from
     /// @param _amounts The amounts of tokens to burn from each address
     function batchBurn(address[] calldata _userAddresses, uint256[] calldata _amounts) public virtual onlyOwner {
-        require(_userAddresses.length == _amounts.length, "Length mismatch");
+        require(_userAddresses.length == _amounts.length, LengthMismatch());
         for (uint256 i = 0; i < _userAddresses.length; i++) {
             _validateBurn(_userAddresses[i], _amounts[i]);
             _burn(_userAddresses[i], _amounts[i]);

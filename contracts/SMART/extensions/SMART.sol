@@ -11,6 +11,7 @@ import { SMARTHooks } from "./SMARTHooks.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { LengthMismatch } from "./common/CommonErrors.sol";
 
 /// @title SMART
 /// @notice Base extension that implements the core SMART token functionality
@@ -21,7 +22,6 @@ abstract contract SMART is SMARTHooks, ISMART, Ownable {
     error InvalidModuleAddress();
     error InvalidModuleImplementation();
     error ModuleAlreadyAddedOnInit();
-    error LengthMismatch();
     error RecipientNotVerified();
     error MintNotCompliant();
     error TransferNotCompliant();

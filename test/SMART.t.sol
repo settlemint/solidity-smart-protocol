@@ -29,7 +29,7 @@ contract CounterTest is Test {
 
         identityRegistryStorage = new SMARTIdentityRegistryStorage();
         trustedIssuersRegistry = new SMARTTrustedIssuersRegistry();
-        identityRegistry = new SMARTIdentityRegistry(identityRegistryStorage, trustedIssuersRegistry);
+        identityRegistry = new SMARTIdentityRegistry(address(identityRegistryStorage), address(trustedIssuersRegistry));
         compliance = new SMARTCompliance();
 
         factory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
@@ -43,7 +43,7 @@ contract CounterTest is Test {
         vm.startPrank(platformAdmin);
 
         // Create the identity using the factory
-        address identity = identityFactory.createIdentity(clientWalletAddress_);
+        address identity = identityFactory.createIdentity(clientWalletAddress_, new bytes32[](0));
 
         // Register the identity in the registry
         identityRegistry.registerIdentity(clientWalletAddress_, IIdentity(identity), countryCode_);
