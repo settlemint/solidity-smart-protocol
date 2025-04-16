@@ -70,7 +70,15 @@ contract MySMARTTokenFactory is ReentrancyGuard {
         bytes32 salt = _calculateSalt(name, symbol, decimals, identityRegistry, compliance);
 
         MySMARTToken newToken = new MySMARTToken{ salt: salt }(
-            name, symbol, decimals, onchainID, identityRegistry, compliance, requiredClaimTopics, initialModules
+            name,
+            symbol,
+            decimals,
+            onchainID,
+            identityRegistry,
+            compliance,
+            requiredClaimTopics,
+            initialModules,
+            msg.sender
         );
 
         token = address(newToken);
@@ -122,7 +130,8 @@ contract MySMARTTokenFactory is ReentrancyGuard {
                                         identityRegistry,
                                         compliance,
                                         requiredClaimTopics,
-                                        initialModules
+                                        initialModules,
+                                        sender
                                     )
                                 )
                             )
