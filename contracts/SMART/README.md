@@ -15,3 +15,6 @@
   - Also check that identityRegistry has access to the storage and the issuers registry
 - Integrate MetaTx
 - Make implementations Upgradable
+
+## Ideas
+- Can identity verification become a Compliance module?
