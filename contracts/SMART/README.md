@@ -11,10 +11,12 @@
 - Simplified the identity factory using proxy 1967 pattern.
 
 ## TODO
+
+- Integrate MetaTx
+- Should extensions be upgradable?
 - Integrate OpenZeppelin AccessControl
   - Also check that identityRegistry has access to the storage and the issuers registry
-- Integrate MetaTx
-- Make implementations Upgradable
 
 ## Ideas
+
 - Can identity verification become a Compliance module?
