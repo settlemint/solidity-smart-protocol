@@ -181,7 +181,7 @@ contract SMARTTest is Test {
         vm.stopPrank();
     }
 
-    function _issueAllClaims(
+    function _issueKYCClaim(
         address issuerIdentityAddr_,
         uint256 issuerPrivateKey_,
         address clientWalletAddress_
@@ -191,9 +191,29 @@ contract SMARTTest is Test {
         _issueClaim(
             issuerIdentityAddr_, issuerPrivateKey_, clientWalletAddress_, CLAIM_TOPIC_KYC, "Verified KYC by Issuer"
         );
+    }
+
+    function _issueAMLClaim(
+        address issuerIdentityAddr_,
+        uint256 issuerPrivateKey_,
+        address clientWalletAddress_
+    )
+        public
+    {
         _issueClaim(
             issuerIdentityAddr_, issuerPrivateKey_, clientWalletAddress_, CLAIM_TOPIC_AML, "Verified AML by Issuer"
         );
+    }
+
+    function _issueAllClaims(
+        address issuerIdentityAddr_,
+        uint256 issuerPrivateKey_,
+        address clientWalletAddress_
+    )
+        public
+    {
+        _issueKYCClaim(issuerIdentityAddr_, issuerPrivateKey_, clientWalletAddress_);
+        _issueAMLClaim(issuerIdentityAddr_, issuerPrivateKey_, clientWalletAddress_);
     }
 
     function _createToken(
@@ -256,6 +276,9 @@ contract SMARTTest is Test {
         _issueAllClaims(claimIssuerIdentityAddress, claimIssuerPrivateKey, clientJP);
         _issueAllClaims(claimIssuerIdentityAddress, claimIssuerPrivateKey, clientUS);
 
+        // Only has the KYC claim
+        _issueKYCClaim(claimIssuerIdentityAddress, claimIssuerPrivateKey, clientUnverified);
+
         // Create empty array for module pairs
         uint16[] memory allowedCountries = new uint16[](2);
         allowedCountries[0] = COUNTRY_CODE_BE;
@@ -272,10 +295,12 @@ contract SMARTTest is Test {
         _mintToken(bondAddress, tokenIssuer, clientBE, 1000);
         assertEq(_getBalance(bondAddress, clientBE), 1000);
 
+        // Transfer 100 tokens to clientJP
         _transferToken(bondAddress, clientBE, clientJP, 100);
         assertEq(_getBalance(bondAddress, clientJP), 100);
         assertEq(_getBalance(bondAddress, clientBE), 900);
 
+        // Transfer 100 tokens to clientUS should fail because clientUS is not in the allowed countries
         vm.expectRevert(
             abi.encodeWithSelector(
                 ISMARTComplianceModule.ComplianceCheckFailed.selector, "Receiver country not allowed"
@@ -285,6 +310,7 @@ contract SMARTTest is Test {
         assertEq(_getBalance(bondAddress, clientUS), 0);
         assertEq(_getBalance(bondAddress, clientBE), 900);
 
+        // Transfer 100 tokens to clientUnverified should fail because client doesn't have the necesary claims
         vm.expectRevert(abi.encodeWithSelector(ISMART.RecipientNotVerified.selector));
         _transferToken(bondAddress, clientBE, clientUnverified, 100);
         assertEq(_getBalance(bondAddress, clientUnverified), 0);
