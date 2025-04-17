@@ -19,8 +19,8 @@ contract SMARTTest is Test {
     address public tokenIssuer = makeAddr("Token issuer");
     address public client1 = makeAddr("Client 1");
 
-    uint256 private claimIssuer1PrivateKey = 0x12345;
-    address public claimIssuer1 = vm.addr(claimIssuer1PrivateKey);
+    uint256 private claimIssuerPrivateKey = 0x12345;
+    address public claimIssuer = vm.addr(claimIssuerPrivateKey);
 
     uint256 public constant CLAIM_TOPIC_KYC = 1;
     uint256 public constant CLAIM_TOPIC_AML = 2;
@@ -32,7 +32,8 @@ contract SMARTTest is Test {
     SMARTCompliance compliance;
     SMARTIdentityFactory identityFactory;
 
-    MySMARTTokenFactory tokenFactory;
+    MySMARTTokenFactory bondFactory;
+    MySMARTTokenFactory equityFactory;
 
     function setUp() public {
         vm.startPrank(platformAdmin);
@@ -47,17 +48,15 @@ contract SMARTTest is Test {
         compliance = new SMARTCompliance();
         identityFactory = new SMARTIdentityFactory();
 
-        tokenFactory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
+        bondFactory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
+        equityFactory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
 
         vm.stopPrank();
     }
 
     function _createIdentity(address walletAddress_) public returns (address) {
-        vm.startPrank(platformAdmin);
-
+        vm.prank(platformAdmin);
         address identity = identityFactory.createIdentity(walletAddress_, new bytes32[](0));
-
-        vm.stopPrank();
 
         return identity;
     }
@@ -66,12 +65,9 @@ contract SMARTTest is Test {
         // Create the identity using the factory
         address identity = _createIdentity(clientWalletAddress_);
 
-        vm.startPrank(platformAdmin);
-
         // Register the identity in the registry
+        vm.prank(platformAdmin);
         identityRegistry.registerIdentity(clientWalletAddress_, IIdentity(identity), countryCode_);
-
-        vm.stopPrank();
 
         return identity;
     }
@@ -86,11 +82,9 @@ contract SMARTTest is Test {
         // Create the identity using the factory
         address issuerIdentityAddr = _createIdentity(issuerWalletAddress_);
 
-        vm.startPrank(platformAdmin);
+        vm.prank(platformAdmin);
         // IMPORTANT: Cast the *identity address* to IClaimIssuer for the registry
         trustedIssuersRegistry.addTrustedIssuer(IClaimIssuer(issuerIdentityAddr), claimTopics);
-
-        vm.stopPrank();
 
         return issuerIdentityAddr; // Return the created identity address
     }
@@ -125,7 +119,7 @@ contract SMARTTest is Test {
     }
 
     function _verifyClaim(
-        IClaimIssuer claimIssuer,
+        IClaimIssuer claimIssuer_,
         IIdentity clientIdentity,
         uint256 claimTopic,
         bytes memory signature,
@@ -135,7 +129,7 @@ contract SMARTTest is Test {
         view
         returns (bool)
     {
-        return claimIssuer.isClaimValid(clientIdentity, claimTopic, signature, data);
+        return claimIssuer_.isClaimValid(clientIdentity, claimTopic, signature, data);
     }
 
     function _issueClaim(
@@ -171,6 +165,7 @@ contract SMARTTest is Test {
     }
 
     function _createToken(
+        MySMARTTokenFactory tokenFactory,
         string memory name,
         string memory symbol,
         uint256[] memory claimTopics,
@@ -192,6 +187,15 @@ contract SMARTTest is Test {
         return tokenAddress;
     }
 
+    function _mintToken(address tokenAddress, address issuerIdentityAddr_, address to, uint256 amount) public {
+        vm.prank(issuerIdentityAddr_);
+        MySMARTToken(tokenAddress).mint(to, amount);
+    }
+
+    function _getBalance(address tokenAddress, address walletAddress) public view returns (uint256) {
+        return MySMARTToken(tokenAddress).balanceOf(walletAddress);
+    }
+
     function test_Mint() public {
         // Create the token issuer identity
         _createClientIdentity(tokenIssuer, 56);
@@ -204,15 +208,23 @@ contract SMARTTest is Test {
         claimTopics[0] = CLAIM_TOPIC_KYC;
         claimTopics[1] = CLAIM_TOPIC_AML;
         // Store the issuer's identity contract address
-        address issuer1Identity = _createIssuerIdentity(claimIssuer1, claimTopics);
+        address claimIssuerIdentityAddress = _createIssuerIdentity(claimIssuer, claimTopics);
 
         // Issue claims from issuer1 to client1
         // Pass the issuer's identity address, not wallet address
-        _issueClaim(issuer1Identity, claimIssuer1PrivateKey, client1, CLAIM_TOPIC_KYC, "Verified KYC by Issuer 1");
-        _issueClaim(issuer1Identity, claimIssuer1PrivateKey, client1, CLAIM_TOPIC_AML, "Verified AML by Issuer 1");
+        _issueClaim(
+            claimIssuerIdentityAddress, claimIssuerPrivateKey, client1, CLAIM_TOPIC_KYC, "Verified KYC by Issuer 1"
+        );
+        _issueClaim(
+            claimIssuerIdentityAddress, claimIssuerPrivateKey, client1, CLAIM_TOPIC_AML, "Verified AML by Issuer 1"
+        );
 
         // Create empty array for modules
         address[] memory emptyModules = new address[](0);
-        _createToken("Test Token", "TEST", claimTopics, emptyModules, tokenIssuer);
+        address bondAddress = _createToken(bondFactory, "Test Bond", "TSTB", claimTopics, emptyModules, tokenIssuer);
+
+        _mintToken(bondAddress, tokenIssuer, client1, 1000);
+
+        assertEq(_getBalance(bondAddress, client1), 1000);
     }
 }
