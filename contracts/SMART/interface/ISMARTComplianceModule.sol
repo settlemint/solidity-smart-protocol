@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 /// @title ISMARTComplianceModule
 /// @notice Interface for SMART compliance modules
-interface ISMARTComplianceModule {
+interface ISMARTComplianceModule is IERC165 {
     /// Custom Errors
     error ComplianceCheckFailed(string reason);
     error InvalidParameters(string reason);

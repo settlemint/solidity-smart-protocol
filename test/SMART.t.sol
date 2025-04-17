@@ -14,6 +14,8 @@ import { SMARTIdentityFactory } from "../contracts/SMART/SMARTIdentityFactory.so
 import { IClaimIssuer } from "../contracts/onchainid/interface/IClaimIssuer.sol";
 import { console } from "forge-std/console.sol";
 import { ISMART } from "../contracts/SMART/interface/ISMART.sol";
+import { CountryAllowListComplianceModule } from "../contracts/SMART/compliance/CountryAllowListComplianceModule.sol";
+import { CountryBlockListComplianceModule } from "../contracts/SMART/compliance/CountryBlockListComplianceModule.sol";
 
 contract SMARTTest is Test {
     address public platformAdmin = makeAddr("Platform Admin");
@@ -30,12 +32,16 @@ contract SMARTTest is Test {
 
     uint16 public constant COUNTRY_CODE_BE = 56;
     uint16 public constant COUNTRY_CODE_JP = 392;
+    uint16 public constant COUNTRY_CODE_US = 840;
 
     SMARTIdentityRegistryStorage identityRegistryStorage;
     SMARTTrustedIssuersRegistry trustedIssuersRegistry;
     SMARTIdentityRegistry identityRegistry;
     SMARTCompliance compliance;
     SMARTIdentityFactory identityFactory;
+
+    CountryAllowListComplianceModule countryAllowListComplianceModule;
+    CountryBlockListComplianceModule countryBlockListComplianceModule;
 
     MySMARTTokenFactory bondFactory;
     MySMARTTokenFactory equityFactory;
@@ -52,6 +58,9 @@ contract SMARTTest is Test {
 
         compliance = new SMARTCompliance();
         identityFactory = new SMARTIdentityFactory();
+
+        countryAllowListComplianceModule = new CountryAllowListComplianceModule();
+        countryBlockListComplianceModule = new CountryBlockListComplianceModule();
 
         bondFactory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
         equityFactory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
@@ -212,7 +221,7 @@ contract SMARTTest is Test {
 
         // Create the clients identity
         _createClientIdentity(client1, COUNTRY_CODE_BE);
-        _createClientIdentity(client2, COUNTRY_CODE_BE);
+        _createClientIdentity(client2, COUNTRY_CODE_JP);
 
         // Create the issuer identity
         uint256[] memory claimTopics = new uint256[](2);
@@ -238,8 +247,16 @@ contract SMARTTest is Test {
         );
 
         // Create empty array for module pairs
-        ISMART.ComplianceModuleParamPair[] memory emptyModulePairs = new ISMART.ComplianceModuleParamPair[](0);
-        address bondAddress = _createToken(bondFactory, "Test Bond", "TSTB", claimTopics, emptyModulePairs, tokenIssuer);
+        uint16[] memory allowedCountries = new uint16[](2);
+        allowedCountries[0] = COUNTRY_CODE_BE;
+        allowedCountries[1] = COUNTRY_CODE_JP;
+
+        ISMART.ComplianceModuleParamPair[] memory modulePairs = new ISMART.ComplianceModuleParamPair[](1);
+        modulePairs[0] = ISMART.ComplianceModuleParamPair({
+            module: address(countryAllowListComplianceModule),
+            params: abi.encode(allowedCountries)
+        });
+        address bondAddress = _createToken(bondFactory, "Test Bond", "TSTB", claimTopics, modulePairs, tokenIssuer);
 
         // Mint 1000 tokens to client1
         _mintToken(bondAddress, tokenIssuer, client1, 1000);

@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { ISMARTComplianceModule } from "../interface/ISMARTComplianceModule.sol";
 import { ISMART } from "../interface/ISMART.sol";
 import { ISMARTIdentityRegistry } from "../interface/ISMARTIdentityRegistry.sol";
+import { AbstractComplianceModule } from "./AbstractComplianceModule.sol";
 
 /**
  * @title AbstractCountryComplianceModule
  * @notice Base abstract contract for country-based compliance modules
  * @dev Parameters format: abi.encode(uint16[] countries)
  */
-abstract contract AbstractCountryComplianceModule is ISMARTComplianceModule {
+abstract contract AbstractCountryComplianceModule is AbstractComplianceModule {
     /**
      * @dev Validates the format of module parameters
      * @param _params The encoded parameters to validate
@@ -24,30 +24,6 @@ abstract contract AbstractCountryComplianceModule is ISMARTComplianceModule {
             revert InvalidParameters("At least one country code is required");
         }
     }
-
-    /**
-     * @inheritdoc ISMARTComplianceModule
-     */
-    function transferred(
-        address _token,
-        address _from,
-        address _to,
-        uint256 _value,
-        bytes calldata _params
-    )
-        external
-        override
-    { }
-
-    /**
-     * @inheritdoc ISMARTComplianceModule
-     */
-    function destroyed(address _token, address _from, uint256 _value, bytes calldata _params) external override { }
-
-    /**
-     * @inheritdoc ISMARTComplianceModule
-     */
-    function created(address _token, address _to, uint256 _value, bytes calldata _params) external override { }
 
     /**
      * @dev Helper function to validate parameter decoding
