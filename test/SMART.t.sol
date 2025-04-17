@@ -16,12 +16,14 @@ import { console } from "forge-std/console.sol";
 import { ISMART } from "../contracts/SMART/interface/ISMART.sol";
 import { CountryAllowListComplianceModule } from "../contracts/SMART/compliance/CountryAllowListComplianceModule.sol";
 import { CountryBlockListComplianceModule } from "../contracts/SMART/compliance/CountryBlockListComplianceModule.sol";
+import { ISMARTComplianceModule } from "../contracts/SMART/interface/ISMARTComplianceModule.sol";
 
 contract SMARTTest is Test {
     address public platformAdmin = makeAddr("Platform Admin");
     address public tokenIssuer = makeAddr("Token issuer");
-    address public client1 = makeAddr("Client 1");
-    address public client2 = makeAddr("Client 2");
+    address public clientBE = makeAddr("Client BE");
+    address public clientJP = makeAddr("Client JP");
+    address public clientUS = makeAddr("Client US");
 
     uint256 private claimIssuerPrivateKey = 0x12345;
     address public claimIssuer = vm.addr(claimIssuerPrivateKey);
@@ -178,6 +180,21 @@ contract SMARTTest is Test {
         vm.stopPrank();
     }
 
+    function _issueAllClaims(
+        address issuerIdentityAddr_,
+        uint256 issuerPrivateKey_,
+        address clientWalletAddress_
+    )
+        public
+    {
+        _issueClaim(
+            issuerIdentityAddr_, issuerPrivateKey_, clientWalletAddress_, CLAIM_TOPIC_KYC, "Verified KYC by Issuer"
+        );
+        _issueClaim(
+            issuerIdentityAddr_, issuerPrivateKey_, clientWalletAddress_, CLAIM_TOPIC_AML, "Verified AML by Issuer"
+        );
+    }
+
     function _createToken(
         MySMARTTokenFactory tokenFactory,
         string memory name,
@@ -220,8 +237,9 @@ contract SMARTTest is Test {
         _createClientIdentity(tokenIssuer, COUNTRY_CODE_BE);
 
         // Create the clients identity
-        _createClientIdentity(client1, COUNTRY_CODE_BE);
-        _createClientIdentity(client2, COUNTRY_CODE_JP);
+        _createClientIdentity(clientBE, COUNTRY_CODE_BE);
+        _createClientIdentity(clientJP, COUNTRY_CODE_JP);
+        _createClientIdentity(clientUS, COUNTRY_CODE_US);
 
         // Create the issuer identity
         uint256[] memory claimTopics = new uint256[](2);
@@ -232,19 +250,9 @@ contract SMARTTest is Test {
 
         // Issue claims from issuer1 to client1
         // Pass the issuer's identity address, not wallet address
-        _issueClaim(
-            claimIssuerIdentityAddress, claimIssuerPrivateKey, client1, CLAIM_TOPIC_KYC, "Verified KYC by Issuer"
-        );
-        _issueClaim(
-            claimIssuerIdentityAddress, claimIssuerPrivateKey, client1, CLAIM_TOPIC_AML, "Verified AML by Issuer"
-        );
-
-        _issueClaim(
-            claimIssuerIdentityAddress, claimIssuerPrivateKey, client2, CLAIM_TOPIC_KYC, "Verified KYC by Issuer"
-        );
-        _issueClaim(
-            claimIssuerIdentityAddress, claimIssuerPrivateKey, client2, CLAIM_TOPIC_AML, "Verified AML by Issuer"
-        );
+        _issueAllClaims(claimIssuerIdentityAddress, claimIssuerPrivateKey, clientBE);
+        _issueAllClaims(claimIssuerIdentityAddress, claimIssuerPrivateKey, clientJP);
+        _issueAllClaims(claimIssuerIdentityAddress, claimIssuerPrivateKey, clientUS);
 
         // Create empty array for module pairs
         uint16[] memory allowedCountries = new uint16[](2);
@@ -259,11 +267,20 @@ contract SMARTTest is Test {
         address bondAddress = _createToken(bondFactory, "Test Bond", "TSTB", claimTopics, modulePairs, tokenIssuer);
 
         // Mint 1000 tokens to client1
-        _mintToken(bondAddress, tokenIssuer, client1, 1000);
-        assertEq(_getBalance(bondAddress, client1), 1000);
+        _mintToken(bondAddress, tokenIssuer, clientBE, 1000);
+        assertEq(_getBalance(bondAddress, clientBE), 1000);
 
-        _transferToken(bondAddress, client1, client2, 100);
-        assertEq(_getBalance(bondAddress, client2), 100);
-        assertEq(_getBalance(bondAddress, client1), 900);
+        _transferToken(bondAddress, clientBE, clientJP, 100);
+        assertEq(_getBalance(bondAddress, clientJP), 100);
+        assertEq(_getBalance(bondAddress, clientBE), 900);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ISMARTComplianceModule.ComplianceCheckFailed.selector, "Receiver country not allowed"
+            )
+        );
+        _mintToken(bondAddress, tokenIssuer, clientUS, 100);
+        assertEq(_getBalance(bondAddress, clientUS), 0);
+        assertEq(_getBalance(bondAddress, clientBE), 900);
     }
 }
