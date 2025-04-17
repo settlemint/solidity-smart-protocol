@@ -10,6 +10,9 @@ import { ISMARTComplianceModule } from "./ISMARTComplianceModule.sol";
 /// @title ISMART
 /// @notice Base interface for SMART tokens that integrates with IdentityRegistry and Compliance
 interface ISMART is IERC20, IERC20Metadata {
+    /// Custom Errors
+    error RecipientNotVerified();
+
     /// Structs
     /// @notice A struct to pair a compliance module with its parameters
     struct ComplianceModuleParamPair {

@@ -24,6 +24,7 @@ contract SMARTTest is Test {
     address public clientBE = makeAddr("Client BE");
     address public clientJP = makeAddr("Client JP");
     address public clientUS = makeAddr("Client US");
+    address public clientUnverified = makeAddr("Client Unverified");
 
     uint256 private claimIssuerPrivateKey = 0x12345;
     address public claimIssuer = vm.addr(claimIssuerPrivateKey);
@@ -240,6 +241,7 @@ contract SMARTTest is Test {
         _createClientIdentity(clientBE, COUNTRY_CODE_BE);
         _createClientIdentity(clientJP, COUNTRY_CODE_JP);
         _createClientIdentity(clientUS, COUNTRY_CODE_US);
+        _createClientIdentity(clientUnverified, COUNTRY_CODE_BE);
 
         // Create the issuer identity
         uint256[] memory claimTopics = new uint256[](2);
@@ -279,8 +281,13 @@ contract SMARTTest is Test {
                 ISMARTComplianceModule.ComplianceCheckFailed.selector, "Receiver country not allowed"
             )
         );
-        _mintToken(bondAddress, tokenIssuer, clientUS, 100);
+        _transferToken(bondAddress, clientBE, clientUS, 100);
         assertEq(_getBalance(bondAddress, clientUS), 0);
+        assertEq(_getBalance(bondAddress, clientBE), 900);
+
+        vm.expectRevert(abi.encodeWithSelector(ISMART.RecipientNotVerified.selector));
+        _transferToken(bondAddress, clientBE, clientUnverified, 100);
+        assertEq(_getBalance(bondAddress, clientUnverified), 0);
         assertEq(_getBalance(bondAddress, clientBE), 900);
     }
 }

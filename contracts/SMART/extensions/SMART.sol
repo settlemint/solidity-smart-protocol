@@ -22,7 +22,6 @@ abstract contract SMART is SMARTHooks, ISMART, Ownable {
     error InvalidModuleAddress();
     error InvalidModuleImplementation();
     error ModuleAlreadyAddedOnInit();
-    error RecipientNotVerified();
     error MintNotCompliant();
     error TransferNotCompliant();
     error ModuleAlreadyAdded();
