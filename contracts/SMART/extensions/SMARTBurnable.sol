@@ -35,4 +35,9 @@ abstract contract SMARTBurnable is ERC20Burnable, SMARTHooks, ISMART, Ownable {
     function _validateBurn(address _from, uint256 _amount) internal virtual override {
         super._validateBurn(_from, _amount);
     }
+
+    /// @dev Internal hook called after burning tokens.
+    function _afterBurn(address _from, uint256 _amount) internal virtual override {
+        super._afterBurn(_from, _amount);
+    }
 }
