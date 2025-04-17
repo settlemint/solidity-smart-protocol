@@ -2,8 +2,10 @@
 pragma solidity ^0.8.27;
 
 import { IERC3643TrustedIssuersRegistry } from "../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IClaimIssuer } from "../onchainid/interface/IClaimIssuer.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 // --- Errors ---
 error InvalidIssuerAddress();
@@ -14,8 +16,13 @@ error IssuerNotFoundInTopicList(address issuerAddress, uint256 claimTopic);
 error AddressNotFoundInList(address addr);
 
 /// @title SMARTTrustedIssuersRegistry
-/// @notice Registry for trusted identity issuers, optimized for retrieving issuers by claim topic.
-contract SMARTTrustedIssuersRegistry is IERC3643TrustedIssuersRegistry, Ownable {
+/// @notice Registry for trusted identity issuers, optimized for retrieving issuers by claim topic (Upgradeable).
+contract SMARTTrustedIssuersRegistry is
+    Initializable,
+    IERC3643TrustedIssuersRegistry,
+    OwnableUpgradeable,
+    UUPSUpgradeable
+{
     // --- Storage Variables ---
     struct TrustedIssuer {
         address issuer;
@@ -45,7 +52,17 @@ contract SMARTTrustedIssuersRegistry is IERC3643TrustedIssuersRegistry, Ownable 
     event ClaimTopicsUpdated(address indexed _issuer, uint256[] _claimTopics);
 
     // --- Constructor ---
-    constructor() Ownable(msg.sender) { }
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializes the contract after deployment through a proxy.
+    /// @param initialOwner The address to grant ownership to.
+    function initialize(address initialOwner) public initializer {
+        __Ownable_init(initialOwner);
+        __UUPSUpgradeable_init();
+    }
 
     // --- State-Changing Functions ---
     /// @inheritdoc IERC3643TrustedIssuersRegistry
@@ -224,4 +241,10 @@ contract SMARTTrustedIssuersRegistry is IERC3643TrustedIssuersRegistry, Ownable 
         }
         revert AddressNotFoundInList(addrToRemove);
     }
+
+    // --- Upgradeability ---
+
+    /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
+    /// @param newImplementation The address of the new implementation contract.
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
 }

@@ -2,8 +2,10 @@
 pragma solidity ^0.8.27;
 
 import { IERC3643IdentityRegistryStorage } from "../ERC-3643/IERC3643IdentityRegistryStorage.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IIdentity } from "../onchainid/interface/IIdentity.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 // --- Errors ---
 error InvalidIdentityWalletAddress();
@@ -16,8 +18,13 @@ error IdentityRegistryNotBound(address registryAddress);
 error UnauthorizedCaller();
 
 /// @title SMARTIdentityRegistryStorage
-/// @notice Storage contract for identity registry data
-contract SMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage, Ownable {
+/// @notice Storage contract for identity registry data (Upgradeable)
+contract SMARTIdentityRegistryStorage is
+    Initializable,
+    IERC3643IdentityRegistryStorage,
+    OwnableUpgradeable,
+    UUPSUpgradeable
+{
     // --- Storage Variables ---
     struct Identity {
         address identityContract;
@@ -54,7 +61,17 @@ contract SMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage, Ownabl
     }
 
     // --- Constructor ---
-    constructor() Ownable(msg.sender) { }
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializes the contract after deployment through a proxy.
+    /// @param initialOwner The address to grant ownership to.
+    function initialize(address initialOwner) public initializer {
+        __Ownable_init(initialOwner);
+        __UUPSUpgradeable_init();
+    }
 
     // --- State-Changing Functions ---
     /// @inheritdoc IERC3643IdentityRegistryStorage
@@ -178,4 +195,10 @@ contract SMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage, Ownabl
     function getIdentityWallets() external view returns (address[] memory) {
         return _identityWallets;
     }
+
+    // --- Upgradeability ---
+
+    /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
+    /// @param newImplementation The address of the new implementation contract.
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
 }

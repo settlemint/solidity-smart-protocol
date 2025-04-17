@@ -4,13 +4,25 @@ pragma solidity ^0.8.27;
 import { ISMARTCompliance } from "./interface/ISMARTCompliance.sol";
 import { ISMARTComplianceModule } from "./interface/ISMARTComplianceModule.sol";
 import { ISMART } from "./interface/ISMART.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /// @title SMARTCompliance
-/// @notice Implementation of the compliance contract for SMART tokens
-contract SMARTCompliance is ISMARTCompliance, Ownable {
+/// @notice Implementation of the compliance contract for SMART tokens (Upgradeable)
+contract SMARTCompliance is Initializable, ISMARTCompliance, OwnableUpgradeable, UUPSUpgradeable {
     // --- Constructor ---
-    constructor() Ownable(msg.sender) { }
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializes the contract after deployment through a proxy.
+    /// @param initialOwner The address to grant ownership to.
+    function initialize(address initialOwner) public initializer {
+        __Ownable_init(initialOwner);
+        __UUPSUpgradeable_init();
+    }
 
     // --- State-Changing Functions ---
 
@@ -64,5 +76,8 @@ contract SMARTCompliance is ISMARTCompliance, Ownable {
     }
 
     // --- Internal Functions ---
-    // (No internal functions)
+
+    /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
+    /// @param newImplementation The address of the new implementation contract.
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
 }

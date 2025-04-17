@@ -5,10 +5,12 @@ pragma solidity ^0.8.27;
 import { Identity } from "../onchainid/Identity.sol";
 import { IIdentity } from "../onchainid/interface/IIdentity.sol";
 import { IERC734 } from "../onchainid/interface/IERC734.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 // --- Errors ---
 error ZeroAddressNotAllowed();
@@ -16,10 +18,14 @@ error SaltAlreadyTaken();
 error WalletAlreadyLinked();
 error WalletInManagementKeys();
 error TokenAlreadyLinked();
+error InvalidImplementationAddress();
 
-contract SMARTIdentityFactory is Ownable {
+/// @title SMARTIdentityFactory
+/// @notice Factory for creating deterministic OnchainID identities for wallets and tokens (Upgradeable)
+contract SMARTIdentityFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // --- Storage Variables ---
-    address private immutable _identityImplementation;
+    /// @notice The implementation contract address for the Identity proxies created by this factory.
+    address private _identityImplementation;
 
     mapping(string => bool) private _saltTaken;
     mapping(address => address) private _identities; // Changed bool to address
@@ -28,16 +34,29 @@ contract SMARTIdentityFactory is Ownable {
     // --- Events ---
     event IdentityCreated(address indexed identity, address indexed wallet);
     event TokenIdentityCreated(address indexed identity, address indexed token);
+    event IdentityImplementationSet(address indexed newImplementation);
 
     // --- Constructor ---
-    constructor() Ownable(_msgSender()) {
-        _identityImplementation = address(new Identity(address(0), true));
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializes the contract after deployment through a proxy.
+    /// @param initialOwner The address to grant ownership to.
+    /// @param identityImplementation_ The address of the Identity contract implementation to be used by the factory.
+    function initialize(address initialOwner, address identityImplementation_) public initializer {
+        if (identityImplementation_ == address(0)) revert InvalidImplementationAddress();
+        __Ownable_init(initialOwner);
+        __UUPSUpgradeable_init();
+        _identityImplementation = identityImplementation_;
+        emit IdentityImplementationSet(identityImplementation_);
     }
 
     // --- State-Changing Functions ---
     function createIdentity(address _wallet, bytes32[] memory _managementKeys) external onlyOwner returns (address) {
         if (_wallet == address(0)) revert ZeroAddressNotAllowed();
-        if (_identities[_wallet] != address(0)) revert WalletAlreadyLinked(); // Comparison with address(0)
+        if (_identities[_wallet] != address(0)) revert WalletAlreadyLinked();
 
         address identity = _createIdentityInternal("OID", _wallet, _wallet);
 
@@ -51,7 +70,7 @@ contract SMARTIdentityFactory is Ownable {
             }
         }
 
-        _identities[_wallet] = identity; // Assign identity address
+        _identities[_wallet] = identity;
 
         emit IdentityCreated(identity, _wallet);
         return identity;
@@ -70,6 +89,14 @@ contract SMARTIdentityFactory is Ownable {
         return identity;
     }
 
+    /// @notice Allows the owner to update the Identity implementation address used for future deployments.
+    /// @param newImplementation_ The address of the new Identity contract implementation.
+    function setIdentityImplementation(address newImplementation_) external onlyOwner {
+        if (newImplementation_ == address(0)) revert InvalidImplementationAddress();
+        _identityImplementation = newImplementation_;
+        emit IdentityImplementationSet(newImplementation_);
+    }
+
     // --- View Functions ---
     function getTokenIdentity(address _token) external view returns (address) {
         return _tokenIdentities[_token];
@@ -85,6 +112,11 @@ contract SMARTIdentityFactory is Ownable {
                 )
             )
         );
+    }
+
+    /// @notice Returns the current Identity implementation address used by the factory.
+    function getIdentityImplementation() external view returns (address) {
+        return _identityImplementation;
     }
 
     // --- Internal Functions ---
@@ -128,4 +160,10 @@ contract SMARTIdentityFactory is Ownable {
             )
         );
     }
+
+    // --- Upgradeability ---
+
+    /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
+    /// @param newImplementation The address of the new implementation contract.
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
 }

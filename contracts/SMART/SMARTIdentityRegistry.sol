@@ -6,8 +6,10 @@ import { IIdentity } from "./../onchainid/interface/IIdentity.sol";
 import { IERC3643IdentityRegistryStorage } from "./../ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 import { ISMART } from "./interface/ISMART.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IClaimIssuer } from "./../onchainid/interface/IClaimIssuer.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 // --- Errors ---
 error InvalidStorageAddress();
@@ -19,8 +21,8 @@ error InvalidUserAddress();
 error IdentityAlreadyRegistered(address userAddress);
 
 /// @title SMARTIdentityRegistry
-/// @notice Registry for managing investor identities
-contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
+/// @notice Registry for managing investor identities (Upgradeable)
+contract SMARTIdentityRegistry is Initializable, ISMARTIdentityRegistry, OwnableUpgradeable, UUPSUpgradeable {
     // --- Storage ---
     IERC3643IdentityRegistryStorage private _identityStorage;
     IERC3643TrustedIssuersRegistry private _trustedIssuersRegistry;
@@ -34,7 +36,29 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
     event CountryUpdated(address indexed _investorAddress, uint16 indexed _country);
 
     // --- Constructor ---
-    constructor(address identityStorage_, address trustedIssuersRegistry_) Ownable(msg.sender) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializes the contract after deployment through a proxy.
+    /// @param initialOwner The address to grant ownership to.
+    /// @param identityStorage_ The address of the Identity Registry Storage contract.
+    /// @param trustedIssuersRegistry_ The address of the Trusted Issuers Registry contract.
+    function initialize(
+        address initialOwner,
+        address identityStorage_,
+        address trustedIssuersRegistry_
+    )
+        public
+        initializer
+    {
+        __Ownable_init(initialOwner);
+        __UUPSUpgradeable_init();
+
+        if (identityStorage_ == address(0)) revert InvalidStorageAddress();
+        if (trustedIssuersRegistry_ == address(0)) revert InvalidRegistryAddress();
+
         _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
         emit IdentityStorageSet(address(_identityStorage));
         _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
@@ -230,4 +254,10 @@ contract SMARTIdentityRegistry is ISMARTIdentityRegistry, Ownable {
         _identityStorage.addIdentityToStorage(_userAddress, _identity, _country);
         emit IdentityRegistered(_userAddress, _identity);
     }
+
+    // --- Upgradeability ---
+
+    /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
+    /// @param newImplementation The address of the new implementation contract.
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
 }

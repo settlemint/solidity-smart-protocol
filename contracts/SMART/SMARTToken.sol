@@ -12,7 +12,7 @@ import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/exte
 import { SMARTHooks } from "./extensions/SMARTHooks.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-/// @title MySMARTToken
+/// @title SMARTToken
 /// @notice A complete implementation of a SMART token with all available extensions
 contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
     constructor(
