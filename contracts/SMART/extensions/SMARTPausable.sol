@@ -7,12 +7,12 @@ import { ERC20Pausable } from "@openzeppelin/contracts/token/ERC20/extensions/ER
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-// --- Custom Errors ---
-error TokenPaused();
-
 /// @title SMARTPausable
 /// @notice Extension that adds pausable functionality to SMART tokens using OpenZeppelin's Pausable
 abstract contract SMARTPausable is ERC20Pausable, SMARTHooks, ISMART, Ownable {
+    // --- Custom Errors ---
+    error TokenPaused();
+
     // --- Constructor ---
 
     // --- Modifiers ---

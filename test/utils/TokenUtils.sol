@@ -101,4 +101,10 @@ contract TokenUtils is Test {
         MySMARTToken(tokenAddress).transfer(to, amount);
         vm.stopPrank();
     }
+
+    function pauseToken(address tokenAddress, address tokenIssuer_) public {
+        vm.startPrank(tokenIssuer_);
+        MySMARTToken(tokenAddress).pause();
+        vm.stopPrank();
+    }
 }

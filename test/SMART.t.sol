@@ -8,6 +8,7 @@ import { ISMART } from "../contracts/SMART/interface/ISMART.sol";
 import { ISMARTComplianceModule } from "../contracts/SMART/interface/ISMARTComplianceModule.sol";
 import { ClaimUtils } from "./utils/ClaimUtils.sol";
 import { TestConstants } from "./utils/Constants.sol"; // Import the constants library
+import { SMARTPausable } from "../contracts/SMART/extensions/SMARTPausable.sol";
 
 contract SMARTTest is SMARTTestBase {
     address public tokenIssuer;
@@ -28,7 +29,7 @@ contract SMARTTest is SMARTTestBase {
         claimIssuer = vm.addr(claimIssuerPrivateKey);
     }
 
-    function test_Mint() public {
+    function _setupIdentities() internal {
         // Create the token issuer identity
         // Note: The original test created a *client* identity for the token issuer.
         // Assuming the token issuer also needs KYC/AML based on typical flows, let's keep this pattern.
@@ -55,8 +56,9 @@ contract SMARTTest is SMARTTestBase {
         claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientUS);
         // Only issue KYC claim to the unverified client
         claimUtils.issueKYCClaim(claimIssuerIdentityAddress, clientUnverified);
+    }
 
-        // --- Token Creation ---
+    function _createBondToken() internal returns (address) {
         uint256[] memory requiredClaimTopics = new uint256[](2);
         requiredClaimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
         requiredClaimTopics[1] = TestConstants.CLAIM_TOPIC_AML;
@@ -80,6 +82,13 @@ contract SMARTTest is SMARTTestBase {
             modulePairs,
             tokenIssuer // Use tokenIssuer address from base
         );
+
+        return bondAddress;
+    }
+
+    function test_Mint() public {
+        _setupIdentities();
+        address bondAddress = _createBondToken();
 
         // --- Minting --- (Use TokenUtils)
         tokenUtils.mintToken(bondAddress, tokenIssuer, clientBE, 1000);
@@ -113,6 +122,18 @@ contract SMARTTest is SMARTTestBase {
         assertEq(
             tokenUtils.getBalance(bondAddress, clientBE), 900, "Transfer BE->Unverified should have failed (BE balance)"
         );
+    }
+
+    function test_Pause() public {
+        _setupIdentities();
+        address bondAddress = _createBondToken();
+
+        tokenUtils.mintToken(bondAddress, tokenIssuer, clientBE, 500);
+
+        tokenUtils.pauseToken(bondAddress, tokenIssuer);
+
+        vm.expectRevert(abi.encodeWithSelector(SMARTPausable.TokenPaused.selector));
+        tokenUtils.mintToken(bondAddress, tokenIssuer, clientBE, 500);
     }
 
     // Add other test functions here, calling helpers via identityUtils, claimUtils, tokenUtils
