@@ -223,8 +223,8 @@ contract SMARTTest is Test {
         address[] memory emptyModules = new address[](0);
         address bondAddress = _createToken(bondFactory, "Test Bond", "TSTB", claimTopics, emptyModules, tokenIssuer);
 
+        // Mint 1000 tokens to client1
         _mintToken(bondAddress, tokenIssuer, client1, 1000);
-
         assertEq(_getBalance(bondAddress, client1), 1000);
     }
 }
