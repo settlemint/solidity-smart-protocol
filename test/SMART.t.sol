@@ -18,6 +18,7 @@ contract SMARTTest is Test {
     address public platformAdmin = makeAddr("Platform Admin");
     address public tokenIssuer = makeAddr("Token issuer");
     address public client1 = makeAddr("Client 1");
+    address public client2 = makeAddr("Client 2");
 
     uint256 private claimIssuerPrivateKey = 0x12345;
     address public claimIssuer = vm.addr(claimIssuerPrivateKey);
@@ -25,6 +26,9 @@ contract SMARTTest is Test {
     uint256 public constant CLAIM_TOPIC_KYC = 1;
     uint256 public constant CLAIM_TOPIC_AML = 2;
     uint256 public constant ECDSA_TYPE = 1; // Scheme for ECDSA signatures (ERC735)
+
+    uint16 public constant COUNTRY_CODE_BE = 56;
+    uint16 public constant COUNTRY_CODE_JP = 392;
 
     SMARTIdentityRegistryStorage identityRegistryStorage;
     SMARTTrustedIssuersRegistry trustedIssuersRegistry;
@@ -196,12 +200,18 @@ contract SMARTTest is Test {
         return MySMARTToken(tokenAddress).balanceOf(walletAddress);
     }
 
+    function _transferToken(address tokenAddress, address from, address to, uint256 amount) public {
+        vm.prank(from);
+        MySMARTToken(tokenAddress).transfer(to, amount);
+    }
+
     function test_Mint() public {
         // Create the token issuer identity
-        _createClientIdentity(tokenIssuer, 56);
+        _createClientIdentity(tokenIssuer, COUNTRY_CODE_BE);
 
-        // Create the client identity
-        _createClientIdentity(client1, 56);
+        // Create the clients identity
+        _createClientIdentity(client1, COUNTRY_CODE_BE);
+        _createClientIdentity(client2, COUNTRY_CODE_BE);
 
         // Create the issuer identity
         uint256[] memory claimTopics = new uint256[](2);
@@ -213,10 +223,17 @@ contract SMARTTest is Test {
         // Issue claims from issuer1 to client1
         // Pass the issuer's identity address, not wallet address
         _issueClaim(
-            claimIssuerIdentityAddress, claimIssuerPrivateKey, client1, CLAIM_TOPIC_KYC, "Verified KYC by Issuer 1"
+            claimIssuerIdentityAddress, claimIssuerPrivateKey, client1, CLAIM_TOPIC_KYC, "Verified KYC by Issuer"
         );
         _issueClaim(
-            claimIssuerIdentityAddress, claimIssuerPrivateKey, client1, CLAIM_TOPIC_AML, "Verified AML by Issuer 1"
+            claimIssuerIdentityAddress, claimIssuerPrivateKey, client1, CLAIM_TOPIC_AML, "Verified AML by Issuer"
+        );
+
+        _issueClaim(
+            claimIssuerIdentityAddress, claimIssuerPrivateKey, client2, CLAIM_TOPIC_KYC, "Verified KYC by Issuer"
+        );
+        _issueClaim(
+            claimIssuerIdentityAddress, claimIssuerPrivateKey, client2, CLAIM_TOPIC_AML, "Verified AML by Issuer"
         );
 
         // Create empty array for modules
@@ -226,5 +243,9 @@ contract SMARTTest is Test {
         // Mint 1000 tokens to client1
         _mintToken(bondAddress, tokenIssuer, client1, 1000);
         assertEq(_getBalance(bondAddress, client1), 1000);
+
+        _transferToken(bondAddress, client1, client2, 100);
+        assertEq(_getBalance(bondAddress, client2), 100);
+        assertEq(_getBalance(bondAddress, client1), 900);
     }
 }
