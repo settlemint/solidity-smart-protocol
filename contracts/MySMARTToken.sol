@@ -6,6 +6,7 @@ import { SMARTPausable } from "./SMART/extensions/SMARTPausable.sol";
 import { SMARTBurnable } from "./SMART/extensions/SMARTBurnable.sol";
 import { SMARTCustodian } from "./SMART/extensions/SMARTCustodian.sol";
 import { ISMARTIdentityRegistry } from "./SMART/interface/ISMARTIdentityRegistry.sol";
+import { ISMART } from "./SMART/interface/ISMART.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SMARTHooks } from "./SMART/extensions/SMARTHooks.sol";
@@ -22,10 +23,19 @@ contract MySMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        address[] memory initialModules_,
+        ISMART.ComplianceModuleParamPair[] memory initialModulePairs_,
         address initialOwner_
     )
-        SMART(name_, symbol_, decimals_, onchainID_, identityRegistry_, compliance_, requiredClaimTopics_, initialModules_)
+        SMART(
+            name_,
+            symbol_,
+            decimals_,
+            onchainID_,
+            identityRegistry_,
+            compliance_,
+            requiredClaimTopics_,
+            initialModulePairs_
+        )
         Ownable(initialOwner_)
     { }
 

@@ -13,6 +13,7 @@ import { SMARTCompliance } from "../contracts/SMART/SMARTCompliance.sol";
 import { SMARTIdentityFactory } from "../contracts/SMART/SMARTIdentityFactory.sol";
 import { IClaimIssuer } from "../contracts/onchainid/interface/IClaimIssuer.sol";
 import { console } from "forge-std/console.sol";
+import { ISMART } from "../contracts/SMART/interface/ISMART.sol";
 
 contract SMARTTest is Test {
     address public platformAdmin = makeAddr("Platform Admin");
@@ -173,14 +174,14 @@ contract SMARTTest is Test {
         string memory name,
         string memory symbol,
         uint256[] memory claimTopics,
-        address[] memory initialModules,
+        ISMART.ComplianceModuleParamPair[] memory modulePairs,
         address tokenIssuer_
     )
         public
         returns (address)
     {
         vm.prank(tokenIssuer_);
-        address tokenAddress = tokenFactory.create(name, symbol, 18, claimTopics, initialModules);
+        address tokenAddress = tokenFactory.create(name, symbol, 18, claimTopics, modulePairs);
 
         vm.prank(platformAdmin); // TODO does this make sense? that only platform admin can create the token identity?
         address tokenIdentityAddress = identityFactory.createTokenIdentity(tokenAddress, tokenIssuer_);
@@ -236,9 +237,9 @@ contract SMARTTest is Test {
             claimIssuerIdentityAddress, claimIssuerPrivateKey, client2, CLAIM_TOPIC_AML, "Verified AML by Issuer"
         );
 
-        // Create empty array for modules
-        address[] memory emptyModules = new address[](0);
-        address bondAddress = _createToken(bondFactory, "Test Bond", "TSTB", claimTopics, emptyModules, tokenIssuer);
+        // Create empty array for module pairs
+        ISMART.ComplianceModuleParamPair[] memory emptyModulePairs = new ISMART.ComplianceModuleParamPair[](0);
+        address bondAddress = _createToken(bondFactory, "Test Bond", "TSTB", claimTopics, emptyModulePairs, tokenIssuer);
 
         // Mint 1000 tokens to client1
         _mintToken(bondAddress, tokenIssuer, client1, 1000);

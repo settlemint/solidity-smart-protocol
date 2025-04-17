@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { MySMARTToken } from "./MySMARTToken.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ISMART } from "./SMART/interface/ISMART.sol";
 
 /// @title MySMARTTokenFactory
 /// @notice Factory contract for deploying MySMARTToken instances
@@ -44,21 +45,22 @@ contract MySMARTTokenFactory is ReentrancyGuard {
     /// @param symbol The symbol of the token
     /// @param decimals The number of decimals for the token
     /// @param requiredClaimTopics The array of required claim topics
-    /// @param initialModules The array of initial module addresses
+    /// @param modulePairs The array of module-parameter pairs
     /// @return token The address of the newly created token
     function create(
         string memory name,
         string memory symbol,
         uint8 decimals,
         uint256[] memory requiredClaimTopics,
-        address[] memory initialModules
+        ISMART.ComplianceModuleParamPair[] memory modulePairs
     )
         external
         nonReentrant
         returns (address token)
     {
         // Check if address is already deployed
-        address predicted = predictAddress(msg.sender, name, symbol, decimals, requiredClaimTopics, initialModules);
+        address predicted = predictAddress(msg.sender, name, symbol, decimals, requiredClaimTopics, modulePairs);
+
         if (isAddressDeployed(predicted)) revert AddressAlreadyDeployed();
 
         bytes32 salt = _calculateSalt(name, symbol, decimals, identityRegistry, compliance);
@@ -71,7 +73,7 @@ contract MySMARTTokenFactory is ReentrancyGuard {
             identityRegistry,
             compliance,
             requiredClaimTopics,
-            initialModules,
+            modulePairs,
             msg.sender
         );
 
@@ -87,7 +89,7 @@ contract MySMARTTokenFactory is ReentrancyGuard {
     /// @param symbol The symbol of the token
     /// @param decimals The number of decimals for the token
     /// @param requiredClaimTopics The array of required claim topics
-    /// @param initialModules The array of initial module addresses
+    /// @param modulePairs The array of module-parameter pairs
     /// @return predicted The address where the token would be deployed
     function predictAddress(
         address sender,
@@ -95,7 +97,7 @@ contract MySMARTTokenFactory is ReentrancyGuard {
         string memory symbol,
         uint8 decimals,
         uint256[] memory requiredClaimTopics,
-        address[] memory initialModules
+        ISMART.ComplianceModuleParamPair[] memory modulePairs
     )
         public
         view
@@ -118,10 +120,11 @@ contract MySMARTTokenFactory is ReentrancyGuard {
                                         name,
                                         symbol,
                                         decimals,
+                                        address(0), // onchainID
                                         identityRegistry,
                                         compliance,
                                         requiredClaimTopics,
-                                        initialModules,
+                                        modulePairs,
                                         sender
                                     )
                                 )

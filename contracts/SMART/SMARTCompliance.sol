@@ -16,25 +16,27 @@ contract SMARTCompliance is ISMARTCompliance, Ownable {
 
     /// @inheritdoc ISMARTCompliance
     function transferred(address _token, address _from, address _to, uint256 _amount) external override {
-        address[] memory modules = ISMART(_token).complianceModules();
-        for (uint256 i = 0; i < modules.length; i++) {
-            ISMARTComplianceModule(modules[i]).transferred(_token, _from, _to, _amount);
+        ISMART.ComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
+        for (uint256 i = 0; i < modulePairs.length; i++) {
+            ISMARTComplianceModule(modulePairs[i].module).transferred(
+                _token, _from, _to, _amount, modulePairs[i].params
+            );
         }
     }
 
     /// @inheritdoc ISMARTCompliance
     function created(address _token, address _to, uint256 _amount) external override {
-        address[] memory modules = ISMART(_token).complianceModules();
-        for (uint256 i = 0; i < modules.length; i++) {
-            ISMARTComplianceModule(modules[i]).created(_token, _to, _amount);
+        ISMART.ComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
+        for (uint256 i = 0; i < modulePairs.length; i++) {
+            ISMARTComplianceModule(modulePairs[i].module).created(_token, _to, _amount, modulePairs[i].params);
         }
     }
 
     /// @inheritdoc ISMARTCompliance
     function destroyed(address _token, address _from, uint256 _amount) external override {
-        address[] memory modules = ISMART(_token).complianceModules();
-        for (uint256 i = 0; i < modules.length; i++) {
-            ISMARTComplianceModule(modules[i]).destroyed(_token, _from, _amount);
+        ISMART.ComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
+        for (uint256 i = 0; i < modulePairs.length; i++) {
+            ISMARTComplianceModule(modulePairs[i].module).destroyed(_token, _from, _amount, modulePairs[i].params);
         }
     }
 
@@ -52,9 +54,11 @@ contract SMARTCompliance is ISMARTCompliance, Ownable {
         override
         returns (bool)
     {
-        address[] memory modules = ISMART(_token).complianceModules();
-        for (uint256 i = 0; i < modules.length; i++) {
-            ISMARTComplianceModule(modules[i]).canTransfer(_token, _from, _to, _amount);
+        ISMART.ComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
+        for (uint256 i = 0; i < modulePairs.length; i++) {
+            ISMARTComplianceModule(modulePairs[i].module).canTransfer(
+                _token, _from, _to, _amount, modulePairs[i].params
+            );
         }
         return true;
     }
