@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-// Removed ISMART import - not directly used
-// import { ISMART } from "../interface/ISMART.sol";
-import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+// Removed ERC20Burnable import - no longer inherited directly
+// import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { SMARTExtension } from "./SMARTExtension.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { LengthMismatch } from "./common/CommonErrors.sol";
 import { _SMARTBurnableLogic } from "./base/_SMARTBurnableLogic.sol"; // Import base logic
-
 /// @title SMARTBurnable
 /// @notice Standard (non-upgradeable) extension that adds burnable functionality to SMART tokens.
-/// @dev Inherits from OZ ERC20Burnable, Ownable, SMARTExtension, and _SMARTBurnableLogic.
+/// @dev Inherits from Ownable, SMARTExtension, and _SMARTBurnableLogic.
+///      Relies on the main contract inheriting ERC20 to provide the internal _burn function.
+/// @dev Does not inherit ERC20Burnable directly to avoid exposing public `burn(value)` and `burnFrom(account, value)`,
+///      which conflict with the IERC3643 requirement for an owner-controlled `burn(address, amount)` function.
+
 abstract contract SMARTBurnable is
-    ERC20Burnable, // Provides the standard _burn function
+    // ERC20Burnable removed from inheritance
     SMARTExtension,
     Ownable,
     _SMARTBurnableLogic // Inherit base logic
@@ -23,7 +25,7 @@ abstract contract SMARTBurnable is
     /// @notice Burns a specific amount of tokens from a user's address
     /// @param userAddress The address to burn tokens from
     /// @param amount The amount of tokens to burn
-    /// @dev Requires caller to be the owner.
+    /// @dev Requires caller to be the owner. Matches IERC3643 signature.
     function burn(address userAddress, uint256 amount) public virtual onlyOwner {
         // Call the internal implementation from the base logic contract
         _burnInternal(userAddress, amount);
@@ -40,7 +42,7 @@ abstract contract SMARTBurnable is
 
     // --- Hook Implementations ---
     // Implement the abstract functions required by _SMARTBurnableLogic
-    // by calling the functions provided by SMARTExtension and ERC20Burnable.
+    // by calling the functions provided by SMARTExtension and relying on ERC20's _burn.
 
     /// @dev Internal validation hook for burning tokens.
     function _validateBurn(
@@ -63,7 +65,8 @@ abstract contract SMARTBurnable is
         super._afterBurn(from, amount); // Call downstream hooks (e.g., SMART)
     }
 
-    /// @dev Provides the actual burn implementation by calling ERC20Burnable's internal _burn.
+    /// @dev Provides the actual burn implementation by calling ERC20's internal _burn.
+    ///      This assumes the contract inheriting this extension also inherits ERC20.
     function _executeBurn(
         address from,
         uint256 amount
@@ -72,6 +75,8 @@ abstract contract SMARTBurnable is
         virtual
         override(_SMARTBurnableLogic) // Implements the abstract function from the logic base
     {
-        _burn(from, amount); // Call the _burn function inherited directly from ERC20Burnable
+        // Note: _burn is the internal function from the base ERC20 contract,
+        // which MUST be inherited by the final contract using this extension.
+        _burn(from, amount);
     }
 }

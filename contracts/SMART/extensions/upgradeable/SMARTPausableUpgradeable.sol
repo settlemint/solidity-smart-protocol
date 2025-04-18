@@ -76,6 +76,12 @@ abstract contract SMARTPausableUpgradeable is
         super._validateTransfer(from, to, amount); // Call downstream validation
     }
 
+    /// @inheritdoc SMARTExtensionUpgradeable
+    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTExtensionUpgradeable) {
+        _pausable_validateBurnLogic();
+        super._validateBurn(from, amount);
+    }
+
     /**
      * @dev Overrides _update to resolve conflict between ERC20PausableUpgradeable and base ERC20Upgradeable.
      * Ensures the whenNotPaused modifier from PausableUpgradeable is applied.

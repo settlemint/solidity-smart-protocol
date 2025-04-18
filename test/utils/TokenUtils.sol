@@ -10,6 +10,7 @@ import { SMARTToken } from "../../contracts/SMART/SMARTToken.sol";
 import { SMARTTokenUpgradeable } from "../../contracts/SMART/SMARTTokenUpgradeable.sol";
 import { SMARTIdentityRegistry } from "../../contracts/SMART/SMARTIdentityRegistry.sol";
 import { SMARTPausable } from "../../contracts/SMART/extensions/SMARTPausable.sol";
+import { SMARTBurnable } from "../../contracts/SMART/extensions/SMARTBurnable.sol";
 
 contract TokenUtils is Test {
     address internal _platformAdmin;
@@ -160,6 +161,18 @@ contract TokenUtils is Test {
     function transferToken(address tokenAddress, address from, address to, uint256 amount) public {
         vm.startPrank(from);
         ISMART(tokenAddress).transfer(to, amount);
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Burns tokens from a holder's account.
+     * @param tokenAddress The address of the token contract.
+     * @param from The burner's wallet address.
+     * @param amount The amount to burn.
+     */
+    function burnToken(address tokenAddress, address tokenIssuer_, address from, uint256 amount) public {
+        vm.startPrank(tokenIssuer_); // The holder initiates the burn
+        SMARTBurnable(tokenAddress).burn(from, amount);
         vm.stopPrank();
     }
 

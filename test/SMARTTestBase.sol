@@ -12,6 +12,7 @@ import { IdentityUtils } from "./utils/IdentityUtils.sol"; // Needed for _setupI
 import { TokenUtils } from "./utils/TokenUtils.sol"; // Needed for tests
 import { InfrastructureUtils } from "./utils/InfrastructureUtils.sol"; // Needed for tests
 import { MockedComplianceModule } from "./mocks/MockedComplianceModule.sol";
+import { console } from "forge-std/console.sol";
 
 abstract contract SMARTTestBase is Test {
     // --- State Variables ---
@@ -203,6 +204,53 @@ abstract contract SMARTTestBase is Test {
             mockComplianceModule.transferredCallCount(),
             transferredHookCountBefore + 1,
             "Mock transferred hook count incorrect after transfer post-unpause"
+        );
+    }
+
+    function test_Burn() public {
+        // Assumes token is deployed and identities are set up by setUp() in inheriting contract
+        require(address(token) != address(0), "Token not deployed in setUp");
+
+        // --- Initial Mint ---
+        uint256 initialMintAmount = 500;
+        tokenUtils.mintToken(address(token), tokenIssuer, clientBE, initialMintAmount);
+        assertEq(token.balanceOf(clientBE), initialMintAmount, "Burn test setup mint failed");
+
+        mockComplianceModule.reset(); // Reset mock counter for burn tests
+
+        // --- Burn Tokens ---
+        uint256 burnAmount = 100;
+        uint256 destroyedHookCountBefore = mockComplianceModule.destroyedCallCount();
+        tokenUtils.burnToken(address(token), tokenIssuer, clientBE, burnAmount);
+
+        // --- Assertions ---
+        assertEq(token.balanceOf(clientBE), initialMintAmount - burnAmount, "Burn failed (balance incorrect)");
+        assertEq(
+            mockComplianceModule.destroyedCallCount(),
+            destroyedHookCountBefore + 1,
+            "Mock destroyed hook count incorrect after burn"
+        );
+
+        // --- Test Burn When Paused ---
+        tokenUtils.pauseToken(address(token), tokenIssuer);
+
+        // Check burning is paused
+        vm.expectRevert(abi.encodeWithSelector(_SMARTPausableLogic.TokenPaused.selector));
+        tokenUtils.burnToken(address(token), tokenIssuer, clientBE, 10); // Attempt to burn while paused
+
+        // Unpause
+        tokenUtils.unpauseToken(address(token), tokenIssuer);
+
+        // Check burning works again
+        destroyedHookCountBefore = mockComplianceModule.destroyedCallCount();
+        uint256 secondBurnAmount = 20;
+        uint256 balanceBeforeSecondBurn = token.balanceOf(clientBE);
+        tokenUtils.burnToken(address(token), tokenIssuer, clientBE, secondBurnAmount);
+        assertEq(token.balanceOf(clientBE), balanceBeforeSecondBurn - secondBurnAmount, "Burn after unpause failed");
+        assertEq(
+            mockComplianceModule.destroyedCallCount(),
+            destroyedHookCountBefore + 1,
+            "Mock destroyed hook count incorrect after burn post-unpause"
         );
     }
 

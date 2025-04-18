@@ -206,7 +206,7 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTBurnableUpgradeable, SMARTCustodianUpgradeable, SMARTExtensionUpgradeable) // SMARTUpgradeable
+        override(SMARTBurnableUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTExtensionUpgradeable) // SMARTUpgradeable
             // does not implement _validateBurn
     {
         super._validateBurn(from, amount);

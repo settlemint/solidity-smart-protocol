@@ -54,6 +54,12 @@ abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, Ownable, _SMAR
         super._validateTransfer(from, to, amount);
     }
 
+    /// @inheritdoc SMARTExtension
+    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTExtension) {
+        _pausable_validateBurnLogic();
+        super._validateBurn(from, amount);
+    }
+
     /**
      * @dev Overrides _update to resolve conflict between ERC20Pausable and SMARTExtension,
      * ensuring the whenNotPaused modifier is applied.

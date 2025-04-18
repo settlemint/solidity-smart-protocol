@@ -34,4 +34,8 @@ abstract contract _SMARTPausableLogic {
     function _pausable_validateTransferLogic() internal view virtual {
         if (paused()) revert TokenPaused();
     }
+
+    function _pausable_validateBurnLogic() internal view virtual {
+        if (paused()) revert TokenPaused();
+    }
 }

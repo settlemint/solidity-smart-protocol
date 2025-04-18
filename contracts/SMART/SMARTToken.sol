@@ -118,7 +118,7 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
     )
         internal
         virtual
-        override(SMARTBurnable, SMARTCustodian, SMARTExtension)
+        override(SMARTBurnable, SMARTPausable, SMARTCustodian, SMARTExtension)
     {
         super._validateBurn(from, amount);
     }
