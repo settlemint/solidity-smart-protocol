@@ -15,8 +15,8 @@ import { IClaimIssuer } from "../../contracts/onchainid/interface/IClaimIssuer.s
 import { ISMART } from "../../contracts/SMART/interface/ISMART.sol";
 import { CountryAllowListComplianceModule } from "../../contracts/SMART/compliance/CountryAllowListComplianceModule.sol";
 import { CountryBlockListComplianceModule } from "../../contracts/SMART/compliance/CountryBlockListComplianceModule.sol";
-import { ISMARTComplianceModule } from "../../contracts/SMART/interface/ISMARTComplianceModule.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { MockedComplianceModule } from "../mocks/MockedComplianceModule.sol";
 
 contract InfrastructureUtils is Test {
     // Core Contract Instances (now holding proxy addresses)
@@ -25,6 +25,9 @@ contract InfrastructureUtils is Test {
     SMARTIdentityRegistry public identityRegistry; // Proxy
     SMARTCompliance public compliance; // Proxy
     SMARTIdentityFactory public identityFactory; // Proxy
+
+    // Compliance Modules
+    MockedComplianceModule public mockedComplianceModule;
     CountryAllowListComplianceModule public countryAllowListComplianceModule;
     CountryBlockListComplianceModule public countryBlockListComplianceModule;
 
@@ -69,6 +72,7 @@ contract InfrastructureUtils is Test {
         identityRegistryStorage.bindIdentityRegistry(address(identityRegistry));
 
         // --- Deploy Other Contracts ---
+        mockedComplianceModule = new MockedComplianceModule();
         countryAllowListComplianceModule = new CountryAllowListComplianceModule();
         countryBlockListComplianceModule = new CountryBlockListComplianceModule();
 

@@ -28,21 +28,6 @@ contract SMARTUpgradeableTest is SMARTTestBase {
     // Keep the function to create the standard token instance
     // Make it private as it's only used within this contract's setup
     function _createToken() private returns (address) {
-        uint256[] memory requiredClaimTopics = new uint256[](2);
-        requiredClaimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
-        requiredClaimTopics[1] = TestConstants.CLAIM_TOPIC_AML;
-
-        uint16[] memory allowedCountries = new uint16[](2);
-        allowedCountries[0] = TestConstants.COUNTRY_CODE_BE;
-        allowedCountries[1] = TestConstants.COUNTRY_CODE_JP;
-
-        ISMART.ComplianceModuleParamPair[] memory modulePairs = new ISMART.ComplianceModuleParamPair[](1);
-        modulePairs[0] = ISMART.ComplianceModuleParamPair({
-            module: address(infrastructureUtils.countryAllowListComplianceModule()), // Access compliance module from
-                // base
-            params: abi.encode(allowedCountries)
-        });
-
         // Use TokenUtils to create the token, passing the bondFactory from base
         address bondAddress = tokenUtils.createUpgradeableToken(
             "Test Bond",

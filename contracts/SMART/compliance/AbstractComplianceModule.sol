@@ -23,18 +23,28 @@ abstract contract AbstractComplianceModule is ISMARTComplianceModule, ERC165 {
         bytes calldata _params
     )
         external
+        virtual
         override
     { }
 
     /**
      * @inheritdoc ISMARTComplianceModule
      */
-    function destroyed(address _token, address _from, uint256 _value, bytes calldata _params) external override { }
+    function destroyed(
+        address _token,
+        address _from,
+        uint256 _value,
+        bytes calldata _params
+    )
+        external
+        virtual
+        override
+    { }
 
     /**
      * @inheritdoc ISMARTComplianceModule
      */
-    function created(address _token, address _to, uint256 _value, bytes calldata _params) external override { }
+    function created(address _token, address _to, uint256 _value, bytes calldata _params) external virtual override { }
 
     /**
      * @inheritdoc ERC165

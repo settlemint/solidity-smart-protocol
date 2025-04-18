@@ -25,6 +25,11 @@ abstract contract SMARTTestBase is Test {
     address public clientUnverified;
     address public claimIssuer; // Wallet address of the claim issuer
 
+    // --- Test Data ---
+    uint256[] public requiredClaimTopics;
+    uint16[] public allowedCountries;
+    ISMART.ComplianceModuleParamPair[] public modulePairs;
+
     // --- Private Keys ---
     uint256 internal claimIssuerPrivateKey = 0x12345;
 
@@ -67,34 +72,21 @@ abstract contract SMARTTestBase is Test {
 
         // --- Setup Identities ---
         _setupIdentities();
-    }
 
-    // --- Internal Helper Functions ---
+        requiredClaimTopics = new uint256[](2);
+        requiredClaimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
+        requiredClaimTopics[1] = TestConstants.CLAIM_TOPIC_AML;
 
-    function _setupIdentities() internal {
-        // Create the token issuer identity
-        identityUtils.createClientIdentity(tokenIssuer, TestConstants.COUNTRY_CODE_BE);
-        // Issue claims to the token issuer as well (assuming they need verification)
-        uint256[] memory claimTopics = new uint256[](2);
-        claimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
-        claimTopics[1] = TestConstants.CLAIM_TOPIC_AML;
-        // Use claimIssuer address directly, createIssuerIdentity handles creating the on-chain identity
-        address claimIssuerIdentityAddress = identityUtils.createIssuerIdentity(claimIssuer, claimTopics);
-        // Now issue claims TO the token issuer
-        claimUtils.issueAllClaims(claimIssuerIdentityAddress, tokenIssuer);
+        allowedCountries = new uint16[](2);
+        allowedCountries[0] = TestConstants.COUNTRY_CODE_BE;
+        allowedCountries[1] = TestConstants.COUNTRY_CODE_JP;
 
-        // Create the client identities
-        identityUtils.createClientIdentity(clientBE, TestConstants.COUNTRY_CODE_BE);
-        identityUtils.createClientIdentity(clientJP, TestConstants.COUNTRY_CODE_JP);
-        identityUtils.createClientIdentity(clientUS, TestConstants.COUNTRY_CODE_US);
-        identityUtils.createClientIdentity(clientUnverified, TestConstants.COUNTRY_CODE_BE);
-
-        // Issue claims to clients
-        claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientBE);
-        claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientJP);
-        claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientUS);
-        // Only issue KYC claim to the unverified client
-        claimUtils.issueKYCClaim(claimIssuerIdentityAddress, clientUnverified);
+        modulePairs = new ISMART.ComplianceModuleParamPair[](1);
+        modulePairs[0] = ISMART.ComplianceModuleParamPair({
+            module: address(infrastructureUtils.countryAllowListComplianceModule()), // Access compliance module from
+                // base
+            params: abi.encode(allowedCountries)
+        });
     }
 
     // --- Test Functions ---
@@ -176,5 +168,31 @@ abstract contract SMARTTestBase is Test {
         assertEq(token.balanceOf(clientBE), 550);
     }
 
-    // Add other common test functions here...
+    // --- Internal Helper Functions ---
+
+    function _setupIdentities() internal {
+        // Create the token issuer identity
+        identityUtils.createClientIdentity(tokenIssuer, TestConstants.COUNTRY_CODE_BE);
+        // Issue claims to the token issuer as well (assuming they need verification)
+        uint256[] memory claimTopics = new uint256[](2);
+        claimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
+        claimTopics[1] = TestConstants.CLAIM_TOPIC_AML;
+        // Use claimIssuer address directly, createIssuerIdentity handles creating the on-chain identity
+        address claimIssuerIdentityAddress = identityUtils.createIssuerIdentity(claimIssuer, claimTopics);
+        // Now issue claims TO the token issuer
+        claimUtils.issueAllClaims(claimIssuerIdentityAddress, tokenIssuer);
+
+        // Create the client identities
+        identityUtils.createClientIdentity(clientBE, TestConstants.COUNTRY_CODE_BE);
+        identityUtils.createClientIdentity(clientJP, TestConstants.COUNTRY_CODE_JP);
+        identityUtils.createClientIdentity(clientUS, TestConstants.COUNTRY_CODE_US);
+        identityUtils.createClientIdentity(clientUnverified, TestConstants.COUNTRY_CODE_BE);
+
+        // Issue claims to clients
+        claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientBE);
+        claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientJP);
+        claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientUS);
+        // Only issue KYC claim to the unverified client
+        claimUtils.issueKYCClaim(claimIssuerIdentityAddress, clientUnverified);
+    }
 }
