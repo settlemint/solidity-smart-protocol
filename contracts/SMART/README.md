@@ -13,10 +13,10 @@
 ## TODO
 
 - Integrate MetaTx
-- Should extensions be upgradable?
 - Integrate OpenZeppelin AccessControl
   - Also check that identityRegistry has access to the storage and the issuers registry
 
-## Ideas
+## Open questions?
 
-- Can identity verification become a Compliance module?
+- Should extensions have logic for upgradeable?
+- Should modules be upgradeable?
