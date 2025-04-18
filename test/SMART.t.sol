@@ -8,7 +8,7 @@ import { ISMART } from "../contracts/SMART/interface/ISMART.sol";
 import { ISMARTComplianceModule } from "../contracts/SMART/interface/ISMARTComplianceModule.sol";
 import { ClaimUtils } from "./utils/ClaimUtils.sol";
 import { TestConstants } from "./utils/Constants.sol"; // Import the constants library
-import { SMARTPausable } from "../contracts/SMART/extensions/SMARTPausable.sol";
+import { _SMARTPausableLogic } from "../contracts/SMART/extensions/base/_SMARTPausableLogic.sol";
 
 contract SMARTTest is SMARTTestBase {
     address public tokenIssuer;
@@ -132,7 +132,7 @@ contract SMARTTest is SMARTTestBase {
 
         tokenUtils.pauseToken(bondAddress, tokenIssuer);
 
-        vm.expectRevert(abi.encodeWithSelector(SMARTPausable.TokenPaused.selector));
+        vm.expectRevert(abi.encodeWithSelector(_SMARTPausableLogic.TokenPaused.selector));
         tokenUtils.mintToken(bondAddress, tokenIssuer, clientBE, 500);
     }
 

@@ -34,22 +34,31 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
             identityRegistry_,
             compliance_,
             requiredClaimTopics_,
-            initialModulePairs_
+            initialModulePairs_,
+            initialOwner_
         )
-        Ownable(initialOwner_)
     { }
 
     // --- Overrides for Conflicting Functions ---
 
     /// @inheritdoc ERC20
+    function name() public view virtual override(SMART, ERC20, IERC20Metadata) returns (string memory) {
+        return super.name();
+    }
+
+    /// @inheritdoc ERC20
+    function symbol() public view virtual override(SMART, ERC20, IERC20Metadata) returns (string memory) {
+        return super.symbol();
+    }
+
+    /// @inheritdoc ERC20
     function decimals() public view virtual override(SMART, ERC20, IERC20Metadata) returns (uint8) {
-        return super.decimals(); // Use SMART implementation
+        return super.decimals();
     }
 
     /// @inheritdoc ERC20
     function transfer(address to, uint256 amount) public virtual override(SMART, ERC20, IERC20) returns (bool) {
-        // Explicitly call SMART implementation which handles hooks
-        return SMART.transfer(to, amount);
+        return super.transfer(to, amount);
     }
 
     /// @inheritdoc ERC20
@@ -63,8 +72,7 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
         override(SMART, ERC20, IERC20)
         returns (bool)
     {
-        // Explicitly call SMART implementation which handles hooks and allowance
-        return SMART.transferFrom(from, to, amount);
+        return super.transferFrom(from, to, amount);
     }
 
     /**
