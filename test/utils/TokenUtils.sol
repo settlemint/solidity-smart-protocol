@@ -169,6 +169,12 @@ contract TokenUtils is Test {
         vm.stopPrank();
     }
 
+    function unpauseToken(address tokenAddress, address tokenIssuer_) public {
+        vm.startPrank(tokenIssuer_);
+        SMARTPausable(tokenAddress).unpause();
+        vm.stopPrank();
+    }
+
     function _createAndSetTokenOnchainID(address tokenAddress, address tokenIssuer_) internal returns (address) {
         // Ensure tokenAddress is the proxy address when dealing with upgradeable tokens
         vm.startPrank(_platformAdmin); // Platform admin creates the token identity

@@ -18,38 +18,18 @@ import { CountryBlockListComplianceModule } from "../../contracts/SMART/complian
 import { ISMARTComplianceModule } from "../../contracts/SMART/interface/ISMARTComplianceModule.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-// Import utility contracts (paths may need adjustment if they are in a different subdirectory)
-import { IdentityUtils } from "./IdentityUtils.sol";
-import { ClaimUtils } from "./ClaimUtils.sol";
-import { TokenUtils } from "./TokenUtils.sol";
-
-contract SMARTTestBase is Test {
-    // --- State Variables ---
-    // Addresses
-    address public platformAdmin;
-
-    // Private Keys
-    uint256 internal claimIssuerPrivateKey = 0x12345;
-
+contract InfrastructureUtils is Test {
     // Core Contract Instances (now holding proxy addresses)
-    SMARTIdentityRegistryStorage internal identityRegistryStorage; // Proxy
-    SMARTTrustedIssuersRegistry internal trustedIssuersRegistry; // Proxy
-    SMARTIdentityRegistry internal identityRegistry; // Proxy
-    SMARTCompliance internal compliance; // Proxy
-    SMARTIdentityFactory internal identityFactory; // Proxy
-    CountryAllowListComplianceModule internal countryAllowListComplianceModule;
-    CountryBlockListComplianceModule internal countryBlockListComplianceModule;
-
-    // Utility Contract Instances
-    IdentityUtils internal identityUtils;
-    ClaimUtils internal claimUtils;
-    TokenUtils internal tokenUtils;
+    SMARTIdentityRegistryStorage public identityRegistryStorage; // Proxy
+    SMARTTrustedIssuersRegistry public trustedIssuersRegistry; // Proxy
+    SMARTIdentityRegistry public identityRegistry; // Proxy
+    SMARTCompliance public compliance; // Proxy
+    SMARTIdentityFactory public identityFactory; // Proxy
+    CountryAllowListComplianceModule public countryAllowListComplianceModule;
+    CountryBlockListComplianceModule public countryBlockListComplianceModule;
 
     // --- Setup ---
-    function setUp() public virtual {
-        // Initialize Addresses
-        platformAdmin = makeAddr("Platform Admin");
-
+    constructor(address platformAdmin) {
         // --- Deploy Implementations ---
         Identity identityImpl = new Identity(address(0), true); // Deploy Identity impl needed by factory
         SMARTIdentityRegistryStorage storageImpl = new SMARTIdentityRegistryStorage();
@@ -95,10 +75,6 @@ contract SMARTTestBase is Test {
         vm.stopPrank();
 
         // --- Instantiate Utility Contracts ---
-        // Instantiate utilities using PROXY addresses
-        identityUtils = new IdentityUtils(platformAdmin, identityFactory, identityRegistry, trustedIssuersRegistry);
-        claimUtils = new ClaimUtils(platformAdmin, claimIssuerPrivateKey, identityRegistry);
-        tokenUtils = new TokenUtils(platformAdmin, identityFactory, identityRegistry, compliance);
     }
 
     // --- Helper Functions ---
