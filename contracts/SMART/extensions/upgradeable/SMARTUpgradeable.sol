@@ -32,32 +32,27 @@ abstract contract SMARTUpgradeable is
         _disableInitializers(); // Prevent implementation contract initialization
     }
 
-    // --- Initializer ---
-    /// @dev Initializes the contract, setting up ERC20, Ownable, and SMART logic.
-    ///      This replaces the constructor for upgradeable contracts.
-    function initialize(
+    /// @dev Internal initializer for SMARTUpgradeable state.
+    ///      Initializes the core SMART logic via _SMARTLogic's initializer.
+    ///      Should be called by the final concrete contract's initialize function.
+    function __SMARTUpgradeable_init(
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
-        address initialOwner_,
+        // Note: initialOwner_ is handled by __Ownable_init in the final contract
         address onchainID_,
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
         ComplianceModuleParamPair[] memory initialModulePairs_
     )
-        public
-        virtual
-        initializer // Locks this function after first call
+        internal
+        onlyInitializing
     {
-        // Initialize parent contracts
-        __Ownable_init(initialOwner_); // Initialize Ownable
-        __ERC20_init(name_, symbol_); // Initialize ERC20 - Note: Uses OZ internal storage
-        __UUPSUpgradeable_init(); // Initialize UUPS
-        __SMARTExtension_init(); // Placeholder if SMARTExtensionUpgradeable needs init
+        // Initialize direct parent extension state (if any)
+        __SMARTExtension_init();
 
-        // Initialize SMART logic state via the base contract's internal initializer
-        // This sets __name, __symbol, __decimals, etc. in _SMARTLogic's storage
+        // Initialize the core SMART logic state via the base logic contract
         __SMART_init_unchained(
             name_,
             symbol_,
@@ -68,7 +63,6 @@ abstract contract SMARTUpgradeable is
             requiredClaimTopics_,
             initialModulePairs_
         );
-        // Note: Event emission happens within __SMART_init_unchained
     }
 
     // --- State-Changing Functions ---
@@ -267,7 +261,7 @@ abstract contract SMARTUpgradeable is
 
     // --- Upgradeability Requirement ---
     // Required by OZ UUPSUpgradeable pattern if using UUPS
-    function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
+    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyOwner { }
 
     // --- Gap for upgradeability ---
     // Leave a gap for future storage variables to avoid storage collisions.

@@ -39,8 +39,6 @@ contract SMARTTestBase is Test {
     SMARTIdentityFactory internal identityFactory; // Proxy
     CountryAllowListComplianceModule internal countryAllowListComplianceModule;
     CountryBlockListComplianceModule internal countryBlockListComplianceModule;
-    MySMARTTokenFactory internal bondFactory;
-    MySMARTTokenFactory internal equityFactory;
 
     // Utility Contract Instances
     IdentityUtils internal identityUtils;
@@ -94,17 +92,13 @@ contract SMARTTestBase is Test {
         countryAllowListComplianceModule = new CountryAllowListComplianceModule();
         countryBlockListComplianceModule = new CountryBlockListComplianceModule();
 
-        // Deploy factories using PROXY addresses
-        bondFactory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
-        equityFactory = new MySMARTTokenFactory(address(identityRegistry), address(compliance));
-
         vm.stopPrank();
 
         // --- Instantiate Utility Contracts ---
         // Instantiate utilities using PROXY addresses
         identityUtils = new IdentityUtils(platformAdmin, identityFactory, identityRegistry, trustedIssuersRegistry);
         claimUtils = new ClaimUtils(platformAdmin, claimIssuerPrivateKey, identityRegistry);
-        tokenUtils = new TokenUtils(platformAdmin, identityFactory, compliance);
+        tokenUtils = new TokenUtils(platformAdmin, identityFactory, identityRegistry, compliance);
     }
 
     // --- Helper Functions ---

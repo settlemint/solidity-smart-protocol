@@ -116,7 +116,6 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     /// @inheritdoc ISMART
     function batchTransfer(address[] calldata toList, uint256[] calldata amounts) external virtual override {
         if (toList.length != amounts.length) revert LengthMismatch();
-        address sender = _msgSender(); // Cache sender
         for (uint256 i = 0; i < toList.length; i++) {
             // Use public transfer function for each transfer
             transfer(toList[i], amounts[i]);

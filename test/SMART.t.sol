@@ -75,7 +75,6 @@ contract SMARTTest is SMARTTestBase {
 
         // Use TokenUtils to create the token, passing the bondFactory from base
         address bondAddress = tokenUtils.createToken(
-            bondFactory, // Use bondFactory instance from base
             "Test Bond",
             "TSTB",
             requiredClaimTopics,
