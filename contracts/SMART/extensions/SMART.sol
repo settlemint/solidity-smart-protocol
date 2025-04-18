@@ -4,46 +4,25 @@ pragma solidity ^0.8.27;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ISMART } from "../interface/ISMART.sol";
-import { ISMARTIdentityRegistry } from "../interface/ISMARTIdentityRegistry.sol";
-import { ISMARTCompliance } from "../interface/ISMARTCompliance.sol";
-import { ISMARTComplianceModule } from "../interface/ISMARTComplianceModule.sol";
 import { SMARTExtension } from "./SMARTExtension.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { LengthMismatch } from "./common/CommonErrors.sol";
+import { _SMARTLogic } from "./base/_SMARTLogic.sol";
 
 /// @title SMART
-/// @notice Base extension that implements the core SMART token functionality
-abstract contract SMART is SMARTExtension, Ownable {
+/// @notice Standard (non-upgradeable) implementation of the core SMART token functionality.
+/// @dev Inherits core logic from _SMARTLogic and standard OZ contracts.
+abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     // --- Custom Errors ---
-    error InvalidComplianceAddress();
-    error InvalidIdentityRegistryAddress();
-    error InvalidModuleAddress();
-    error InvalidModuleImplementation();
-    error ModuleAlreadyAddedOnInit();
-    error MintNotCompliant();
-    error TransferNotCompliant();
-    error ModuleAlreadyAdded();
-    error ModuleNotFound();
+    // Errors are inherited from _SMARTLogic
 
     // --- Storage Variables ---
-    uint8 private immutable _decimals;
-    address private _onchainID;
-    ISMARTIdentityRegistry private _identityRegistry;
-    ISMARTCompliance private _compliance;
-    mapping(address => uint256) private _moduleIndex; // Store index + 1 for existence check
-    mapping(address => bytes) private _moduleParameters; // Store parameters per module
-    address[] private _complianceModuleList;
-    uint256[] internal _requiredClaimTopics;
+    // State variables are inherited from _SMARTLogic (prefixed with __)
+    // Note: immutable _decimals removed, now stored in __decimals
 
     // --- Events ---
-    event TransferCompleted(address indexed from, address indexed to, uint256 amount);
-    event MintValidated(address indexed to, uint256 amount);
-    event MintCompleted(address indexed to, uint256 amount);
-    // Note: UpdatedTokenInformation, IdentityRegistryAdded, ComplianceAdded,
-    // ComplianceModuleAdded, ComplianceModuleRemoved are emitted but defined elsewhere (likely interfaces/base
-    // contracts)
+    // Events are inherited from _SMARTLogic
 
     // --- Constructor ---
     constructor(
@@ -54,108 +33,102 @@ abstract contract SMART is SMARTExtension, Ownable {
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ComplianceModuleParamPair[] memory initialModulePairs_
+        ComplianceModuleParamPair[] memory initialModulePairs_,
+        address initialOwner_
     )
         ERC20(name_, symbol_)
+        Ownable(initialOwner_)
     {
-        if (compliance_ == address(0)) revert InvalidComplianceAddress();
-        if (identityRegistry_ == address(0)) revert InvalidIdentityRegistryAddress();
-
-        _decimals = decimals_;
-        _onchainID = onchainID_;
-        _identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
-        _compliance = ISMARTCompliance(compliance_);
-        _requiredClaimTopics = requiredClaimTopics_;
-
-        // Register initial modules and their parameters
-        for (uint256 i = 0; i < initialModulePairs_.length; i++) {
-            address module = initialModulePairs_[i].module;
-            bytes memory params = initialModulePairs_[i].params;
-
-            // Validate module and parameters internally (reverts on failure)
-            _validateModuleAndParams(module, params);
-
-            // Check for duplicates during initialization
-            if (_moduleIndex[module] != 0) revert ModuleAlreadyAddedOnInit();
-
-            // Add module and store parameters
-            _complianceModuleList.push(module);
-            _moduleIndex[module] = _complianceModuleList.length; // Store index + 1
-            _moduleParameters[module] = params; // Store parameters
-
-            emit ComplianceModuleAdded(module, params); // Emit with parameters
-        }
+        // Call the internal initializer from the base logic contract
+        __SMART_init_unchained(
+            name_,
+            symbol_,
+            decimals_,
+            onchainID_,
+            identityRegistry_,
+            compliance_,
+            requiredClaimTopics_,
+            initialModulePairs_
+        );
+        // UpdatedTokenInformation is emitted within __SMART_init_unchained now
     }
 
     // --- State-Changing Functions ---
+    // Override functions from ISMART (via _SMARTLogic) and ERC20/Ownable as needed
+
     /// @inheritdoc ISMART
-    function setName(string calldata _name) external virtual override onlyOwner {
-        _setName(_name);
+    function setName(string calldata name_) external virtual override onlyOwner {
+        _setName(name_); // Calls _SMARTLogic's internal _setName
+            // Event is emitted within _setName
     }
 
     /// @inheritdoc ISMART
-    function setSymbol(string calldata _symbol) external virtual override onlyOwner {
-        _setSymbol(_symbol);
+    function setSymbol(string calldata symbol_) external virtual override onlyOwner {
+        _setSymbol(symbol_); // Calls _SMARTLogic's internal _setSymbol
+            // Event is emitted within _setSymbol
     }
 
     /// @inheritdoc ISMART
     function setOnchainID(address onchainID_) external virtual override onlyOwner {
-        _onchainID = onchainID_;
-        emit UpdatedTokenInformation(name(), symbol(), decimals(), _onchainID);
+        _setOnchainID(onchainID_); // Call internal logic from base
+            // Event is emitted within _setOnchainID
     }
 
     /// @inheritdoc ISMART
     function setIdentityRegistry(address identityRegistry_) external virtual override onlyOwner {
-        if (identityRegistry_ == address(0)) revert InvalidIdentityRegistryAddress();
-        _identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
-        emit IdentityRegistryAdded(address(_identityRegistry));
+        _setIdentityRegistry(identityRegistry_); // Call internal logic from base
     }
 
     /// @inheritdoc ISMART
     function setCompliance(address compliance_) external virtual override onlyOwner {
-        if (compliance_ == address(0)) revert InvalidComplianceAddress();
-        _compliance = ISMARTCompliance(compliance_);
-        emit ComplianceAdded(address(_compliance));
+        _setCompliance(compliance_); // Call internal logic from base
     }
 
     /// @inheritdoc ISMART
-    function mint(address _to, uint256 _amount) external virtual override onlyOwner {
-        _validateMint(_to, _amount);
-        _mint(_to, _amount);
-        _afterMint(_to, _amount);
+    function mint(address to, uint256 amount) external virtual override onlyOwner {
+        _validateMint(to, amount); // Calls SMARTExtension -> _SMARTLogic validation
+        _mint(to, amount); // Calls ERC20 _mint
+        _afterMint(to, amount); // Calls SMARTExtension -> _SMARTLogic hooks
     }
 
     /// @inheritdoc ISMART
-    function batchMint(address[] calldata _toList, uint256[] calldata _amounts) external virtual override onlyOwner {
-        if (_toList.length != _amounts.length) revert LengthMismatch();
-        for (uint256 i = 0; i < _toList.length; i++) {
-            _validateMint(_toList[i], _amounts[i]);
-            _mint(_toList[i], _amounts[i]);
-            _afterMint(_toList[i], _amounts[i]);
+    function batchMint(address[] calldata toList, uint256[] calldata amounts) external virtual override onlyOwner {
+        if (toList.length != amounts.length) revert LengthMismatch();
+        for (uint256 i = 0; i < toList.length; i++) {
+            // Use internal implementations
+            _validateMint(toList[i], amounts[i]);
+            _mint(toList[i], amounts[i]); // Use ERC20 internal _mint
+            _afterMint(toList[i], amounts[i]);
         }
     }
 
     /// @inheritdoc ERC20
+    /// @dev Overrides ERC20.transfer to include SMART validation and hooks.
     function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
         address sender = _msgSender();
-        _validateTransfer(sender, to, amount);
-        _transfer(sender, to, amount);
-        _afterTransfer(sender, to, amount);
+        _validateTransfer(sender, to, amount); // Calls SMARTExtension -> _SMARTLogic validation
+        // _transfer is ERC20's internal function, calls _update
+        super._transfer(sender, to, amount); // Call ERC20's _transfer
+        _afterTransfer(sender, to, amount); // Calls SMARTExtension -> _SMARTLogic hooks
         return true;
     }
 
     /// @inheritdoc ISMART
-    function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external virtual override {
-        if (_toList.length != _amounts.length) revert LengthMismatch();
-        address sender = _msgSender();
-        for (uint256 i = 0; i < _toList.length; i++) {
-            _validateTransfer(sender, _toList[i], _amounts[i]);
-            _transfer(sender, _toList[i], _amounts[i]);
-            _afterTransfer(sender, _toList[i], _amounts[i]);
+    function batchTransfer(address[] calldata toList, uint256[] calldata amounts) external virtual override {
+        if (toList.length != amounts.length) revert LengthMismatch();
+        address sender = _msgSender(); // Cache sender
+        for (uint256 i = 0; i < toList.length; i++) {
+            // Use public transfer function for each transfer
+            transfer(toList[i], amounts[i]);
+            // // Alternative: Direct internal calls (requires sender context)
+            // _validateTransfer(sender, toList[i], amounts[i]);
+            // super._transfer(sender, toList[i], amounts[i]); // Call ERC20's internal transfer
+            // _afterTransfer(sender, toList[i], amounts[i]);
         }
     }
 
     /// @inheritdoc ERC20
+    /// @dev Overrides ERC20.transferFrom to include SMART validation and hooks.
     function transferFrom(
         address from,
         address to,
@@ -167,185 +140,97 @@ abstract contract SMART is SMARTExtension, Ownable {
         returns (bool)
     {
         address spender = _msgSender();
-        _validateTransfer(from, to, amount);
-        _spendAllowance(from, spender, amount);
-        _transfer(from, to, amount);
-        _afterTransfer(from, to, amount);
+        // Validation should happen before allowance check for security/compliance
+        _validateTransfer(from, to, amount); // Calls SMARTExtension -> _SMARTLogic validation
+        // _spendAllowance is ERC20's internal function
+        super._spendAllowance(from, spender, amount);
+        // _transfer is ERC20's internal function
+        super._transfer(from, to, amount); // Call ERC20's _transfer
+        _afterTransfer(from, to, amount); // Calls SMARTExtension -> _SMARTLogic hooks
         return true;
     }
 
     /// @inheritdoc ISMART
-    function addComplianceModule(address _module, bytes calldata _params) external virtual override onlyOwner {
-        _validateModuleAndParams(_module, _params);
-
-        if (_moduleIndex[_module] != 0) revert ModuleAlreadyAdded();
-
-        _complianceModuleList.push(_module);
-        _moduleIndex[_module] = _complianceModuleList.length;
-        _moduleParameters[_module] = _params;
-
-        emit ComplianceModuleAdded(_module, _params);
+    function addComplianceModule(address module, bytes calldata params) external virtual override onlyOwner {
+        _addComplianceModule(module, params); // Call internal logic from base
     }
 
     /// @inheritdoc ISMART
-    function removeComplianceModule(address _module) external virtual override onlyOwner {
-        uint256 index = _moduleIndex[_module];
-        if (index == 0) revert ModuleNotFound();
-
-        uint256 listIndex = index - 1;
-        uint256 lastIndex = _complianceModuleList.length - 1;
-        if (listIndex != lastIndex) {
-            address lastModule = _complianceModuleList[lastIndex];
-            _complianceModuleList[listIndex] = lastModule;
-            _moduleIndex[lastModule] = listIndex + 1;
-        }
-        _complianceModuleList.pop();
-        delete _moduleIndex[_module];
-        delete _moduleParameters[_module];
-
-        emit ComplianceModuleRemoved(_module);
+    function removeComplianceModule(address module) external virtual override onlyOwner {
+        _removeComplianceModule(module); // Call internal logic from base
     }
 
     /// @inheritdoc ISMART
     function setParametersForComplianceModule(
-        address _module,
-        bytes calldata _params
+        address module,
+        bytes calldata params
     )
         external
         virtual
         override
         onlyOwner
     {
-        if (_moduleIndex[_module] == 0) revert ModuleNotFound();
-
-        _validateModuleAndParams(_module, _params);
-
-        _moduleParameters[_module] = _params;
-
-        emit ModuleParametersUpdated(_module, _params);
+        _setParametersForComplianceModule(module, params); // Call internal logic from base
     }
 
     // --- View Functions ---
+    // Override ERC20 views to use _SMARTLogic state
+
     /// @inheritdoc ERC20
-    function decimals() public view virtual override(ERC20, IERC20Metadata) returns (uint8) {
-        return _decimals;
+    function name() public view virtual override(ERC20, IERC20Metadata, _SMARTLogic) returns (string memory) {
+        return __name; // Use state variable from _SMARTLogic
     }
 
-    /// @inheritdoc ISMART
-    function onchainID() external view virtual override returns (address) {
-        return _onchainID;
+    /// @inheritdoc ERC20
+    function symbol() public view virtual override(ERC20, IERC20Metadata, _SMARTLogic) returns (string memory) {
+        return __symbol; // Use state variable from _SMARTLogic
     }
 
-    /// @inheritdoc ISMART
-    function identityRegistry() external view virtual override returns (ISMARTIdentityRegistry) {
-        return _identityRegistry;
-    }
-
-    /// @inheritdoc ISMART
-    function compliance() external view virtual override returns (ISMARTCompliance) {
-        return _compliance;
-    }
-
-    /// @inheritdoc ISMART
-    function requiredClaimTopics() external view virtual override returns (uint256[] memory) {
-        return _requiredClaimTopics;
-    }
-
-    /// @inheritdoc ISMART
-    function complianceModules() external view virtual override returns (ComplianceModuleParamPair[] memory) {
-        uint256 length = _complianceModuleList.length;
-        ComplianceModuleParamPair[] memory pairs = new ComplianceModuleParamPair[](length);
-
-        for (uint256 i = 0; i < length; i++) {
-            address module = _complianceModuleList[i];
-            pairs[i] = ComplianceModuleParamPair({ module: module, params: _moduleParameters[module] });
-        }
-
-        return pairs;
-    }
-
-    /// @inheritdoc ISMART
-    function getParametersForComplianceModule(address _module) external view virtual override returns (bytes memory) {
-        return _moduleParameters[_module];
-    }
-
-    /// @inheritdoc ISMART
-    function isValidComplianceModule(address _module, bytes calldata _params) external view virtual override {
-        // Reverts internally if validation fails
-        // Pass params as memory because internal function expects memory
-        _validateModuleAndParams(_module, _params);
-    }
-
-    /// @inheritdoc ISMART
-    function areValidComplianceModules(ComplianceModuleParamPair[] calldata _pairs) external view virtual override {
-        for (uint256 i = 0; i < _pairs.length; i++) {
-            // Reverts internally if validation fails for any module/param pair
-            // Pass params as memory because internal function expects memory
-            _validateModuleAndParams(_pairs[i].module, _pairs[i].params);
-        }
+    /// @inheritdoc ERC20
+    function decimals() public view virtual override(ERC20, IERC20Metadata, _SMARTLogic) returns (uint8) {
+        return __decimals; // Use state variable from _SMARTLogic
     }
 
     // --- Internal Functions ---
-    /// @dev Internal function to validate a module's interface support AND its parameters.
-    ///      Reverts with appropriate error if validation fails.
-    function _validateModuleAndParams(address _module, bytes memory _params) internal view {
-        if (_module == address(0)) revert InvalidModuleAddress();
+    // Internal hooks (_validate*, _after*) inherit SMARTExtension and call _SMARTLogic via super.
 
-        bool supportsInterface;
-        try IERC165(_module).supportsInterface(type(ISMARTComplianceModule).interfaceId) returns (bool supported) {
-            supportsInterface = supported;
-        } catch {
-            revert InvalidModuleImplementation();
-        }
-        if (!supportsInterface) {
-            revert InvalidModuleImplementation();
-        }
-
-        ISMARTComplianceModule(_module).validateParameters(_params);
+    /// @inheritdoc SMARTExtension
+    function _validateMint(address to, uint256 amount) internal virtual override(SMARTExtension) {
+        // Call logic helper from _SMARTLogic with new name
+        _smart_validateMintLogic(to, amount);
+        super._validateMint(to, amount);
     }
 
     /// @inheritdoc SMARTExtension
-    function _validateMint(address _to, uint256 _amount) internal virtual override {
-        super._validateMint(_to, _amount);
-        if (!_identityRegistry.isVerified(_to, _requiredClaimTopics)) revert RecipientNotVerified();
-        if (!_compliance.canTransfer(address(this), address(0), _to, _amount)) revert MintNotCompliant();
-        emit MintValidated(_to, _amount);
+    function _afterMint(address to, uint256 amount) internal virtual override(SMARTExtension) {
+        // Call logic helper from _SMARTLogic with new name
+        _smart_afterMintLogic(to, amount);
+        super._afterMint(to, amount);
     }
 
     /// @inheritdoc SMARTExtension
-    function _afterMint(address _to, uint256 _amount) internal virtual override {
-        super._afterMint(_to, _amount);
-        _compliance.created(address(this), _to, _amount);
-        emit MintCompleted(_to, _amount);
+    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTExtension) {
+        // Call logic helper from _SMARTLogic with new name
+        _smart_validateTransferLogic(from, to, amount);
+        super._validateTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTExtension
-    function _validateTransfer(address _from, address _to, uint256 _amount) internal virtual override {
-        super._validateTransfer(_from, _to, _amount);
-        if (!_identityRegistry.isVerified(_to, _requiredClaimTopics)) revert RecipientNotVerified();
-        if (!_compliance.canTransfer(address(this), _from, _to, _amount)) revert TransferNotCompliant();
+    function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMARTExtension) {
+        // Call logic helper from _SMARTLogic with new name
+        _smart_afterTransferLogic(from, to, amount);
+        super._afterTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTExtension
-    function _afterTransfer(address _from, address _to, uint256 _amount) internal virtual override {
-        super._afterTransfer(_from, _to, _amount);
-        _compliance.transferred(address(this), _from, _to, _amount);
-        emit TransferCompleted(_from, _to, _amount);
+    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTExtension) {
+        // Call logic helper from _SMARTLogic with new name
+        _smart_afterBurnLogic(from, amount);
+        super._afterBurn(from, amount);
     }
 
-    /// @inheritdoc SMARTExtension
-    function _afterBurn(address _from, uint256 _amount) internal virtual override {
-        super._afterBurn(_from, _amount);
-        _compliance.destroyed(address(this), _from, _amount);
-    }
+    // --- Overrides for ERC20 name/symbol setters to emit UpdatedTokenInformation ---
+    // REMOVED internal _setName and _setSymbol overrides as they don't exist in ERC20 base
 
-    /// @dev Internal function to set the token name
-    function _setName(string memory _name) internal virtual {
-        emit UpdatedTokenInformation(_name, symbol(), decimals(), _onchainID);
-    }
-
-    /// @dev Internal function to set the token symbol
-    function _setSymbol(string memory _symbol) internal virtual {
-        emit UpdatedTokenInformation(name(), _symbol, decimals(), _onchainID);
-    }
+    // Removed _validateModuleAndParams - logic moved to _SMARTLogic
 }

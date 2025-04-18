@@ -1,22 +1,18 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { ISMART } from "../interface/ISMART.sol";
 import { SMARTExtension } from "./SMARTExtension.sol";
 import { ERC20Pausable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { _SMARTPausableLogic } from "./base/_SMARTPausableLogic.sol";
 
 /// @title SMARTPausable
-/// @notice Extension that adds pausable functionality to SMART tokens using OpenZeppelin's Pausable
-abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, Ownable {
-    // --- Custom Errors ---
-    error TokenPaused();
-
-    // --- Constructor ---
-
-    // --- Modifiers ---
-    // Modifiers whenNotPaused and whenPaused are inherited from Pausable
+/// @notice Standard (non-upgradeable) extension that adds pausable functionality.
+/// @dev Inherits from OZ ERC20Pausable, Ownable, SMARTExtension, and _SMARTPausableLogic.
+abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, Ownable, _SMARTPausableLogic {
+    // Error inherited from _SMARTPausableLogic
 
     // --- State-Changing Functions ---
     /// @dev Triggers stopped state.
@@ -39,21 +35,23 @@ abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, Ownable {
     /**
      * @dev Returns true if the contract is paused, and false otherwise.
      */
-    function paused() public view virtual override returns (bool) {
-        // Added override specifier consistency
+    function paused() public view virtual override(Pausable, _SMARTPausableLogic) returns (bool) {
         return super.paused();
     }
 
     // --- Internal Functions ---
-    /// @notice Override validation hooks to include pausing checks
-    function _validateMint(address _to, uint256 _amount) internal virtual override {
-        if (paused()) revert TokenPaused();
-        super._validateMint(_to, _amount);
+    /// @inheritdoc SMARTExtension
+    function _validateMint(address to, uint256 amount) internal virtual override(SMARTExtension) {
+        // Call Pausable check helper with new name
+        _pausable_validateMintLogic();
+        super._validateMint(to, amount);
     }
 
-    function _validateTransfer(address _from, address _to, uint256 _amount) internal virtual override {
-        if (paused()) revert TokenPaused();
-        super._validateTransfer(_from, _to, _amount);
+    /// @inheritdoc SMARTExtension
+    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTExtension) {
+        // Call Pausable check helper with new name
+        _pausable_validateTransferLogic();
+        super._validateTransfer(from, to, amount);
     }
 
     /**
