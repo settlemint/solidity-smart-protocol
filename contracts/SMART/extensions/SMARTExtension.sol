@@ -2,11 +2,12 @@
 pragma solidity ^0.8.27;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-/// @title SMARTHooks
+import { ISMART } from "../interface/ISMART.sol";
+/// @title SMARTExtension
 /// @notice Abstract contract that defines the internal hooks for SMART tokens
 /// @dev These hooks should be called first in any override implementation
-abstract contract SMARTHooks is ERC20 {
+
+abstract contract SMARTExtension is ERC20, ISMART {
     /// Internal validation and hook functions
     /// @dev These functions should be called first in any override implementation
     function _validateMint(address _to, uint256 _amount) internal virtual {

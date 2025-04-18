@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { ISMART } from "../interface/ISMART.sol";
-import { SMARTHooks } from "./SMARTHooks.sol";
+import { SMARTExtension } from "./SMARTExtension.sol";
 import { ISMARTIdentityRegistry } from "./../interface/ISMARTIdentityRegistry.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // Still needed for override specifiers
 import { IIdentity } from "../../onchainid/interface/IIdentity.sol";
@@ -18,7 +18,7 @@ import { LengthMismatch } from "./common/CommonErrors.sol";
 ///      whereas this contract requires both a boolean address-level freeze and an additive/subtractive partial freeze
 /// amount.
 ///      Leveraging ERC20Custodian's state and logic would be overly complex and less efficient for these requirements.
-abstract contract SMARTCustodian is SMARTHooks, ISMART, Ownable {
+abstract contract SMARTCustodian is SMARTExtension, Ownable {
     // --- Storage Variables ---
 
     mapping(address => bool) private _frozen;

@@ -3,13 +3,13 @@ pragma solidity ^0.8.27;
 
 import { ISMART } from "../interface/ISMART.sol";
 import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import { SMARTHooks } from "./SMARTHooks.sol";
+import { SMARTExtension } from "./SMARTExtension.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { LengthMismatch } from "./common/CommonErrors.sol";
 
 /// @title SMARTBurnable
 /// @notice Extension that adds burnable functionality to SMART tokens
-abstract contract SMARTBurnable is ERC20Burnable, SMARTHooks, ISMART, Ownable {
+abstract contract SMARTBurnable is ERC20Burnable, SMARTExtension, Ownable {
     /// @notice Burns a specific amount of tokens from a user's address
     /// @param _userAddress The address to burn tokens from
     /// @param _amount The amount of tokens to burn

@@ -10,6 +10,8 @@ import { IClaimIssuer } from "./../onchainid/interface/IClaimIssuer.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 
 // --- Errors ---
 error InvalidStorageAddress();
@@ -21,8 +23,14 @@ error InvalidUserAddress();
 error IdentityAlreadyRegistered(address userAddress);
 
 /// @title SMARTIdentityRegistry
-/// @notice Registry for managing investor identities (Upgradeable)
-contract SMARTIdentityRegistry is Initializable, ISMARTIdentityRegistry, OwnableUpgradeable, UUPSUpgradeable {
+/// @notice Registry for managing investor identities (Upgradeable, ERC-2771 compatible)
+contract SMARTIdentityRegistry is
+    Initializable,
+    ISMARTIdentityRegistry,
+    ERC2771ContextUpgradeable,
+    OwnableUpgradeable,
+    UUPSUpgradeable
+{
     // --- Storage ---
     IERC3643IdentityRegistryStorage private _identityStorage;
     IERC3643TrustedIssuersRegistry private _trustedIssuersRegistry;
@@ -37,7 +45,7 @@ contract SMARTIdentityRegistry is Initializable, ISMARTIdentityRegistry, Ownable
 
     // --- Constructor ---
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor() ERC2771ContextUpgradeable(address(0)) {
         _disableInitializers();
     }
 
@@ -255,9 +263,42 @@ contract SMARTIdentityRegistry is Initializable, ISMARTIdentityRegistry, Ownable
         emit IdentityRegistered(_userAddress, _identity);
     }
 
+    /// @inheritdoc ContextUpgradeable
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (address sender)
+    {
+        return ERC2771ContextUpgradeable._msgSender();
+    }
+
+    /// @inheritdoc ContextUpgradeable
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (bytes calldata)
+    {
+        return ERC2771ContextUpgradeable._msgData();
+    }
+
+    /// @inheritdoc ERC2771ContextUpgradeable
+    function _contextSuffixLength()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (uint256)
+    {
+        return ERC2771ContextUpgradeable._contextSuffixLength();
+    }
+
     // --- Upgradeability ---
 
     /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
     /// @param newImplementation The address of the new implementation contract.
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
+    function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
 }

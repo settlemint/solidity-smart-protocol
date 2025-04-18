@@ -7,7 +7,7 @@ import { ISMART } from "../interface/ISMART.sol";
 import { ISMARTIdentityRegistry } from "../interface/ISMARTIdentityRegistry.sol";
 import { ISMARTCompliance } from "../interface/ISMARTCompliance.sol";
 import { ISMARTComplianceModule } from "../interface/ISMARTComplianceModule.sol";
-import { SMARTHooks } from "./SMARTHooks.sol";
+import { SMARTExtension } from "./SMARTExtension.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
@@ -15,7 +15,7 @@ import { LengthMismatch } from "./common/CommonErrors.sol";
 
 /// @title SMART
 /// @notice Base extension that implements the core SMART token functionality
-abstract contract SMART is SMARTHooks, ISMART, Ownable {
+abstract contract SMART is SMARTExtension, Ownable {
     // --- Custom Errors ---
     error InvalidComplianceAddress();
     error InvalidIdentityRegistryAddress();
@@ -137,7 +137,7 @@ abstract contract SMART is SMARTHooks, ISMART, Ownable {
 
     /// @inheritdoc ERC20
     function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
-        address sender = msg.sender;
+        address sender = _msgSender();
         _validateTransfer(sender, to, amount);
         _transfer(sender, to, amount);
         _afterTransfer(sender, to, amount);
@@ -147,7 +147,7 @@ abstract contract SMART is SMARTHooks, ISMART, Ownable {
     /// @inheritdoc ISMART
     function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external virtual override {
         if (_toList.length != _amounts.length) revert LengthMismatch();
-        address sender = msg.sender;
+        address sender = _msgSender();
         for (uint256 i = 0; i < _toList.length; i++) {
             _validateTransfer(sender, _toList[i], _amounts[i]);
             _transfer(sender, _toList[i], _amounts[i]);
@@ -166,7 +166,7 @@ abstract contract SMART is SMARTHooks, ISMART, Ownable {
         override(ERC20, IERC20)
         returns (bool)
     {
-        address spender = msg.sender;
+        address spender = _msgSender();
         _validateTransfer(from, to, amount);
         _spendAllowance(from, spender, amount);
         _transfer(from, to, amount);
@@ -304,7 +304,7 @@ abstract contract SMART is SMARTHooks, ISMART, Ownable {
         ISMARTComplianceModule(_module).validateParameters(_params);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @inheritdoc SMARTExtension
     function _validateMint(address _to, uint256 _amount) internal virtual override {
         super._validateMint(_to, _amount);
         if (!_identityRegistry.isVerified(_to, _requiredClaimTopics)) revert RecipientNotVerified();
@@ -312,28 +312,28 @@ abstract contract SMART is SMARTHooks, ISMART, Ownable {
         emit MintValidated(_to, _amount);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @inheritdoc SMARTExtension
     function _afterMint(address _to, uint256 _amount) internal virtual override {
         super._afterMint(_to, _amount);
         _compliance.created(address(this), _to, _amount);
         emit MintCompleted(_to, _amount);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @inheritdoc SMARTExtension
     function _validateTransfer(address _from, address _to, uint256 _amount) internal virtual override {
         super._validateTransfer(_from, _to, _amount);
         if (!_identityRegistry.isVerified(_to, _requiredClaimTopics)) revert RecipientNotVerified();
         if (!_compliance.canTransfer(address(this), _from, _to, _amount)) revert TransferNotCompliant();
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @inheritdoc SMARTExtension
     function _afterTransfer(address _from, address _to, uint256 _amount) internal virtual override {
         super._afterTransfer(_from, _to, _amount);
         _compliance.transferred(address(this), _from, _to, _amount);
         emit TransferCompleted(_from, _to, _amount);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @inheritdoc SMARTExtension
     function _afterBurn(address _from, uint256 _amount) internal virtual override {
         super._afterBurn(_from, _amount);
         _compliance.destroyed(address(this), _from, _amount);

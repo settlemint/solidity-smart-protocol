@@ -2,14 +2,14 @@
 pragma solidity ^0.8.27;
 
 import { ISMART } from "../interface/ISMART.sol";
-import { SMARTHooks } from "./SMARTHooks.sol";
+import { SMARTExtension } from "./SMARTExtension.sol";
 import { ERC20Pausable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title SMARTPausable
 /// @notice Extension that adds pausable functionality to SMART tokens using OpenZeppelin's Pausable
-abstract contract SMARTPausable is ERC20Pausable, SMARTHooks, ISMART, Ownable {
+abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, Ownable {
     // --- Custom Errors ---
     error TokenPaused();
 
@@ -57,7 +57,7 @@ abstract contract SMARTPausable is ERC20Pausable, SMARTHooks, ISMART, Ownable {
     }
 
     /**
-     * @dev Overrides _update to resolve conflict between ERC20Pausable and SMARTHooks,
+     * @dev Overrides _update to resolve conflict between ERC20Pausable and SMARTExtension,
      * ensuring the whenNotPaused modifier is applied.
      */
     function _update(

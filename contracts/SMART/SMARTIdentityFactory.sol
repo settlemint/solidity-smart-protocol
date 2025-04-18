@@ -11,6 +11,8 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 
 // --- Errors ---
 error ZeroAddressNotAllowed();
@@ -21,14 +23,15 @@ error TokenAlreadyLinked();
 error InvalidImplementationAddress();
 
 /// @title SMARTIdentityFactory
-/// @notice Factory for creating deterministic OnchainID identities for wallets and tokens (Upgradeable)
-contract SMARTIdentityFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+/// @notice Factory for creating deterministic OnchainID identities for wallets and tokens (Upgradeable, ERC-2771
+/// compatible)
+contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
     // --- Storage Variables ---
     /// @notice The implementation contract address for the Identity proxies created by this factory.
     address private _identityImplementation;
 
     mapping(string => bool) private _saltTaken;
-    mapping(address => address) private _identities; // Changed bool to address
+    mapping(address => address) private _identities;
     mapping(address => address) private _tokenIdentities;
 
     // --- Events ---
@@ -38,7 +41,7 @@ contract SMARTIdentityFactory is Initializable, OwnableUpgradeable, UUPSUpgradea
 
     // --- Constructor ---
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor() ERC2771ContextUpgradeable(address(0)) {
         _disableInitializers();
     }
 
@@ -161,9 +164,42 @@ contract SMARTIdentityFactory is Initializable, OwnableUpgradeable, UUPSUpgradea
         );
     }
 
+    /// @inheritdoc ContextUpgradeable
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (address sender)
+    {
+        return ERC2771ContextUpgradeable._msgSender();
+    }
+
+    /// @inheritdoc ContextUpgradeable
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (bytes calldata)
+    {
+        return ERC2771ContextUpgradeable._msgData();
+    }
+
+    /// @inheritdoc ERC2771ContextUpgradeable
+    function _contextSuffixLength()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (uint256)
+    {
+        return ERC2771ContextUpgradeable._contextSuffixLength();
+    }
+
     // --- Upgradeability ---
 
     /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
     /// @param newImplementation The address of the new implementation contract.
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
+    function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
 }
