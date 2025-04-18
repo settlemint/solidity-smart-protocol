@@ -12,11 +12,9 @@
 
 ## TODO
 
-- Integrate MetaTx
 - Integrate OpenZeppelin AccessControl
   - Also check that identityRegistry has access to the storage and the issuers registry
 
 ## Open questions?
 
-- Should extensions have logic for upgradeable?
 - Should modules be upgradeable?
