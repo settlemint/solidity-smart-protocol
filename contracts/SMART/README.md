@@ -18,3 +18,5 @@
 ## Open questions?
 
 - Should modules be upgradeable?
+- Right now SMARTBurnable doesn't extend ERC20Burnable, because it follows ERC3643, which only has a burn(user, amount) function which is guarded by the owner. While ERC20Burnable has a burn(amount) and burnFrom(user, amount) function. This means right now a user can't burn their own tokens, which we might need for Redeem? 
+  - Do we deviate from ERC3643 and follow ERC20Burnable? or do we implement a ERC20Redeemable extension?
