@@ -35,7 +35,6 @@ contract MockedComplianceModule is AbstractComplianceModule {
     uint256 public createdCallCount;
     uint256 public destroyedCallCount;
     uint256 public transferredCallCount;
-    uint256 public canTransferCallCount;
     uint256 public validateParametersCallCount;
 
     // --- Single Array to Store Call History ---
@@ -156,7 +155,6 @@ contract MockedComplianceModule is AbstractComplianceModule {
         createdCallCount = 0;
         destroyedCallCount = 0;
         transferredCallCount = 0;
-        canTransferCallCount = 0;
         validateParametersCallCount = 0;
 
         delete callHistory;
