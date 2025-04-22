@@ -8,18 +8,20 @@ import { _SMARTExtension } from "./_SMARTExtension.sol";
 /// @dev Contains internal implementations for burning tokens.
 
 abstract contract _SMARTBurnableLogic is _SMARTExtension {
-    // --- Internal Burn Logic ---
-    // Concrete contracts will call these internal functions,
-    // potentially wrapping them with access control (e.g., onlyOwner).
+    // --- Abstract Hooks ---
+
+    /// @dev Abstract function representing the actual burn operation (e.g., ERC20Burnable._burn).
+    ///      This needs to be implemented in the concrete contract inheriting this logic
+    ///      and ERC20Burnable(Upgradeable).
+    function _executeBurn(address from, uint256 amount) internal virtual;
+
+    // --- Internal Functions ---
 
     /// @dev Internal implementation for burning a specific amount of tokens.
-    ///      Relies on concrete contract providing `_validateBurn`, `_burn`, `_afterBurn`
-    ///      (likely inherited from SMARTExtension and ERC20Burnable/Upgradeable).
+    ///      Relies on concrete contract providing `_validateBurn`, `_burn`, `_afterBurn`.
     function _burnInternal(address userAddress, uint256 amount) internal virtual {
         _validateBurn(userAddress, amount);
-        // Call the actual burn function provided by ERC20Burnable(Upgradeable)
-        // This needs to be implemented in the concrete contract inheriting this logic
-        // and ERC20Burnable(Upgradeable). We cannot call _burn directly here.
+        // We cannot call _burn directly here, hence _executeBurn.
         _executeBurn(userAddress, amount);
         _afterBurn(userAddress, amount);
     }
@@ -28,15 +30,7 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension {
     function _batchBurnInternal(address[] calldata userAddresses, uint256[] calldata amounts) internal virtual {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
-            // Call the single internal burn implementation
             _burnInternal(userAddresses[i], amounts[i]);
         }
     }
-
-    // --- Abstract Hooks ---
-    // These must be implemented by the concrete contract, typically by inheriting
-    // SMARTExtension(Upgradeable) and ERC20Burnable(Upgradeable).
-
-    /// @dev Abstract function representing the actual burn operation (e.g., ERC20Burnable._burn).
-    function _executeBurn(address from, uint256 amount) internal virtual;
 }

@@ -2,14 +2,13 @@
 pragma solidity ^0.8.27;
 
 import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
-import { IIdentity } from "../../../onchainid/interface/IIdentity.sol"; // Adjusted path
+import { IIdentity } from "../../../onchainid/interface/IIdentity.sol";
 import { LengthMismatch } from "../common/CommonErrors.sol";
 
 /// @title _SMARTCustodianLogic
 /// @notice Base logic contract for SMARTCustodian functionality.
 abstract contract _SMARTCustodianLogic {
     // --- Storage Variables ---
-    // Use internal prefix convention
     mapping(address => bool) internal __frozen;
     mapping(address => uint256) internal __frozenTokens;
 
@@ -31,7 +30,7 @@ abstract contract _SMARTCustodianLogic {
     event TokensFrozen(address indexed user, uint256 amount);
     event TokensUnfrozen(address indexed user, uint256 amount);
 
-    // --- Abstract Functions (Implemented by Concrete Contract) ---
+    // --- Abstract Functions ---
 
     /// @dev Returns the token balance of an address.
     function _getBalance(address account) internal view virtual returns (uint256);
@@ -55,7 +54,7 @@ abstract contract _SMARTCustodianLogic {
         return __frozenTokens[userAddress];
     }
 
-    // --- Internal Logic Functions (Called by Concrete Contract) ---
+    // --- Internal Functions ---
 
     function _setAddressFrozen(address userAddress, bool freeze) internal virtual {
         __frozen[userAddress] = freeze;
@@ -84,8 +83,6 @@ abstract contract _SMARTCustodianLogic {
 
     function _forcedTransfer(address from, address to, uint256 amount) internal virtual {
         // Validation is expected to be called by the concrete contract's `_validateTransfer` override first.
-        // This function only handles the logic *after* initial validation.
-
         uint256 currentFrozen = __frozenTokens[from];
         uint256 currentBalance = _getBalance(from);
         uint256 freeBalance = currentBalance - currentFrozen;
@@ -117,7 +114,6 @@ abstract contract _SMARTCustodianLogic {
         if (!(registry.isVerified(lostWallet, topics) || registry.isVerified(newWallet, topics))) {
             revert RecoveryWalletsNotVerified();
         }
-        // Use internal state variable directly
         if (__frozen[newWallet]) revert RecoveryTargetAddressFrozen();
 
         uint256 frozenTokens = __frozenTokens[lostWallet];
@@ -144,7 +140,7 @@ abstract contract _SMARTCustodianLogic {
             __frozen[newWallet] = false; // Ensure new wallet isn't incorrectly marked frozen
         }
 
-        // Update identity registry (using cached registry instance)
+        // Update identity registry
         uint16 country = registry.investorCountry(lostWallet);
         if (!registry.isVerified(newWallet, topics)) {
             registry.registerIdentity(newWallet, IIdentity(investorOnchainID), country);
@@ -154,15 +150,12 @@ abstract contract _SMARTCustodianLogic {
         }
 
         emit RecoverySuccess(lostWallet, newWallet, investorOnchainID);
-        // Return value handled by concrete contract if needed
     }
 
-    // --- Internal Hook Logic Helper Functions ---
-    // Renamed to include prefix
+    // Helper Functions for Hooks
     function _custodian_validateMintLogic(address to, uint256 /* amount */ ) internal virtual {
         if (__frozen[to]) revert RecipientAddressFrozen();
     }
-    // Renamed to include prefix
 
     function _custodian_validateTransferLogic(address from, address to, uint256 amount) internal virtual {
         if (__frozen[from]) revert SenderAddressFrozen();
@@ -174,7 +167,6 @@ abstract contract _SMARTCustodianLogic {
             revert InsufficientUnfrozenTokens(availableUnfrozen, amount);
         }
     }
-    // Renamed to include prefix
 
     function _custodian_validateBurnLogic(address from, uint256 amount) internal virtual {
         if (__frozen[from]) revert SenderAddressFrozen();
@@ -185,12 +177,4 @@ abstract contract _SMARTCustodianLogic {
             revert InsufficientUnfrozenTokens(availableUnfrozen, amount);
         }
     }
-
-    // --- Internal Hook Overrides (Base Implementation) ---
-    // REMOVED - Concrete contracts (SMARTCustodian, SMARTCustodianUpgradeable)
-    // will implement these checks directly using inherited state (__frozen, __frozenTokens) before calling super.
-
-    // function _validateMint(address to, uint256 /* amount */) internal /* view */ virtual { ... }
-    // function _validateTransfer(address from, address to, uint256 amount) internal /* view */ virtual { ... }
-    // function _validateBurn(address from, uint256 amount) internal /* view */ virtual { ... }
 }
