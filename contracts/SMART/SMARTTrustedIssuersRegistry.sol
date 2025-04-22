@@ -18,8 +18,7 @@ error IssuerNotFoundInTopicList(address issuerAddress, uint256 claimTopic);
 error AddressNotFoundInList(address addr);
 
 /// @title SMARTTrustedIssuersRegistry
-/// @notice Registry for trusted identity issuers, optimized for retrieving issuers by claim topic (Upgradeable,
-/// ERC-2771 compatible).
+/// @notice Registry for trusted identity issuers, optimized for retrieving issuers by claim topic.
 contract SMARTTrustedIssuersRegistry is
     Initializable,
     IERC3643TrustedIssuersRegistry,
@@ -39,15 +38,15 @@ contract SMARTTrustedIssuersRegistry is
     // List of all trusted issuer addresses, allowing iteration over all issuers.
     address[] private _issuerAddresses;
 
-    /// @dev Mapping from claim topic to a list of issuer addresses authorized for that topic.
-    /// Used for efficient retrieval in getTrustedIssuersForClaimTopic.
+    // Mapping from claim topic to a list of issuer addresses authorized for that topic.
+    // Used for efficient retrieval in getTrustedIssuersForClaimTopic.
     mapping(uint256 => address[]) private _issuersByClaimTopic;
 
-    /// @dev Mapping from claim topic => issuer address => index in the _issuersByClaimTopic array.
-    /// Stores `index + 1` because the default mapping value is 0, allowing us to distinguish
-    /// between the first element (index 0) and non-existence.
-    /// Essential for efficient O(1) removal of an issuer from a topic's list using the swap-and-pop pattern
-    /// in the _removeIssuerFromClaimTopic helper function.
+    // Mapping from claim topic => issuer address => index in the _issuersByClaimTopic array.
+    // Stores `index + 1` because the default mapping value is 0, allowing us to distinguish
+    // between the first element (index 0) and non-existence.
+    // Essential for efficient O(1) removal of an issuer from a topic's list using the swap-and-pop pattern
+    // in the _removeIssuerFromClaimTopic helper function.
     mapping(uint256 => mapping(address => uint256)) private _claimTopicIssuerIndex;
 
     // --- Events ---
@@ -56,20 +55,17 @@ contract SMARTTrustedIssuersRegistry is
     event ClaimTopicsUpdated(address indexed _issuer, uint256[] _claimTopics);
 
     // --- Constructor ---
-    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() ERC2771ContextUpgradeable(address(0)) {
         _disableInitializers();
     }
 
-    /// @notice Initializes the contract after deployment through a proxy.
-    /// @param initialOwner The address to grant ownership to.
+    // --- Initializer ---
     function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
     }
 
     // --- State-Changing Functions ---
-    /// @inheritdoc IERC3643TrustedIssuersRegistry
     function addTrustedIssuer(IClaimIssuer _trustedIssuer, uint256[] calldata _claimTopics) external onlyOwner {
         address issuerAddress = address(_trustedIssuer);
         if (issuerAddress == address(0)) revert InvalidIssuerAddress();
@@ -87,7 +83,6 @@ contract SMARTTrustedIssuersRegistry is
         emit TrustedIssuerAdded(issuerAddress, _claimTopics);
     }
 
-    /// @inheritdoc IERC3643TrustedIssuersRegistry
     function removeTrustedIssuer(IClaimIssuer _trustedIssuer) external onlyOwner {
         address issuerAddress = address(_trustedIssuer);
         if (!_trustedIssuers[issuerAddress].exists) revert IssuerDoesNotExist(issuerAddress);
@@ -109,7 +104,6 @@ contract SMARTTrustedIssuersRegistry is
         emit TrustedIssuerRemoved(issuerAddress);
     }
 
-    /// @inheritdoc IERC3643TrustedIssuersRegistry
     function updateIssuerClaimTopics(
         IClaimIssuer _trustedIssuer,
         uint256[] calldata _newClaimTopics
@@ -162,7 +156,6 @@ contract SMARTTrustedIssuersRegistry is
     }
 
     // --- View Functions ---
-    /// @inheritdoc IERC3643TrustedIssuersRegistry
     function getTrustedIssuers() external view returns (IClaimIssuer[] memory) {
         IClaimIssuer[] memory issuers = new IClaimIssuer[](_issuerAddresses.length);
         for (uint256 i = 0; i < _issuerAddresses.length; i++) {
@@ -171,13 +164,11 @@ contract SMARTTrustedIssuersRegistry is
         return issuers;
     }
 
-    /// @inheritdoc IERC3643TrustedIssuersRegistry
     function getTrustedIssuerClaimTopics(IClaimIssuer _trustedIssuer) external view returns (uint256[] memory) {
         if (!_trustedIssuers[address(_trustedIssuer)].exists) revert IssuerDoesNotExist(address(_trustedIssuer));
         return _trustedIssuers[address(_trustedIssuer)].claimTopics;
     }
 
-    /// @inheritdoc IERC3643TrustedIssuersRegistry
     /// @notice Retrieves issuers for a specific claim topic using the optimized lookup.
     function getTrustedIssuersForClaimTopic(uint256 claimTopic) external view returns (IClaimIssuer[] memory) {
         address[] storage issuerAddrs = _issuersByClaimTopic[claimTopic];
@@ -188,20 +179,17 @@ contract SMARTTrustedIssuersRegistry is
         return issuers;
     }
 
-    /// @inheritdoc IERC3643TrustedIssuersRegistry
     function hasClaimTopic(address _issuer, uint256 _claimTopic) external view returns (bool) {
         // Check existence in the index mapping (index > 0 means present)
         return _claimTopicIssuerIndex[_claimTopic][_issuer] > 0;
     }
 
-    /// @inheritdoc IERC3643TrustedIssuersRegistry
     function isTrustedIssuer(address _issuer) external view override returns (bool) {
         // Check existence in the primary mapping
         return _trustedIssuers[_issuer].exists;
     }
 
     // --- Internal Functions ---
-    /// @dev Adds an issuer to the lookup structures for a specific claim topic.
     function _addIssuerToClaimTopic(uint256 claimTopic, address issuerAddress) internal {
         address[] storage issuers = _issuersByClaimTopic[claimTopic];
         // Store index + 1 because default mapping value is 0
@@ -209,7 +197,6 @@ contract SMARTTrustedIssuersRegistry is
         issuers.push(issuerAddress);
     }
 
-    /// @dev Removes an issuer from the lookup structures for a specific claim topic using swap-and-pop.
     function _removeIssuerFromClaimTopic(uint256 claimTopic, address issuerAddress) internal {
         uint256 indexToRemove = _claimTopicIssuerIndex[claimTopic][issuerAddress];
         if (indexToRemove == 0) revert IssuerNotFoundInTopicList(issuerAddress, claimTopic);
@@ -231,7 +218,6 @@ contract SMARTTrustedIssuersRegistry is
         issuers.pop();
     }
 
-    /// @dev Removes an address from a dynamic array using swap-and-pop.
     function _removeAddressFromList(address[] storage list, address addrToRemove) internal {
         for (uint256 i = 0; i < list.length; i++) {
             if (list[i] == addrToRemove) {
@@ -246,7 +232,6 @@ contract SMARTTrustedIssuersRegistry is
         revert AddressNotFoundInList(addrToRemove);
     }
 
-    /// @inheritdoc ContextUpgradeable
     function _msgSender()
         internal
         view
@@ -257,7 +242,6 @@ contract SMARTTrustedIssuersRegistry is
         return ERC2771ContextUpgradeable._msgSender();
     }
 
-    /// @inheritdoc ContextUpgradeable
     function _msgData()
         internal
         view
@@ -268,7 +252,6 @@ contract SMARTTrustedIssuersRegistry is
         return ERC2771ContextUpgradeable._msgData();
     }
 
-    /// @inheritdoc ERC2771ContextUpgradeable
     function _contextSuffixLength()
         internal
         view
@@ -280,8 +263,5 @@ contract SMARTTrustedIssuersRegistry is
     }
 
     // --- Upgradeability ---
-
-    /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
-    /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
 }

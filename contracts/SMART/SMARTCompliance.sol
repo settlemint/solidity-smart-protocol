@@ -11,7 +11,7 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 
 /// @title SMARTCompliance
-/// @notice Implementation of the compliance contract for SMART tokens (Upgradeable, ERC-2771 compatible)
+/// @notice Implementation of the compliance contract for SMART tokens.
 contract SMARTCompliance is
     Initializable,
     ISMARTCompliance,
@@ -20,24 +20,17 @@ contract SMARTCompliance is
     UUPSUpgradeable
 {
     // --- Constructor ---
-    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() ERC2771ContextUpgradeable(address(0)) {
-        // Initialize parent constructor
         _disableInitializers();
     }
 
-    /// @notice Initializes the contract after deployment through a proxy.
-    /// @param initialOwner The address to grant ownership to.
-    // No trustedForwarder param needed here anymore
+    // --- Initializer ---
     function initialize(address initialOwner) public initializer {
-        __Ownable_init(initialOwner); // Calls __Context_init indirectly
+        __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
-        // __ERC2771Context_init(trustedForwarder); // No longer exists/needed
     }
 
     // --- State-Changing Functions ---
-
-    /// @inheritdoc ISMARTCompliance
     function transferred(address _token, address _from, address _to, uint256 _amount) external override {
         ISMART.ComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
         for (uint256 i = 0; i < modulePairs.length; i++) {
@@ -47,7 +40,6 @@ contract SMARTCompliance is
         }
     }
 
-    /// @inheritdoc ISMARTCompliance
     function created(address _token, address _to, uint256 _amount) external override {
         ISMART.ComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
         for (uint256 i = 0; i < modulePairs.length; i++) {
@@ -55,7 +47,6 @@ contract SMARTCompliance is
         }
     }
 
-    /// @inheritdoc ISMARTCompliance
     function destroyed(address _token, address _from, uint256 _amount) external override {
         ISMART.ComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
         for (uint256 i = 0; i < modulePairs.length; i++) {
@@ -64,8 +55,6 @@ contract SMARTCompliance is
     }
 
     // --- View Functions ---
-
-    /// @inheritdoc ISMARTCompliance
     function canTransfer(
         address _token,
         address _from,
@@ -87,8 +76,6 @@ contract SMARTCompliance is
     }
 
     // --- Internal Functions ---
-
-    /// @inheritdoc ContextUpgradeable
     function _msgSender()
         internal
         view
@@ -99,7 +86,6 @@ contract SMARTCompliance is
         return ERC2771ContextUpgradeable._msgSender();
     }
 
-    /// @inheritdoc ContextUpgradeable
     function _msgData()
         internal
         view
@@ -110,7 +96,6 @@ contract SMARTCompliance is
         return ERC2771ContextUpgradeable._msgData();
     }
 
-    /// @inheritdoc ERC2771ContextUpgradeable
     function _contextSuffixLength()
         internal
         view
@@ -118,10 +103,9 @@ contract SMARTCompliance is
         override(ContextUpgradeable, ERC2771ContextUpgradeable)
         returns (uint256)
     {
-        return ERC2771ContextUpgradeable._contextSuffixLength(); // Explicitly use ERC2771 version
+        return ERC2771ContextUpgradeable._contextSuffixLength();
     }
 
-    /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
-    /// @param newImplementation The address of the new implementation contract.
+    // --- Upgradeability ---
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
 }

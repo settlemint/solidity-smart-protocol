@@ -23,11 +23,9 @@ error TokenAlreadyLinked();
 error InvalidImplementationAddress();
 
 /// @title SMARTIdentityFactory
-/// @notice Factory for creating deterministic OnchainID identities for wallets and tokens (Upgradeable, ERC-2771
-/// compatible)
+/// @notice Factory for creating deterministic OnchainID identities for wallets and tokens.
 contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
     // --- Storage Variables ---
-    /// @notice The implementation contract address for the Identity proxies created by this factory.
     address private _identityImplementation;
 
     mapping(string => bool) private _saltTaken;
@@ -40,14 +38,11 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
     event IdentityImplementationSet(address indexed newImplementation);
 
     // --- Constructor ---
-    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() ERC2771ContextUpgradeable(address(0)) {
         _disableInitializers();
     }
 
-    /// @notice Initializes the contract after deployment through a proxy.
-    /// @param initialOwner The address to grant ownership to.
-    /// @param identityImplementation_ The address of the Identity contract implementation to be used by the factory.
+    // --- Initializer ---
     function initialize(address initialOwner, address identityImplementation_) public initializer {
         if (identityImplementation_ == address(0)) revert InvalidImplementationAddress();
         __Ownable_init(initialOwner);
@@ -92,8 +87,6 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         return identity;
     }
 
-    /// @notice Allows the owner to update the Identity implementation address used for future deployments.
-    /// @param newImplementation_ The address of the new Identity contract implementation.
     function setIdentityImplementation(address newImplementation_) external onlyOwner {
         if (newImplementation_ == address(0)) revert InvalidImplementationAddress();
         _identityImplementation = newImplementation_;
@@ -117,16 +110,11 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         );
     }
 
-    /// @notice Returns the current Identity implementation address used by the factory.
     function getIdentityImplementation() external view returns (address) {
         return _identityImplementation;
     }
 
     // --- Internal Functions ---
-
-    /**
-     * @dev Internal function to handle common identity creation logic.
-     */
     function _createIdentityInternal(
         string memory _saltPrefix,
         address _entityAddress,
@@ -164,7 +152,6 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         );
     }
 
-    /// @inheritdoc ContextUpgradeable
     function _msgSender()
         internal
         view
@@ -175,7 +162,6 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         return ERC2771ContextUpgradeable._msgSender();
     }
 
-    /// @inheritdoc ContextUpgradeable
     function _msgData()
         internal
         view
@@ -186,7 +172,6 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         return ERC2771ContextUpgradeable._msgData();
     }
 
-    /// @inheritdoc ERC2771ContextUpgradeable
     function _contextSuffixLength()
         internal
         view
@@ -198,8 +183,5 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
     }
 
     // --- Upgradeability ---
-
-    /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
-    /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
 }
