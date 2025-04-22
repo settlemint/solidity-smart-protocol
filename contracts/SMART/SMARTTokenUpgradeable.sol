@@ -13,6 +13,8 @@ import { ISMART } from "./interface/ISMART.sol"; // Assuming ISMART interface is
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
+import { SMARTRedeemableUpgradeable } from "./extensions/upgradeable/SMARTRedeemableUpgradeable.sol";
+import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 /// @title SMARTTokenUpgradeable
 /// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
 
@@ -22,7 +24,8 @@ contract SMARTTokenUpgradeable is
     SMARTUpgradeable,
     SMARTCustodianUpgradeable,
     SMARTPausableUpgradeable,
-    SMARTBurnableUpgradeable
+    SMARTBurnableUpgradeable,
+    SMARTRedeemableUpgradeable
 {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -174,6 +177,18 @@ contract SMARTTokenUpgradeable is
     // --- Overrides for Hook Functions ---
     // These overrides ensure that hooks from all relevant extensions are called in a defined order.
 
+    /// @dev Overrides required because both SMARTBurnableUpgradeable and SMARTRedeemableUpgradeable define this.
+    function _executeBurn(
+        address from,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMARTBurnableUpgradeable, SMARTRedeemableUpgradeable)
+    {
+        _burn(from, amount); // Calls ERC20Upgradeable._burn
+    }
+
     /// @inheritdoc SMARTHooks
     function _validateMint(
         address to,
@@ -213,6 +228,18 @@ contract SMARTTokenUpgradeable is
     }
 
     /// @inheritdoc SMARTHooks
+    function _validateRedeem(
+        address owner,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMARTRedeemableUpgradeable, SMARTHooks)
+    {
+        super._validateRedeem(owner, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
     function _afterMint(address to, uint256 amount) internal virtual override(SMARTUpgradeable, SMARTHooks) {
         // SMARTCustodianUpgradeable, SMARTPausableUpgradeable, SMARTBurnableUpgradeable do not implement _afterMint
         super._afterMint(to, amount);
@@ -243,6 +270,40 @@ contract SMARTTokenUpgradeable is
     {
         // SMARTCustodianUpgradeable, SMARTPausableUpgradeable do not implement _afterBurn
         super._afterBurn(from, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterRedeem(
+        address owner,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMARTRedeemableUpgradeable, SMARTHooks)
+    {
+        super._afterRedeem(owner, amount);
+    }
+
+    /// @dev Overrides required due to conflict with ContextUpgradeable inherited via multiple paths.
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(SMARTRedeemableUpgradeable, ContextUpgradeable)
+        returns (address)
+    {
+        return super._msgSender();
+    }
+
+    /// @dev Overrides required due to conflict with ContextUpgradeable inherited via multiple paths.
+    function _msgData()
+        internal
+        view
+        virtual
+        override(SMARTRedeemableUpgradeable, ContextUpgradeable)
+        returns (bytes calldata)
+    {
+        return super._msgData();
     }
 
     // --- UUPS Upgradeability ---

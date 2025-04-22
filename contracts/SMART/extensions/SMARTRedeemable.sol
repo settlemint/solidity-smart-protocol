@@ -11,7 +11,7 @@ import { SMARTHooks } from "./common/SMARTHooks.sol";
 /// @notice Standard (non-upgradeable) extension for SMART tokens allowing holders to redeem (burn) their tokens.
 /// @dev Provides hooks for adding custom logic before and after redemption.
 ///      Inherits from Context, SMARTExtension, and _SMARTRedeemableLogic.
-abstract contract SMARTRedeemable is Context, SMARTExtension, _SMARTRedeemableLogic {
+abstract contract SMARTRedeemable is SMARTExtension, _SMARTRedeemableLogic {
     // --- Hooks ---
 
     /// @dev Implements the abstract burn execution using ERC20._burn.

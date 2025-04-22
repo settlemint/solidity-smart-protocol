@@ -11,10 +11,13 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
+import { SMARTRedeemable } from "./extensions/SMARTRedeemable.sol";
+import { Context } from "@openzeppelin/contracts/utils/Context.sol";
+import { SMARTExtension } from "./extensions/SMARTExtension.sol";
 /// @title SMARTToken
 /// @notice A complete implementation of a SMART token with all available extensions
 
-contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
+contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMARTRedeemable {
     constructor(
         string memory name_,
         string memory symbol_,
@@ -86,6 +89,12 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
     // --- Overrides for Hook Functions ---
     // These overrides ensure that hooks from all relevant extensions are called in a defined order.
 
+    /// @dev Overrides required because both SMARTBurnable and SMARTRedeemable define this.
+    ///      Calls the underlying ERC20 _burn function.
+    function _executeBurn(address from, uint256 amount) internal virtual override(SMARTBurnable, SMARTRedeemable) {
+        _burn(from, amount); // Calls ERC20._burn
+    }
+
     /// @inheritdoc SMARTHooks
     function _validateMint(
         address to,
@@ -124,6 +133,11 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
     }
 
     /// @inheritdoc SMARTHooks
+    function _validateRedeem(address owner, uint256 amount) internal virtual override(SMARTRedeemable, SMARTHooks) {
+        super._validateRedeem(owner, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
     function _afterMint(address to, uint256 amount) internal virtual override(SMART, SMARTHooks) {
         super._afterMint(to, amount);
     }
@@ -136,5 +150,20 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable {
     /// @inheritdoc SMARTHooks
     function _afterBurn(address from, uint256 amount) internal virtual override(SMART, SMARTBurnable, SMARTHooks) {
         super._afterBurn(from, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterRedeem(address owner, uint256 amount) internal virtual override(SMARTRedeemable, SMARTHooks) {
+        super._afterRedeem(owner, amount);
+    }
+
+    /// @dev Overrides required due to conflict between Context inherited via SMARTExtension and SMARTRedeemable.
+    function _msgSender() internal view virtual override(SMARTRedeemable, Context) returns (address) {
+        return super._msgSender();
+    }
+
+    /// @dev Overrides required due to conflict between Context inherited via SMARTExtension and SMARTRedeemable.
+    function _msgData() internal view virtual override(SMARTRedeemable, Context) returns (bytes calldata) {
+        return super._msgData();
     }
 }
