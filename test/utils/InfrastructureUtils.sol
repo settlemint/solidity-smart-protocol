@@ -17,6 +17,7 @@ import { CountryAllowListComplianceModule } from "../../contracts/SMART/complian
 import { CountryBlockListComplianceModule } from "../../contracts/SMART/compliance/CountryBlockListComplianceModule.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { MockedComplianceModule } from "../mocks/MockedComplianceModule.sol";
+import { ImplementationAuthority } from "../../contracts/onchainid/proxy/ImplementationAuthority.sol";
 
 contract InfrastructureUtils is Test {
     // Core Contract Instances (now holding proxy addresses)
@@ -25,6 +26,7 @@ contract InfrastructureUtils is Test {
     SMARTIdentityRegistry public identityRegistry; // Proxy
     SMARTCompliance public compliance; // Proxy
     SMARTIdentityFactory public identityFactory; // Proxy
+    ImplementationAuthority public implementationAuthority;
 
     // Compliance Modules
     MockedComplianceModule public mockedComplianceModule;
@@ -34,7 +36,7 @@ contract InfrastructureUtils is Test {
     // --- Setup ---
     constructor(address platformAdmin) {
         // --- Deploy Implementations ---
-        Identity identityImpl = new Identity(address(0), true); // Deploy Identity impl needed by factory
+        Identity identityImpl = new Identity(address(0), true); // Deploy Identity impl needed by authority
         SMARTIdentityRegistryStorage storageImpl = new SMARTIdentityRegistryStorage();
         SMARTTrustedIssuersRegistry issuersImpl = new SMARTTrustedIssuersRegistry();
         SMARTCompliance complianceImpl = new SMARTCompliance();
@@ -43,6 +45,9 @@ contract InfrastructureUtils is Test {
 
         // --- Deploy Proxies and Initialize using Helper ---
         vm.startPrank(platformAdmin); // Use admin for initialization and binding
+
+        // --- Deploy ImplementationAuthority FIRST ---
+        implementationAuthority = new ImplementationAuthority(address(identityImpl));
 
         // Storage Proxy
         bytes memory storageInitData = abi.encodeCall(SMARTIdentityRegistryStorage.initialize, (platformAdmin));
@@ -56,9 +61,9 @@ contract InfrastructureUtils is Test {
         bytes memory complianceInitData = abi.encodeCall(SMARTCompliance.initialize, (platformAdmin));
         compliance = SMARTCompliance(_deployProxy(address(complianceImpl), complianceInitData));
 
-        // Factory Proxy
+        // Factory Proxy - Pass ImplementationAuthority address
         bytes memory factoryInitData =
-            abi.encodeCall(SMARTIdentityFactory.initialize, (platformAdmin, address(identityImpl)));
+            abi.encodeCall(SMARTIdentityFactory.initialize, (platformAdmin, address(implementationAuthority)));
         identityFactory = SMARTIdentityFactory(_deployProxy(address(factoryImpl), factoryInitData));
 
         // Registry Proxy

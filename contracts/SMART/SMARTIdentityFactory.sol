@@ -2,15 +2,19 @@
 
 pragma solidity ^0.8.27;
 
-import { Identity } from "../onchainid/Identity.sol";
-import { IIdentity } from "../onchainid/interface/IIdentity.sol";
+// import { Identity } from "../onchainid/Identity.sol"; // No longer needed directly
+// import { IIdentity } from "../onchainid/interface/IIdentity.sol"; // No longer needed directly
 import { IERC734 } from "../onchainid/interface/IERC734.sol";
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { IdentityProxy } from "../onchainid/proxy/IdentityProxy.sol"; // Import IdentityProxy
+import { IImplementationAuthority } from "../onchainid/interface/IImplementationAuthority.sol"; // Import
+    // IImplementationAuthority
+// import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol"; // Remove ERC1967Proxy
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+// import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol"; // Remove
+// UUPSUpgradeable
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 
@@ -20,13 +24,20 @@ error SaltAlreadyTaken();
 error WalletAlreadyLinked();
 error WalletInManagementKeys();
 error TokenAlreadyLinked();
-error InvalidImplementationAddress();
+// error InvalidImplementationAddress(); // Remove or rename
+error InvalidAuthorityAddress(); // New error
 
 /// @title SMARTIdentityFactory
-/// @notice Factory for creating deterministic OnchainID identities for wallets and tokens.
-contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
+/// @notice Factory for creating deterministic OnchainID identities (using IdentityProxy) for wallets and tokens,
+/// managed by an ImplementationAuthority.
+contract SMARTIdentityFactory is
+    Initializable,
+    ERC2771ContextUpgradeable,
+    OwnableUpgradeable // Remove UUPSUpgradeable
+{
     // --- Storage Variables ---
-    address private _identityImplementation;
+    // address private _identityImplementation; // Remove direct implementation address
+    address private _implementationAuthority; // Store authority address
 
     mapping(string => bool) private _saltTaken;
     mapping(address => address) private _identities;
@@ -35,7 +46,8 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
     // --- Events ---
     event IdentityCreated(address indexed identity, address indexed wallet);
     event TokenIdentityCreated(address indexed identity, address indexed token);
-    event IdentityImplementationSet(address indexed newImplementation);
+    // event IdentityImplementationSet(address indexed newImplementation); // Remove event for direct implementation
+    event ImplementationAuthoritySet(address indexed newAuthority); // Add event for authority
 
     // --- Constructor ---
     constructor() ERC2771ContextUpgradeable(address(0)) {
@@ -43,12 +55,15 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
     }
 
     // --- Initializer ---
-    function initialize(address initialOwner, address identityImplementation_) public initializer {
-        if (identityImplementation_ == address(0)) revert InvalidImplementationAddress();
+    function initialize(address initialOwner, address implementationAuthority_) public initializer {
+        // if (identityImplementation_ == address(0)) revert InvalidImplementationAddress(); // Adjust check
+        if (implementationAuthority_ == address(0)) revert InvalidAuthorityAddress();
         __Ownable_init(initialOwner);
-        __UUPSUpgradeable_init();
-        _identityImplementation = identityImplementation_;
-        emit IdentityImplementationSet(identityImplementation_);
+        // __UUPSUpgradeable_init(); // Remove UUPS init
+        // _identityImplementation = identityImplementation_; // Store authority instead
+        _implementationAuthority = implementationAuthority_;
+        // emit IdentityImplementationSet(identityImplementation_); // Emit new event
+        emit ImplementationAuthoritySet(implementationAuthority_);
     }
 
     // --- State-Changing Functions ---
@@ -56,15 +71,21 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         if (_wallet == address(0)) revert ZeroAddressNotAllowed();
         if (_identities[_wallet] != address(0)) revert WalletAlreadyLinked();
 
+        // Pass _wallet as initial owner to internal function
         address identity = _createIdentityInternal("OID", _wallet, _wallet);
 
         // Add management keys if provided
         if (_managementKeys.length > 0) {
+            // Add keys *after* deployment and initialization via proxy constructor
+            IERC734 identityContract = IERC734(identity);
+            // Remove the deployer/initial owner key added by proxy constructor
+            identityContract.removeKey(keccak256(abi.encode(_wallet)), 1);
+            // Add the specified management keys
             for (uint256 i = 0; i < _managementKeys.length; i++) {
                 if (_managementKeys[i] == keccak256(abi.encode(_wallet))) {
-                    revert WalletInManagementKeys();
+                    revert WalletInManagementKeys(); // This check might be redundant if we remove _wallet key anyway
                 }
-                IERC734(identity).addKey(_managementKeys[i], 1, 1);
+                identityContract.addKey(_managementKeys[i], 1, 1);
             }
         }
 
@@ -79,6 +100,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         if (_tokenOwner == address(0)) revert ZeroAddressNotAllowed();
         if (_tokenIdentities[_token] != address(0)) revert TokenAlreadyLinked();
 
+        // Pass _tokenOwner as initial owner to internal function
         address identity = _createIdentityInternal("Token", _token, _tokenOwner);
 
         _tokenIdentities[_token] = identity;
@@ -87,69 +109,95 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         return identity;
     }
 
-    function setIdentityImplementation(address newImplementation_) external onlyOwner {
-        if (newImplementation_ == address(0)) revert InvalidImplementationAddress();
-        _identityImplementation = newImplementation_;
-        emit IdentityImplementationSet(newImplementation_);
-    }
-
     // --- View Functions ---
     function getTokenIdentity(address _token) external view returns (address) {
         return _tokenIdentities[_token];
     }
 
+    /**
+     * @notice Computes the deterministic address for an IdentityProxy.
+     * @param _salt A unique string salt combined with the entity address.
+     * @param _wallet The address that will be the initial management key for the proxy.
+     */
     function getAddress(string memory _salt, address _wallet) public view returns (address) {
+        bytes memory proxyBytecode = type(IdentityProxy).creationCode;
+        // Constructor arguments for IdentityProxy: address implementationAuthority, address initialManagementKey
+        bytes memory constructorArgs = abi.encode(_implementationAuthority, _wallet);
+
         return Create2.computeAddress(
-            bytes32(keccak256(abi.encodePacked(_salt))),
-            keccak256(
-                abi.encodePacked(
-                    type(ERC1967Proxy).creationCode,
-                    abi.encode(_identityImplementation, abi.encodeCall(Identity.initialize, (_wallet)))
-                )
-            )
+            bytes32(keccak256(abi.encodePacked(_salt))), // Use the combined salt directly
+            keccak256(abi.encodePacked(proxyBytecode, constructorArgs)) // Hash bytecode + constructor args
         );
     }
 
-    function getIdentityImplementation() external view returns (address) {
-        return _identityImplementation;
+    /**
+     * @notice Returns the address of the ImplementationAuthority contract managing the identities.
+     */
+    function getImplementationAuthority() external view returns (address) {
+        // return _identityImplementation; // Return authority address
+        return _implementationAuthority;
     }
 
     // --- Internal Functions ---
+
+    /**
+     * @dev Internal function to compute salt, check availability, and deploy the identity.
+     * @param _saltPrefix Prefix for the salt ("OID" or "Token").
+     * @param _entityAddress The address of the wallet or token being identified.
+     * @param _initialOwnerAddress The address to set as the initial management key in the IdentityProxy constructor.
+     */
     function _createIdentityInternal(
         string memory _saltPrefix,
         address _entityAddress,
-        address _ownerAddress
+        address _initialOwnerAddress
     )
         private
         returns (address)
     {
-        string memory salt = string.concat(_saltPrefix, Strings.toHexString(_entityAddress));
-        if (_saltTaken[salt]) revert SaltAlreadyTaken();
+        // Generate salt based on prefix and entity address
+        string memory saltString = string.concat(_saltPrefix, Strings.toHexString(_entityAddress));
+        bytes32 saltBytes = keccak256(abi.encodePacked(saltString));
 
-        address identity = _deployIdentity(salt, _ownerAddress);
-        _saltTaken[salt] = true;
+        if (_saltTaken[saltString]) revert SaltAlreadyTaken(); // Check using string salt
+
+        // Deploy using the initial owner address for the proxy constructor
+        address identity = _deployIdentity(saltBytes, _initialOwnerAddress);
+        _saltTaken[saltString] = true; // Mark string salt as taken
         return identity;
     }
 
     /**
-     * @dev Deploys an ERC1967 proxy pointing to the identity implementation.
-     * Uses Create2 for deterministic address calculation.
-     * Returns the existing address if already deployed.
+     * @dev Deploys an IdentityProxy using Create2.
+     * Uses the factory's stored ImplementationAuthority address.
+     * @param _saltBytes The keccak256 hash of the unique salt string.
+     * @param _initialOwner The address to be passed as initialManagementKey to the IdentityProxy constructor.
+     * @return The address of the deployed IdentityProxy.
      */
-    function _deployIdentity(string memory _salt, address _wallet) private returns (address) {
-        address addr = getAddress(_salt, _wallet);
+    function _deployIdentity(bytes32 _saltBytes, address _initialOwner) private returns (address) {
+        address addr = getAddressForByteSalt(_saltBytes, _initialOwner);
 
-        // If identity already exists, return it
-        if (addr.code.length > 0) {
-            return addr;
-        }
+        bytes memory proxyBytecode = type(IdentityProxy).creationCode;
+        // Constructor arguments for IdentityProxy: address implementationAuthority, address initialManagementKey
+        bytes memory constructorArgs = abi.encode(_implementationAuthority, _initialOwner);
 
-        // Deploy new identity
-        return address(
-            new ERC1967Proxy{ salt: bytes32(keccak256(abi.encodePacked(_salt))) }(
-                _identityImplementation, abi.encodeCall(Identity.initialize, (_wallet))
-            )
-        );
+        // Using OZ Create2 deploy
+        bytes memory bytecode = abi.encodePacked(proxyBytecode, constructorArgs);
+        address deployedAddress = Create2.deploy(0, _saltBytes, bytecode);
+
+        // Sanity check: Ensure deployment address matches calculated address
+        require(deployedAddress == addr, "SMARTIdentityFactory: Deployment address mismatch");
+        return deployedAddress;
+    }
+
+    /**
+     * @dev Computes the deterministic address for an IdentityProxy using a bytes32 salt.
+     * @param _saltBytes The keccak256 hash of the unique salt string.
+     * @param _wallet The address that will be the initial management key for the proxy.
+     */
+    function getAddressForByteSalt(bytes32 _saltBytes, address _wallet) public view returns (address) {
+        bytes memory proxyBytecode = type(IdentityProxy).creationCode;
+        bytes memory constructorArgs = abi.encode(_implementationAuthority, _wallet);
+        return Create2.computeAddress(_saltBytes, keccak256(abi.encodePacked(proxyBytecode, constructorArgs)));
     }
 
     function _msgSender()
@@ -183,5 +231,6 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
     }
 
     // --- Upgradeability ---
-    function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
+    // function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { } // Remove
+    // UUPS function
 }
