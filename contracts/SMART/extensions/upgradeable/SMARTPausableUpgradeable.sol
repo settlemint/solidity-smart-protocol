@@ -4,14 +4,12 @@ pragma solidity ^0.8.27;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20PausableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol"; // For paused()
-    // override
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
-import { _SMARTPausableLogic } from "../base/_SMARTPausableLogic.sol"; // Import base logic
-import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol"; // For _update
+import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol";
+import { _SMARTPausableLogic } from "../base/_SMARTPausableLogic.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
-// override
 
 /// @title SMARTPausableUpgradeable
 /// @notice Upgradeable extension that adds pausable functionality.
@@ -19,65 +17,65 @@ import { SMARTHooks } from "../common/SMARTHooks.sol";
 /// _SMARTPausableLogic.
 abstract contract SMARTPausableUpgradeable is
     Initializable,
-    ERC20PausableUpgradeable, // Provides upgradeable _pause, _unpause, paused, whenNotPaused
+    ERC20PausableUpgradeable,
     SMARTExtensionUpgradeable,
     OwnableUpgradeable,
-    _SMARTPausableLogic // Inherit base logic
+    _SMARTPausableLogic
 {
-    // Error inherited from _SMARTPausableLogic
-
+    // --- Constructor ---
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
+    // --- Initializer ---
     /// @dev Initializer for the pausable extension.
     function __SMARTPausable_init() internal onlyInitializing {
         __Pausable_init(); // Initialize Pausable state
     }
 
     // --- State-Changing Functions ---
-    // Keep public pause/unpause, applying onlyOwner
-    // No 'override' needed as these are new functions in this layer
+
+    /// @notice Pauses the contract (Owner only).
     function pause() public virtual onlyOwner {
         _pause(); // Call PausableUpgradeable internal function
     }
 
+    /// @notice Unpauses the contract (Owner only).
     function unpause() public virtual onlyOwner {
         _unpause(); // Call PausableUpgradeable internal function
     }
 
     // --- View Functions ---
+
     /// @dev Returns true if the contract is paused, and false otherwise.
-    ///      Override needed to specify all base contracts.
     function paused() public view virtual override(PausableUpgradeable, _SMARTPausableLogic) returns (bool) {
         return super.paused(); // Delegate to PausableUpgradeable.paused()
     }
 
-    // --- Internal Functions ---
-    // Override validation hooks to incorporate _SMARTPausableLogic checks via super
+    // --- Hooks ---
 
     /// @inheritdoc SMARTHooks
     function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateMintLogic(); // Call renamed helper
+        _pausable_validateMintLogic(); // Call helper from base logic
         super._validateMint(to, amount); // Call downstream validation
     }
 
     /// @inheritdoc SMARTHooks
     function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateTransferLogic(); // Call renamed helper
+        _pausable_validateTransferLogic(); // Call helper from base logic
         super._validateTransfer(from, to, amount); // Call downstream validation
     }
 
     /// @inheritdoc SMARTHooks
     function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateBurnLogic();
+        _pausable_validateBurnLogic(); // Call helper from base logic
         super._validateBurn(from, amount);
     }
 
     /**
-     * @dev Overrides _update to resolve conflict between ERC20PausableUpgradeable and base ERC20Upgradeable.
-     * Ensures the whenNotPaused modifier from PausableUpgradeable is applied.
+     * @dev Overrides _update to resolve conflict between ERC20PausableUpgradeable and base ERC20Upgradeable,
+     *      ensuring the whenNotPaused modifier from PausableUpgradeable is applied.
      */
     function _update(
         address from,
@@ -87,11 +85,11 @@ abstract contract SMARTPausableUpgradeable is
         internal
         virtual
         override(ERC20PausableUpgradeable, ERC20Upgradeable) // Specify both bases
-            // whenNotPaused modifier is applied by ERC20PausableUpgradeable's implementation
     {
         super._update(from, to, value); // Delegate to ERC20PausableUpgradeable._update
     }
 
-    // --- Gap for upgradeability ---
+    // --- Gap ---
+    /// @dev Gap for upgradeability.
     uint256[50] private __gap;
 }

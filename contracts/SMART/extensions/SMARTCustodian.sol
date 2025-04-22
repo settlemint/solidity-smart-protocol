@@ -15,30 +15,24 @@ import { SMARTHooks } from "./common/SMARTHooks.sol";
 /// @notice Standard (non-upgradeable) extension that adds custodian features.
 /// @dev Inherits from SMARTExtension, Ownable, and _SMARTCustodianLogic.
 abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogic {
-    // State, Errors, Events are inherited from _SMARTCustodianLogic
-
-    // --- Constructor ---
-    // No constructor needed unless initialization is required for this specific layer
-
-    // --- State-Changing Functions (Public API) ---
-    // Public functions delegate to internal logic in _SMARTCustodianLogic
+    // --- State-Changing Functions ---
 
     function setAddressFrozen(address userAddress, bool freeze) public virtual onlyOwner {
-        _setAddressFrozen(userAddress, freeze);
+        _setAddressFrozen(userAddress, freeze); // Calls base logic
     }
 
     function freezePartialTokens(address userAddress, uint256 amount) public virtual onlyOwner {
-        _freezePartialTokens(userAddress, amount);
+        _freezePartialTokens(userAddress, amount); // Calls base logic
     }
 
     function unfreezePartialTokens(address userAddress, uint256 amount) public virtual onlyOwner {
-        _unfreezePartialTokens(userAddress, amount);
+        _unfreezePartialTokens(userAddress, amount); // Calls base logic
     }
 
     function batchSetAddressFrozen(address[] calldata userAddresses, bool[] calldata freeze) public virtual onlyOwner {
         if (userAddresses.length != freeze.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
-            _setAddressFrozen(userAddresses[i], freeze[i]);
+            _setAddressFrozen(userAddresses[i], freeze[i]); // Calls base logic
         }
     }
 
@@ -52,7 +46,7 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
     {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
-            _freezePartialTokens(userAddresses[i], amounts[i]);
+            _freezePartialTokens(userAddresses[i], amounts[i]); // Calls base logic
         }
     }
 
@@ -66,17 +60,19 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
     {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
-            _unfreezePartialTokens(userAddresses[i], amounts[i]);
+            _unfreezePartialTokens(userAddresses[i], amounts[i]); // Calls base logic
         }
     }
 
+    /// @dev Requires owner privileges.
     function forcedTransfer(address from, address to, uint256 amount) public virtual onlyOwner returns (bool) {
-        _validateTransfer(from, to, amount);
-        _forcedTransfer(from, to, amount);
-        _afterTransfer(from, to, amount);
+        _validateTransfer(from, to, amount); // Ensure custodian/other checks run first via hook chain
+        _forcedTransfer(from, to, amount); // Call internal logic from base
+        _afterTransfer(from, to, amount); // Call hook chain
         return true;
     }
 
+    /// @dev Requires owner privileges.
     function batchForcedTransfer(
         address[] calldata fromList,
         address[] calldata toList,
@@ -90,10 +86,11 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
             revert LengthMismatch();
         }
         for (uint256 i = 0; i < fromList.length; i++) {
-            forcedTransfer(fromList[i], toList[i], amounts[i]);
+            forcedTransfer(fromList[i], toList[i], amounts[i]); // Calls single forcedTransfer
         }
     }
 
+    /// @dev Requires owner privileges.
     function recoveryAddress(
         address lostWallet,
         address newWallet,
@@ -104,11 +101,11 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
         onlyOwner
         returns (bool)
     {
-        _recoveryAddress(lostWallet, newWallet, investorOnchainID);
+        _recoveryAddress(lostWallet, newWallet, investorOnchainID); // Calls base logic
         return true;
     }
 
-    // --- Implementation of Abstract Functions from _SMARTCustodianLogic ---
+    // --- Hooks ---
 
     /// @dev Returns the token balance of an address using ERC20.balanceOf.
     function _getBalance(address account) internal view virtual override(_SMARTCustodianLogic) returns (uint256) {
@@ -123,8 +120,7 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
         override(_SMARTCustodianLogic)
         returns (ISMARTIdentityRegistry)
     {
-        // This relies on the concrete SMART or SMARTUpgradeable contract implementing
-        // the identityRegistry() view function from ISMART (via _SMARTLogic)
+        // Relies on the concrete SMART contract implementing identityRegistry()
         return this.identityRegistry();
     }
 
@@ -136,8 +132,7 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
         override(_SMARTCustodianLogic)
         returns (uint256[] memory)
     {
-        // This relies on the concrete SMART or SMARTUpgradeable contract implementing
-        // the requiredClaimTopics() view function from ISMART (via _SMARTLogic)
+        // Relies on the concrete SMART contract implementing requiredClaimTopics()
         return this.requiredClaimTopics();
     }
 
@@ -151,36 +146,25 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
         virtual
         override(_SMARTCustodianLogic)
     {
-        // Call the internal _update function inherited from ERC20 (via SMARTExtension)
-        // This is crucial for forcedTransfer and recoveryAddress in the base logic
+        // Call the internal _update function inherited from ERC20
         _update(from, to, amount);
     }
 
-    // --- Internal Hook Overrides ---
-    // Override SMARTExtension hooks to incorporate _SMARTCustodianLogic checks
-
     /// @inheritdoc SMARTHooks
     function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        // Call Custodian check helper with new name
-        _custodian_validateMintLogic(to, amount);
+        _custodian_validateMintLogic(to, amount); // Call helper from base logic
         super._validateMint(to, amount);
     }
 
     /// @inheritdoc SMARTHooks
     function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        // Call Custodian check helper with new name
-        _custodian_validateTransferLogic(from, to, amount);
+        _custodian_validateTransferLogic(from, to, amount); // Call helper from base logic
         super._validateTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
     function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        // Call Custodian check helper with new name
-        _custodian_validateBurnLogic(from, amount);
+        _custodian_validateBurnLogic(from, amount); // Call helper from base logic
         super._validateBurn(from, amount);
     }
-
-    // _afterMint, _afterTransfer, _afterBurn hooks are inherited from SMARTExtension
-    // and eventually call _SMARTLogic hooks if SMART/SMARTUpgradeable is inherited.
-    // No specific custodian logic needed *after* the action, only before (validation).
 }

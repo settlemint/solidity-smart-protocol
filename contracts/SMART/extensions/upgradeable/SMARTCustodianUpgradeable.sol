@@ -5,55 +5,54 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol"; // Needed for
     // _update, balanceOf context
-import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
-import { _SMARTCustodianLogic } from "../base/_SMARTCustodianLogic.sol"; // Import base logic
-import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol"; // Keep for _getIdentityRegistry
-    // return type
-import { IIdentity } from "../../../onchainid/interface/IIdentity.sol"; // Keep for _recoveryAddress usage
+import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol";
+import { _SMARTCustodianLogic } from "../base/_SMARTCustodianLogic.sol";
+import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
+import { IIdentity } from "../../../onchainid/interface/IIdentity.sol";
 import { LengthMismatch } from "../common/CommonErrors.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
+
 /// @title SMARTCustodianUpgradeable
 /// @notice Upgradeable extension that adds custodian features.
 /// @dev Inherits from SMARTExtensionUpgradeable, OwnableUpgradeable, and _SMARTCustodianLogic.
-
 abstract contract SMARTCustodianUpgradeable is
     Initializable,
     SMARTExtensionUpgradeable,
     OwnableUpgradeable,
-    _SMARTCustodianLogic // Inherit base logic
+    _SMARTCustodianLogic
 {
     // State, Errors, Events are inherited from _SMARTCustodianLogic
 
+    // --- Constructor ---
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
+    // --- Initializer ---
     /// @dev Initializer for the custodian extension.
     function __SMARTCustodian_init() internal onlyInitializing {
-        // No specific state to initialize for Custodian itself
+        // Initialization logic for Ownable, etc., is expected in the main contract's initializer.
     }
 
-    // --- State-Changing Functions (Public API) ---
-    // Public functions delegate to internal logic in _SMARTCustodianLogic
+    // --- State-Changing Functions ---
 
-    // These functions are new to this layer, so no 'override' needed from OwnableUpgradeable etc.
     function setAddressFrozen(address userAddress, bool freeze) public virtual onlyOwner {
-        _setAddressFrozen(userAddress, freeze);
+        _setAddressFrozen(userAddress, freeze); // Calls base logic
     }
 
     function freezePartialTokens(address userAddress, uint256 amount) public virtual onlyOwner {
-        _freezePartialTokens(userAddress, amount);
+        _freezePartialTokens(userAddress, amount); // Calls base logic
     }
 
     function unfreezePartialTokens(address userAddress, uint256 amount) public virtual onlyOwner {
-        _unfreezePartialTokens(userAddress, amount);
+        _unfreezePartialTokens(userAddress, amount); // Calls base logic
     }
 
     function batchSetAddressFrozen(address[] calldata userAddresses, bool[] calldata freeze) public virtual onlyOwner {
         if (userAddresses.length != freeze.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
-            _setAddressFrozen(userAddresses[i], freeze[i]);
+            _setAddressFrozen(userAddresses[i], freeze[i]); // Calls base logic
         }
     }
 
@@ -67,7 +66,7 @@ abstract contract SMARTCustodianUpgradeable is
     {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
-            _freezePartialTokens(userAddresses[i], amounts[i]);
+            _freezePartialTokens(userAddresses[i], amounts[i]); // Calls base logic
         }
     }
 
@@ -81,17 +80,19 @@ abstract contract SMARTCustodianUpgradeable is
     {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
-            _unfreezePartialTokens(userAddresses[i], amounts[i]);
+            _unfreezePartialTokens(userAddresses[i], amounts[i]); // Calls base logic
         }
     }
 
+    /// @dev Requires owner privileges.
     function forcedTransfer(address from, address to, uint256 amount) public virtual onlyOwner returns (bool) {
-        _validateTransfer(from, to, amount); // Ensure custodian checks run first via hook chain
+        _validateTransfer(from, to, amount); // Ensure custodian/other checks run first via hook chain
         _forcedTransfer(from, to, amount); // Call internal logic from base
         _afterTransfer(from, to, amount); // Call hook chain
         return true;
     }
 
+    /// @dev Requires owner privileges.
     function batchForcedTransfer(
         address[] calldata fromList,
         address[] calldata toList,
@@ -105,10 +106,11 @@ abstract contract SMARTCustodianUpgradeable is
             revert LengthMismatch();
         }
         for (uint256 i = 0; i < fromList.length; i++) {
-            forcedTransfer(fromList[i], toList[i], amounts[i]);
+            forcedTransfer(fromList[i], toList[i], amounts[i]); // Calls single forcedTransfer
         }
     }
 
+    /// @dev Requires owner privileges.
     function recoveryAddress(
         address lostWallet,
         address newWallet,
@@ -119,11 +121,11 @@ abstract contract SMARTCustodianUpgradeable is
         onlyOwner
         returns (bool)
     {
-        _recoveryAddress(lostWallet, newWallet, investorOnchainID);
+        _recoveryAddress(lostWallet, newWallet, investorOnchainID); // Calls base logic
         return true;
     }
 
-    // --- Implementation of Abstract Functions from _SMARTCustodianLogic ---
+    // --- Hooks ---
 
     /// @dev Returns the token balance of an address using ERC20Upgradeable.balanceOf.
     function _getBalance(address account) internal view virtual override(_SMARTCustodianLogic) returns (uint256) {
@@ -164,31 +166,29 @@ abstract contract SMARTCustodianUpgradeable is
         virtual
         override(_SMARTCustodianLogic)
     {
-        // Call the internal _update function inherited from ERC20Upgradeable (via SMARTExtensionUpgradeable)
+        // Call the internal _update function inherited from ERC20Upgradeable
         _update(from, to, amount);
     }
 
-    // --- Internal Hook Overrides ---
-    // Override SMARTExtensionUpgradeable hooks to incorporate _SMARTCustodianLogic checks
-
     /// @inheritdoc SMARTHooks
     function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_validateMintLogic(to, amount); // Call renamed helper
+        _custodian_validateMintLogic(to, amount); // Call helper from base logic
         super._validateMint(to, amount);
     }
 
     /// @inheritdoc SMARTHooks
     function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_validateTransferLogic(from, to, amount); // Call renamed helper
+        _custodian_validateTransferLogic(from, to, amount); // Call helper from base logic
         super._validateTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
     function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_validateBurnLogic(from, amount); // Call renamed helper
+        _custodian_validateBurnLogic(from, amount); // Call helper from base logic
         super._validateBurn(from, amount);
     }
 
-    // --- Gap for upgradeability ---
+    // --- Gap ---
+    /// @dev Gap for upgradeability.
     uint256[50] private __gap;
 }

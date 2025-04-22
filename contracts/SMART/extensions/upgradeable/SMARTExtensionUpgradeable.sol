@@ -7,16 +7,16 @@ import { ISMART } from "../../interface/ISMART.sol"; // Assuming ISMART doesn't 
 import { _SMARTExtension } from "../base/_SMARTExtension.sol";
 
 /// @title SMARTExtensionUpgradeable
-/// @notice Abstract upgradeable contract that defines the internal hooks for SMART tokens
-/// @dev These hooks should be called first in any override implementation
+/// @notice Abstract upgradeable contract that defines the internal hooks for SMART tokens.
+/// @dev Base for upgradeable SMART extensions, inheriting essential upgradeable contracts.
+///      These hooks should be called first in any override implementation.
 abstract contract SMARTExtensionUpgradeable is Initializable, _SMARTExtension, ERC20Upgradeable {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    // --- Gap for upgradeability ---
-    // Leave a gap for future storage variables to avoid storage collisions.
-    // The size depends on the number of expected future variables. 50 is a common choice.
+    // --- Gap ---
+    /// @dev Gap for upgradeability.
     uint256[50] private __gap;
 }

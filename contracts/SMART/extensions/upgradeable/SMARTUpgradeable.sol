@@ -6,33 +6,31 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol"; // Import
     // UUPSUpgradeable
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol"; // For override specifier
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol"; // For override
-    // specifier
-// Use upgradeable extension base
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol";
-// Import the base logic contract
 import { _SMARTLogic } from "../base/_SMARTLogic.sol";
-// Import ISMART just for @inheritdoc tags if needed (though _SMARTLogic implements it)
 import { ISMART } from "../../interface/ISMART.sol";
 import { LengthMismatch } from "../common/CommonErrors.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
+
 /// @title SMARTUpgradeable
 /// @notice Upgradeable implementation of the core SMART token functionality using UUPS proxy pattern.
 /// @dev Inherits core logic from _SMARTLogic and upgradeable OZ contracts.
-
 abstract contract SMARTUpgradeable is
     Initializable,
-    SMARTExtensionUpgradeable, // Use upgradeable extension base
-    OwnableUpgradeable, // Use upgradeable Ownable
-    UUPSUpgradeable, // Inherit UUPSUpgradeable for _authorizeUpgrade
-    _SMARTLogic // Base logic containing state and core functions
+    SMARTExtensionUpgradeable,
+    OwnableUpgradeable,
+    UUPSUpgradeable,
+    _SMARTLogic
 {
+    // --- Constructor ---
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers(); // Prevent implementation contract initialization
     }
 
+    // --- Initializer ---
     /// @dev Internal initializer for SMARTUpgradeable state.
     ///      Initializes the core SMART logic via _SMARTLogic's initializer.
     ///      Should be called by the final concrete contract's initialize function.
@@ -50,7 +48,6 @@ abstract contract SMARTUpgradeable is
         internal
         onlyInitializing
     {
-        // Initialize direct parent extension state (if any)
         __SMARTExtension_init();
 
         // Initialize the core SMART logic state via the base logic contract
@@ -67,39 +64,38 @@ abstract contract SMARTUpgradeable is
     }
 
     // --- State-Changing Functions ---
-    // Implement functions from ISMART (via _SMARTLogic) and potentially override OZ functions
 
     /// @inheritdoc ISMART
     function setName(string calldata name_) external virtual override onlyOwner {
-        _setName(name_); // Calls _SMARTLogic's internal _setName
+        _setName(name_);
     }
 
     /// @inheritdoc ISMART
     function setSymbol(string calldata symbol_) external virtual override onlyOwner {
-        _setSymbol(symbol_); // Calls _SMARTLogic's internal _setSymbol
+        _setSymbol(symbol_);
     }
 
     /// @inheritdoc ISMART
     function setOnchainID(address onchainID_) external virtual override onlyOwner {
-        _setOnchainID(onchainID_); // Call internal logic from base
+        _setOnchainID(onchainID_);
     }
 
     /// @inheritdoc ISMART
     function setIdentityRegistry(address identityRegistry_) external virtual override onlyOwner {
-        _setIdentityRegistry(identityRegistry_); // Call internal logic from base
+        _setIdentityRegistry(identityRegistry_);
     }
 
     /// @inheritdoc ISMART
     function setCompliance(address compliance_) external virtual override onlyOwner {
-        _setCompliance(compliance_); // Call internal logic from base
+        _setCompliance(compliance_);
     }
 
     /// @inheritdoc ISMART
     /// @dev Requires owner privileges.
     function mint(address to, uint256 amount) external virtual override onlyOwner {
-        _validateMint(to, amount); // Calls SMARTExtensionUpgradeable -> _SMARTLogic validation
-        _mint(to, amount); // Calls ERC20Upgradeable _mint
-        _afterMint(to, amount); // Calls SMARTExtensionUpgradeable -> _SMARTLogic hooks
+        _validateMint(to, amount);
+        _mint(to, amount);
+        _afterMint(to, amount);
     }
 
     /// @inheritdoc ISMART
@@ -107,9 +103,8 @@ abstract contract SMARTUpgradeable is
     function batchMint(address[] calldata toList, uint256[] calldata amounts) external virtual override onlyOwner {
         if (toList.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < toList.length; i++) {
-            // Use internal functions
             _validateMint(toList[i], amounts[i]);
-            _mint(toList[i], amounts[i]); // Use ERC20Upgradeable internal _mint
+            _mint(toList[i], amounts[i]);
             _afterMint(toList[i], amounts[i]);
         }
     }
@@ -118,20 +113,19 @@ abstract contract SMARTUpgradeable is
     /// @dev Overrides ERC20Upgradeable.transfer to include SMART validation and hooks.
     function transfer(address to, uint256 amount) public virtual override(ERC20Upgradeable, IERC20) returns (bool) {
         address sender = _msgSender();
-        _validateTransfer(sender, to, amount); // Calls SMARTExtensionUpgradeable -> _SMARTLogic validation
-        super._transfer(sender, to, amount); // Call ERC20Upgradeable's _transfer
-        _afterTransfer(sender, to, amount); // Calls SMARTExtensionUpgradeable -> _SMARTLogic hooks
+        _validateTransfer(sender, to, amount);
+        super._transfer(sender, to, amount);
+        _afterTransfer(sender, to, amount);
         return true;
     }
 
     /// @inheritdoc ISMART
     function batchTransfer(address[] calldata toList, uint256[] calldata amounts) external virtual override {
         if (toList.length != amounts.length) revert LengthMismatch();
-        address sender = _msgSender(); // Cache sender
+        address sender = _msgSender();
         for (uint256 i = 0; i < toList.length; i++) {
-            // Use internal functions for consistency and efficiency
             _validateTransfer(sender, toList[i], amounts[i]);
-            super._transfer(sender, toList[i], amounts[i]); // Call ERC20Upgradeable's internal transfer
+            super._transfer(sender, toList[i], amounts[i]);
             _afterTransfer(sender, toList[i], amounts[i]);
         }
     }
@@ -149,21 +143,21 @@ abstract contract SMARTUpgradeable is
         returns (bool)
     {
         address spender = _msgSender();
-        _validateTransfer(from, to, amount); // Calls SMARTExtensionUpgradeable -> _SMARTLogic validation
-        super._spendAllowance(from, spender, amount); // Call ERC20Upgradeable's _spendAllowance
-        super._transfer(from, to, amount); // Call ERC20Upgradeable's _transfer
-        _afterTransfer(from, to, amount); // Calls SMARTExtensionUpgradeable -> _SMARTLogic hooks
+        _validateTransfer(from, to, amount);
+        super._spendAllowance(from, spender, amount);
+        super._transfer(from, to, amount);
+        _afterTransfer(from, to, amount);
         return true;
     }
 
     /// @inheritdoc ISMART
     function addComplianceModule(address module, bytes calldata params) external virtual override onlyOwner {
-        _addComplianceModule(module, params); // Call internal logic from base
+        _addComplianceModule(module, params);
     }
 
     /// @inheritdoc ISMART
     function removeComplianceModule(address module) external virtual override onlyOwner {
-        _removeComplianceModule(module); // Call internal logic from base
+        _removeComplianceModule(module);
     }
 
     /// @inheritdoc ISMART
@@ -176,13 +170,10 @@ abstract contract SMARTUpgradeable is
         override
         onlyOwner
     {
-        _setParametersForComplianceModule(module, params); // Call internal logic from base
+        _setParametersForComplianceModule(module, params);
     }
 
     // --- View Functions ---
-    // View functions (name, symbol, decimals, onchainID, etc.) are inherited from _SMARTLogic.
-    // We need to override name, symbol, decimals here because ERC20Upgradeable also defines them,
-    // and Solidity requires explicit override for all bases.
 
     /// @inheritdoc ERC20Upgradeable
     function name()
@@ -211,48 +202,46 @@ abstract contract SMARTUpgradeable is
         return super.decimals(); // Delegate to _SMARTLogic's implementation via inheritance
     }
 
-    // --- Internal Functions ---
-    // Internal hooks (_validate*, _after*) inherit SMARTExtensionUpgradeable and call _SMARTLogic via super.
+    // --- Hooks ---
 
     /// @inheritdoc SMARTHooks
     function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_validateMintLogic(to, amount); // Call renamed helper from _SMARTLogic
+        _smart_validateMintLogic(to, amount); // Call helper from base logic
         super._validateMint(to, amount);
     }
 
     /// @inheritdoc SMARTHooks
     function _afterMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_afterMintLogic(to, amount); // Call renamed helper from _SMARTLogic
+        _smart_afterMintLogic(to, amount); // Call helper from base logic
         super._afterMint(to, amount);
     }
 
     /// @inheritdoc SMARTHooks
     function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_validateTransferLogic(from, to, amount); // Call renamed helper from _SMARTLogic
+        _smart_validateTransferLogic(from, to, amount); // Call helper from base logic
         super._validateTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
     function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_afterTransferLogic(from, to, amount); // Call renamed helper from _SMARTLogic
+        _smart_afterTransferLogic(from, to, amount); // Call helper from base logic
         super._afterTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
     function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_afterBurnLogic(from, amount); // Call renamed helper from _SMARTLogic
+        _smart_afterBurnLogic(from, amount); // Call helper from base logic
         super._afterBurn(from, amount);
     }
 
-    // --- Upgradeability Requirement ---
-    // Required by OZ UUPSUpgradeable pattern if using UUPS
+    /// @dev Required by OZ UUPSUpgradeable pattern.
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyOwner { }
 
-    // --- Gap for upgradeability ---
-    // Leave a gap for future storage variables to avoid storage collisions.
+    // --- Gap ---
+    /// @dev Gap for upgradeability.
     uint256[50] private __gap;
 
-    // --- Internal Initializer Placeholder ---
-    // If SMARTExtensionUpgradeable needs its own initializer logic
+    // --- Internal Functions ---
+    /// @dev Placeholder for potential SMARTExtensionUpgradeable initializer logic.
     function __SMARTExtension_init() internal onlyInitializing { }
 }

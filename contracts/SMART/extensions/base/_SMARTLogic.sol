@@ -12,9 +12,7 @@ import { LengthMismatch } from "../common/CommonErrors.sol"; // Assuming CommonE
 /// @notice Base contract containing the core state, logic, and events for SMART tokens.
 /// @dev This contract is intended to be inherited by both standard and upgradeable SMART implementations.
 ///      It does not include constructors or initializers itself.
-abstract contract _SMARTLogic is
-    ISMART // Inherit ISMART for interface conformance
-{
+abstract contract _SMARTLogic is ISMART {
     // --- Errors ---
     error InvalidComplianceAddress();
     error InvalidIdentityRegistryAddress();
@@ -40,13 +38,10 @@ abstract contract _SMARTLogic is
     uint256[] internal __requiredClaimTopics;
 
     // --- Events ---
-    // Events defined in ISMART are implicitly included.
+    // Events defined in ISMART (e.g., UpdatedTokenInformation) are implicitly included and emitted by internal logic.
     event TransferCompleted(address indexed from, address indexed to, uint256 amount);
     event MintValidated(address indexed to, uint256 amount);
     event MintCompleted(address indexed to, uint256 amount);
-    // ISMART events emitted by internal logic:
-    // UpdatedTokenInformation, IdentityRegistryAdded, ComplianceAdded,
-    // ComplianceModuleAdded, ComplianceModuleRemoved, ModuleParametersUpdated
 
     // --- View Functions ---
 
