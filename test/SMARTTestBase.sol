@@ -12,7 +12,7 @@ import { IdentityUtils } from "./utils/IdentityUtils.sol"; // Needed for _setupI
 import { TokenUtils } from "./utils/TokenUtils.sol"; // Needed for tests
 import { InfrastructureUtils } from "./utils/InfrastructureUtils.sol"; // Needed for tests
 import { MockedComplianceModule } from "./mocks/MockedComplianceModule.sol";
-import { console } from "forge-std/console.sol";
+import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 abstract contract SMARTTestBase is Test {
     // --- State Variables ---
@@ -280,5 +280,83 @@ abstract contract SMARTTestBase is Test {
         claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientUS);
         // Only issue KYC claim to the unverified client
         claimUtils.issueKYCClaim(claimIssuerIdentityAddress, clientUnverified);
+    }
+
+    // --- Test for SMARTRedeemable ---
+
+    function test_Redeem() public {
+        // Assumes token is deployed, includes SMARTRedeemable, and identities are set up
+        require(address(token) != address(0), "Token not deployed in setUp");
+
+        // --- Initial Mint ---
+        uint256 initialMintAmount = 500;
+        tokenUtils.mintToken(address(token), tokenIssuer, clientBE, initialMintAmount);
+        assertEq(token.balanceOf(clientBE), initialMintAmount, "Redeem test setup mint failed");
+
+        mockComplianceModule.reset(); // Reset mock counter for redeem tests
+
+        // --- Redeem Tokens (as clientBE) ---
+        uint256 redeemAmount = 100;
+        uint256 destroyedHookCountBefore = mockComplianceModule.destroyedCallCount();
+        uint256 initialTotalSupply = token.totalSupply();
+
+        // Assuming the 'token' instance will have the 'redeem' function from SMARTRedeemable
+        // We need to cast 'token' to an interface that includes 'redeem', or assume it exists.
+        // For simplicity in the base test, we'll call it directly. Inheriting tests must ensure
+        // the token actually implements SMARTRedeemable.
+        // A more robust approach might involve an interface like ISMARTRedeemable(address(token)).redeem(redeemAmount);
+        // For simplicity in the base test, we'll call it directly. Inheriting tests must ensure
+        // the token actually implements SMARTRedeemable.
+        // A more robust approach might involve an interface like ISMARTRedeemable(address(token)).redeem(redeemAmount);
+        tokenUtils.redeemToken(address(token), clientBE, redeemAmount);
+
+        // --- Assertions ---
+        assertEq(token.balanceOf(clientBE), initialMintAmount - redeemAmount, "Redeem failed (balance incorrect)");
+        assertEq(token.totalSupply(), initialTotalSupply - redeemAmount, "Redeem failed (total supply incorrect)");
+        // Redeem triggers _burn, which should trigger the destroyed hook
+        assertEq(
+            mockComplianceModule.destroyedCallCount(),
+            destroyedHookCountBefore + 1,
+            "Mock destroyed hook count incorrect after redeem"
+        );
+
+        uint256 balance = token.balanceOf(clientBE);
+        // --- Test Redeem More Than Balance ---
+        // Expect ERC20InsufficientBalance revert (or similar depending on ERC20 implementation)
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, clientBE, balance, balance + 1)
+        );
+        // check as specific error might vary
+        tokenUtils.redeemToken(address(token), clientBE, balance + 1);
+
+        // --- Test Redeem When Paused (if applicable) ---
+        // This assumes the token also inherits from SMARTPausable
+        tokenUtils.pauseToken(address(token), tokenIssuer);
+
+        vm.expectRevert(abi.encodeWithSelector(_SMARTPausableLogic.TokenPaused.selector));
+        tokenUtils.redeemToken(address(token), clientBE, 10);
+
+        // Unpause
+        tokenUtils.unpauseToken(address(token), tokenIssuer);
+
+        // Check redeem works again
+        destroyedHookCountBefore = mockComplianceModule.destroyedCallCount();
+        uint256 secondRedeemAmount = 20;
+        uint256 balanceBeforeSecondRedeem = token.balanceOf(clientBE);
+        initialTotalSupply = token.totalSupply(); // Update total supply
+
+        tokenUtils.redeemToken(address(token), clientBE, secondRedeemAmount);
+
+        assertEq(
+            token.balanceOf(clientBE), balanceBeforeSecondRedeem - secondRedeemAmount, "Redeem after unpause failed"
+        );
+        assertEq(
+            token.totalSupply(), initialTotalSupply - secondRedeemAmount, "Redeem after unpause failed (total supply)"
+        );
+        assertEq(
+            mockComplianceModule.destroyedCallCount(),
+            destroyedHookCountBefore + 1,
+            "Mock destroyed hook count incorrect after redeem post-unpause"
+        );
     }
 }

@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
 import { IIdentity } from "../../../onchainid/interface/IIdentity.sol";
 import { LengthMismatch } from "../common/CommonErrors.sol";
+import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 /// @title _SMARTCustodianLogic
 /// @notice Base logic contract for SMARTCustodian functionality.
@@ -22,7 +23,6 @@ abstract contract _SMARTCustodianLogic {
     error RecoveryTargetAddressFrozen();
     error RecipientAddressFrozen();
     error SenderAddressFrozen();
-    error InsufficientUnfrozenTokens(uint256 available, uint256 requested);
 
     // --- Events ---
     event AddressFrozen(address indexed userAddress, bool indexed isFrozen);
@@ -164,17 +164,39 @@ abstract contract _SMARTCustodianLogic {
         uint256 frozenTokens = __frozenTokens[from];
         uint256 availableUnfrozen = _getBalance(from) - frozenTokens;
         if (availableUnfrozen < amount) {
-            revert InsufficientUnfrozenTokens(availableUnfrozen, amount);
+            revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
         }
     }
 
+    /// @dev Free tokens from frozen balance if needed, this will be called by an admin
     function _custodian_validateBurnLogic(address from, uint256 amount) internal virtual {
+        uint256 totalBalance = _getBalance(from);
+        if (totalBalance < amount) {
+            revert InsufficientTotalBalance(totalBalance, amount);
+        }
+
+        uint256 currentFrozen = __frozenTokens[from];
+        if (currentFrozen > 0) {
+            // Only proceed if there are frozen tokens
+            uint256 freeBalance = totalBalance - currentFrozen;
+            if (amount > freeBalance) {
+                uint256 tokensToUnfreeze = amount - freeBalance;
+                // The InsufficientTotalBalance check above ensures currentFrozen >= tokensToUnfreeze
+                __frozenTokens[from] = currentFrozen - tokensToUnfreeze;
+                emit TokensUnfrozen(from, tokensToUnfreeze);
+            }
+        }
+        // Note: The actual _burn operation should happen in the calling contract after this validation.
+    }
+
+    /// @dev Block if there are not enough free tokens, else they will be unfrozen by validateBurnLogic
+    function _custodian_validateRedeemLogic(address from, uint256 amount) internal virtual {
         if (__frozen[from]) revert SenderAddressFrozen();
 
         uint256 frozenTokens = __frozenTokens[from];
         uint256 availableUnfrozen = _getBalance(from) - frozenTokens;
         if (availableUnfrozen < amount) {
-            revert InsufficientUnfrozenTokens(availableUnfrozen, amount);
+            revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
         }
     }
 }

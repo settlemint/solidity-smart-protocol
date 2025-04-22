@@ -11,6 +11,7 @@ import { SMARTTokenUpgradeable } from "../../contracts/SMART/SMARTTokenUpgradeab
 import { SMARTIdentityRegistry } from "../../contracts/SMART/SMARTIdentityRegistry.sol";
 import { SMARTPausable } from "../../contracts/SMART/extensions/SMARTPausable.sol";
 import { SMARTBurnable } from "../../contracts/SMART/extensions/SMARTBurnable.sol";
+import { SMARTRedeemable } from "../../contracts/SMART/extensions/SMARTRedeemable.sol";
 
 contract TokenUtils is Test {
     address internal _platformAdmin;
@@ -185,6 +186,12 @@ contract TokenUtils is Test {
     function unpauseToken(address tokenAddress, address tokenIssuer_) public {
         vm.startPrank(tokenIssuer_);
         SMARTPausable(tokenAddress).unpause();
+        vm.stopPrank();
+    }
+
+    function redeemToken(address tokenAddress, address holder, uint256 amount) public {
+        vm.startPrank(holder);
+        SMARTRedeemable(tokenAddress).redeem(amount);
         vm.stopPrank();
     }
 

@@ -6,11 +6,11 @@ import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { _SMARTRedeemableLogic } from "./base/_SMARTRedeemableLogic.sol";
 import { _Context } from "./base/interfaces/_Context.sol";
 import { SMARTHooks } from "./common/SMARTHooks.sol";
-
 /// @title SMARTRedeemable
 /// @notice Standard (non-upgradeable) extension for SMART tokens allowing holders to redeem (burn) their tokens.
 /// @dev Provides hooks for adding custom logic before and after redemption.
 ///      Inherits from Context, SMARTExtension, and _SMARTRedeemableLogic.
+
 abstract contract SMARTRedeemable is SMARTExtension, _SMARTRedeemableLogic {
     // --- Hooks ---
 

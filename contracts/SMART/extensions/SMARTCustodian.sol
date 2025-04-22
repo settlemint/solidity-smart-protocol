@@ -167,4 +167,10 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
         _custodian_validateBurnLogic(from, amount); // Call helper from base logic
         super._validateBurn(from, amount);
     }
+
+    /// @inheritdoc SMARTHooks
+    function _validateRedeem(address from, uint256 amount) internal virtual override(SMARTHooks) {
+        _custodian_validateRedeemLogic(from, amount); // Call helper from base logic
+        super._validateRedeem(from, amount);
+    }
 }

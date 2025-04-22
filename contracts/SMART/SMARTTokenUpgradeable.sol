@@ -223,7 +223,7 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTRedeemableUpgradeable, SMARTHooks)
+        override(SMARTRedeemableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._validateRedeem(owner, amount);
     }

@@ -109,7 +109,14 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMAR
         super._validateBurn(from, amount);
     }
 
-    function _validateRedeem(address owner, uint256 amount) internal virtual override(SMARTRedeemable, SMARTHooks) {
+    function _validateRedeem(
+        address owner,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMARTRedeemable, SMARTCustodian, SMARTHooks)
+    {
         super._validateRedeem(owner, amount);
     }
 

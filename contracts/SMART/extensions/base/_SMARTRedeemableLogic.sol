@@ -3,10 +3,10 @@ pragma solidity ^0.8.27;
 
 import { _Context } from "./interfaces/_Context.sol";
 import { _SMARTExtension } from "./_SMARTExtension.sol";
-
 /// @title _SMARTRedeemableLogic
 /// @notice Base logic contract for SMARTRedeemable functionality.
 /// @dev Contains the core redemption flow and abstract hooks.
+
 abstract contract _SMARTRedeemableLogic is _SMARTExtension, _Context {
     // --- Events ---
 
