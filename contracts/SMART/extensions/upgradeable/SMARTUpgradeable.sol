@@ -16,10 +16,11 @@ import { _SMARTLogic } from "../base/_SMARTLogic.sol";
 // Import ISMART just for @inheritdoc tags if needed (though _SMARTLogic implements it)
 import { ISMART } from "../../interface/ISMART.sol";
 import { LengthMismatch } from "../common/CommonErrors.sol";
-
+import { SMARTHooks } from "../common/SMARTHooks.sol";
 /// @title SMARTUpgradeable
 /// @notice Upgradeable implementation of the core SMART token functionality using UUPS proxy pattern.
 /// @dev Inherits core logic from _SMARTLogic and upgradeable OZ contracts.
+
 abstract contract SMARTUpgradeable is
     Initializable,
     SMARTExtensionUpgradeable, // Use upgradeable extension base
@@ -213,48 +214,32 @@ abstract contract SMARTUpgradeable is
     // --- Internal Functions ---
     // Internal hooks (_validate*, _after*) inherit SMARTExtensionUpgradeable and call _SMARTLogic via super.
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _validateMint(address to, uint256 amount) internal virtual override(SMARTExtensionUpgradeable) {
+    /// @inheritdoc SMARTHooks
+    function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
         _smart_validateMintLogic(to, amount); // Call renamed helper from _SMARTLogic
         super._validateMint(to, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _afterMint(address to, uint256 amount) internal virtual override(SMARTExtensionUpgradeable) {
+    /// @inheritdoc SMARTHooks
+    function _afterMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
         _smart_afterMintLogic(to, amount); // Call renamed helper from _SMARTLogic
         super._afterMint(to, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _validateTransfer(
-        address from,
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTExtensionUpgradeable)
-    {
+    /// @inheritdoc SMARTHooks
+    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         _smart_validateTransferLogic(from, to, amount); // Call renamed helper from _SMARTLogic
         super._validateTransfer(from, to, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _afterTransfer(
-        address from,
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTExtensionUpgradeable)
-    {
+    /// @inheritdoc SMARTHooks
+    function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         _smart_afterTransferLogic(from, to, amount); // Call renamed helper from _SMARTLogic
         super._afterTransfer(from, to, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTExtensionUpgradeable) {
+    /// @inheritdoc SMARTHooks
+    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         _smart_afterBurnLogic(from, amount); // Call renamed helper from _SMARTLogic
         super._afterBurn(from, amount);
     }

@@ -9,6 +9,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
 import { _SMARTBurnableLogic } from "../base/_SMARTBurnableLogic.sol"; // Import base logic
 import { LengthMismatch } from "../common/CommonErrors.sol";
+import { SMARTHooks } from "../common/SMARTHooks.sol";
 
 /// @title SMARTBurnableUpgradeable
 /// @notice Upgradeable extension that adds burnable functionality to SMART tokens.
@@ -59,28 +60,14 @@ abstract contract SMARTBurnableUpgradeable is
     // by calling the functions provided by SMARTExtensionUpgradeable and relying on ERC20Upgradeable's _burn.
 
     /// @dev Internal validation hook for burning tokens.
-    function _validateBurn(
-        address from,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTExtensionUpgradeable, _SMARTBurnableLogic)
-    {
+    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         // No specific logic helper to call from _SMARTBurnableLogic for validation
         // Add any burnable-specific validation here if needed
         super._validateBurn(from, amount); // Call downstream validation
     }
 
     /// @dev Internal hook called after burning tokens.
-    function _afterBurn(
-        address from,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTExtensionUpgradeable, _SMARTBurnableLogic)
-    {
+    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         // No specific logic helper to call from _SMARTBurnableLogic for this hook
         // Add any burnable-specific actions here if needed
         super._afterBurn(from, amount); // Call downstream hooks

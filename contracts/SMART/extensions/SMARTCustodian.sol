@@ -9,6 +9,7 @@ import { IIdentity } from "../../onchainid/interface/IIdentity.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { LengthMismatch } from "./common/CommonErrors.sol";
 import { _SMARTCustodianLogic } from "./base/_SMARTCustodianLogic.sol";
+import { SMARTHooks } from "./common/SMARTHooks.sol";
 
 /// @title SMARTCustodian
 /// @notice Standard (non-upgradeable) extension that adds custodian features.
@@ -158,22 +159,22 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
     // --- Internal Hook Overrides ---
     // Override SMARTExtension hooks to incorporate _SMARTCustodianLogic checks
 
-    /// @inheritdoc SMARTExtension
-    function _validateMint(address to, uint256 amount) internal virtual override(SMARTExtension) {
+    /// @inheritdoc SMARTHooks
+    function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
         // Call Custodian check helper with new name
         _custodian_validateMintLogic(to, amount);
         super._validateMint(to, amount);
     }
 
-    /// @inheritdoc SMARTExtension
-    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTExtension) {
+    /// @inheritdoc SMARTHooks
+    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         // Call Custodian check helper with new name
         _custodian_validateTransferLogic(from, to, amount);
         super._validateTransfer(from, to, amount);
     }
 
-    /// @inheritdoc SMARTExtension
-    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTExtension) {
+    /// @inheritdoc SMARTHooks
+    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         // Call Custodian check helper with new name
         _custodian_validateBurnLogic(from, amount);
         super._validateBurn(from, amount);

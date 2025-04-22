@@ -9,13 +9,13 @@ import { SMARTUpgradeable } from "./extensions/upgradeable/SMARTUpgradeable.sol"
 import { SMARTPausableUpgradeable } from "./extensions/upgradeable/SMARTPausableUpgradeable.sol";
 import { SMARTBurnableUpgradeable } from "./extensions/upgradeable/SMARTBurnableUpgradeable.sol";
 import { SMARTCustodianUpgradeable } from "./extensions/upgradeable/SMARTCustodianUpgradeable.sol";
-import { SMARTExtensionUpgradeable } from "./extensions/upgradeable/SMARTExtensionUpgradeable.sol";
 import { ISMART } from "./interface/ISMART.sol"; // Assuming ISMART interface is compatible
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
+import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
 /// @title SMARTTokenUpgradeable
 /// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
+
 contract SMARTTokenUpgradeable is
     Initializable,
     UUPSUpgradeable,
@@ -174,19 +174,19 @@ contract SMARTTokenUpgradeable is
     // --- Overrides for Hook Functions ---
     // These overrides ensure that hooks from all relevant extensions are called in a defined order.
 
-    /// @inheritdoc SMARTExtensionUpgradeable
+    /// @inheritdoc SMARTHooks
     function _validateMint(
         address to,
         uint256 amount
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTExtensionUpgradeable)
+        override(SMARTUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._validateMint(to, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
+    /// @inheritdoc SMARTHooks
     function _validateTransfer(
         address from,
         address to,
@@ -194,38 +194,31 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTExtensionUpgradeable)
+        override(SMARTUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._validateTransfer(from, to, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
+    /// @inheritdoc SMARTHooks
     function _validateBurn(
         address from,
         uint256 amount
     )
         internal
         virtual
-        override(SMARTBurnableUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTExtensionUpgradeable) // SMARTUpgradeable
+        override(SMARTBurnableUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks) // SMARTUpgradeable
             // does not implement _validateBurn
     {
         super._validateBurn(from, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _afterMint(
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTUpgradeable, SMARTExtensionUpgradeable)
-    {
+    /// @inheritdoc SMARTHooks
+    function _afterMint(address to, uint256 amount) internal virtual override(SMARTUpgradeable, SMARTHooks) {
         // SMARTCustodianUpgradeable, SMARTPausableUpgradeable, SMARTBurnableUpgradeable do not implement _afterMint
         super._afterMint(to, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
+    /// @inheritdoc SMARTHooks
     function _afterTransfer(
         address from,
         address to,
@@ -233,20 +226,20 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTExtensionUpgradeable)
+        override(SMARTUpgradeable, SMARTHooks)
     // SMARTCustodianUpgradeable, SMARTPausableUpgradeable, SMARTBurnableUpgradeable do not implement _afterTransfer
     {
         super._afterTransfer(from, to, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
+    /// @inheritdoc SMARTHooks
     function _afterBurn(
         address from,
         uint256 amount
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTBurnableUpgradeable, SMARTExtensionUpgradeable)
+        override(SMARTUpgradeable, SMARTBurnableUpgradeable, SMARTHooks)
     {
         // SMARTCustodianUpgradeable, SMARTPausableUpgradeable do not implement _afterBurn
         super._afterBurn(from, amount);

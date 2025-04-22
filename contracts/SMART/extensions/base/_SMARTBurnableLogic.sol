@@ -2,11 +2,12 @@
 pragma solidity ^0.8.27;
 
 import { LengthMismatch } from "../common/CommonErrors.sol";
-
+import { _SMARTExtension } from "./_SMARTExtension.sol";
 /// @title _SMARTBurnableLogic
 /// @notice Base logic contract for SMARTBurnable functionality.
 /// @dev Contains internal implementations for burning tokens.
-abstract contract _SMARTBurnableLogic {
+
+abstract contract _SMARTBurnableLogic is _SMARTExtension {
     // --- Internal Burn Logic ---
     // Concrete contracts will call these internal functions,
     // potentially wrapping them with access control (e.g., onlyOwner).
@@ -35,12 +36,6 @@ abstract contract _SMARTBurnableLogic {
     // --- Abstract Hooks ---
     // These must be implemented by the concrete contract, typically by inheriting
     // SMARTExtension(Upgradeable) and ERC20Burnable(Upgradeable).
-
-    /// @dev Abstract internal validation hook for burning tokens.
-    function _validateBurn(address from, uint256 amount) internal virtual;
-
-    /// @dev Abstract internal hook called after burning tokens.
-    function _afterBurn(address from, uint256 amount) internal virtual;
 
     /// @dev Abstract function representing the actual burn operation (e.g., ERC20Burnable._burn).
     function _executeBurn(address from, uint256 amount) internal virtual;

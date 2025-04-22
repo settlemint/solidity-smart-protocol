@@ -10,7 +10,8 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
 import { _SMARTPausableLogic } from "../base/_SMARTPausableLogic.sol"; // Import base logic
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol"; // For _update
-    // override
+import { SMARTHooks } from "../common/SMARTHooks.sol";
+// override
 
 /// @title SMARTPausableUpgradeable
 /// @notice Upgradeable extension that adds pausable functionality.
@@ -56,28 +57,20 @@ abstract contract SMARTPausableUpgradeable is
     // --- Internal Functions ---
     // Override validation hooks to incorporate _SMARTPausableLogic checks via super
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _validateMint(address to, uint256 amount) internal virtual override(SMARTExtensionUpgradeable) {
+    /// @inheritdoc SMARTHooks
+    function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
         _pausable_validateMintLogic(); // Call renamed helper
         super._validateMint(to, amount); // Call downstream validation
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _validateTransfer(
-        address from,
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTExtensionUpgradeable)
-    {
+    /// @inheritdoc SMARTHooks
+    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         _pausable_validateTransferLogic(); // Call renamed helper
         super._validateTransfer(from, to, amount); // Call downstream validation
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTExtensionUpgradeable) {
+    /// @inheritdoc SMARTHooks
+    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         _pausable_validateBurnLogic();
         super._validateBurn(from, amount);
     }

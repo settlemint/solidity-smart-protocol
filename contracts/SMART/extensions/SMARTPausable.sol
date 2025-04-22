@@ -7,6 +7,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { _SMARTPausableLogic } from "./base/_SMARTPausableLogic.sol";
+import { SMARTHooks } from "./common/SMARTHooks.sol";
 
 /// @title SMARTPausable
 /// @notice Standard (non-upgradeable) extension that adds pausable functionality.
@@ -40,22 +41,22 @@ abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, Ownable, _SMAR
     }
 
     // --- Internal Functions ---
-    /// @inheritdoc SMARTExtension
-    function _validateMint(address to, uint256 amount) internal virtual override(SMARTExtension) {
+    /// @inheritdoc SMARTHooks
+    function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
         // Call Pausable check helper with new name
         _pausable_validateMintLogic();
         super._validateMint(to, amount);
     }
 
-    /// @inheritdoc SMARTExtension
-    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTExtension) {
+    /// @inheritdoc SMARTHooks
+    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         // Call Pausable check helper with new name
         _pausable_validateTransferLogic();
         super._validateTransfer(from, to, amount);
     }
 
-    /// @inheritdoc SMARTExtension
-    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTExtension) {
+    /// @inheritdoc SMARTHooks
+    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         _pausable_validateBurnLogic();
         super._validateBurn(from, amount);
     }

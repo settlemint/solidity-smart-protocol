@@ -7,6 +7,7 @@ import { SMARTExtension } from "./SMARTExtension.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { LengthMismatch } from "./common/CommonErrors.sol";
 import { _SMARTBurnableLogic } from "./base/_SMARTBurnableLogic.sol"; // Import base logic
+import { SMARTHooks } from "./common/SMARTHooks.sol";
 /// @title SMARTBurnable
 /// @notice Standard (non-upgradeable) extension that adds burnable functionality to SMART tokens.
 /// @dev Inherits from Ownable, SMARTExtension, and _SMARTBurnableLogic.
@@ -15,7 +16,6 @@ import { _SMARTBurnableLogic } from "./base/_SMARTBurnableLogic.sol"; // Import 
 ///      which conflict with the IERC3643 requirement for an owner-controlled `burn(address, amount)` function.
 
 abstract contract SMARTBurnable is
-    // ERC20Burnable removed from inheritance
     SMARTExtension,
     Ownable,
     _SMARTBurnableLogic // Inherit base logic
@@ -45,21 +45,14 @@ abstract contract SMARTBurnable is
     // by calling the functions provided by SMARTExtension and relying on ERC20's _burn.
 
     /// @dev Internal validation hook for burning tokens.
-    function _validateBurn(
-        address from,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTExtension, _SMARTBurnableLogic)
-    {
+    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         // No specific logic helper to call from _SMARTBurnableLogic for validation
         // Add any burnable-specific validation here if needed
         super._validateBurn(from, amount); // Call downstream validation (e.g., SMARTCustodian, SMART)
     }
 
     /// @dev Internal hook called after burning tokens.
-    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTExtension, _SMARTBurnableLogic) {
+    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         // No specific logic helper to call from _SMARTBurnableLogic for this hook
         // Add any burnable-specific actions here if needed
         super._afterBurn(from, amount); // Call downstream hooks (e.g., SMART)

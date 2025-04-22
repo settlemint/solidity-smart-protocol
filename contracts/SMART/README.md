@@ -9,6 +9,7 @@
 - Removed the need to a separate claims topics registry, since we don't use it anymore
 - Token will be passed in isVerified function to check if the identity has all the necessary claim topics
 - Simplified the identity factory using proxy 1967 pattern.
+- SMARTRedeemable extension for self-burning tokens
 
 ## TODO
 

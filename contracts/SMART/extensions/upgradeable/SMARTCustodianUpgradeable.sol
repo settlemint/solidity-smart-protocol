@@ -11,10 +11,11 @@ import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.s
     // return type
 import { IIdentity } from "../../../onchainid/interface/IIdentity.sol"; // Keep for _recoveryAddress usage
 import { LengthMismatch } from "../common/CommonErrors.sol";
-
+import { SMARTHooks } from "../common/SMARTHooks.sol";
 /// @title SMARTCustodianUpgradeable
 /// @notice Upgradeable extension that adds custodian features.
 /// @dev Inherits from SMARTExtensionUpgradeable, OwnableUpgradeable, and _SMARTCustodianLogic.
+
 abstract contract SMARTCustodianUpgradeable is
     Initializable,
     SMARTExtensionUpgradeable,
@@ -170,28 +171,20 @@ abstract contract SMARTCustodianUpgradeable is
     // --- Internal Hook Overrides ---
     // Override SMARTExtensionUpgradeable hooks to incorporate _SMARTCustodianLogic checks
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _validateMint(address to, uint256 amount) internal virtual override(SMARTExtensionUpgradeable) {
+    /// @inheritdoc SMARTHooks
+    function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
         _custodian_validateMintLogic(to, amount); // Call renamed helper
         super._validateMint(to, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _validateTransfer(
-        address from,
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTExtensionUpgradeable)
-    {
+    /// @inheritdoc SMARTHooks
+    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         _custodian_validateTransferLogic(from, to, amount); // Call renamed helper
         super._validateTransfer(from, to, amount);
     }
 
-    /// @inheritdoc SMARTExtensionUpgradeable
-    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTExtensionUpgradeable) {
+    /// @inheritdoc SMARTHooks
+    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         _custodian_validateBurnLogic(from, amount); // Call renamed helper
         super._validateBurn(from, amount);
     }
