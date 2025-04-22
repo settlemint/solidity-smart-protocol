@@ -23,7 +23,7 @@ error InvalidUserAddress();
 error IdentityAlreadyRegistered(address userAddress);
 
 /// @title SMARTIdentityRegistry
-/// @notice Registry for managing investor identities (Upgradeable, ERC-2771 compatible)
+/// @notice Registry for managing investor identities.
 contract SMARTIdentityRegistry is
     Initializable,
     ISMARTIdentityRegistry,
@@ -44,15 +44,11 @@ contract SMARTIdentityRegistry is
     event CountryUpdated(address indexed _investorAddress, uint16 indexed _country);
 
     // --- Constructor ---
-    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() ERC2771ContextUpgradeable(address(0)) {
         _disableInitializers();
     }
 
-    /// @notice Initializes the contract after deployment through a proxy.
-    /// @param initialOwner The address to grant ownership to.
-    /// @param identityStorage_ The address of the Identity Registry Storage contract.
-    /// @param trustedIssuersRegistry_ The address of the Trusted Issuers Registry contract.
+    // --- Initializer ---
     function initialize(
         address initialOwner,
         address identityStorage_,
@@ -74,26 +70,22 @@ contract SMARTIdentityRegistry is
     }
 
     // --- State-Changing Functions ---
-    /// @inheritdoc ISMARTIdentityRegistry
     function setIdentityRegistryStorage(address identityStorage_) external override onlyOwner {
         if (identityStorage_ == address(0)) revert InvalidStorageAddress();
         _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
         emit IdentityStorageSet(address(_identityStorage));
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function setTrustedIssuersRegistry(address trustedIssuersRegistry_) external override onlyOwner {
         if (trustedIssuersRegistry_ == address(0)) revert InvalidRegistryAddress();
         _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
         emit TrustedIssuersRegistrySet(address(_trustedIssuersRegistry));
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function registerIdentity(address _userAddress, IIdentity _identity, uint16 _country) external override onlyOwner {
         _registerIdentity(_userAddress, _identity, _country);
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function deleteIdentity(address _userAddress) external override onlyOwner {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
 
@@ -103,7 +95,6 @@ contract SMARTIdentityRegistry is
         emit IdentityRemoved(_userAddress, identityToDelete);
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function updateCountry(address _userAddress, uint16 _country) external override onlyOwner {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
 
@@ -111,7 +102,6 @@ contract SMARTIdentityRegistry is
         emit CountryUpdated(_userAddress, _country);
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function updateIdentity(address _userAddress, IIdentity _identity) external override onlyOwner {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
@@ -122,7 +112,6 @@ contract SMARTIdentityRegistry is
         emit IdentityUpdated(oldInvestorIdentity, _identity);
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function batchRegisterIdentity(
         address[] calldata _userAddresses,
         IIdentity[] calldata _identities,
@@ -142,8 +131,6 @@ contract SMARTIdentityRegistry is
     }
 
     // --- View Functions ---
-
-    /// @inheritdoc ISMARTIdentityRegistry
     function contains(address _userAddress) external view override returns (bool) {
         // Attempt to retrieve the identity.
         // If storedIdentity reverts (e.g., IdentityDoesNotExist), the catch block executes.
@@ -157,7 +144,6 @@ contract SMARTIdentityRegistry is
         }
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function isVerified(
         address _userAddress,
         uint256[] memory requiredClaimTopics
@@ -227,33 +213,24 @@ contract SMARTIdentityRegistry is
         return true;
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function identity(address _userAddress) public view override returns (IIdentity) {
         return IIdentity(_identityStorage.storedIdentity(_userAddress));
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function investorCountry(address _userAddress) external view override returns (uint16) {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
         return _identityStorage.storedInvestorCountry(_userAddress);
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function identityStorage() external view override returns (IERC3643IdentityRegistryStorage) {
         return _identityStorage;
     }
 
-    /// @inheritdoc ISMARTIdentityRegistry
     function issuersRegistry() external view override returns (IERC3643TrustedIssuersRegistry) {
         return _trustedIssuersRegistry;
     }
 
     // --- Internal Functions ---
-
-    /// @notice Internal function to register an identity
-    /// @param _userAddress The address of the user
-    /// @param _identity The identity contract
-    /// @param _country The country code
     function _registerIdentity(address _userAddress, IIdentity _identity, uint16 _country) internal {
         if (_userAddress == address(0)) revert InvalidUserAddress();
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
@@ -263,7 +240,6 @@ contract SMARTIdentityRegistry is
         emit IdentityRegistered(_userAddress, _identity);
     }
 
-    /// @inheritdoc ContextUpgradeable
     function _msgSender()
         internal
         view
@@ -274,7 +250,6 @@ contract SMARTIdentityRegistry is
         return ERC2771ContextUpgradeable._msgSender();
     }
 
-    /// @inheritdoc ContextUpgradeable
     function _msgData()
         internal
         view
@@ -285,7 +260,6 @@ contract SMARTIdentityRegistry is
         return ERC2771ContextUpgradeable._msgData();
     }
 
-    /// @inheritdoc ERC2771ContextUpgradeable
     function _contextSuffixLength()
         internal
         view
@@ -297,8 +271,5 @@ contract SMARTIdentityRegistry is
     }
 
     // --- Upgradeability ---
-
-    /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
-    /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
 }

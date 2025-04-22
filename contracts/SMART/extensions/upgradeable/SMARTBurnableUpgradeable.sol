@@ -75,7 +75,7 @@ abstract contract SMARTBurnableUpgradeable is
 
     /// @dev Provides the actual burn implementation by calling ERC20Upgradeable's internal _burn.
     ///      This assumes the contract inheriting this extension also inherits ERC20Upgradeable.
-    function _executeBurn(
+    function _burnable_executeBurn(
         address from,
         uint256 amount
     )

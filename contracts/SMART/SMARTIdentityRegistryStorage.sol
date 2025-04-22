@@ -20,7 +20,7 @@ error IdentityRegistryNotBound(address registryAddress);
 error UnauthorizedCaller();
 
 /// @title SMARTIdentityRegistryStorage
-/// @notice Storage contract for identity registry data (Upgradeable, ERC-2771 compatible)
+/// @notice Storage contract for identity registry data.
 contract SMARTIdentityRegistryStorage is
     Initializable,
     IERC3643IdentityRegistryStorage,
@@ -57,27 +57,23 @@ contract SMARTIdentityRegistryStorage is
     event IdentityRegistryUnbound(address indexed _identityRegistry);
 
     // --- Modifiers ---
-    // TODO: Can this be done with AccessControl?
     modifier onlyOwnerOrBoundRegistry() {
         if (_msgSender() != owner() && !_boundIdentityRegistries[_msgSender()]) revert UnauthorizedCaller();
         _;
     }
 
     // --- Constructor ---
-    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() ERC2771ContextUpgradeable(address(0)) {
         _disableInitializers();
     }
 
-    /// @notice Initializes the contract after deployment through a proxy.
-    /// @param initialOwner The address to grant ownership to.
+    // --- Initializer ---
     function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
     }
 
     // --- State-Changing Functions ---
-    /// @inheritdoc IERC3643IdentityRegistryStorage
     function addIdentityToStorage(
         address _userAddress,
         IIdentity _identity,
@@ -92,37 +88,37 @@ contract SMARTIdentityRegistryStorage is
 
         _identities[_userAddress] = Identity(address(_identity), _country);
         _identityWallets.push(_userAddress);
-        // Store the index of the newly added wallet address
-        _identityWalletsIndex[_userAddress] = _identityWallets.length - 1;
+        // Store the index + 1 of the newly added wallet address for O(1) removal checks
+        _identityWalletsIndex[_userAddress] = _identityWallets.length;
 
         emit IdentityStored(_userAddress, _identity);
     }
 
-    /// @inheritdoc IERC3643IdentityRegistryStorage
     function removeIdentityFromStorage(address _userAddress) external onlyOwnerOrBoundRegistry {
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
         IIdentity oldIdentity = IIdentity(_identities[_userAddress].identityContract);
 
-        // Efficiently remove from _identityWallets array using the mapping index pattern
-        uint256 indexToRemove = _identityWalletsIndex[_userAddress];
+        // Efficiently remove from _identityWallets array using the mapping index
+        uint256 indexToRemove = _identityWalletsIndex[_userAddress] - 1; // Adjust index back to 0-based
         address lastWalletAddress = _identityWallets[_identityWallets.length - 1];
 
-        // Move the last wallet address to the position of the one being removed
-        _identityWallets[indexToRemove] = lastWalletAddress;
-        // Update the index mapping for the moved wallet address
-        _identityWalletsIndex[lastWalletAddress] = indexToRemove;
+        if (_userAddress != lastWalletAddress) {
+            // Move the last wallet address to the position of the one being removed
+            _identityWallets[indexToRemove] = lastWalletAddress;
+            // Update the index mapping for the moved wallet address (index + 1 for storage)
+            _identityWalletsIndex[lastWalletAddress] = indexToRemove + 1;
+        }
 
-        // Remove the last element (which is now duplicated at indexToRemove or is the one to remove if it was the last)
+        // Remove the last element
         _identityWallets.pop();
 
         // Clean up identity data and index mapping
         delete _identities[_userAddress];
-        delete _identityWalletsIndex[_userAddress];
+        delete _identityWalletsIndex[_userAddress]; // Set index back to 0
 
         emit IdentityUnstored(_userAddress, oldIdentity);
     }
 
-    /// @inheritdoc IERC3643IdentityRegistryStorage
     function modifyStoredIdentity(address _userAddress, IIdentity _identity) external onlyOwnerOrBoundRegistry {
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
@@ -133,7 +129,6 @@ contract SMARTIdentityRegistryStorage is
         emit IdentityModified(oldIdentity, _identity);
     }
 
-    /// @inheritdoc IERC3643IdentityRegistryStorage
     function modifyStoredInvestorCountry(address _userAddress, uint16 _country) external onlyOwnerOrBoundRegistry {
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
 
@@ -142,66 +137,60 @@ contract SMARTIdentityRegistryStorage is
         emit CountryModified(_userAddress, _country);
     }
 
-    /// @inheritdoc IERC3643IdentityRegistryStorage
     function bindIdentityRegistry(address _identityRegistry) external onlyOwner {
         if (_identityRegistry == address(0)) revert InvalidIdentityRegistryAddress();
         if (_boundIdentityRegistries[_identityRegistry]) revert IdentityRegistryAlreadyBound(_identityRegistry);
 
         _boundIdentityRegistries[_identityRegistry] = true;
         _boundIdentityRegistryAddresses.push(_identityRegistry);
-        _boundIdentityRegistriesIndex[_identityRegistry] = _boundIdentityRegistryAddresses.length - 1;
+        // Store index + 1 for O(1) removal checks
+        _boundIdentityRegistriesIndex[_identityRegistry] = _boundIdentityRegistryAddresses.length;
 
         emit IdentityRegistryBound(_identityRegistry);
     }
 
-    /// @inheritdoc IERC3643IdentityRegistryStorage
     function unbindIdentityRegistry(address _identityRegistry) external onlyOwner {
         if (!_boundIdentityRegistries[_identityRegistry]) revert IdentityRegistryNotBound(_identityRegistry);
 
         // Efficiently remove from _boundIdentityRegistryAddresses array
-        uint256 indexToRemove = _boundIdentityRegistriesIndex[_identityRegistry];
+        uint256 indexToRemove = _boundIdentityRegistriesIndex[_identityRegistry] - 1; // Adjust index back to 0-based
         address lastRegistry = _boundIdentityRegistryAddresses[_boundIdentityRegistryAddresses.length - 1];
 
-        _boundIdentityRegistryAddresses[indexToRemove] = lastRegistry;
-        _boundIdentityRegistriesIndex[lastRegistry] = indexToRemove;
+        if (_identityRegistry != lastRegistry) {
+            _boundIdentityRegistryAddresses[indexToRemove] = lastRegistry;
+            // Update index for moved registry (index + 1 for storage)
+            _boundIdentityRegistriesIndex[lastRegistry] = indexToRemove + 1;
+        }
 
         _boundIdentityRegistryAddresses.pop();
 
         // Clean up bound status and index mapping
-        delete _boundIdentityRegistriesIndex[_identityRegistry];
-        _boundIdentityRegistries[_identityRegistry] = false; // Explicitly set to false
+        delete _boundIdentityRegistriesIndex[_identityRegistry]; // Set index back to 0
+        _boundIdentityRegistries[_identityRegistry] = false;
 
         emit IdentityRegistryUnbound(_identityRegistry);
     }
 
     // --- View Functions ---
-    /// @inheritdoc IERC3643IdentityRegistryStorage
     function linkedIdentityRegistries() external view returns (address[] memory) {
-        // Return the correctly maintained list of bound registry addresses
         return _boundIdentityRegistryAddresses;
     }
 
-    /// @inheritdoc IERC3643IdentityRegistryStorage
     function storedIdentity(address _userAddress) external view returns (IIdentity) {
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
         return IIdentity(_identities[_userAddress].identityContract);
     }
 
-    /// @inheritdoc IERC3643IdentityRegistryStorage
     function storedInvestorCountry(address _userAddress) external view returns (uint16) {
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
         return _identities[_userAddress].country;
     }
 
-    /// @notice Get all registered wallet addresses that have an identity
-    /// @return The array of wallet addresses with identities
     function getIdentityWallets() external view returns (address[] memory) {
         return _identityWallets;
     }
 
-    // --- Internal Functions --- (Added for completeness)
-
-    /// @inheritdoc ContextUpgradeable
+    // --- Internal Functions ---
     function _msgSender()
         internal
         view
@@ -212,7 +201,6 @@ contract SMARTIdentityRegistryStorage is
         return ERC2771ContextUpgradeable._msgSender();
     }
 
-    /// @inheritdoc ContextUpgradeable
     function _msgData()
         internal
         view
@@ -223,7 +211,6 @@ contract SMARTIdentityRegistryStorage is
         return ERC2771ContextUpgradeable._msgData();
     }
 
-    /// @inheritdoc ERC2771ContextUpgradeable
     function _contextSuffixLength()
         internal
         view
@@ -235,8 +222,5 @@ contract SMARTIdentityRegistryStorage is
     }
 
     // --- Upgradeability ---
-
-    /// @dev Authorizes an upgrade to a new implementation contract. Only the owner can authorize.
-    /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
 }

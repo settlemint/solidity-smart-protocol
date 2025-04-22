@@ -84,6 +84,7 @@ contract SMARTTokenUpgradeable is
         __SMARTCustodian_init();
         __SMARTPausable_init(); // Internally calls __Pausable_init
         __SMARTBurnable_init();
+        __SMARTRedeemable_init(); // Initialize Redeemable
 
         // 5. Initialize UUPS (must be after Ownable is initialized)
         __UUPSUpgradeable_init();
@@ -176,18 +177,6 @@ contract SMARTTokenUpgradeable is
 
     // --- Overrides for Hook Functions ---
     // These overrides ensure that hooks from all relevant extensions are called in a defined order.
-
-    /// @dev Overrides required because both SMARTBurnableUpgradeable and SMARTRedeemableUpgradeable define this.
-    function _executeBurn(
-        address from,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTBurnableUpgradeable, SMARTRedeemableUpgradeable)
-    {
-        _burn(from, amount); // Calls ERC20Upgradeable._burn
-    }
 
     /// @inheritdoc SMARTHooks
     function _validateMint(

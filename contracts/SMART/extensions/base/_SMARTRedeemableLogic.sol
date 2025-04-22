@@ -25,7 +25,7 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension, _Context {
         address owner = _msgSender(); // Requires _msgSender() from inheriting contract (Context / ContextUpgradeable)
         _validateRedeem(owner, amount);
         _validateBurn(owner, amount);
-        _executeBurn(owner, amount); // Abstracted burn execution
+        _redeemable_executeBurn(owner, amount); // Abstracted burn execution
         _afterBurn(owner, amount);
         _afterRedeem(owner, amount);
 
@@ -34,5 +34,5 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension, _Context {
     }
 
     /// @dev Abstract function representing the actual burn operation (e.g., ERC20Burnable._burn).
-    function _executeBurn(address from, uint256 amount) internal virtual;
+    function _redeemable_executeBurn(address from, uint256 amount) internal virtual;
 }

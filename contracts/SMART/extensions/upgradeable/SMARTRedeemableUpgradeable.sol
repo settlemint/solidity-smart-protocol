@@ -32,7 +32,7 @@ abstract contract SMARTRedeemableUpgradeable is
     }
 
     // @dev Abstract function representing the actual burn operation (e.g., ERC20Burnable._burn).
-    function _executeBurn(address from, uint256 amount) internal virtual override(_SMARTRedeemableLogic) {
+    function _redeemable_executeBurn(address from, uint256 amount) internal virtual override(_SMARTRedeemableLogic) {
         _burn(from, amount);
     }
 

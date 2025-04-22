@@ -13,7 +13,7 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension {
     /// @dev Abstract function representing the actual burn operation (e.g., ERC20Burnable._burn).
     ///      This needs to be implemented in the concrete contract inheriting this logic
     ///      and ERC20Burnable(Upgradeable).
-    function _executeBurn(address from, uint256 amount) internal virtual;
+    function _burnable_executeBurn(address from, uint256 amount) internal virtual;
 
     // --- Internal Functions ---
 
@@ -22,7 +22,7 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension {
     function _burnInternal(address userAddress, uint256 amount) internal virtual {
         _validateBurn(userAddress, amount);
         // We cannot call _burn directly here, hence _executeBurn.
-        _executeBurn(userAddress, amount);
+        _burnable_executeBurn(userAddress, amount);
         _afterBurn(userAddress, amount);
     }
 
