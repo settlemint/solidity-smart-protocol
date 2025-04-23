@@ -5,7 +5,9 @@ import { ISMARTCompliance } from "./interface/ISMARTCompliance.sol";
 import { ISMARTComplianceModule } from "./interface/ISMARTComplianceModule.sol";
 import { ISMART } from "./interface/ISMART.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { AccessControlDefaultAdminRulesUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
@@ -16,7 +18,7 @@ contract SMARTCompliance is
     Initializable,
     ISMARTCompliance,
     ERC2771ContextUpgradeable,
-    OwnableUpgradeable,
+    AccessControlDefaultAdminRulesUpgradeable,
     UUPSUpgradeable
 {
     // --- Constructor ---
@@ -25,8 +27,9 @@ contract SMARTCompliance is
     }
 
     // --- Initializer ---
-    function initialize(address initialOwner) public initializer {
-        __Ownable_init(initialOwner);
+    function initialize(address initialAdmin) public initializer {
+        __AccessControl_init();
+        __AccessControlDefaultAdminRules_init(3 days, initialAdmin);
         __UUPSUpgradeable_init();
     }
 
@@ -107,5 +110,5 @@ contract SMARTCompliance is
     }
 
     // --- Upgradeability ---
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner { }
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) { }
 }

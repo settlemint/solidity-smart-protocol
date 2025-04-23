@@ -4,7 +4,9 @@ pragma solidity ^0.8.27;
 import { IERC3643TrustedIssuersRegistry } from "../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 import { IClaimIssuer } from "../onchainid/interface/IClaimIssuer.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { AccessControlDefaultAdminRulesUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
@@ -23,9 +25,12 @@ contract SMARTTrustedIssuersRegistry is
     Initializable,
     IERC3643TrustedIssuersRegistry,
     ERC2771ContextUpgradeable,
-    OwnableUpgradeable,
+    AccessControlDefaultAdminRulesUpgradeable,
     UUPSUpgradeable
 {
+    // --- Roles ---
+    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
+
     // --- Storage Variables ---
     struct TrustedIssuer {
         address issuer;
@@ -60,13 +65,22 @@ contract SMARTTrustedIssuersRegistry is
     }
 
     // --- Initializer ---
-    function initialize(address initialOwner) public initializer {
-        __Ownable_init(initialOwner);
+    function initialize(address initialAdmin) public initializer {
+        __AccessControl_init();
+        __AccessControlDefaultAdminRules_init(3 days, initialAdmin);
         __UUPSUpgradeable_init();
+
+        _grantRole(REGISTRAR_ROLE, initialAdmin);
     }
 
     // --- State-Changing Functions ---
-    function addTrustedIssuer(IClaimIssuer _trustedIssuer, uint256[] calldata _claimTopics) external onlyOwner {
+    function addTrustedIssuer(
+        IClaimIssuer _trustedIssuer,
+        uint256[] calldata _claimTopics
+    )
+        external
+        onlyRole(REGISTRAR_ROLE)
+    {
         address issuerAddress = address(_trustedIssuer);
         if (issuerAddress == address(0)) revert InvalidIssuerAddress();
         if (_claimTopics.length == 0) revert NoClaimTopicsProvided();
@@ -83,7 +97,7 @@ contract SMARTTrustedIssuersRegistry is
         emit TrustedIssuerAdded(issuerAddress, _claimTopics);
     }
 
-    function removeTrustedIssuer(IClaimIssuer _trustedIssuer) external onlyOwner {
+    function removeTrustedIssuer(IClaimIssuer _trustedIssuer) external onlyRole(REGISTRAR_ROLE) {
         address issuerAddress = address(_trustedIssuer);
         if (!_trustedIssuers[issuerAddress].exists) revert IssuerDoesNotExist(issuerAddress);
 
@@ -109,7 +123,7 @@ contract SMARTTrustedIssuersRegistry is
         uint256[] calldata _newClaimTopics
     )
         external
-        onlyOwner
+        onlyRole(REGISTRAR_ROLE)
     {
         address issuerAddress = address(_trustedIssuer);
         if (!_trustedIssuers[issuerAddress].exists) revert IssuerDoesNotExist(issuerAddress);
@@ -263,5 +277,9 @@ contract SMARTTrustedIssuersRegistry is
     }
 
     // --- Upgradeability ---
-    function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override(UUPSUpgradeable)
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    { }
 }
