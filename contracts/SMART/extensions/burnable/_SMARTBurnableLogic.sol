@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { LengthMismatch } from "../common/CommonErrors.sol";
-import { _SMARTExtension } from "./_SMARTExtension.sol";
+import { _SMARTExtension } from "./../common/_SMARTExtension.sol";
 /// @title _SMARTBurnableLogic
 /// @notice Base logic contract for SMARTBurnable functionality.
 /// @dev Contains internal implementations for burning tokens.
