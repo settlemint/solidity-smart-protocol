@@ -5,6 +5,7 @@ import { SMARTTest } from "./SMARTTest.sol"; // Inherit from the logic base
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { _SMARTPausableLogic } from "../../contracts/SMART/extensions/pausable/internal/_SMARTPausableLogic.sol";
+import { Unauthorized } from "../../contracts/SMART/extensions/common/CommonErrors.sol";
 
 abstract contract SMARTPausableTest is SMARTTest {
     function test_Pause_SetAndCheck() public {
@@ -73,7 +74,7 @@ abstract contract SMARTPausableTest is SMARTTest {
 
     function test_Pause_AccessControl_Reverts() public {
         assertFalse(tokenUtils.isPaused(address(token)));
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, clientBE));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
         tokenUtils.pauseToken(address(token), clientBE);
         assertFalse(tokenUtils.isPaused(address(token)));
     }

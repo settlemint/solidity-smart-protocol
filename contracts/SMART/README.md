@@ -13,7 +13,5 @@
 
 ## TODO
 
-- Integrate OpenZeppelin AccessControl
-  - Also check that identityRegistry has access to the storage and the issuers registry
 - Should modules be upgradeable?
-
+- Should unauthorized error have the sender? should it be thrown in the authorization hooks then? Because now we don't have msgSender in the implementations
