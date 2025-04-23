@@ -15,6 +15,10 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
 import { SMARTRedeemableUpgradeable } from "./extensions/redeemable/SMARTRedeemableUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { SMARTAccessControlAuthorization } from "./extensions/core/SMARTAccessControlAuthorization.sol";
+import { SMARTBurnableAccessControlAuthorization } from
+    "./extensions/burnable/SMARTBurnableAccessControlAuthorization.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 /// @title SMARTTokenUpgradeable
 /// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
 
@@ -22,10 +26,13 @@ contract SMARTTokenUpgradeable is
     Initializable,
     UUPSUpgradeable,
     SMARTUpgradeable,
+    SMARTAccessControlAuthorization,
+    SMARTBurnableAccessControlAuthorization,
     SMARTCustodianUpgradeable,
     SMARTPausableUpgradeable,
     SMARTBurnableUpgradeable,
-    SMARTRedeemableUpgradeable
+    SMARTRedeemableUpgradeable,
+    AccessControlUpgradeable
 {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -88,6 +95,14 @@ contract SMARTTokenUpgradeable is
 
         // 5. Initialize UUPS (must be after Ownable is initialized)
         __UUPSUpgradeable_init();
+        __AccessControl_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
+        _grantRole(BURNER_ROLE, initialOwner_);
+        _grantRole(MINTER_ROLE, initialOwner_);
+        _grantRole(COMPLIANCE_ADMIN_ROLE, initialOwner_);
+        _grantRole(VERIFICATION_ADMIN_ROLE, initialOwner_);
+        _grantRole(TOKEN_ADMIN_ROLE, initialOwner_);
     }
 
     // --- Overrides for Conflicting Functions ---
@@ -155,6 +170,18 @@ contract SMARTTokenUpgradeable is
         returns (bool)
     {
         return super.transferFrom(from, to, amount);
+    }
+
+    function hasRole(
+        bytes32 role,
+        address account
+    )
+        public
+        view
+        override(SMARTAccessControlAuthorization, SMARTBurnableAccessControlAuthorization, AccessControlUpgradeable)
+        returns (bool)
+    {
+        return super.hasRole(role, account);
     }
 
     /**
@@ -279,7 +306,12 @@ contract SMARTTokenUpgradeable is
         internal
         view
         virtual
-        override(SMARTRedeemableUpgradeable, ContextUpgradeable)
+        override(
+            SMARTRedeemableUpgradeable,
+            ContextUpgradeable,
+            SMARTAccessControlAuthorization,
+            SMARTBurnableAccessControlAuthorization
+        )
         returns (address)
     {
         return super._msgSender();

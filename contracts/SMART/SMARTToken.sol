@@ -4,6 +4,8 @@ pragma solidity ^0.8.27;
 import { SMART } from "./extensions/core/SMART.sol";
 import { SMARTPausable } from "./extensions/pausable/SMARTPausable.sol";
 import { SMARTBurnable } from "./extensions/burnable/SMARTBurnable.sol";
+import { SMARTBurnableAccessControlAuthorization } from
+    "./extensions/burnable/SMARTBurnableAccessControlAuthorization.sol";
 import { SMARTCustodian } from "./extensions/custodian/SMARTCustodian.sol";
 import { ISMARTIdentityRegistry } from "./interface/ISMARTIdentityRegistry.sol";
 import { ISMART } from "./interface/ISMART.sol";
@@ -14,10 +16,21 @@ import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
 import { SMARTRedeemable } from "./extensions/redeemable/SMARTRedeemable.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { SMARTExtension } from "./extensions/common/SMARTExtension.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { SMARTAccessControlAuthorization } from "./extensions/core/SMARTAccessControlAuthorization.sol";
 /// @title SMARTToken
 /// @notice A complete implementation of a SMART token with all available extensions
 
-contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMARTRedeemable {
+contract SMARTToken is
+    SMART,
+    SMARTAccessControlAuthorization,
+    SMARTBurnableAccessControlAuthorization,
+    SMARTCustodian,
+    SMARTPausable,
+    SMARTBurnable,
+    SMARTRedeemable,
+    AccessControl
+{
     constructor(
         string memory name_,
         string memory symbol_,
@@ -40,7 +53,14 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMAR
             initialModulePairs_,
             initialOwner_
         )
-    { }
+    {
+        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
+        _grantRole(BURNER_ROLE, initialOwner_);
+        _grantRole(MINTER_ROLE, initialOwner_);
+        _grantRole(COMPLIANCE_ADMIN_ROLE, initialOwner_);
+        _grantRole(VERIFICATION_ADMIN_ROLE, initialOwner_);
+        _grantRole(TOKEN_ADMIN_ROLE, initialOwner_);
+    }
 
     // --- State-Changing Functions (Overrides) ---
     function transfer(address to, uint256 amount) public virtual override(SMART, ERC20, IERC20) returns (bool) {
@@ -71,6 +91,19 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMAR
 
     function decimals() public view virtual override(SMART, ERC20, IERC20Metadata) returns (uint8) {
         return super.decimals();
+    }
+
+    function hasRole(
+        bytes32 role,
+        address account
+    )
+        public
+        view
+        virtual
+        override(SMARTAccessControlAuthorization, SMARTBurnableAccessControlAuthorization, AccessControl)
+        returns (bool)
+    {
+        return AccessControl.hasRole(role, account);
     }
 
     // --- Hooks ---
@@ -145,11 +178,17 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMAR
         super._update(from, to, value);
     }
 
-    function _msgSender() internal view virtual override(SMARTRedeemable, Context) returns (address) {
-        return super._msgSender();
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(SMARTAccessControlAuthorization, SMARTBurnableAccessControlAuthorization, Context, SMARTRedeemable)
+        returns (address)
+    {
+        return Context._msgSender();
     }
 
-    function _msgData() internal view virtual override(SMARTRedeemable, Context) returns (bytes calldata) {
-        return super._msgData();
+    function _msgData() internal view virtual override(Context, SMARTRedeemable) returns (bytes calldata) {
+        return Context._msgData();
     }
 }
