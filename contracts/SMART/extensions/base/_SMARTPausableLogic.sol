@@ -15,15 +15,15 @@ abstract contract _SMARTPausableLogic {
 
     // --- Internal Functions ---
     // Hook Helper Functions
-    function _pausable_validateMintLogic() internal view virtual {
+    function _pausable_beforeMintLogic() internal view virtual {
         if (paused()) revert TokenPaused();
     }
 
-    function _pausable_validateTransferLogic() internal view virtual {
+    function _pausable_beforeTransferLogic() internal view virtual {
         if (paused()) revert TokenPaused();
     }
 
-    function _pausable_validateBurnLogic() internal view virtual {
+    function _pausable_beforeBurnLogic() internal view virtual {
         if (paused()) revert TokenPaused();
     }
 }

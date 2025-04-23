@@ -41,9 +41,9 @@ abstract contract SMARTRedeemableUpgradeable is
     /// conditions, trigger trade).
     /// @param owner The address redeeming the tokens.
     /// @param amount The amount of tokens being redeemed.
-    function _validateRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
+    function _beforeRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
         // Placeholder for custom logic
-        super._validateRedeem(owner, amount);
+        super._beforeRedeem(owner, amount);
     }
 
     /// @notice Hook called after token redemption.

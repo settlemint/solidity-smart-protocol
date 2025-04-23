@@ -23,8 +23,8 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension, _Context {
     /// @param amount The amount of tokens to redeem.
     function redeem(uint256 amount) external virtual returns (bool) {
         address owner = _msgSender(); // Requires _msgSender() from inheriting contract (Context / ContextUpgradeable)
-        _validateRedeem(owner, amount);
-        _validateBurn(owner, amount);
+        _beforeRedeem(owner, amount);
+        _beforeBurn(owner, amount);
         _redeemable_executeBurn(owner, amount); // Abstracted burn execution
         _afterBurn(owner, amount);
         _afterRedeem(owner, amount);

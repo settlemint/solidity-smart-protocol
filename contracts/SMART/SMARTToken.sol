@@ -75,7 +75,7 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMAR
 
     // --- Hooks ---
 
-    function _validateMint(
+    function _beforeMint(
         address to,
         uint256 amount
     )
@@ -83,10 +83,10 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMAR
         virtual
         override(SMART, SMARTPausable, SMARTCustodian, SMARTHooks)
     {
-        super._validateMint(to, amount);
+        super._beforeMint(to, amount);
     }
 
-    function _validateTransfer(
+    function _beforeTransfer(
         address from,
         address to,
         uint256 amount,
@@ -96,10 +96,10 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMAR
         virtual
         override(SMART, SMARTPausable, SMARTCustodian, SMARTHooks)
     {
-        super._validateTransfer(from, to, amount, forced);
+        super._beforeTransfer(from, to, amount, forced);
     }
 
-    function _validateBurn(
+    function _beforeBurn(
         address from,
         uint256 amount
     )
@@ -107,10 +107,10 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMAR
         virtual
         override(SMARTBurnable, SMARTPausable, SMARTCustodian, SMARTHooks)
     {
-        super._validateBurn(from, amount);
+        super._beforeBurn(from, amount);
     }
 
-    function _validateRedeem(
+    function _beforeRedeem(
         address owner,
         uint256 amount
     )
@@ -118,7 +118,7 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMAR
         virtual
         override(SMARTRedeemable, SMARTCustodian, SMARTHooks)
     {
-        super._validateRedeem(owner, amount);
+        super._beforeRedeem(owner, amount);
     }
 
     function _afterMint(address to, uint256 amount) internal virtual override(SMART, SMARTHooks) {

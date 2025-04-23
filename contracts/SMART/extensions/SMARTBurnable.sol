@@ -43,9 +43,9 @@ abstract contract SMARTBurnable is
     // --- Hooks ---
 
     /// @dev Internal validation hook for burning tokens.
-    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
+    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         // Add any burnable-specific validation here if needed
-        super._validateBurn(from, amount); // Call downstream validation
+        super._beforeBurn(from, amount); // Call downstream validation
     }
 
     /// @dev Internal hook called after burning tokens.

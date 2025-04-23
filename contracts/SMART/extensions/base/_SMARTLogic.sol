@@ -233,7 +233,7 @@ abstract contract _SMARTLogic is ISMART {
     }
 
     // Helper Functions for Hooks
-    function _smart_validateMintLogic(address to, uint256 amount) internal virtual {
+    function _smart_beforeMintLogic(address to, uint256 amount) internal virtual {
         if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
         if (!__compliance.canTransfer(address(this), address(0), to, amount)) revert MintNotCompliant();
         emit MintValidated(to, amount);
@@ -244,7 +244,7 @@ abstract contract _SMARTLogic is ISMART {
         emit MintCompleted(to, amount);
     }
 
-    function _smart_validateTransferLogic(address from, address to, uint256 amount, bool) internal virtual {
+    function _smart_beforeTransferLogic(address from, address to, uint256 amount, bool) internal virtual {
         if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
         if (!__compliance.canTransfer(address(this), from, to, amount)) revert TransferNotCompliant();
     }

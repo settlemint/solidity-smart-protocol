@@ -86,7 +86,7 @@ abstract contract SMARTCustodianUpgradeable is
 
     /// @dev Requires owner privileges.
     function forcedTransfer(address from, address to, uint256 amount) public virtual onlyOwner returns (bool) {
-        _validateTransfer(from, to, amount, true); // Ensure custodian/other checks run first via hook chain
+        _beforeTransfer(from, to, amount, true); // Ensure custodian/other checks run first via hook chain
         _forcedTransfer(from, to, amount); // Call internal logic from base
         _afterTransfer(from, to, amount); // Call hook chain
         return true;
@@ -171,13 +171,13 @@ abstract contract SMARTCustodianUpgradeable is
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_validateMintLogic(to, amount); // Call helper from base logic
-        super._validateMint(to, amount);
+    function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
+        _custodian_beforeMintLogic(to, amount); // Call helper from base logic
+        super._beforeMint(to, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateTransfer(
+    function _beforeTransfer(
         address from,
         address to,
         uint256 amount,
@@ -187,20 +187,20 @@ abstract contract SMARTCustodianUpgradeable is
         virtual
         override(SMARTHooks)
     {
-        _custodian_validateTransferLogic(from, to, amount, forced); // Call helper from base logic
-        super._validateTransfer(from, to, amount, forced);
+        _custodian_beforeTransferLogic(from, to, amount, forced); // Call helper from base logic
+        super._beforeTransfer(from, to, amount, forced);
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_validateBurnLogic(from, amount); // Call helper from base logic
-        super._validateBurn(from, amount);
+    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
+        _custodian_beforeBurnLogic(from, amount); // Call helper from base logic
+        super._beforeBurn(from, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateRedeem(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_validateRedeemLogic(from, amount); // Call helper from base logic
-        super._validateRedeem(from, amount);
+    function _beforeRedeem(address from, uint256 amount) internal virtual override(SMARTHooks) {
+        _custodian_beforeRedeemLogic(from, amount); // Call helper from base logic
+        super._beforeRedeem(from, amount);
     }
 
     // --- Gap ---

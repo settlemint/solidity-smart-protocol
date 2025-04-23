@@ -56,13 +56,13 @@ abstract contract SMARTPausableUpgradeable is
     // --- Hooks ---
 
     /// @inheritdoc SMARTHooks
-    function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateMintLogic(); // Call helper from base logic
-        super._validateMint(to, amount); // Call downstream validation
+    function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
+        _pausable_beforeMintLogic(); // Call helper from base logic
+        super._beforeMint(to, amount); // Call downstream validation
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateTransfer(
+    function _beforeTransfer(
         address from,
         address to,
         uint256 amount,
@@ -72,14 +72,14 @@ abstract contract SMARTPausableUpgradeable is
         virtual
         override(SMARTHooks)
     {
-        _pausable_validateTransferLogic(); // Call helper from base logic
-        super._validateTransfer(from, to, amount, forced); // Call downstream validation
+        _pausable_beforeTransferLogic(); // Call helper from base logic
+        super._beforeTransfer(from, to, amount, forced); // Call downstream validation
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateBurnLogic(); // Call helper from base logic
-        super._validateBurn(from, amount);
+    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
+        _pausable_beforeBurnLogic(); // Call helper from base logic
+        super._beforeBurn(from, amount);
     }
 
     /**

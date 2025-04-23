@@ -179,7 +179,7 @@ contract SMARTTokenUpgradeable is
     // These overrides ensure that hooks from all relevant extensions are called in a defined order.
 
     /// @inheritdoc SMARTHooks
-    function _validateMint(
+    function _beforeMint(
         address to,
         uint256 amount
     )
@@ -187,11 +187,11 @@ contract SMARTTokenUpgradeable is
         virtual
         override(SMARTUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
-        super._validateMint(to, amount);
+        super._beforeMint(to, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateTransfer(
+    function _beforeTransfer(
         address from,
         address to,
         uint256 amount,
@@ -201,24 +201,24 @@ contract SMARTTokenUpgradeable is
         virtual
         override(SMARTUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
-        super._validateTransfer(from, to, amount, forced);
+        super._beforeTransfer(from, to, amount, forced);
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateBurn(
+    function _beforeBurn(
         address from,
         uint256 amount
     )
         internal
         virtual
         override(SMARTBurnableUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks) // SMARTUpgradeable
-            // does not implement _validateBurn
+            // does not implement _beforeBurn
     {
-        super._validateBurn(from, amount);
+        super._beforeBurn(from, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateRedeem(
+    function _beforeRedeem(
         address owner,
         uint256 amount
     )
@@ -226,7 +226,7 @@ contract SMARTTokenUpgradeable is
         virtual
         override(SMARTRedeemableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
-        super._validateRedeem(owner, amount);
+        super._beforeRedeem(owner, amount);
     }
 
     /// @inheritdoc SMARTHooks

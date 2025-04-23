@@ -23,9 +23,9 @@ abstract contract SMARTRedeemable is SMARTExtension, _SMARTRedeemableLogic {
     /// @dev Can be overridden by inheriting contracts to add custom pre-redemption logic.
     /// @param owner The address redeeming the tokens.
     /// @param amount The amount of tokens being redeemed.
-    function _validateRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
+    function _beforeRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
         // Placeholder for custom logic
-        super._validateRedeem(owner, amount);
+        super._beforeRedeem(owner, amount);
     }
 
     /// @notice Hook called after token redemption.

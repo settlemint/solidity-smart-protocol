@@ -82,7 +82,7 @@ abstract contract _SMARTCustodianLogic {
     }
 
     function _forcedTransfer(address from, address to, uint256 amount) internal virtual {
-        // Validation is expected to be called by the concrete contract's `_validateTransfer` override first.
+        // Validation is expected to be called by the concrete contract's `_beforeTransfer` override first.
         uint256 currentFrozen = __frozenTokens[from];
         uint256 currentBalance = _getBalance(from);
         uint256 freeBalance = currentBalance - currentFrozen;
@@ -153,11 +153,11 @@ abstract contract _SMARTCustodianLogic {
     }
 
     // Helper Functions for Hooks
-    function _custodian_validateMintLogic(address to, uint256 /* amount */ ) internal virtual {
+    function _custodian_beforeMintLogic(address to, uint256 /* amount */ ) internal virtual {
         if (__frozen[to]) revert RecipientAddressFrozen();
     }
 
-    function _custodian_validateTransferLogic(address from, address to, uint256 amount, bool forced) internal virtual {
+    function _custodian_beforeTransferLogic(address from, address to, uint256 amount, bool forced) internal virtual {
         if (!forced) {
             if (__frozen[from]) revert SenderAddressFrozen();
             if (__frozen[to]) revert RecipientAddressFrozen();
@@ -171,7 +171,7 @@ abstract contract _SMARTCustodianLogic {
     }
 
     /// @dev Free tokens from frozen balance if needed, this will be called by an admin
-    function _custodian_validateBurnLogic(address from, uint256 amount) internal virtual {
+    function _custodian_beforeBurnLogic(address from, uint256 amount) internal virtual {
         uint256 totalBalance = _getBalance(from);
         if (totalBalance < amount) {
             revert InsufficientTotalBalance(totalBalance, amount);
@@ -192,7 +192,7 @@ abstract contract _SMARTCustodianLogic {
     }
 
     /// @dev Block if there are not enough free tokens, else they will be unfrozen by validateBurnLogic
-    function _custodian_validateRedeemLogic(address from, uint256 amount) internal virtual {
+    function _custodian_beforeRedeemLogic(address from, uint256 amount) internal virtual {
         if (__frozen[from]) revert SenderAddressFrozen();
 
         uint256 frozenTokens = __frozenTokens[from];

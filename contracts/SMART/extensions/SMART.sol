@@ -83,7 +83,7 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     /// @inheritdoc ISMART
     /// @dev Requires owner privileges.
     function mint(address to, uint256 amount) external virtual override onlyOwner {
-        _validateMint(to, amount);
+        _beforeMint(to, amount);
         _mint(to, amount);
         _afterMint(to, amount);
     }
@@ -93,7 +93,7 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     function batchMint(address[] calldata toList, uint256[] calldata amounts) external virtual override onlyOwner {
         if (toList.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < toList.length; i++) {
-            _validateMint(toList[i], amounts[i]);
+            _beforeMint(toList[i], amounts[i]);
             _mint(toList[i], amounts[i]);
             _afterMint(toList[i], amounts[i]);
         }
@@ -103,7 +103,7 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     /// @dev Overrides ERC20.transfer to include SMART validation and hooks.
     function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
         address sender = _msgSender();
-        _validateTransfer(sender, to, amount, false);
+        _beforeTransfer(sender, to, amount, false);
         super._transfer(sender, to, amount);
         _afterTransfer(sender, to, amount);
         return true;
@@ -115,7 +115,7 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
         address sender = _msgSender(); // Cache sender for efficiency
         for (uint256 i = 0; i < toList.length; i++) {
             // Use internal functions for consistency and to ensure hooks are called
-            _validateTransfer(sender, toList[i], amounts[i], false);
+            _beforeTransfer(sender, toList[i], amounts[i], false);
             super._transfer(sender, toList[i], amounts[i]); // Call ERC20's internal transfer
             _afterTransfer(sender, toList[i], amounts[i]);
         }
@@ -134,7 +134,7 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
         returns (bool)
     {
         address spender = _msgSender();
-        _validateTransfer(from, to, amount, false);
+        _beforeTransfer(from, to, amount, false);
         super._spendAllowance(from, spender, amount);
         super._transfer(from, to, amount);
         _afterTransfer(from, to, amount);
@@ -184,9 +184,9 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     // --- Hooks ---
 
     /// @inheritdoc SMARTHooks
-    function _validateMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_validateMintLogic(to, amount); // Call helper from base logic
-        super._validateMint(to, amount);
+    function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
+        _smart_beforeMintLogic(to, amount); // Call helper from base logic
+        super._beforeMint(to, amount);
     }
 
     /// @inheritdoc SMARTHooks
@@ -196,7 +196,7 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateTransfer(
+    function _beforeTransfer(
         address from,
         address to,
         uint256 amount,
@@ -206,8 +206,8 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
         virtual
         override(SMARTHooks)
     {
-        _smart_validateTransferLogic(from, to, amount, forced); // Call helper from base logic
-        super._validateTransfer(from, to, amount, forced);
+        _smart_beforeTransferLogic(from, to, amount, forced); // Call helper from base logic
+        super._beforeTransfer(from, to, amount, forced);
     }
 
     /// @inheritdoc SMARTHooks
