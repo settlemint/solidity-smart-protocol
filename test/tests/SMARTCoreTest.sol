@@ -1,22 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { SMARTBaseTest } from "./SMARTBaseTest.sol";
+import { SMARTTest } from "./SMARTTest.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { ISMARTComplianceModule } from "../../contracts/SMART/interface/ISMARTComplianceModule.sol";
 import { ISMART } from "../../contracts/SMART/interface/ISMART.sol";
 
-abstract contract SMARTTokenTest is SMARTBaseTest {
+abstract contract SMARTCoreTest is SMARTTest {
     function test_Mint_Success() public {
-        require(address(token) != address(0), "Token not deployed");
-        _mintInitialBalances(); // Use helper
+        // manual mint, because _mintInitialBalances resets the compliance counter
+        tokenUtils.mintToken(address(token), tokenIssuer, clientBE, INITIAL_MINT_AMOUNT);
+        tokenUtils.mintToken(address(token), tokenIssuer, clientJP, INITIAL_MINT_AMOUNT);
+        tokenUtils.mintToken(address(token), tokenIssuer, clientUS, INITIAL_MINT_AMOUNT);
+
         assertEq(token.balanceOf(clientBE), INITIAL_MINT_AMOUNT, "Initial mint failed");
         assertEq(mockComplianceModule.createdCallCount(), 3, "Mock created hook count incorrect after initial mints");
     }
 
     function test_Mint_AccessControl_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         vm.startPrank(clientBE); // Non-owner
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, clientBE));
         token.mint(clientBE, 100 ether);
@@ -24,7 +26,6 @@ abstract contract SMARTTokenTest is SMARTBaseTest {
     }
 
     function test_Transfer_Success() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 transferAmount = 100 ether;
         uint256 balBESnap = token.balanceOf(clientBE);
@@ -39,7 +40,6 @@ abstract contract SMARTTokenTest is SMARTBaseTest {
     }
 
     function test_Transfer_InsufficientBalance_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 senderBalance = token.balanceOf(clientBE);
         uint256 transferAmount = senderBalance + 1 ether;
@@ -53,7 +53,6 @@ abstract contract SMARTTokenTest is SMARTBaseTest {
     }
 
     function test_Transfer_ToUnverified_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 transferAmount = 100 ether;
         uint256 hookCountSnap = mockComplianceModule.transferredCallCount();
@@ -64,7 +63,6 @@ abstract contract SMARTTokenTest is SMARTBaseTest {
     }
 
     function test_Transfer_MockComplianceBlocked_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 transferAmount = 100 ether;
         uint256 balBESnap = token.balanceOf(clientBE);

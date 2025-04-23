@@ -16,7 +16,6 @@ abstract contract _SMARTCustodianLogic {
     // --- Errors ---
     error FreezeAmountExceedsAvailableBalance(uint256 available, uint256 requested);
     error InsufficientFrozenTokens(uint256 frozenBalance, uint256 requested);
-    error InsufficientTotalBalance(uint256 balance, uint256 requested);
     error InconsistentForcedTransferState();
     error NoTokensToRecover();
     error RecoveryWalletsNotVerified();
@@ -87,7 +86,7 @@ abstract contract _SMARTCustodianLogic {
         uint256 currentBalance = _getBalance(from);
         uint256 freeBalance = currentBalance - currentFrozen;
 
-        if (currentBalance < amount) revert InsufficientTotalBalance(currentBalance, amount);
+        if (currentBalance < amount) revert IERC20Errors.ERC20InsufficientBalance(from, currentBalance, amount);
 
         if (amount > freeBalance) {
             uint256 neededFromFrozen = amount - freeBalance;
@@ -175,7 +174,7 @@ abstract contract _SMARTCustodianLogic {
     function _custodian_beforeBurnLogic(address from, uint256 amount) internal virtual {
         uint256 totalBalance = _getBalance(from);
         if (totalBalance < amount) {
-            revert InsufficientTotalBalance(totalBalance, amount);
+            revert IERC20Errors.ERC20InsufficientBalance(from, totalBalance, amount);
         }
 
         uint256 currentFrozen = __frozenTokens[from];

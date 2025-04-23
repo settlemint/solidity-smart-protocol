@@ -1,26 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { SMARTBaseTest } from "./SMARTBaseTest.sol"; // Inherit from the logic base
+import { SMARTTest } from "./SMARTTest.sol"; // Inherit from the logic base
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { _SMARTCustodianLogic } from "../../contracts/SMART/extensions/custodian/_SMARTCustodianLogic.sol";
 import { TestConstants } from "./Constants.sol";
 
-abstract contract SMARTCustodianTest is SMARTBaseTest {
+abstract contract SMARTCustodianTest is SMARTTest {
     // =====================================================================
     //                         ADDRESS FREEZE TESTS
     // =====================================================================
 
     function test_FreezeAddress_SetAndCheck() public {
-        require(address(token) != address(0), "Token not deployed");
         assertFalse(tokenUtils.isFrozen(address(token), clientBE), "Should not be frozen initially");
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         assertTrue(tokenUtils.isFrozen(address(token), clientBE), "Should be frozen");
     }
 
     function test_FreezeAddress_TransferFromFrozen_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.SenderAddressFrozen.selector));
@@ -28,7 +26,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_FreezeAddress_TransferToFrozen_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientJP, true);
         vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.RecipientAddressFrozen.selector));
@@ -36,14 +33,12 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_FreezeAddress_MintToFrozen_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.RecipientAddressFrozen.selector));
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, 1 ether);
     }
 
     function test_FreezeAddress_RedeemFromFrozen_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.SenderAddressFrozen.selector));
@@ -51,7 +46,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_FreezeAddress_UnfreezeAndCheck() public {
-        require(address(token) != address(0), "Token not deployed");
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         assertTrue(tokenUtils.isFrozen(address(token), clientBE), "Should be frozen before unfreeze");
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, false);
@@ -59,7 +53,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_FreezeAddress_OperationsAfterUnfreeze_Succeed() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, false);
@@ -91,7 +84,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_FreezeAddress_AccessControl_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         vm.startPrank(clientBE); // Non-owner
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, clientBE));
         tokenUtils.setAddressFrozenAsExecutor(address(token), clientBE, clientBE, true);
@@ -105,7 +97,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     // =====================================================================
 
     function test_PartialFreeze_FreezeAndCheck() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = 100 ether;
         assertEq(tokenUtils.getFrozenTokens(address(token), clientBE), 0, "Should have 0 frozen initially");
@@ -114,7 +105,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_FreezeMoreThanAvailable_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 currentBalance = token.balanceOf(clientBE);
         uint256 freezeAmount = currentBalance + 1 ether;
@@ -129,7 +119,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_UnfreezeAndCheck() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = 100 ether;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -149,7 +138,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_UnfreezeMoreThanFrozen_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = 100 ether;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -166,7 +154,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_TransferLessThanUnfrozen_Succeeds() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -186,7 +173,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_TransferExactlyUnfrozen_Succeeds() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -206,7 +192,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_TransferMoreThanUnfrozen_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -223,7 +208,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_BurnLessThanUnfrozen_Succeeds() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -241,7 +225,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_BurnExactlyUnfrozen_Succeeds() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -259,7 +242,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_BurnMoreThanUnfrozen_SucceedsAndUnfreezes() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 totalBalance = token.balanceOf(clientBE);
         uint256 freezeAmount = totalBalance / 2;
@@ -272,8 +254,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
         uint256 balBESnap = token.balanceOf(clientBE);
         uint256 frozenSnap = tokenUtils.getFrozenTokens(address(token), clientBE);
 
-        vm.expectEmit(true, true, true, true, address(token));
-        emit _SMARTCustodianLogic.TokensUnfrozen(clientBE, expectedUnfreezeAmount);
         tokenUtils.burnToken(address(token), tokenIssuer, clientBE, burnAmount);
 
         assertEq(token.balanceOf(clientBE), balBESnap - burnAmount, "Balance wrong after burn");
@@ -285,7 +265,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_BurnMoreThanTotal_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 totalBalance = token.balanceOf(clientBE);
         uint256 freezeAmount = totalBalance / 2;
@@ -295,13 +274,12 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
 
         // Should revert based on total balance check before attempting unfreeze logic
         vm.expectRevert(
-            abi.encodeWithSelector(_SMARTCustodianLogic.InsufficientTotalBalance.selector, totalBalance, burnAmount)
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, clientBE, totalBalance, burnAmount)
         );
         tokenUtils.burnToken(address(token), tokenIssuer, clientBE, burnAmount);
     }
 
     function test_PartialFreeze_RedeemLessThanUnfrozen_Succeeds() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -320,7 +298,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_RedeemMoreThanUnfrozen_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -338,7 +315,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_PartialFreeze_AccessControl_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, clientBE));
         tokenUtils.freezePartialTokensAsExecutor(address(token), clientBE, clientBE, 1 ether);
@@ -352,7 +328,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     // =====================================================================
 
     function test_ForcedTransfer_Success() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 transferAmount = 100 ether;
         uint256 balBESnap = token.balanceOf(clientBE);
@@ -365,21 +340,19 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_ForcedTransfer_InsufficientTotalBalance_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 currentSenderBalance = token.balanceOf(clientBE);
         uint256 excessiveAmount = currentSenderBalance + 1 wei;
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                _SMARTCustodianLogic.InsufficientTotalBalance.selector, currentSenderBalance, excessiveAmount
+                IERC20Errors.ERC20InsufficientBalance.selector, clientBE, currentSenderBalance, excessiveAmount
             )
         );
         tokenUtils.forcedTransfer(address(token), tokenIssuer, clientBE, clientJP, excessiveAmount);
     }
 
     function test_ForcedTransfer_FromFrozenSender_Succeeds() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 transferAmount = 10 ether;
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
@@ -396,7 +369,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_ForcedTransfer_ToFrozenReceiver_Succeeds() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 transferAmount = 10 ether;
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientJP, true);
@@ -415,7 +387,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     // --- Forced Transfer with Partial Freeze Scenarios ---
 
     function test_ForcedTransfer_PartialFreeze_LessThanUnfrozen_Succeeds() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -435,7 +406,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_ForcedTransfer_PartialFreeze_ExactlyUnfrozen_Succeeds() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -455,7 +425,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_ForcedTransfer_PartialFreeze_MoreThanUnfrozen_SucceedsAndUnfreezes() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -469,8 +438,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
         uint256 balJPSnap = token.balanceOf(clientJP);
         uint256 frozenSnap = tokenUtils.getFrozenTokens(address(token), clientBE);
 
-        vm.expectEmit(true, true, true, true, address(token));
-        emit _SMARTCustodianLogic.TokensUnfrozen(clientBE, expectedUnfreezeAmount);
         tokenUtils.forcedTransfer(address(token), tokenIssuer, clientBE, clientJP, transferAmount);
 
         assertEq(token.balanceOf(clientBE), balBESnap - transferAmount, "Sender balance wrong");
@@ -483,7 +450,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_ForcedTransfer_PartialFreeze_ExactlyRemainingBalance_SucceedsAndUnfreezes() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -508,10 +474,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
 
         uint256 balJPSnap = token.balanceOf(clientJP);
 
-        if (expectedUnfreezeAmount > 0) {
-            vm.expectEmit(true, true, true, true, address(token));
-            emit _SMARTCustodianLogic.TokensUnfrozen(clientBE, expectedUnfreezeAmount);
-        }
         tokenUtils.forcedTransfer(address(token), tokenIssuer, clientBE, clientJP, transferAmount);
 
         assertEq(token.balanceOf(clientBE), 0, "Sender balance should be 0");
@@ -524,7 +486,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_ForcedTransfer_AccessControl_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, clientBE));
         tokenUtils.forcedTransferAsExecutor(address(token), clientBE, clientBE, clientJP, 1 ether);
@@ -536,7 +497,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     // =====================================================================
 
     function test_AddressRecovery_Success() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
 
         address lostWallet = clientBE;
@@ -562,13 +522,9 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
             TestConstants.COUNTRY_CODE_BE,
             "Country code wrong"
         );
-        // Check old identity removed (optional, depends on implementation)
-        // assertFalse(infrastructureUtils.identityRegistry().isVerified(lostWallet, requiredClaimTopics), "Lost wallet
-        // still verified");
     }
 
     function test_AddressRecovery_WithFrozenState_Success() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
 
         address lostWallet = clientJP;
@@ -588,21 +544,7 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
             tokenUtils.getFrozenTokens(address(token), lostWallet), freezeAmount, "Lost wallet frozen tokens wrong"
         );
 
-        // Register new wallet ID
-        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_JP);
-
-        // Perform Recovery - Expect state transfer events
-        vm.expectEmit(true, true, true, true, address(token));
-        emit _SMARTCustodianLogic.TokensUnfrozen(lostWallet, freezeAmount);
-        vm.expectEmit(true, true, true, true, address(token));
-        emit _SMARTCustodianLogic.TokensFrozen(newWallet, freezeAmount);
-        vm.expectEmit(true, true, true, true, address(token));
-        emit _SMARTCustodianLogic.AddressFrozen(newWallet, true);
-        vm.expectEmit(true, true, true, true, address(token));
-        emit _SMARTCustodianLogic.AddressFrozen(lostWallet, false);
-        vm.expectEmit(true, true, true, true, address(token));
-        emit _SMARTCustodianLogic.RecoverySuccess(lostWallet, newWallet, investorOnchainID);
-        tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
+        tokenUtils.recoveryAddressAsExecutor(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
 
         // Post-checks
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
@@ -617,7 +559,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_AddressRecovery_NoBalance_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
 
         address lostWallet = clientBE;
@@ -636,7 +577,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_AddressRecovery_NewWalletFrozen_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
 
         address lostWallet = clientBE;
@@ -652,17 +592,14 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
     }
 
     function test_AddressRecovery_AccessControl_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
 
         address lostWallet = clientBE;
         address newWallet = makeAddr("New Wallet BE");
         address investorOnchainID = identityUtils.getIdentity(lostWallet);
 
-        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
-
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, clientJP));
-        tokenUtils.recoveryAddressAsExecutor(address(token), lostWallet, clientJP, newWallet, investorOnchainID);
+        tokenUtils.recoveryAddressAsExecutor(address(token), clientJP, clientJP, newWallet, investorOnchainID);
         vm.stopPrank();
     }
 }

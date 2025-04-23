@@ -16,7 +16,7 @@ import { MockedComplianceModule } from "./mocks/MockedComplianceModule.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-abstract contract SMARTBaseTest is Test {
+abstract contract SMARTTest is Test {
     // --- State Variables ---
     ISMART internal token; // Token instance to be tested (set in inheriting contracts)
     MockedComplianceModule internal mockComplianceModule;
@@ -119,7 +119,6 @@ abstract contract SMARTBaseTest is Test {
 
     // --- Helper Functions ---
     function _mintInitialBalances() internal {
-        require(address(token) != address(0), "Token not deployed");
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, INITIAL_MINT_AMOUNT);
         tokenUtils.mintToken(address(token), tokenIssuer, clientJP, INITIAL_MINT_AMOUNT);
         tokenUtils.mintToken(address(token), tokenIssuer, clientUS, INITIAL_MINT_AMOUNT);

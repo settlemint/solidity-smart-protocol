@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { SMARTBaseTest } from "./SMARTBaseTest.sol"; // Inherit from the logic base
+import { SMARTTest } from "./SMARTTest.sol"; // Inherit from the logic base
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { _SMARTPausableLogic } from "../../contracts/SMART/extensions/pausable/_SMARTPausableLogic.sol";
 
-abstract contract SMARTPausableTest is SMARTBaseTest {
+abstract contract SMARTPausableTest is SMARTTest {
     function test_Pause_SetAndCheck() public {
-        require(address(token) != address(0), "Token not deployed");
         // Cast to SMARTPausable for view function
         assertFalse(tokenUtils.isPaused(address(token)), "Token should not be paused initially");
         tokenUtils.pauseToken(address(token), tokenIssuer);
@@ -17,7 +16,6 @@ abstract contract SMARTPausableTest is SMARTBaseTest {
     }
 
     function test_Pause_MintWhilePaused_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         tokenUtils.pauseToken(address(token), tokenIssuer);
         vm.expectRevert(abi.encodeWithSelector(_SMARTPausableLogic.TokenPaused.selector));
@@ -25,7 +23,6 @@ abstract contract SMARTPausableTest is SMARTBaseTest {
     }
 
     function test_Pause_TransferWhilePaused_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         tokenUtils.pauseToken(address(token), tokenIssuer);
         vm.expectRevert(abi.encodeWithSelector(_SMARTPausableLogic.TokenPaused.selector));
@@ -33,7 +30,6 @@ abstract contract SMARTPausableTest is SMARTBaseTest {
     }
 
     function test_Pause_BurnWhilePaused_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         tokenUtils.pauseToken(address(token), tokenIssuer);
         vm.expectRevert(abi.encodeWithSelector(_SMARTPausableLogic.TokenPaused.selector));
@@ -41,7 +37,6 @@ abstract contract SMARTPausableTest is SMARTBaseTest {
     }
 
     function test_Unpause_SetAndCheck() public {
-        require(address(token) != address(0), "Token not deployed");
         tokenUtils.pauseToken(address(token), tokenIssuer);
         // Cast to SMARTPausable for view function
         assertTrue(tokenUtils.isPaused(address(token)), "Token should be paused before unpause");
@@ -51,7 +46,6 @@ abstract contract SMARTPausableTest is SMARTBaseTest {
     }
 
     function test_Unpause_OperationsAfterUnpause_Succeed() public {
-        require(address(token) != address(0), "Token not deployed");
         _mintInitialBalances();
         tokenUtils.pauseToken(address(token), tokenIssuer);
         tokenUtils.unpauseToken(address(token), tokenIssuer);
@@ -78,14 +72,9 @@ abstract contract SMARTPausableTest is SMARTBaseTest {
     }
 
     function test_Pause_AccessControl_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
-        vm.startPrank(clientBE); // Non-owner
+        assertFalse(tokenUtils.isPaused(address(token)));
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, clientBE));
-        // Cast necessary for direct call in access control test
-        tokenUtils.isPaused(address(token));
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, clientBE));
-        // Cast necessary for direct call in access control test
-        tokenUtils.isPaused(address(token));
-        vm.stopPrank();
+        tokenUtils.pauseToken(address(token), clientBE);
+        assertFalse(tokenUtils.isPaused(address(token)));
     }
 }
