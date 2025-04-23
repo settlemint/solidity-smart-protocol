@@ -8,7 +8,7 @@ import { SMARTExtension } from "../common/SMARTExtension.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { LengthMismatch } from "../common/CommonErrors.sol";
-import { _SMARTLogic } from "./_SMARTLogic.sol";
+import { _SMARTLogic } from "./internal/_SMARTLogic.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
 
 /// @title SMART

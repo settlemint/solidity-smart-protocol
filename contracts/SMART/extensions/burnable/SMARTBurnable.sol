@@ -6,7 +6,7 @@ pragma solidity ^0.8.27;
 import { SMARTExtension } from "./../common/SMARTExtension.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { LengthMismatch } from "./../common/CommonErrors.sol";
-import { _SMARTBurnableLogic } from "./_SMARTBurnableLogic.sol"; // Import base logic
+import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol"; // Import base logic
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
 /// @title SMARTBurnable
 /// @notice Standard (non-upgradeable) extension that adds burnable functionality to SMART tokens.

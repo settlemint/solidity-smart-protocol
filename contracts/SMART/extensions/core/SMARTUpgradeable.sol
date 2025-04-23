@@ -8,7 +8,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
-import { _SMARTLogic } from "./_SMARTLogic.sol";
+import { _SMARTLogic } from "./internal/_SMARTLogic.sol";
 import { ISMART } from "../../interface/ISMART.sol";
 import { LengthMismatch } from "../common/CommonErrors.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";

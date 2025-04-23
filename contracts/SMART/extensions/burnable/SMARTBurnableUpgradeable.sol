@@ -7,7 +7,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 //     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
-import { _SMARTBurnableLogic } from "./_SMARTBurnableLogic.sol"; // Import base logic
+import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol"; // Import base logic
 import { LengthMismatch } from "./../common/CommonErrors.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
 
