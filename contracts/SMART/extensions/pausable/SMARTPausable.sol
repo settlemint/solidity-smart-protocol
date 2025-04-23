@@ -6,22 +6,25 @@ import { ERC20Pausable } from "@openzeppelin/contracts/token/ERC20/extensions/ER
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { _SMARTPausableLogic } from "./_SMARTPausableLogic.sol";
+import { _SMARTPausableLogic } from "./internal/_SMARTPausableLogic.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
-
+import { Unauthorized } from "./../common/CommonErrors.sol";
 /// @title SMARTPausable
 /// @notice Standard (non-upgradeable) extension that adds pausable functionality.
 /// @dev Inherits from OZ ERC20Pausable, Ownable, SMARTExtension, and _SMARTPausableLogic.
-abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, Ownable, _SMARTPausableLogic {
+
+abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, _SMARTPausableLogic {
     // --- State-Changing Functions ---
 
     /// @notice Pauses the contract (Owner only).
-    function pause() public virtual onlyOwner {
+    function pause() public virtual {
+        if (!_authorizePause()) revert Unauthorized();
         _pause();
     }
 
     /// @notice Unpauses the contract (Owner only).
-    function unpause() public virtual onlyOwner {
+    function unpause() public virtual {
+        if (!_authorizePause()) revert Unauthorized();
         _unpause();
     }
 

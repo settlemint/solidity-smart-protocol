@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+import { _SMARTPausableAuthorizationHooks } from "./_SMARTPausableAuthorizationHooks.sol";
+
 /// @title _SMARTPausableLogic
 /// @notice Base logic contract for SMARTPausable functionality.
 /// @dev Contains validation hooks checking the paused state.
-abstract contract _SMARTPausableLogic {
+abstract contract _SMARTPausableLogic is _SMARTPausableAuthorizationHooks {
     // --- Errors ---
     error TokenPaused();
 

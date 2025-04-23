@@ -7,19 +7,19 @@ import { ERC20PausableUpgradeable } from
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
-import { _SMARTPausableLogic } from "./_SMARTPausableLogic.sol";
+import { _SMARTPausableLogic } from "./internal/_SMARTPausableLogic.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
-
+import { Unauthorized } from "../common/CommonErrors.sol";
 /// @title SMARTPausableUpgradeable
 /// @notice Upgradeable extension that adds pausable functionality.
 /// @dev Inherits from OZ ERC20PausableUpgradeable, OwnableUpgradeable, SMARTExtensionUpgradeable, and
 /// _SMARTPausableLogic.
+
 abstract contract SMARTPausableUpgradeable is
     Initializable,
     ERC20PausableUpgradeable,
     SMARTExtensionUpgradeable,
-    OwnableUpgradeable,
     _SMARTPausableLogic
 {
     // --- Constructor ---
@@ -37,12 +37,14 @@ abstract contract SMARTPausableUpgradeable is
     // --- State-Changing Functions ---
 
     /// @notice Pauses the contract (Owner only).
-    function pause() public virtual onlyOwner {
+    function pause() public virtual {
+        if (!_authorizePause()) revert Unauthorized();
         _pause(); // Call PausableUpgradeable internal function
     }
 
     /// @notice Unpauses the contract (Owner only).
-    function unpause() public virtual onlyOwner {
+    function unpause() public virtual {
+        if (!_authorizePause()) revert Unauthorized();
         _unpause(); // Call PausableUpgradeable internal function
     }
 
