@@ -2,22 +2,24 @@
 pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
-import { MySMARTTokenFactory } from "../../contracts/MySMARTTokenFactory.sol";
-import { MySMARTToken } from "../../contracts/MySMARTToken.sol";
-import { Identity } from "../../contracts/onchainid/Identity.sol";
-import { IIdentity } from "../../contracts/onchainid/interface/IIdentity.sol";
-import { SMARTIdentityRegistryStorage } from "../../contracts/SMART/SMARTIdentityRegistryStorage.sol";
-import { SMARTTrustedIssuersRegistry } from "../../contracts/SMART/SMARTTrustedIssuersRegistry.sol";
-import { SMARTIdentityRegistry } from "../../contracts/SMART/SMARTIdentityRegistry.sol";
-import { SMARTCompliance } from "../../contracts/SMART/SMARTCompliance.sol";
-import { SMARTIdentityFactory } from "../../contracts/SMART/SMARTIdentityFactory.sol";
-import { IClaimIssuer } from "../../contracts/onchainid/interface/IClaimIssuer.sol";
-import { ISMART } from "../../contracts/SMART/interface/ISMART.sol";
-import { CountryAllowListComplianceModule } from "../../contracts/SMART/compliance/CountryAllowListComplianceModule.sol";
-import { CountryBlockListComplianceModule } from "../../contracts/SMART/compliance/CountryBlockListComplianceModule.sol";
+import { MySMARTTokenFactory } from "../../../contracts/MySMARTTokenFactory.sol";
+import { MySMARTToken } from "../../../contracts/MySMARTToken.sol";
+import { Identity } from "../../../contracts/onchainid/Identity.sol";
+import { IIdentity } from "../../../contracts/onchainid/interface/IIdentity.sol";
+import { SMARTIdentityRegistryStorage } from "../../../contracts/SMART/SMARTIdentityRegistryStorage.sol";
+import { SMARTTrustedIssuersRegistry } from "../../../contracts/SMART/SMARTTrustedIssuersRegistry.sol";
+import { SMARTIdentityRegistry } from "../../../contracts/SMART/SMARTIdentityRegistry.sol";
+import { SMARTCompliance } from "../../../contracts/SMART/SMARTCompliance.sol";
+import { SMARTIdentityFactory } from "../../../contracts/SMART/SMARTIdentityFactory.sol";
+import { IClaimIssuer } from "../../../contracts/onchainid/interface/IClaimIssuer.sol";
+import { ISMART } from "../../../contracts/SMART/interface/ISMART.sol";
+import { CountryAllowListComplianceModule } from
+    "../../../contracts/SMART/compliance/CountryAllowListComplianceModule.sol";
+import { CountryBlockListComplianceModule } from
+    "../../../contracts/SMART/compliance/CountryBlockListComplianceModule.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { MockedComplianceModule } from "../mocks/MockedComplianceModule.sol";
-import { ImplementationAuthority } from "../../contracts/onchainid/proxy/ImplementationAuthority.sol";
+import { ImplementationAuthority } from "../../../contracts/onchainid/proxy/ImplementationAuthority.sol";
 
 contract InfrastructureUtils is Test {
     // Core Contract Instances (now holding proxy addresses)

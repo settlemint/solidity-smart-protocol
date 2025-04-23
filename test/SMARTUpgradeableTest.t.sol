@@ -1,33 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { SMARTTestBase } from "./SMARTTestBase.sol"; // Inherit from the logic base
+import { SMARTBaseTest } from "./tests/SMARTBaseTest.sol";
+import { SMARTTokenTest } from "./tests/SMARTTokenTest.sol";
+import { SMARTBurnableTest } from "./tests/SMARTBurnableTest.sol";
+import { SMARTPausableTest } from "./tests/SMARTPausableTest.sol";
+import { SMARTCustodianTest } from "./tests/SMARTCustodianTest.sol";
 import { ISMART } from "../contracts/SMART/interface/ISMART.sol";
-import { TestConstants } from "./utils/Constants.sol";
-import { ISMARTComplianceModule } from "../contracts/SMART/interface/ISMARTComplianceModule.sol"; // Keep if needed by
 
 // Contract for testing the UPGRADEABLE SMART token implementation
-contract SMARTUpgradeableTest is SMARTTestBase {
-    function setUp() public override {
-        // 1. Call the base setup (infrastructure, actors, identities)
-        super.setUp();
-
-        // 2. Deploy the specific (standard) token instance for this test suite
-        address tokenAddress = _createToken();
-
-        // 3. Assign the deployed token to the `token` variable in the base contract
-        // This allows the tests in SMARTTestLogicBase to run against the standard token.
-        token = ISMART(tokenAddress);
-
-        // --- Post-Deployment Setup Specific to Standard Token (if any) ---
-        // If _createBondToken doesn't handle everything (e.g., granting roles), do it here.
-    }
-
-    // --- Helper Functions Specific to Standard Token ---
-
-    // Keep the function to create the standard token instance
-    // Make it private as it's only used within this contract's setup
-    function _createToken() private returns (address) {
+contract SMARTUpgradeableTest is
+    SMARTBaseTest,
+    SMARTTokenTest,
+    SMARTBurnableTest,
+    SMARTPausableTest,
+    SMARTCustodianTest
+{
+    function _setupToken() internal override {
         // Use TokenUtils to create the token, passing the bondFactory from base
         address bondAddress = tokenUtils.createUpgradeableToken(
             "Test Bond",
@@ -37,6 +26,6 @@ contract SMARTUpgradeableTest is SMARTTestBase {
             tokenIssuer // Use tokenIssuer address from base
         );
 
-        return bondAddress;
+        token = ISMART(bondAddress);
     }
 }

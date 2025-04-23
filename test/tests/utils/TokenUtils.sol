@@ -3,16 +3,16 @@ pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { SMARTIdentityFactory } from "../../contracts/SMART/SMARTIdentityFactory.sol";
-import { SMARTCompliance } from "../../contracts/SMART/SMARTCompliance.sol";
-import { ISMART } from "../../contracts/SMART/interface/ISMART.sol";
-import { SMARTToken } from "../../contracts/SMART/SMARTToken.sol";
-import { SMARTTokenUpgradeable } from "../../contracts/SMART/SMARTTokenUpgradeable.sol";
-import { SMARTIdentityRegistry } from "../../contracts/SMART/SMARTIdentityRegistry.sol";
-import { SMARTPausable } from "../../contracts/SMART/extensions/SMARTPausable.sol";
-import { SMARTBurnable } from "../../contracts/SMART/extensions/SMARTBurnable.sol";
-import { SMARTRedeemable } from "../../contracts/SMART/extensions/SMARTRedeemable.sol";
-import { SMARTCustodian } from "../../contracts/SMART/extensions/SMARTCustodian.sol";
+import { SMARTIdentityFactory } from "../../../contracts/SMART/SMARTIdentityFactory.sol";
+import { SMARTCompliance } from "../../../contracts/SMART/SMARTCompliance.sol";
+import { ISMART } from "../../../contracts/SMART/interface/ISMART.sol";
+import { SMARTToken } from "../../../contracts/SMART/SMARTToken.sol";
+import { SMARTTokenUpgradeable } from "../../../contracts/SMART/SMARTTokenUpgradeable.sol";
+import { SMARTIdentityRegistry } from "../../../contracts/SMART/SMARTIdentityRegistry.sol";
+import { SMARTPausable } from "../../../contracts/SMART/extensions/SMARTPausable.sol";
+import { SMARTBurnable } from "../../../contracts/SMART/extensions/SMARTBurnable.sol";
+import { SMARTRedeemable } from "../../../contracts/SMART/extensions/SMARTRedeemable.sol";
+import { SMARTCustodian } from "../../../contracts/SMART/extensions/SMARTCustodian.sol";
 
 contract TokenUtils is Test {
     address internal _platformAdmin;
@@ -97,7 +97,6 @@ contract TokenUtils is Test {
         )
     {
         // 1. Deploy the implementation contract (no constructor args for upgradeable)
-        // Note: Prank is not strictly needed here as constructor is empty, but keeping for consistency
         vm.startPrank(tokenIssuer_);
         SMARTTokenUpgradeable implementation = new SMARTTokenUpgradeable();
 
@@ -116,14 +115,11 @@ contract TokenUtils is Test {
         );
 
         // 3. Deploy the ERC1967Proxy pointing to the implementation and initializing it
-        // The proxy's owner (admin) is implicitly msg.sender here, which is the test contract.
-        // This is usually fine for testing, but for mainnet, consider proxy admin ownership.
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initializeData);
         address tokenProxyAddress = address(proxy);
         vm.stopPrank();
 
         // 4. Create the token's on-chain identity (using platform admin)
-        // This interacts with the proxy address now.
         _createAndSetTokenOnchainID(tokenProxyAddress, tokenIssuer_);
 
         return tokenProxyAddress; // Return the proxy address
@@ -137,8 +133,19 @@ contract TokenUtils is Test {
      * @param amount The amount to mint.
      */
     function mintToken(address tokenAddress, address tokenIssuer_, address to, uint256 amount) public {
-        // Use the specified token issuer's wallet address to mint
-        vm.startPrank(tokenIssuer_);
+        // Call the executor version, passing the token issuer as the executor
+        mintTokenAsExecutor(tokenAddress, tokenIssuer_, to, amount);
+    }
+
+    /**
+     * @notice Mints tokens (as specified executor).
+     * @param tokenAddress The address of the token contract.
+     * @param executor The address performing the mint.
+     * @param to The recipient's wallet address.
+     * @param amount The amount to mint.
+     */
+    function mintTokenAsExecutor(address tokenAddress, address executor, address to, uint256 amount) public {
+        vm.startPrank(executor);
         ISMART(tokenAddress).mint(to, amount);
         vm.stopPrank();
     }
@@ -169,29 +176,93 @@ contract TokenUtils is Test {
     /**
      * @notice Burns tokens from a holder's account.
      * @param tokenAddress The address of the token contract.
-     * @param from The burner's wallet address.
+     * @param tokenIssuer_ The address of the token issuer initiating the burn.
+     * @param from The holder's wallet address.
      * @param amount The amount to burn.
      */
     function burnToken(address tokenAddress, address tokenIssuer_, address from, uint256 amount) public {
-        vm.startPrank(tokenIssuer_); // The holder initiates the burn
+        // Call the executor version, passing the token issuer as the executor
+        burnTokenAsExecutor(tokenAddress, tokenIssuer_, from, amount);
+    }
+
+    /**
+     * @notice Burns tokens from a holder's account (as specified executor).
+     * @param tokenAddress The address of the token contract.
+     * @param executor The address performing the burn.
+     * @param from The account from which tokens are burned.
+     * @param amount The amount to burn.
+     */
+    function burnTokenAsExecutor(address tokenAddress, address executor, address from, uint256 amount) public {
+        vm.startPrank(executor);
         SMARTBurnable(tokenAddress).burn(from, amount);
         vm.stopPrank();
     }
 
+    /**
+     * @notice Pauses the token contract.
+     * @param tokenAddress The address of the token contract.
+     * @param tokenIssuer_ The address of the token issuer performing the action.
+     */
     function pauseToken(address tokenAddress, address tokenIssuer_) public {
-        vm.startPrank(tokenIssuer_);
+        // Call the executor version, passing the token issuer as the executor
+        pauseTokenAsExecutor(tokenAddress, tokenIssuer_);
+    }
+
+    /**
+     * @notice Pauses the token contract (as specified executor).
+     * @param tokenAddress The address of the token contract.
+     * @param executor The address performing the action.
+     */
+    function pauseTokenAsExecutor(address tokenAddress, address executor) public {
+        vm.startPrank(executor);
         SMARTPausable(tokenAddress).pause();
         vm.stopPrank();
     }
 
+    function isPaused(address tokenAddress) public view returns (bool) {
+        return SMARTPausable(tokenAddress).paused();
+    }
+
+    /**
+     * @notice Unpauses the token contract.
+     * @param tokenAddress The address of the token contract.
+     * @param tokenIssuer_ The address of the token issuer performing the action.
+     */
     function unpauseToken(address tokenAddress, address tokenIssuer_) public {
-        vm.startPrank(tokenIssuer_);
+        // Call the executor version, passing the token issuer as the executor
+        unpauseTokenAsExecutor(tokenAddress, tokenIssuer_);
+    }
+
+    /**
+     * @notice Unpauses the token contract (as specified executor).
+     * @param tokenAddress The address of the token contract.
+     * @param executor The address performing the action.
+     */
+    function unpauseTokenAsExecutor(address tokenAddress, address executor) public {
+        vm.startPrank(executor);
         SMARTPausable(tokenAddress).unpause();
         vm.stopPrank();
     }
 
+    /**
+     * @notice Redeems tokens.
+     * @param tokenAddress The address of the token contract.
+     * @param holder The address of the holder performing the action.
+     * @param amount The amount to redeem.
+     */
     function redeemToken(address tokenAddress, address holder, uint256 amount) public {
-        vm.startPrank(holder);
+        // Call the executor version, passing the holder as the executor
+        redeemTokenAsExecutor(tokenAddress, holder, amount);
+    }
+
+    /**
+     * @notice Redeems tokens (as specified executor).
+     * @param tokenAddress The address of the token contract.
+     * @param executor The address performing the action.
+     * @param amount The amount to redeem.
+     */
+    function redeemTokenAsExecutor(address tokenAddress, address executor, uint256 amount) public {
+        vm.startPrank(executor);
         SMARTRedeemable(tokenAddress).redeem(amount);
         vm.stopPrank();
     }
@@ -228,7 +299,26 @@ contract TokenUtils is Test {
      * @param freeze True to freeze, false to unfreeze.
      */
     function setAddressFrozen(address tokenAddress, address owner, address userAddress, bool freeze) public {
-        vm.startPrank(owner);
+        // Call the executor version, passing the owner as the executor
+        setAddressFrozenAsExecutor(tokenAddress, owner, userAddress, freeze);
+    }
+
+    /**
+     * @notice Freezes or unfreezes a user address (as specified executor).
+     * @param tokenAddress The address of the token contract.
+     * @param executor The address performing the action.
+     * @param userAddress The target user address.
+     * @param freeze True to freeze, false to unfreeze.
+     */
+    function setAddressFrozenAsExecutor(
+        address tokenAddress,
+        address executor,
+        address userAddress,
+        bool freeze
+    )
+        public
+    {
+        vm.startPrank(executor);
         SMARTCustodian(payable(tokenAddress)).setAddressFrozen(userAddress, freeze);
         vm.stopPrank();
     }
@@ -241,7 +331,26 @@ contract TokenUtils is Test {
      * @param amount The amount to freeze.
      */
     function freezePartialTokens(address tokenAddress, address owner, address userAddress, uint256 amount) public {
-        vm.startPrank(owner);
+        // Call the executor version, passing the owner as the executor
+        freezePartialTokensAsExecutor(tokenAddress, owner, userAddress, amount);
+    }
+
+    /**
+     * @notice Freezes a specific amount of tokens for a user (as specified executor).
+     * @param tokenAddress The address of the token contract.
+     * @param executor The address performing the action.
+     * @param userAddress The target user address.
+     * @param amount The amount to freeze.
+     */
+    function freezePartialTokensAsExecutor(
+        address tokenAddress,
+        address executor,
+        address userAddress,
+        uint256 amount
+    )
+        public
+    {
+        vm.startPrank(executor);
         SMARTCustodian(payable(tokenAddress)).freezePartialTokens(userAddress, amount);
         vm.stopPrank();
     }
@@ -254,7 +363,26 @@ contract TokenUtils is Test {
      * @param amount The amount to unfreeze.
      */
     function unfreezePartialTokens(address tokenAddress, address owner, address userAddress, uint256 amount) public {
-        vm.startPrank(owner);
+        // Call the executor version, passing the owner as the executor
+        unfreezePartialTokensAsExecutor(tokenAddress, owner, userAddress, amount);
+    }
+
+    /**
+     * @notice Unfreezes a specific amount of tokens for a user (as specified executor).
+     * @param tokenAddress The address of the token contract.
+     * @param executor The address performing the action.
+     * @param userAddress The target user address.
+     * @param amount The amount to unfreeze.
+     */
+    function unfreezePartialTokensAsExecutor(
+        address tokenAddress,
+        address executor,
+        address userAddress,
+        uint256 amount
+    )
+        public
+    {
+        vm.startPrank(executor);
         SMARTCustodian(payable(tokenAddress)).unfreezePartialTokens(userAddress, amount);
         vm.stopPrank();
     }
@@ -268,7 +396,28 @@ contract TokenUtils is Test {
      * @param amount The amount to transfer.
      */
     function forcedTransfer(address tokenAddress, address owner, address from, address to, uint256 amount) public {
-        vm.startPrank(owner);
+        // Call the executor version, passing the owner as the executor
+        forcedTransferAsExecutor(tokenAddress, owner, from, to, amount);
+    }
+
+    /**
+     * @notice Performs a forced transfer between two addresses (as specified executor).
+     * @param tokenAddress The address of the token contract.
+     * @param executor The address performing the action.
+     * @param from The sender address.
+     * @param to The recipient address.
+     * @param amount The amount to transfer.
+     */
+    function forcedTransferAsExecutor(
+        address tokenAddress,
+        address executor,
+        address from,
+        address to,
+        uint256 amount
+    )
+        public
+    {
+        vm.startPrank(executor);
         SMARTCustodian(payable(tokenAddress)).forcedTransfer(from, to, amount);
         vm.stopPrank();
     }
@@ -290,7 +439,28 @@ contract TokenUtils is Test {
     )
         public
     {
-        vm.startPrank(owner);
+        // Call the executor version, passing the owner as the executor
+        recoveryAddressAsExecutor(tokenAddress, owner, lostWallet, newWallet, investorOnchainID);
+    }
+
+    /**
+     * @notice Recovers assets from a lost wallet to a new wallet (as specified executor).
+     * @param tokenAddress The address of the token contract.
+     * @param executor The address performing the action.
+     * @param lostWallet The address of the lost wallet.
+     * @param newWallet The address of the new wallet.
+     * @param investorOnchainID The onchain ID contract address of the investor.
+     */
+    function recoveryAddressAsExecutor(
+        address tokenAddress,
+        address executor,
+        address lostWallet,
+        address newWallet,
+        address investorOnchainID
+    )
+        public
+    {
+        vm.startPrank(executor);
         SMARTCustodian(payable(tokenAddress)).recoveryAddress(lostWallet, newWallet, investorOnchainID);
         vm.stopPrank();
     }
