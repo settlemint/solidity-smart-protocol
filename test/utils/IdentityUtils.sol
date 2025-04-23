@@ -79,4 +79,12 @@ contract IdentityUtils is Test {
 
         return issuerIdentityAddr; // Return the created identity address
     }
+
+    function getIdentity(address _wallet) public view returns (address) {
+        return _identityFactory.getIdentity(_wallet);
+    }
+
+    function getIdentityFromRegistry(address _wallet) public view returns (IIdentity) {
+        return _identityRegistry.identity(_wallet);
+    }
 }

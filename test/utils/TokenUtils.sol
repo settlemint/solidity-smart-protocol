@@ -12,6 +12,7 @@ import { SMARTIdentityRegistry } from "../../contracts/SMART/SMARTIdentityRegist
 import { SMARTPausable } from "../../contracts/SMART/extensions/SMARTPausable.sol";
 import { SMARTBurnable } from "../../contracts/SMART/extensions/SMARTBurnable.sol";
 import { SMARTRedeemable } from "../../contracts/SMART/extensions/SMARTRedeemable.sol";
+import { SMARTCustodian } from "../../contracts/SMART/extensions/SMARTCustodian.sol";
 
 contract TokenUtils is Test {
     address internal _platformAdmin;
@@ -192,6 +193,105 @@ contract TokenUtils is Test {
     function redeemToken(address tokenAddress, address holder, uint256 amount) public {
         vm.startPrank(holder);
         SMARTRedeemable(tokenAddress).redeem(amount);
+        vm.stopPrank();
+    }
+
+    // --- Custodian Functions ---
+
+    /**
+     * @notice Checks if a user address is frozen.
+     * @param tokenAddress The address of the token contract.
+     * @param userAddress The address to check.
+     * @return True if frozen, false otherwise.
+     */
+    function isFrozen(address tokenAddress, address userAddress) public view returns (bool) {
+        // No prank needed for view function
+        return SMARTCustodian(payable(tokenAddress)).isFrozen(userAddress);
+    }
+
+    /**
+     * @notice Gets the amount of frozen tokens for a user.
+     * @param tokenAddress The address of the token contract.
+     * @param userAddress The address to check.
+     * @return The amount of frozen tokens.
+     */
+    function getFrozenTokens(address tokenAddress, address userAddress) public view returns (uint256) {
+        // No prank needed for view function
+        return SMARTCustodian(payable(tokenAddress)).getFrozenTokens(userAddress);
+    }
+
+    /**
+     * @notice Freezes or unfreezes a user address.
+     * @param tokenAddress The address of the token contract.
+     * @param owner The address performing the action (token owner).
+     * @param userAddress The target user address.
+     * @param freeze True to freeze, false to unfreeze.
+     */
+    function setAddressFrozen(address tokenAddress, address owner, address userAddress, bool freeze) public {
+        vm.startPrank(owner);
+        SMARTCustodian(payable(tokenAddress)).setAddressFrozen(userAddress, freeze);
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Freezes a specific amount of tokens for a user.
+     * @param tokenAddress The address of the token contract.
+     * @param owner The address performing the action (token owner).
+     * @param userAddress The target user address.
+     * @param amount The amount to freeze.
+     */
+    function freezePartialTokens(address tokenAddress, address owner, address userAddress, uint256 amount) public {
+        vm.startPrank(owner);
+        SMARTCustodian(payable(tokenAddress)).freezePartialTokens(userAddress, amount);
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Unfreezes a specific amount of tokens for a user.
+     * @param tokenAddress The address of the token contract.
+     * @param owner The address performing the action (token owner).
+     * @param userAddress The target user address.
+     * @param amount The amount to unfreeze.
+     */
+    function unfreezePartialTokens(address tokenAddress, address owner, address userAddress, uint256 amount) public {
+        vm.startPrank(owner);
+        SMARTCustodian(payable(tokenAddress)).unfreezePartialTokens(userAddress, amount);
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Performs a forced transfer between two addresses.
+     * @param tokenAddress The address of the token contract.
+     * @param owner The address performing the action (token owner).
+     * @param from The sender address.
+     * @param to The recipient address.
+     * @param amount The amount to transfer.
+     */
+    function forcedTransfer(address tokenAddress, address owner, address from, address to, uint256 amount) public {
+        vm.startPrank(owner);
+        SMARTCustodian(payable(tokenAddress)).forcedTransfer(from, to, amount);
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Recovers assets from a lost wallet to a new wallet.
+     * @param tokenAddress The address of the token contract.
+     * @param owner The address performing the action (token owner).
+     * @param lostWallet The address of the lost wallet.
+     * @param newWallet The address of the new wallet.
+     * @param investorOnchainID The onchain ID contract address of the investor.
+     */
+    function recoveryAddress(
+        address tokenAddress,
+        address owner,
+        address lostWallet,
+        address newWallet,
+        address investorOnchainID
+    )
+        public
+    {
+        vm.startPrank(owner);
+        SMARTCustodian(payable(tokenAddress)).recoveryAddress(lostWallet, newWallet, investorOnchainID);
         vm.stopPrank();
     }
 

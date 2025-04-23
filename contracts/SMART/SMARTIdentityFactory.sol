@@ -95,6 +95,10 @@ contract SMARTIdentityFactory is
         return identity;
     }
 
+    function getIdentity(address _wallet) external view returns (address) {
+        return _identities[_wallet];
+    }
+
     function createTokenIdentity(address _token, address _tokenOwner) external onlyOwner returns (address) {
         if (_token == address(0)) revert ZeroAddressNotAllowed();
         if (_tokenOwner == address(0)) revert ZeroAddressNotAllowed();

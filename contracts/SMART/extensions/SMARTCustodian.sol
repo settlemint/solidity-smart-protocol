@@ -66,7 +66,7 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
 
     /// @dev Requires owner privileges.
     function forcedTransfer(address from, address to, uint256 amount) public virtual onlyOwner returns (bool) {
-        _validateTransfer(from, to, amount); // Ensure custodian/other checks run first via hook chain
+        _validateTransfer(from, to, amount, true); // Ensure custodian/other checks run first via hook chain
         _forcedTransfer(from, to, amount); // Call internal logic from base
         _afterTransfer(from, to, amount); // Call hook chain
         return true;
@@ -157,9 +157,18 @@ abstract contract SMARTCustodian is SMARTExtension, Ownable, _SMARTCustodianLogi
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_validateTransferLogic(from, to, amount); // Call helper from base logic
-        super._validateTransfer(from, to, amount);
+    function _validateTransfer(
+        address from,
+        address to,
+        uint256 amount,
+        bool forced
+    )
+        internal
+        virtual
+        override(SMARTHooks)
+    {
+        _custodian_validateTransferLogic(from, to, amount, forced); // Call helper from base logic
+        super._validateTransfer(from, to, amount, forced);
     }
 
     /// @inheritdoc SMARTHooks

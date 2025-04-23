@@ -157,14 +157,16 @@ abstract contract _SMARTCustodianLogic {
         if (__frozen[to]) revert RecipientAddressFrozen();
     }
 
-    function _custodian_validateTransferLogic(address from, address to, uint256 amount) internal virtual {
-        if (__frozen[from]) revert SenderAddressFrozen();
-        if (__frozen[to]) revert RecipientAddressFrozen();
+    function _custodian_validateTransferLogic(address from, address to, uint256 amount, bool forced) internal virtual {
+        if (!forced) {
+            if (__frozen[from]) revert SenderAddressFrozen();
+            if (__frozen[to]) revert RecipientAddressFrozen();
 
-        uint256 frozenTokens = __frozenTokens[from];
-        uint256 availableUnfrozen = _getBalance(from) - frozenTokens;
-        if (availableUnfrozen < amount) {
-            revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
+            uint256 frozenTokens = __frozenTokens[from];
+            uint256 availableUnfrozen = _getBalance(from) - frozenTokens;
+            if (availableUnfrozen < amount) {
+                revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
+            }
         }
     }
 

@@ -194,13 +194,14 @@ contract SMARTTokenUpgradeable is
     function _validateTransfer(
         address from,
         address to,
-        uint256 amount
+        uint256 amount,
+        bool forced
     )
         internal
         virtual
         override(SMARTUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
-        super._validateTransfer(from, to, amount);
+        super._validateTransfer(from, to, amount, forced);
     }
 
     /// @inheritdoc SMARTHooks

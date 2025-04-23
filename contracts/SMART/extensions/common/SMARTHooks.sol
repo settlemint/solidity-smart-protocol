@@ -11,7 +11,7 @@ abstract contract SMARTHooks {
     function _afterMint(address _to, uint256 _amount) internal virtual { }
 
     /// @dev These functions should be called first in any override implementation
-    function _validateTransfer(address _from, address _to, uint256 _amount) internal virtual { }
+    function _validateTransfer(address _from, address _to, uint256 _amount, bool _forced) internal virtual { }
 
     /// @dev These functions should be called first in any override implementation
     function _afterTransfer(address _from, address _to, uint256 _amount) internal virtual { }

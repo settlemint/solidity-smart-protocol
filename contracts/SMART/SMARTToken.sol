@@ -89,13 +89,14 @@ contract SMARTToken is SMART, SMARTCustodian, SMARTPausable, SMARTBurnable, SMAR
     function _validateTransfer(
         address from,
         address to,
-        uint256 amount
+        uint256 amount,
+        bool forced
     )
         internal
         virtual
         override(SMART, SMARTPausable, SMARTCustodian, SMARTHooks)
     {
-        super._validateTransfer(from, to, amount);
+        super._validateTransfer(from, to, amount, forced);
     }
 
     function _validateBurn(

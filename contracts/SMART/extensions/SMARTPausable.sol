@@ -41,9 +41,18 @@ abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, Ownable, _SMAR
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
+    function _validateTransfer(
+        address from,
+        address to,
+        uint256 amount,
+        bool forced
+    )
+        internal
+        virtual
+        override(SMARTHooks)
+    {
         _pausable_validateTransferLogic(); // Call helper from base logic
-        super._validateTransfer(from, to, amount);
+        super._validateTransfer(from, to, amount, forced);
     }
 
     /// @inheritdoc SMARTHooks

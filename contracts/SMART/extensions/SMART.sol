@@ -103,7 +103,7 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     /// @dev Overrides ERC20.transfer to include SMART validation and hooks.
     function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
         address sender = _msgSender();
-        _validateTransfer(sender, to, amount);
+        _validateTransfer(sender, to, amount, false);
         super._transfer(sender, to, amount);
         _afterTransfer(sender, to, amount);
         return true;
@@ -115,7 +115,7 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
         address sender = _msgSender(); // Cache sender for efficiency
         for (uint256 i = 0; i < toList.length; i++) {
             // Use internal functions for consistency and to ensure hooks are called
-            _validateTransfer(sender, toList[i], amounts[i]);
+            _validateTransfer(sender, toList[i], amounts[i], false);
             super._transfer(sender, toList[i], amounts[i]); // Call ERC20's internal transfer
             _afterTransfer(sender, toList[i], amounts[i]);
         }
@@ -134,7 +134,7 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
         returns (bool)
     {
         address spender = _msgSender();
-        _validateTransfer(from, to, amount);
+        _validateTransfer(from, to, amount, false);
         super._spendAllowance(from, spender, amount);
         super._transfer(from, to, amount);
         _afterTransfer(from, to, amount);
@@ -196,9 +196,18 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     }
 
     /// @inheritdoc SMARTHooks
-    function _validateTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_validateTransferLogic(from, to, amount); // Call helper from base logic
-        super._validateTransfer(from, to, amount);
+    function _validateTransfer(
+        address from,
+        address to,
+        uint256 amount,
+        bool forced
+    )
+        internal
+        virtual
+        override(SMARTHooks)
+    {
+        _smart_validateTransferLogic(from, to, amount, forced); // Call helper from base logic
+        super._validateTransfer(from, to, amount, forced);
     }
 
     /// @inheritdoc SMARTHooks
