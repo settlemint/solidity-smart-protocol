@@ -4,7 +4,9 @@ pragma solidity ^0.8.27;
 import { IERC3643IdentityRegistryStorage } from "../ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { IIdentity } from "../onchainid/interface/IIdentity.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { AccessControlDefaultAdminRulesUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
@@ -25,9 +27,12 @@ contract SMARTIdentityRegistryStorage is
     Initializable,
     IERC3643IdentityRegistryStorage,
     ERC2771ContextUpgradeable,
-    OwnableUpgradeable,
+    AccessControlDefaultAdminRulesUpgradeable,
     UUPSUpgradeable
 {
+    // --- Roles ---
+    bytes32 public constant STORAGE_MODIFIER_ROLE = keccak256("STORAGE_MODIFIER_ROLE");
+
     // --- Storage Variables ---
     struct Identity {
         address identityContract;
@@ -56,21 +61,18 @@ contract SMARTIdentityRegistryStorage is
     event IdentityRegistryBound(address indexed _identityRegistry);
     event IdentityRegistryUnbound(address indexed _identityRegistry);
 
-    // --- Modifiers ---
-    modifier onlyOwnerOrBoundRegistry() {
-        if (_msgSender() != owner() && !_boundIdentityRegistries[_msgSender()]) revert UnauthorizedCaller();
-        _;
-    }
-
     // --- Constructor ---
     constructor() ERC2771ContextUpgradeable(address(0)) {
         _disableInitializers();
     }
 
     // --- Initializer ---
-    function initialize(address initialOwner) public initializer {
-        __Ownable_init(initialOwner);
+    function initialize(address initialAdmin) public initializer {
+        __AccessControl_init();
+        __AccessControlDefaultAdminRules_init(3 days, initialAdmin);
         __UUPSUpgradeable_init();
+
+        _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin);
     }
 
     // --- State-Changing Functions ---
@@ -80,7 +82,7 @@ contract SMARTIdentityRegistryStorage is
         uint16 _country
     )
         external
-        onlyOwnerOrBoundRegistry
+        onlyRole(STORAGE_MODIFIER_ROLE)
     {
         if (_userAddress == address(0)) revert InvalidIdentityWalletAddress();
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
@@ -94,7 +96,7 @@ contract SMARTIdentityRegistryStorage is
         emit IdentityStored(_userAddress, _identity);
     }
 
-    function removeIdentityFromStorage(address _userAddress) external onlyOwnerOrBoundRegistry {
+    function removeIdentityFromStorage(address _userAddress) external onlyRole(STORAGE_MODIFIER_ROLE) {
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
         IIdentity oldIdentity = IIdentity(_identities[_userAddress].identityContract);
 
@@ -119,7 +121,7 @@ contract SMARTIdentityRegistryStorage is
         emit IdentityUnstored(_userAddress, oldIdentity);
     }
 
-    function modifyStoredIdentity(address _userAddress, IIdentity _identity) external onlyOwnerOrBoundRegistry {
+    function modifyStoredIdentity(address _userAddress, IIdentity _identity) external onlyRole(STORAGE_MODIFIER_ROLE) {
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
 
@@ -129,7 +131,13 @@ contract SMARTIdentityRegistryStorage is
         emit IdentityModified(oldIdentity, _identity);
     }
 
-    function modifyStoredInvestorCountry(address _userAddress, uint16 _country) external onlyOwnerOrBoundRegistry {
+    function modifyStoredInvestorCountry(
+        address _userAddress,
+        uint16 _country
+    )
+        external
+        onlyRole(STORAGE_MODIFIER_ROLE)
+    {
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
 
         _identities[_userAddress].country = _country;
@@ -137,7 +145,7 @@ contract SMARTIdentityRegistryStorage is
         emit CountryModified(_userAddress, _country);
     }
 
-    function bindIdentityRegistry(address _identityRegistry) external onlyOwner {
+    function bindIdentityRegistry(address _identityRegistry) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_identityRegistry == address(0)) revert InvalidIdentityRegistryAddress();
         if (_boundIdentityRegistries[_identityRegistry]) revert IdentityRegistryAlreadyBound(_identityRegistry);
 
@@ -146,11 +154,15 @@ contract SMARTIdentityRegistryStorage is
         // Store index + 1 for O(1) removal checks
         _boundIdentityRegistriesIndex[_identityRegistry] = _boundIdentityRegistryAddresses.length;
 
+        _grantRole(STORAGE_MODIFIER_ROLE, _identityRegistry);
+
         emit IdentityRegistryBound(_identityRegistry);
     }
 
-    function unbindIdentityRegistry(address _identityRegistry) external onlyOwner {
+    function unbindIdentityRegistry(address _identityRegistry) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (!_boundIdentityRegistries[_identityRegistry]) revert IdentityRegistryNotBound(_identityRegistry);
+
+        _revokeRole(STORAGE_MODIFIER_ROLE, _identityRegistry);
 
         // Efficiently remove from _boundIdentityRegistryAddresses array
         uint256 indexToRemove = _boundIdentityRegistriesIndex[_identityRegistry] - 1; // Adjust index back to 0-based
@@ -222,5 +234,9 @@ contract SMARTIdentityRegistryStorage is
     }
 
     // --- Upgradeability ---
-    function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override(UUPSUpgradeable)
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    { }
 }

@@ -5,6 +5,8 @@ pragma solidity ^0.8.24;
 import { Test } from "forge-std/Test.sol";
 import { ISMART } from "../../contracts/SMART/interface/ISMART.sol";
 import { ISMARTComplianceModule } from "../../contracts/SMART/interface/ISMARTComplianceModule.sol";
+import { ISMARTIdentityRegistry } from "../../contracts/SMART/interface/ISMARTIdentityRegistry.sol";
+import { SMARTIdentityRegistry } from "../../contracts/SMART/SMARTIdentityRegistry.sol";
 import { TestConstants } from "./Constants.sol";
 import { ClaimUtils } from "./utils/ClaimUtils.sol";
 import { IdentityUtils } from "./utils/IdentityUtils.sol";
@@ -95,6 +97,22 @@ abstract contract SMARTBaseTest is Test {
 
         _setupToken();
         assertNotEq(address(token), address(0), "Token not deployed");
+
+        // Grant REGISTRAR_ROLE to the token contract on the Identity Registry
+        // Needed for custody address recovery
+        address registryAddress = address(infrastructureUtils.identityRegistry());
+        address tokenAddress = address(token);
+
+        vm.prank(platformAdmin);
+        SMARTIdentityRegistry(payable(registryAddress)).grantRole(TestConstants.REGISTRAR_ROLE, tokenAddress); // Use
+            // variable
+
+        // Verify the role was granted
+        assertTrue(
+            SMARTIdentityRegistry(payable(registryAddress)).hasRole(TestConstants.REGISTRAR_ROLE, tokenAddress), // Use
+                // variable
+            "Token was not granted REGISTRAR_ROLE"
+        );
     }
 
     function _setupToken() internal virtual { }

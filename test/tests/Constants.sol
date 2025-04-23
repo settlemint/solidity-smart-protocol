@@ -17,4 +17,7 @@ library TestConstants {
     uint16 public constant COUNTRY_CODE_BE = 56;
     uint16 public constant COUNTRY_CODE_JP = 392;
     uint16 public constant COUNTRY_CODE_US = 840;
+
+    // Roles
+    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 }

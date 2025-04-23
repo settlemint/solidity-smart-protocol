@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import { SMARTBaseTest } from "./SMARTBaseTest.sol"; // Inherit from the logic base
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { _SMARTCustodianLogic } from "../../contracts/SMART/extensions/base/_SMARTCustodianLogic.sol";
+import { _SMARTCustodianLogic } from "../../contracts/SMART/extensions/custodian/_SMARTCustodianLogic.sol";
 import { TestConstants } from "./Constants.sol";
 
 abstract contract SMARTCustodianTest is SMARTBaseTest {

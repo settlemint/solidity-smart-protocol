@@ -8,7 +8,9 @@ import { IERC3643TrustedIssuersRegistry } from "./../ERC-3643/IERC3643TrustedIss
 import { ISMART } from "./interface/ISMART.sol";
 import { IClaimIssuer } from "./../onchainid/interface/IClaimIssuer.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { AccessControlDefaultAdminRulesUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
@@ -28,9 +30,12 @@ contract SMARTIdentityRegistry is
     Initializable,
     ISMARTIdentityRegistry,
     ERC2771ContextUpgradeable,
-    OwnableUpgradeable,
+    AccessControlDefaultAdminRulesUpgradeable,
     UUPSUpgradeable
 {
+    // --- Roles ---
+    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
+
     // --- Storage ---
     IERC3643IdentityRegistryStorage private _identityStorage;
     IERC3643TrustedIssuersRegistry private _trustedIssuersRegistry;
@@ -50,18 +55,21 @@ contract SMARTIdentityRegistry is
 
     // --- Initializer ---
     function initialize(
-        address initialOwner,
+        address initialAdmin,
         address identityStorage_,
         address trustedIssuersRegistry_
     )
         public
         initializer
     {
-        __Ownable_init(initialOwner);
+        __AccessControl_init();
+        __AccessControlDefaultAdminRules_init(3 days, initialAdmin);
         __UUPSUpgradeable_init();
 
         if (identityStorage_ == address(0)) revert InvalidStorageAddress();
         if (trustedIssuersRegistry_ == address(0)) revert InvalidRegistryAddress();
+
+        _grantRole(REGISTRAR_ROLE, initialAdmin);
 
         _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
         emit IdentityStorageSet(address(_identityStorage));
@@ -70,23 +78,35 @@ contract SMARTIdentityRegistry is
     }
 
     // --- State-Changing Functions ---
-    function setIdentityRegistryStorage(address identityStorage_) external override onlyOwner {
+    function setIdentityRegistryStorage(address identityStorage_) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (identityStorage_ == address(0)) revert InvalidStorageAddress();
         _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
         emit IdentityStorageSet(address(_identityStorage));
     }
 
-    function setTrustedIssuersRegistry(address trustedIssuersRegistry_) external override onlyOwner {
+    function setTrustedIssuersRegistry(address trustedIssuersRegistry_)
+        external
+        override
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         if (trustedIssuersRegistry_ == address(0)) revert InvalidRegistryAddress();
         _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
         emit TrustedIssuersRegistrySet(address(_trustedIssuersRegistry));
     }
 
-    function registerIdentity(address _userAddress, IIdentity _identity, uint16 _country) external override onlyOwner {
+    function registerIdentity(
+        address _userAddress,
+        IIdentity _identity,
+        uint16 _country
+    )
+        external
+        override
+        onlyRole(REGISTRAR_ROLE)
+    {
         _registerIdentity(_userAddress, _identity, _country);
     }
 
-    function deleteIdentity(address _userAddress) external override onlyOwner {
+    function deleteIdentity(address _userAddress) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
 
         IIdentity identityToDelete = IIdentity(_identityStorage.storedIdentity(_userAddress));
@@ -95,14 +115,14 @@ contract SMARTIdentityRegistry is
         emit IdentityRemoved(_userAddress, identityToDelete);
     }
 
-    function updateCountry(address _userAddress, uint16 _country) external override onlyOwner {
+    function updateCountry(address _userAddress, uint16 _country) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
 
         _identityStorage.modifyStoredInvestorCountry(_userAddress, _country);
         emit CountryUpdated(_userAddress, _country);
     }
 
-    function updateIdentity(address _userAddress, IIdentity _identity) external override onlyOwner {
+    function updateIdentity(address _userAddress, IIdentity _identity) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
 
@@ -119,7 +139,7 @@ contract SMARTIdentityRegistry is
     )
         external
         override
-        onlyOwner
+        onlyRole(REGISTRAR_ROLE)
     {
         if (!(_userAddresses.length == _identities.length && _identities.length == _countries.length)) {
             revert ArrayLengthMismatch();
@@ -271,5 +291,9 @@ contract SMARTIdentityRegistry is
     }
 
     // --- Upgradeability ---
-    function _authorizeUpgrade(address newImplementation) internal override(UUPSUpgradeable) onlyOwner { }
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override(UUPSUpgradeable)
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    { }
 }
