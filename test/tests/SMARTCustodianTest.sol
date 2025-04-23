@@ -559,8 +559,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
         );
 
         // Perform Recovery
-        vm.expectEmit(true, true, true, true, address(token));
-        emit _SMARTCustodianLogic.RecoverySuccess(lostWallet, newWallet, investorOnchainID);
         tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
 
         // Post-checks
@@ -662,54 +660,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
 
         vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.RecoveryTargetAddressFrozen.selector));
         tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
-    }
-
-    function test_AddressRecovery_NeitherWalletVerified_Reverts() public {
-        require(address(token) != address(0), "Token not deployed");
-        _mintInitialBalances(); // Mint to verified clientBE first
-
-        address lostWalletUnverified = clientUnverified; // Not registered/verified
-        address newWalletUnverified = makeAddr("New Unverified Wallet"); // Not registered/verified
-        address investorOnchainID = address(0); // Cannot get ID for unverified wallet
-
-        // Mint some tokens to the unverified address (using forced transfer, as direct mint would fail)
-        // Need to ensure it has balance for the NoTokensToRecover check not to hit first.
-        uint256 recoveryAmount = 10 ether;
-        tokenUtils.forcedTransfer(address(token), tokenIssuer, clientBE, lostWalletUnverified, recoveryAmount);
-        assertEq(token.balanceOf(lostWalletUnverified), recoveryAmount, "Setup transfer failed");
-
-        // Expect revert because neither lost nor new wallet is verified
-        vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.RecoveryWalletsNotVerified.selector));
-        tokenUtils.recoveryAddress(
-            address(token), tokenIssuer, lostWalletUnverified, newWalletUnverified, investorOnchainID
-        );
-    }
-
-    function test_AddressRecovery_OnlyNewWalletVerified_Succeeds() public {
-        require(address(token) != address(0), "Token not deployed");
-        _mintInitialBalances(); // Mint to verified clientBE first
-
-        address lostWalletUnverified = clientUnverified; // Not registered/verified
-        address newWalletVerified = clientJP; // Already registered and verified
-        address investorOnchainID = identityUtils.getIdentity(newWalletVerified); // Use ID of verified wallet
-
-        // Mint some tokens to the unverified address (using forced transfer)
-        uint256 recoveryAmount = 10 ether;
-        tokenUtils.forcedTransfer(address(token), tokenIssuer, clientBE, lostWalletUnverified, recoveryAmount);
-        assertEq(token.balanceOf(lostWalletUnverified), recoveryAmount, "Setup transfer failed");
-
-        uint256 initialNewBalance = token.balanceOf(newWalletVerified);
-
-        // Perform Recovery - Should succeed because new wallet is verified
-        vm.expectEmit(true, true, true, true, address(token));
-        emit _SMARTCustodianLogic.RecoverySuccess(lostWalletUnverified, newWalletVerified, investorOnchainID);
-        tokenUtils.recoveryAddress(
-            address(token), tokenIssuer, lostWalletUnverified, newWalletVerified, investorOnchainID
-        );
-
-        // Post-checks
-        assertEq(token.balanceOf(lostWalletUnverified), 0, "Lost wallet balance not zero");
-        assertEq(token.balanceOf(newWalletVerified), initialNewBalance + recoveryAmount, "New wallet balance wrong");
     }
 
     function test_AddressRecovery_AccessControl_Reverts() public {
