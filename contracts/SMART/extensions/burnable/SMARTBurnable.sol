@@ -3,11 +3,11 @@ pragma solidity ^0.8.27;
 
 // Removed ERC20Burnable import - no longer inherited directly
 // import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import { SMARTExtension } from "./SMARTExtension.sol";
+import { SMARTExtension } from "./../common/SMARTExtension.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { LengthMismatch } from "./common/CommonErrors.sol";
-import { _SMARTBurnableLogic } from "./base/_SMARTBurnableLogic.sol"; // Import base logic
-import { SMARTHooks } from "./common/SMARTHooks.sol";
+import { LengthMismatch } from "./../common/CommonErrors.sol";
+import { _SMARTBurnableLogic } from "./_SMARTBurnableLogic.sol"; // Import base logic
+import { SMARTHooks } from "./../common/SMARTHooks.sol";
 /// @title SMARTBurnable
 /// @notice Standard (non-upgradeable) extension that adds burnable functionality to SMART tokens.
 /// @dev Inherits from Ownable, SMARTExtension, and _SMARTBurnableLogic.

@@ -9,10 +9,10 @@ import { ISMART } from "../../../contracts/SMART/interface/ISMART.sol";
 import { SMARTToken } from "../../../contracts/SMART/SMARTToken.sol";
 import { SMARTTokenUpgradeable } from "../../../contracts/SMART/SMARTTokenUpgradeable.sol";
 import { SMARTIdentityRegistry } from "../../../contracts/SMART/SMARTIdentityRegistry.sol";
-import { SMARTPausable } from "../../../contracts/SMART/extensions/SMARTPausable.sol";
-import { SMARTBurnable } from "../../../contracts/SMART/extensions/SMARTBurnable.sol";
-import { SMARTRedeemable } from "../../../contracts/SMART/extensions/SMARTRedeemable.sol";
-import { SMARTCustodian } from "../../../contracts/SMART/extensions/SMARTCustodian.sol";
+import { SMARTPausable } from "../../../contracts/SMART/extensions/pausable/SMARTPausable.sol";
+import { SMARTBurnable } from "../../../contracts/SMART/extensions/burnable/SMARTBurnable.sol";
+import { SMARTRedeemable } from "../../../contracts/SMART/extensions/redeemable/SMARTRedeemable.sol";
+import { SMARTCustodian } from "../../../contracts/SMART/extensions/custodian/SMARTCustodian.sol";
 
 contract TokenUtils is Test {
     address internal _platformAdmin;

@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { SMART } from "./extensions/SMART.sol";
-import { SMARTPausable } from "./extensions/SMARTPausable.sol";
-import { SMARTBurnable } from "./extensions/SMARTBurnable.sol";
-import { SMARTCustodian } from "./extensions/SMARTCustodian.sol";
+import { SMART } from "./extensions/core/SMART.sol";
+import { SMARTPausable } from "./extensions/pausable/SMARTPausable.sol";
+import { SMARTBurnable } from "./extensions/burnable/SMARTBurnable.sol";
+import { SMARTCustodian } from "./extensions/custodian/SMARTCustodian.sol";
 import { ISMARTIdentityRegistry } from "./interface/ISMARTIdentityRegistry.sol";
 import { ISMART } from "./interface/ISMART.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
-import { SMARTRedeemable } from "./extensions/SMARTRedeemable.sol";
+import { SMARTRedeemable } from "./extensions/redeemable/SMARTRedeemable.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
-import { SMARTExtension } from "./extensions/SMARTExtension.sol";
+import { SMARTExtension } from "./extensions/common/SMARTExtension.sol";
 /// @title SMARTToken
 /// @notice A complete implementation of a SMART token with all available extensions
 

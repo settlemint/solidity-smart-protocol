@@ -6,8 +6,8 @@ import { ERC20PausableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol";
-import { _SMARTPausableLogic } from "../base/_SMARTPausableLogic.sol";
+import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
+import { _SMARTPausableLogic } from "./_SMARTPausableLogic.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
 

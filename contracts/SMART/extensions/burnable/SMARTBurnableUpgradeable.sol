@@ -6,10 +6,10 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 // import { ERC20BurnableUpgradeable } from
 //     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
-import { _SMARTBurnableLogic } from "../base/_SMARTBurnableLogic.sol"; // Import base logic
-import { LengthMismatch } from "../common/CommonErrors.sol";
-import { SMARTHooks } from "../common/SMARTHooks.sol";
+import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
+import { _SMARTBurnableLogic } from "./_SMARTBurnableLogic.sol"; // Import base logic
+import { LengthMismatch } from "./../common/CommonErrors.sol";
+import { SMARTHooks } from "./../common/SMARTHooks.sol";
 
 /// @title SMARTBurnableUpgradeable
 /// @notice Upgradeable extension that adds burnable functionality to SMART tokens.

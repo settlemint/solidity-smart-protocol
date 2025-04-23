@@ -3,11 +3,11 @@ pragma solidity ^0.8.27;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
-import { _SMARTExtension } from "../base/_SMARTExtension.sol";
-import { _SMARTRedeemableLogic } from "../base/_SMARTRedeemableLogic.sol";
+import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
+import { _SMARTExtension } from "./../common/_SMARTExtension.sol";
+import { _SMARTRedeemableLogic } from "./_SMARTRedeemableLogic.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import { _Context } from "../base/interfaces/_Context.sol";
+import { _Context } from "./../common/interfaces/_Context.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
 
 /// @title SMARTRedeemableUpgradeable

@@ -4,13 +4,12 @@ pragma solidity ^0.8.27;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol"; // Needed for
-    // _update, balanceOf context
-import { SMARTExtensionUpgradeable } from "./SMARTExtensionUpgradeable.sol";
-import { _SMARTCustodianLogic } from "../base/_SMARTCustodianLogic.sol";
+import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
+import { _SMARTCustodianLogic } from "./_SMARTCustodianLogic.sol";
 import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
 import { IIdentity } from "../../../onchainid/interface/IIdentity.sol";
-import { LengthMismatch } from "../common/CommonErrors.sol";
-import { SMARTHooks } from "../common/SMARTHooks.sol";
+import { LengthMismatch } from "./../common/CommonErrors.sol";
+import { SMARTHooks } from "./../common/SMARTHooks.sol";
 
 /// @title SMARTCustodianUpgradeable
 /// @notice Upgradeable extension that adds custodian features.

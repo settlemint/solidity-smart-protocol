@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { ISMART } from "../interface/ISMART.sol";
-import { SMARTExtension } from "./SMARTExtension.sol";
-import { ISMARTIdentityRegistry } from "../interface/ISMARTIdentityRegistry.sol";
+import { ISMART } from "../../interface/ISMART.sol";
+import { SMARTExtension } from "../common/SMARTExtension.sol";
+import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { IIdentity } from "../../onchainid/interface/IIdentity.sol";
+import { IIdentity } from "../../../onchainid/interface/IIdentity.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { LengthMismatch } from "./common/CommonErrors.sol";
-import { _SMARTCustodianLogic } from "./base/_SMARTCustodianLogic.sol";
-import { SMARTHooks } from "./common/SMARTHooks.sol";
+import { LengthMismatch } from "./../common/CommonErrors.sol";
+import { _SMARTCustodianLogic } from "./_SMARTCustodianLogic.sol";
+import { SMARTHooks } from "./../common/SMARTHooks.sol";
 
 /// @title SMARTCustodian
 /// @notice Standard (non-upgradeable) extension that adds custodian features.

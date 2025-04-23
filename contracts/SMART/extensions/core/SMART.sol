@@ -3,13 +3,13 @@ pragma solidity ^0.8.27;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ISMART } from "../interface/ISMART.sol";
-import { SMARTExtension } from "./SMARTExtension.sol";
+import { ISMART } from "../../interface/ISMART.sol";
+import { SMARTExtension } from "../common/SMARTExtension.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { LengthMismatch } from "./common/CommonErrors.sol";
-import { _SMARTLogic } from "./base/_SMARTLogic.sol";
-import { SMARTHooks } from "./common/SMARTHooks.sol";
+import { LengthMismatch } from "../common/CommonErrors.sol";
+import { _SMARTLogic } from "./_SMARTLogic.sol";
+import { SMARTHooks } from "../common/SMARTHooks.sol";
 
 /// @title SMART
 /// @notice Standard (non-upgradeable) implementation of the core SMART token functionality.

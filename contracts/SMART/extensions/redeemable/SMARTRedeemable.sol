@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { SMARTExtension } from "./SMARTExtension.sol";
+import { SMARTExtension } from "./../common/SMARTExtension.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
-import { _SMARTRedeemableLogic } from "./base/_SMARTRedeemableLogic.sol";
-import { _Context } from "./base/interfaces/_Context.sol";
-import { SMARTHooks } from "./common/SMARTHooks.sol";
+import { _SMARTRedeemableLogic } from "./_SMARTRedeemableLogic.sol";
+import { _Context } from "./../common/interfaces/_Context.sol";
+import { SMARTHooks } from "./../common/SMARTHooks.sol";
 /// @title SMARTRedeemable
 /// @notice Standard (non-upgradeable) extension for SMART tokens allowing holders to redeem (burn) their tokens.
 /// @dev Provides hooks for adding custom logic before and after redemption.

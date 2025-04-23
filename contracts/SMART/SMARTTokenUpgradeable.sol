@@ -5,15 +5,15 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import { SMARTUpgradeable } from "./extensions/upgradeable/SMARTUpgradeable.sol";
-import { SMARTPausableUpgradeable } from "./extensions/upgradeable/SMARTPausableUpgradeable.sol";
-import { SMARTBurnableUpgradeable } from "./extensions/upgradeable/SMARTBurnableUpgradeable.sol";
-import { SMARTCustodianUpgradeable } from "./extensions/upgradeable/SMARTCustodianUpgradeable.sol";
+import { SMARTUpgradeable } from "./extensions/core/SMARTUpgradeable.sol";
+import { SMARTPausableUpgradeable } from "./extensions/pausable/SMARTPausableUpgradeable.sol";
+import { SMARTBurnableUpgradeable } from "./extensions/burnable/SMARTBurnableUpgradeable.sol";
+import { SMARTCustodianUpgradeable } from "./extensions/custodian/SMARTCustodianUpgradeable.sol";
 import { ISMART } from "./interface/ISMART.sol"; // Assuming ISMART interface is compatible
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
-import { SMARTRedeemableUpgradeable } from "./extensions/upgradeable/SMARTRedeemableUpgradeable.sol";
+import { SMARTRedeemableUpgradeable } from "./extensions/redeemable/SMARTRedeemableUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 /// @title SMARTTokenUpgradeable
 /// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
