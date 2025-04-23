@@ -106,7 +106,7 @@ contract SMARTIdentityRegistry is
         _registerIdentity(_userAddress, _identity, _country);
     }
 
-    function deleteIdentity(address _userAddress) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+    function deleteIdentity(address _userAddress) external override onlyRole(REGISTRAR_ROLE) {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
 
         IIdentity identityToDelete = IIdentity(_identityStorage.storedIdentity(_userAddress));
@@ -115,14 +115,14 @@ contract SMARTIdentityRegistry is
         emit IdentityRemoved(_userAddress, identityToDelete);
     }
 
-    function updateCountry(address _userAddress, uint16 _country) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateCountry(address _userAddress, uint16 _country) external override onlyRole(REGISTRAR_ROLE) {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
 
         _identityStorage.modifyStoredInvestorCountry(_userAddress, _country);
         emit CountryUpdated(_userAddress, _country);
     }
 
-    function updateIdentity(address _userAddress, IIdentity _identity) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateIdentity(address _userAddress, IIdentity _identity) external override onlyRole(REGISTRAR_ROLE) {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
 

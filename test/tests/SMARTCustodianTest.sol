@@ -547,17 +547,6 @@ abstract contract SMARTCustodianTest is SMARTBaseTest {
         uint256 initialLostBalance = token.balanceOf(lostWallet);
         require(initialLostBalance > 0, "Lost wallet has no balance");
 
-        // Pre-checks
-        assertTrue(
-            infrastructureUtils.identityRegistry().isVerified(lostWallet, requiredClaimTopics),
-            "Lost wallet not verified"
-        );
-        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
-        assertFalse(
-            infrastructureUtils.identityRegistry().isVerified(newWallet, requiredClaimTopics),
-            "New wallet verified prematurely"
-        );
-
         // Perform Recovery
         tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
 

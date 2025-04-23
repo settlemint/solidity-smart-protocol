@@ -109,9 +109,8 @@ abstract contract _SMARTCustodianLogic {
 
         // Use abstract getters for context-dependent state
         ISMARTIdentityRegistry registry = _getIdentityRegistry();
-        uint256[] memory topics = _getRequiredClaimTopics();
 
-        if (!(registry.isVerified(lostWallet, topics) || registry.isVerified(newWallet, topics))) {
+        if (!(registry.contains(lostWallet) || registry.contains(newWallet))) {
             revert RecoveryWalletsNotVerified();
         }
         if (__frozen[newWallet]) revert RecoveryTargetAddressFrozen();
@@ -141,12 +140,14 @@ abstract contract _SMARTCustodianLogic {
         }
 
         // Update identity registry
-        uint16 country = registry.investorCountry(lostWallet);
-        if (!registry.isVerified(newWallet, topics)) {
-            registry.registerIdentity(newWallet, IIdentity(investorOnchainID), country);
-        }
-        if (registry.isVerified(lostWallet, topics)) {
-            registry.deleteIdentity(lostWallet);
+        if (registry.contains(lostWallet)) {
+            uint16 country = registry.investorCountry(lostWallet);
+            if (!registry.contains(newWallet)) {
+                registry.registerIdentity(newWallet, IIdentity(investorOnchainID), country);
+            }
+            if (registry.contains(lostWallet)) {
+                registry.deleteIdentity(lostWallet);
+            }
         }
 
         emit RecoverySuccess(lostWallet, newWallet, investorOnchainID);
