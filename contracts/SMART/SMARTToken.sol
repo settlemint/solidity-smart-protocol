@@ -18,6 +18,8 @@ import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { SMARTExtension } from "./extensions/common/SMARTExtension.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { SMARTAccessControlAuthorization } from "./extensions/core/SMARTAccessControlAuthorization.sol";
+import { SMARTPausableAccessControlAuthorization } from
+    "./extensions/pausable/SMARTPausableAccessControlAuthorization.sol";
 /// @title SMARTToken
 /// @notice A complete implementation of a SMART token with all available extensions
 
@@ -25,6 +27,7 @@ contract SMARTToken is
     SMART,
     SMARTAccessControlAuthorization,
     SMARTBurnableAccessControlAuthorization,
+    SMARTPausableAccessControlAuthorization,
     SMARTCustodian,
     SMARTPausable,
     SMARTBurnable,
@@ -100,7 +103,12 @@ contract SMARTToken is
         public
         view
         virtual
-        override(SMARTAccessControlAuthorization, SMARTBurnableAccessControlAuthorization, AccessControl)
+        override(
+            SMARTAccessControlAuthorization,
+            SMARTBurnableAccessControlAuthorization,
+            SMARTPausableAccessControlAuthorization,
+            AccessControl
+        )
         returns (bool)
     {
         return AccessControl.hasRole(role, account);
@@ -182,7 +190,13 @@ contract SMARTToken is
         internal
         view
         virtual
-        override(SMARTAccessControlAuthorization, SMARTBurnableAccessControlAuthorization, Context, SMARTRedeemable)
+        override(
+            SMARTAccessControlAuthorization,
+            SMARTBurnableAccessControlAuthorization,
+            SMARTPausableAccessControlAuthorization,
+            Context,
+            SMARTRedeemable
+        )
         returns (address)
     {
         return Context._msgSender();

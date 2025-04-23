@@ -19,6 +19,8 @@ import { SMARTAccessControlAuthorization } from "./extensions/core/SMARTAccessCo
 import { SMARTBurnableAccessControlAuthorization } from
     "./extensions/burnable/SMARTBurnableAccessControlAuthorization.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { SMARTPausableAccessControlAuthorization } from
+    "./extensions/pausable/SMARTPausableAccessControlAuthorization.sol";
 /// @title SMARTTokenUpgradeable
 /// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
 
@@ -28,6 +30,7 @@ contract SMARTTokenUpgradeable is
     SMARTUpgradeable,
     SMARTAccessControlAuthorization,
     SMARTBurnableAccessControlAuthorization,
+    SMARTPausableAccessControlAuthorization,
     SMARTCustodianUpgradeable,
     SMARTPausableUpgradeable,
     SMARTBurnableUpgradeable,
@@ -178,7 +181,12 @@ contract SMARTTokenUpgradeable is
     )
         public
         view
-        override(SMARTAccessControlAuthorization, SMARTBurnableAccessControlAuthorization, AccessControlUpgradeable)
+        override(
+            SMARTAccessControlAuthorization,
+            SMARTBurnableAccessControlAuthorization,
+            SMARTPausableAccessControlAuthorization,
+            AccessControlUpgradeable
+        )
         returns (bool)
     {
         return super.hasRole(role, account);
@@ -310,7 +318,8 @@ contract SMARTTokenUpgradeable is
             SMARTRedeemableUpgradeable,
             ContextUpgradeable,
             SMARTAccessControlAuthorization,
-            SMARTBurnableAccessControlAuthorization
+            SMARTBurnableAccessControlAuthorization,
+            SMARTPausableAccessControlAuthorization
         )
         returns (address)
     {
