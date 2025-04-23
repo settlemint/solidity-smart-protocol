@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { SMARTExtension } from "./../common/SMARTExtension.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
-import { _SMARTRedeemableLogic } from "./_SMARTRedeemableLogic.sol";
+import { _SMARTRedeemableLogic } from "./internal/_SMARTRedeemableLogic.sol";
 import { _Context } from "./../common/interfaces/_Context.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
 /// @title SMARTRedeemable

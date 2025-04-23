@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
-import { IIdentity } from "../../../onchainid/interface/IIdentity.sol";
-import { LengthMismatch } from "../common/CommonErrors.sol";
+import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistry.sol";
+import { IIdentity } from "../../../../onchainid/interface/IIdentity.sol";
+import { LengthMismatch, Unauthorized } from "../../common/CommonErrors.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import { _SMARTCustodianAuthorizationHooks } from "./_SMARTCustodianAuthorizationHooks.sol";
 
 /// @title _SMARTCustodianLogic
 /// @notice Base logic contract for SMARTCustodian functionality.
-abstract contract _SMARTCustodianLogic {
+abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {
     // --- Storage Variables ---
     mapping(address => bool) internal __frozen;
     mapping(address => uint256) internal __frozenTokens;
@@ -56,11 +57,13 @@ abstract contract _SMARTCustodianLogic {
     // --- Internal Functions ---
 
     function _setAddressFrozen(address userAddress, bool freeze) internal virtual {
+        if (!_authorizeFreezeAddress()) revert Unauthorized();
         __frozen[userAddress] = freeze;
         emit AddressFrozen(userAddress, freeze);
     }
 
     function _freezePartialTokens(address userAddress, uint256 amount) internal virtual {
+        if (!_authorizeFreezePartialTokens()) revert Unauthorized();
         uint256 currentFrozen = __frozenTokens[userAddress];
         // Use abstract getter for balance
         uint256 availableBalance = _getBalance(userAddress) - currentFrozen;
@@ -72,6 +75,7 @@ abstract contract _SMARTCustodianLogic {
     }
 
     function _unfreezePartialTokens(address userAddress, uint256 amount) internal virtual {
+        if (!_authorizeFreezeAddress()) revert Unauthorized();
         uint256 currentFrozen = __frozenTokens[userAddress];
         if (currentFrozen < amount) {
             revert InsufficientFrozenTokens(currentFrozen, amount);
@@ -81,6 +85,7 @@ abstract contract _SMARTCustodianLogic {
     }
 
     function _forcedTransfer(address from, address to, uint256 amount) internal virtual {
+        if (!_authorizeForcedTransfer()) revert Unauthorized();
         // Validation is expected to be called by the concrete contract's `_beforeTransfer` override first.
         uint256 currentFrozen = __frozenTokens[from];
         uint256 currentBalance = _getBalance(from);
@@ -103,6 +108,7 @@ abstract contract _SMARTCustodianLogic {
     }
 
     function _recoveryAddress(address lostWallet, address newWallet, address investorOnchainID) internal virtual {
+        if (!_authorizeRecoveryAddress()) revert Unauthorized();
         uint256 balance = _getBalance(lostWallet);
         if (balance == 0) revert NoTokensToRecover();
 

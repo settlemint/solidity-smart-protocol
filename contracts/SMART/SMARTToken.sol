@@ -20,6 +20,8 @@ import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol"
 import { SMARTAccessControlAuthorization } from "./extensions/core/SMARTAccessControlAuthorization.sol";
 import { SMARTPausableAccessControlAuthorization } from
     "./extensions/pausable/SMARTPausableAccessControlAuthorization.sol";
+import { SMARTCustodianAccessControlAuthorization } from
+    "./extensions/custodian/SMARTCustodianAccessControlAuthorization.sol";
 /// @title SMARTToken
 /// @notice A complete implementation of a SMART token with all available extensions
 
@@ -28,6 +30,7 @@ contract SMARTToken is
     SMARTAccessControlAuthorization,
     SMARTBurnableAccessControlAuthorization,
     SMARTPausableAccessControlAuthorization,
+    SMARTCustodianAccessControlAuthorization,
     SMARTCustodian,
     SMARTPausable,
     SMARTBurnable,
@@ -63,6 +66,10 @@ contract SMARTToken is
         _grantRole(COMPLIANCE_ADMIN_ROLE, initialOwner_);
         _grantRole(VERIFICATION_ADMIN_ROLE, initialOwner_);
         _grantRole(TOKEN_ADMIN_ROLE, initialOwner_);
+        _grantRole(FREEZER_ROLE, initialOwner_);
+        _grantRole(FORCED_TRANSFER_ROLE, initialOwner_);
+        _grantRole(RECOVERY_ROLE, initialOwner_);
+        _grantRole(PAUSER_ROLE, initialOwner_);
     }
 
     // --- State-Changing Functions (Overrides) ---
@@ -107,6 +114,7 @@ contract SMARTToken is
             SMARTAccessControlAuthorization,
             SMARTBurnableAccessControlAuthorization,
             SMARTPausableAccessControlAuthorization,
+            SMARTCustodianAccessControlAuthorization,
             AccessControl
         )
         returns (bool)
@@ -194,6 +202,7 @@ contract SMARTToken is
             SMARTAccessControlAuthorization,
             SMARTBurnableAccessControlAuthorization,
             SMARTPausableAccessControlAuthorization,
+            SMARTCustodianAccessControlAuthorization,
             Context,
             SMARTRedeemable
         )

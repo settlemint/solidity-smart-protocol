@@ -5,7 +5,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol"; // Needed for
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
-import { _SMARTCustodianLogic } from "./_SMARTCustodianLogic.sol";
+import { _SMARTCustodianLogic } from "./internal/_SMARTCustodianLogic.sol";
 import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
 import { IIdentity } from "../../../onchainid/interface/IIdentity.sol";
 import { LengthMismatch } from "./../common/CommonErrors.sol";
@@ -14,12 +14,7 @@ import { SMARTHooks } from "./../common/SMARTHooks.sol";
 /// @title SMARTCustodianUpgradeable
 /// @notice Upgradeable extension that adds custodian features.
 /// @dev Inherits from SMARTExtensionUpgradeable, OwnableUpgradeable, and _SMARTCustodianLogic.
-abstract contract SMARTCustodianUpgradeable is
-    Initializable,
-    SMARTExtensionUpgradeable,
-    OwnableUpgradeable,
-    _SMARTCustodianLogic
-{
+abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgradeable, _SMARTCustodianLogic {
     // State, Errors, Events are inherited from _SMARTCustodianLogic
 
     // --- Constructor ---
@@ -36,47 +31,33 @@ abstract contract SMARTCustodianUpgradeable is
 
     // --- State-Changing Functions ---
 
-    function setAddressFrozen(address userAddress, bool freeze) public virtual onlyOwner {
+    function setAddressFrozen(address userAddress, bool freeze) public virtual {
         _setAddressFrozen(userAddress, freeze); // Calls base logic
     }
 
-    function freezePartialTokens(address userAddress, uint256 amount) public virtual onlyOwner {
+    function freezePartialTokens(address userAddress, uint256 amount) public virtual {
         _freezePartialTokens(userAddress, amount); // Calls base logic
     }
 
-    function unfreezePartialTokens(address userAddress, uint256 amount) public virtual onlyOwner {
+    function unfreezePartialTokens(address userAddress, uint256 amount) public virtual {
         _unfreezePartialTokens(userAddress, amount); // Calls base logic
     }
 
-    function batchSetAddressFrozen(address[] calldata userAddresses, bool[] calldata freeze) public virtual onlyOwner {
+    function batchSetAddressFrozen(address[] calldata userAddresses, bool[] calldata freeze) public virtual {
         if (userAddresses.length != freeze.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
             _setAddressFrozen(userAddresses[i], freeze[i]); // Calls base logic
         }
     }
 
-    function batchFreezePartialTokens(
-        address[] calldata userAddresses,
-        uint256[] calldata amounts
-    )
-        public
-        virtual
-        onlyOwner
-    {
+    function batchFreezePartialTokens(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
             _freezePartialTokens(userAddresses[i], amounts[i]); // Calls base logic
         }
     }
 
-    function batchUnfreezePartialTokens(
-        address[] calldata userAddresses,
-        uint256[] calldata amounts
-    )
-        public
-        virtual
-        onlyOwner
-    {
+    function batchUnfreezePartialTokens(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
             _unfreezePartialTokens(userAddresses[i], amounts[i]); // Calls base logic
@@ -84,7 +65,7 @@ abstract contract SMARTCustodianUpgradeable is
     }
 
     /// @dev Requires owner privileges.
-    function forcedTransfer(address from, address to, uint256 amount) public virtual onlyOwner returns (bool) {
+    function forcedTransfer(address from, address to, uint256 amount) public virtual returns (bool) {
         _beforeTransfer(from, to, amount, true); // Ensure custodian/other checks run first via hook chain
         _forcedTransfer(from, to, amount); // Call internal logic from base
         _afterTransfer(from, to, amount); // Call hook chain
@@ -99,7 +80,6 @@ abstract contract SMARTCustodianUpgradeable is
     )
         public
         virtual
-        onlyOwner
     {
         if (!((fromList.length == toList.length) && (toList.length == amounts.length))) {
             revert LengthMismatch();
@@ -117,7 +97,6 @@ abstract contract SMARTCustodianUpgradeable is
     )
         public
         virtual
-        onlyOwner
         returns (bool)
     {
         _recoveryAddress(lostWallet, newWallet, investorOnchainID); // Calls base logic

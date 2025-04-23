@@ -21,6 +21,8 @@ import { SMARTBurnableAccessControlAuthorization } from
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { SMARTPausableAccessControlAuthorization } from
     "./extensions/pausable/SMARTPausableAccessControlAuthorization.sol";
+import { SMARTCustodianAccessControlAuthorization } from
+    "./extensions/custodian/SMARTCustodianAccessControlAuthorization.sol";
 /// @title SMARTTokenUpgradeable
 /// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
 
@@ -31,6 +33,7 @@ contract SMARTTokenUpgradeable is
     SMARTAccessControlAuthorization,
     SMARTBurnableAccessControlAuthorization,
     SMARTPausableAccessControlAuthorization,
+    SMARTCustodianAccessControlAuthorization,
     SMARTCustodianUpgradeable,
     SMARTPausableUpgradeable,
     SMARTBurnableUpgradeable,
@@ -106,6 +109,10 @@ contract SMARTTokenUpgradeable is
         _grantRole(COMPLIANCE_ADMIN_ROLE, initialOwner_);
         _grantRole(VERIFICATION_ADMIN_ROLE, initialOwner_);
         _grantRole(TOKEN_ADMIN_ROLE, initialOwner_);
+        _grantRole(FREEZER_ROLE, initialOwner_);
+        _grantRole(FORCED_TRANSFER_ROLE, initialOwner_);
+        _grantRole(RECOVERY_ROLE, initialOwner_);
+        _grantRole(PAUSER_ROLE, initialOwner_);
     }
 
     // --- Overrides for Conflicting Functions ---
@@ -185,6 +192,7 @@ contract SMARTTokenUpgradeable is
             SMARTAccessControlAuthorization,
             SMARTBurnableAccessControlAuthorization,
             SMARTPausableAccessControlAuthorization,
+            SMARTCustodianAccessControlAuthorization,
             AccessControlUpgradeable
         )
         returns (bool)
@@ -319,7 +327,8 @@ contract SMARTTokenUpgradeable is
             ContextUpgradeable,
             SMARTAccessControlAuthorization,
             SMARTBurnableAccessControlAuthorization,
-            SMARTPausableAccessControlAuthorization
+            SMARTPausableAccessControlAuthorization,
+            SMARTCustodianAccessControlAuthorization
         )
         returns (address)
     {
