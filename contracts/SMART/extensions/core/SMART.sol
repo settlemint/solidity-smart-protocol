@@ -42,8 +42,7 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ComplianceModuleParamPair[] memory initialModulePairs_,
-        address initialOwner_
+        ComplianceModuleParamPair[] memory initialModulePairs_
     )
         ERC20(name_, symbol_)
     {
