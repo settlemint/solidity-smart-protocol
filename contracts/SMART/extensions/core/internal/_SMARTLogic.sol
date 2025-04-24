@@ -260,7 +260,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         emit MintCompleted(to, amount);
     }
 
-    function _smart_beforeTransferLogic(address from, address to, uint256 amount, bool) internal virtual {
+    function _smart_beforeTransferLogic(address from, address to, uint256 amount) internal virtual {
         if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
         if (!__compliance.canTransfer(address(this), from, to, amount)) revert TransferNotCompliant();
     }

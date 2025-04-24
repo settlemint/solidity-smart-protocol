@@ -103,9 +103,7 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     function batchMint(address[] calldata toList, uint256[] calldata amounts) external virtual override {
         if (toList.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < toList.length; i++) {
-            _beforeMint(toList[i], amounts[i]);
             _mint(toList[i], amounts[i]);
-            _afterMint(toList[i], amounts[i]);
         }
     }
 
@@ -113,9 +111,7 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     /// @dev Overrides ERC20Upgradeable.transfer to include SMART validation and hooks.
     function transfer(address to, uint256 amount) public virtual override(ERC20Upgradeable, IERC20) returns (bool) {
         address sender = _msgSender();
-        _beforeTransfer(sender, to, amount, false);
         super._transfer(sender, to, amount);
-        _afterTransfer(sender, to, amount);
         return true;
     }
 
@@ -124,9 +120,7 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         if (toList.length != amounts.length) revert LengthMismatch();
         address sender = _msgSender();
         for (uint256 i = 0; i < toList.length; i++) {
-            _beforeTransfer(sender, toList[i], amounts[i], false);
             super._transfer(sender, toList[i], amounts[i]);
-            _afterTransfer(sender, toList[i], amounts[i]);
         }
     }
 
@@ -143,10 +137,8 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         returns (bool)
     {
         address spender = _msgSender();
-        _beforeTransfer(from, to, amount, false);
         super._spendAllowance(from, spender, amount);
         super._transfer(from, to, amount);
-        _afterTransfer(from, to, amount);
         return true;
     }
 
@@ -209,18 +201,9 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     }
 
     /// @inheritdoc SMARTHooks
-    function _beforeTransfer(
-        address from,
-        address to,
-        uint256 amount,
-        bool forced
-    )
-        internal
-        virtual
-        override(SMARTHooks)
-    {
-        _smart_beforeTransferLogic(from, to, amount, forced); // Call helper from base logic
-        super._beforeTransfer(from, to, amount, forced);
+    function _beforeTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
+        _smart_beforeTransferLogic(from, to, amount); // Call helper from base logic
+        super._beforeTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks

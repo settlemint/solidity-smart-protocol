@@ -18,18 +18,6 @@ abstract contract SMARTBurnable is SMARTExtension, _SMARTBurnableLogic {
 
     // --- Hooks ---
 
-    /// @dev Internal validation hook for burning tokens.
-    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        // Add any burnable-specific validation here if needed
-        super._beforeBurn(from, amount); // Call downstream validation
-    }
-
-    /// @dev Internal hook called after burning tokens.
-    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        // Add any burnable-specific actions here if needed
-        super._afterBurn(from, amount); // Call downstream hooks
-    }
-
     /// @dev Provides the actual burn implementation by calling ERC20's internal _burn.
     ///      This assumes the contract inheriting this extension also inherits ERC20.
     function _burnable_executeBurn(

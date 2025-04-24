@@ -37,39 +37,6 @@ abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, _SMARTPausable
 
     // --- Hooks ---
 
-    /// @inheritdoc SMARTHooks
-    function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateNotPaused(); // Call helper from base logic
-        super._beforeMint(to, amount);
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _beforeTransfer(
-        address from,
-        address to,
-        uint256 amount,
-        bool forced
-    )
-        internal
-        virtual
-        override(SMARTHooks)
-    {
-        _pausable_validateNotPaused(); // Call helper from base logic
-        super._beforeTransfer(from, to, amount, forced);
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateNotPaused(); // Call helper from base logic
-        super._beforeBurn(from, amount);
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _beforeRedeem(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateNotPaused(); // Call helper from base logic
-        super._beforeRedeem(from, amount);
-    }
-
     /**
      * @dev Overrides _update to resolve conflict between ERC20Pausable and SMARTExtension,
      * ensuring the whenNotPaused modifier is applied.

@@ -220,7 +220,7 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._beforeMint(to, amount);
     }
@@ -229,14 +229,13 @@ contract SMARTTokenUpgradeable is
     function _beforeTransfer(
         address from,
         address to,
-        uint256 amount,
-        bool forced
+        uint256 amount
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
-        super._beforeTransfer(from, to, amount, forced);
+        super._beforeTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
@@ -246,7 +245,7 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTBurnableUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks) // SMARTUpgradeable
+        override(SMARTBurnableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks) // SMARTUpgradeable
             // does not implement _beforeBurn
     {
         super._beforeBurn(from, amount);
@@ -259,7 +258,7 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTRedeemableUpgradeable, SMARTPausableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
+        override(SMARTRedeemableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._beforeRedeem(owner, amount);
     }

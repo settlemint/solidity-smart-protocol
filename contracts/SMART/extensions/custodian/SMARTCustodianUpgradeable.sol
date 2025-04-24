@@ -71,9 +71,7 @@ abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgr
 
     /// @dev Requires owner privileges.
     function forcedTransfer(address from, address to, uint256 amount) public virtual returns (bool) {
-        _beforeTransfer(from, to, amount, true); // Ensure custodian/other checks run first via hook chain
         _forcedTransfer(from, to, amount); // Call internal logic from base
-        _afterTransfer(from, to, amount); // Call hook chain
         return true;
     }
 
@@ -160,18 +158,9 @@ abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgr
     }
 
     /// @inheritdoc SMARTHooks
-    function _beforeTransfer(
-        address from,
-        address to,
-        uint256 amount,
-        bool forced
-    )
-        internal
-        virtual
-        override(SMARTHooks)
-    {
-        _custodian_beforeTransferLogic(from, to, amount, forced); // Call helper from base logic
-        super._beforeTransfer(from, to, amount, forced);
+    function _beforeTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
+        _custodian_beforeTransferLogic(from, to, amount); // Call helper from base logic
+        super._beforeTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks

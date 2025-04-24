@@ -6,6 +6,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { _SMARTPausableLogic } from "../../contracts/SMART/extensions/pausable/internal/_SMARTPausableLogic.sol";
 import { Unauthorized } from "../../contracts/SMART/extensions/common/CommonErrors.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 abstract contract SMARTPausableTest is SMARTTest {
     function test_Pause_SetAndCheck() public {
@@ -19,21 +20,21 @@ abstract contract SMARTPausableTest is SMARTTest {
     function test_Pause_MintWhilePaused_Reverts() public {
         _mintInitialBalances();
         tokenUtils.pauseToken(address(token), tokenIssuer);
-        vm.expectRevert(abi.encodeWithSelector(_SMARTPausableLogic.TokenPaused.selector));
+        vm.expectRevert(abi.encodeWithSelector(Pausable.EnforcedPause.selector));
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, 1 ether);
     }
 
     function test_Pause_TransferWhilePaused_Reverts() public {
         _mintInitialBalances();
         tokenUtils.pauseToken(address(token), tokenIssuer);
-        vm.expectRevert(abi.encodeWithSelector(_SMARTPausableLogic.TokenPaused.selector));
+        vm.expectRevert(abi.encodeWithSelector(Pausable.EnforcedPause.selector));
         tokenUtils.transferToken(address(token), clientBE, clientJP, 1 ether);
     }
 
     function test_Pause_BurnWhilePaused_Reverts() public {
         _mintInitialBalances();
         tokenUtils.pauseToken(address(token), tokenIssuer);
-        vm.expectRevert(abi.encodeWithSelector(_SMARTPausableLogic.TokenPaused.selector));
+        vm.expectRevert(abi.encodeWithSelector(Pausable.EnforcedPause.selector));
         tokenUtils.burnToken(address(token), tokenIssuer, clientBE, 1 ether);
     }
 

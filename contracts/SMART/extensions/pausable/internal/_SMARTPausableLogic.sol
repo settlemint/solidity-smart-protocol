@@ -2,14 +2,12 @@
 pragma solidity ^0.8.27;
 
 import { _SMARTPausableAuthorizationHooks } from "./_SMARTPausableAuthorizationHooks.sol";
+import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 
 /// @title _SMARTPausableLogic
 /// @notice Base logic contract for SMARTPausable functionality.
 /// @dev Contains validation hooks checking the paused state.
-abstract contract _SMARTPausableLogic is _SMARTPausableAuthorizationHooks {
-    // --- Errors ---
-    error TokenPaused();
-
+abstract contract _SMARTPausableLogic is _SMARTExtension, _SMARTPausableAuthorizationHooks {
     // --- State-Changing Functions ---
     /// @notice Pauses the contract (Owner only).
     function pause() public virtual {
@@ -33,9 +31,4 @@ abstract contract _SMARTPausableLogic is _SMARTPausableAuthorizationHooks {
     function _pausable_executeUnpause() internal virtual;
 
     // --- Internal Functions ---
-
-    // Hook Helper Functions
-    function _pausable_validateNotPaused() internal view virtual {
-        if (paused()) revert TokenPaused();
-    }
 }

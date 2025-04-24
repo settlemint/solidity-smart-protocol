@@ -130,38 +130,23 @@ contract SMARTToken is
 
     // --- Hooks ---
 
-    function _beforeMint(
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMART, SMARTPausable, SMARTCustodian, SMARTHooks)
-    {
+    function _beforeMint(address to, uint256 amount) internal virtual override(SMART, SMARTCustodian, SMARTHooks) {
         super._beforeMint(to, amount);
     }
 
     function _beforeTransfer(
         address from,
         address to,
-        uint256 amount,
-        bool forced
-    )
-        internal
-        virtual
-        override(SMART, SMARTPausable, SMARTCustodian, SMARTHooks)
-    {
-        super._beforeTransfer(from, to, amount, forced);
-    }
-
-    function _beforeBurn(
-        address from,
         uint256 amount
     )
         internal
         virtual
-        override(SMARTBurnable, SMARTPausable, SMARTCustodian, SMARTHooks)
+        override(SMART, SMARTCustodian, SMARTHooks)
     {
+        super._beforeTransfer(from, to, amount);
+    }
+
+    function _beforeBurn(address from, uint256 amount) internal virtual override(SMART, SMARTCustodian, SMARTHooks) {
         super._beforeBurn(from, amount);
     }
 
@@ -171,7 +156,7 @@ contract SMARTToken is
     )
         internal
         virtual
-        override(SMARTRedeemable, SMARTPausable, SMARTCustodian, SMARTHooks)
+        override(SMARTRedeemable, SMARTCustodian, SMARTHooks)
     {
         super._beforeRedeem(owner, amount);
     }
@@ -184,7 +169,7 @@ contract SMARTToken is
         super._afterTransfer(from, to, amount);
     }
 
-    function _afterBurn(address from, uint256 amount) internal virtual override(SMART, SMARTBurnable, SMARTHooks) {
+    function _afterBurn(address from, uint256 amount) internal virtual override(SMART, SMARTHooks) {
         super._afterBurn(from, amount);
     }
 
@@ -196,7 +181,7 @@ contract SMARTToken is
     /**
      * @dev Explicitly call the Pausable implementation which includes the `whenNotPaused` check.
      */
-    function _update(address from, address to, uint256 value) internal virtual override(SMARTPausable, ERC20) {
+    function _update(address from, address to, uint256 value) internal virtual override(SMARTPausable, SMART, ERC20) {
         super._update(from, to, value);
     }
 

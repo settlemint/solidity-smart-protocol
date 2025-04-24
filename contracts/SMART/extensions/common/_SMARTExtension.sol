@@ -7,4 +7,6 @@ import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 /// @title _SMARTExtension
 /// @notice Base contract for SMART extension contracts.
 
-abstract contract _SMARTExtension is ISMART, SMARTHooks { }
+abstract contract _SMARTExtension is ISMART, SMARTHooks {
+    bool internal __isForcedTransfer = false;
+}

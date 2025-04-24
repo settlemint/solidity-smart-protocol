@@ -7,13 +7,14 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 // Interface imports
 import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistry.sol";
 import { IIdentity } from "../../../../onchainid/interface/IIdentity.sol";
+import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 
 // Internal implementation imports
 import { _SMARTCustodianAuthorizationHooks } from "./_SMARTCustodianAuthorizationHooks.sol";
 
 /// @title _SMARTCustodianLogic
 /// @notice Base logic contract for SMARTCustodian functionality.
-abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {
+abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthorizationHooks {
     // --- Storage Variables ---
     mapping(address => bool) internal __frozen;
     mapping(address => uint256) internal __frozenTokens;
@@ -90,6 +91,7 @@ abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {
 
     function _forcedTransfer(address from, address to, uint256 amount) internal virtual {
         _authorizeForcedTransfer();
+
         // Validation is expected to be called by the concrete contract's `_beforeTransfer` override first.
         uint256 currentFrozen = __frozenTokens[from];
         uint256 currentBalance = _getBalance(from);
@@ -107,7 +109,9 @@ abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {
         }
 
         // Delegate the actual update to the concrete contract
+        __isForcedTransfer = true;
         _executeTransferUpdate(from, to, amount);
+        __isForcedTransfer = false;
         // Note: _afterTransfer hook is expected to be called by the concrete contract after this.
     }
 
@@ -128,7 +132,9 @@ abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {
         bool walletFrozen = __frozen[lostWallet];
 
         // Delegate the actual update to the concrete contract
+        __isForcedTransfer = true;
         _executeTransferUpdate(lostWallet, newWallet, balance);
+        __isForcedTransfer = false;
 
         // Transfer frozen tokens state
         if (frozenTokens > 0) {
@@ -167,16 +173,14 @@ abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {
         if (__frozen[to]) revert RecipientAddressFrozen();
     }
 
-    function _custodian_beforeTransferLogic(address from, address to, uint256 amount, bool forced) internal virtual {
-        if (!forced) {
-            if (__frozen[from]) revert SenderAddressFrozen();
-            if (__frozen[to]) revert RecipientAddressFrozen();
+    function _custodian_beforeTransferLogic(address from, address to, uint256 amount) internal virtual {
+        if (__frozen[from]) revert SenderAddressFrozen();
+        if (__frozen[to]) revert RecipientAddressFrozen();
 
-            uint256 frozenTokens = __frozenTokens[from];
-            uint256 availableUnfrozen = _getBalance(from) - frozenTokens;
-            if (availableUnfrozen < amount) {
-                revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
-            }
+        uint256 frozenTokens = __frozenTokens[from];
+        uint256 availableUnfrozen = _getBalance(from) - frozenTokens;
+        if (availableUnfrozen < amount) {
+            revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
         }
     }
 

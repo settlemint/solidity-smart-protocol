@@ -57,38 +57,6 @@ abstract contract SMARTPausableUpgradeable is
 
     // --- Hooks ---
 
-    /// @inheritdoc SMARTHooks
-    function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateNotPaused(); // Call helper from base logic
-        super._beforeMint(to, amount); // Call downstream validation
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _beforeTransfer(
-        address from,
-        address to,
-        uint256 amount,
-        bool forced
-    )
-        internal
-        virtual
-        override(SMARTHooks)
-    {
-        _pausable_validateNotPaused(); // Call helper from base logic
-        super._beforeTransfer(from, to, amount, forced); // Call downstream validation
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateNotPaused(); // Call helper from base logic
-        super._beforeBurn(from, amount);
-    }
-
-    function _beforeRedeem(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_validateNotPaused(); // Call helper from base logic
-        super._beforeRedeem(from, amount);
-    }
-
     /**
      * @dev Overrides _update to resolve conflict between ERC20PausableUpgradeable and base ERC20Upgradeable,
      *      ensuring the whenNotPaused modifier from PausableUpgradeable is applied.
@@ -101,6 +69,7 @@ abstract contract SMARTPausableUpgradeable is
         internal
         virtual
         override(ERC20PausableUpgradeable, ERC20Upgradeable) // Specify both bases
+        whenNotPaused
     {
         super._update(from, to, value); // Delegate to ERC20PausableUpgradeable._update
     }

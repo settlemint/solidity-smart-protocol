@@ -89,9 +89,7 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
     /// @inheritdoc ISMART
     /// @dev Requires owner privileges.
     function mint(address to, uint256 amount) external virtual override {
-        _beforeMint(to, amount);
         _mint(to, amount);
-        _afterMint(to, amount);
     }
 
     /// @inheritdoc ISMART
@@ -99,9 +97,7 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
     function batchMint(address[] calldata toList, uint256[] calldata amounts) external virtual override {
         if (toList.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < toList.length; i++) {
-            _beforeMint(toList[i], amounts[i]);
             _mint(toList[i], amounts[i]);
-            _afterMint(toList[i], amounts[i]);
         }
     }
 
@@ -109,9 +105,7 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
     /// @dev Overrides ERC20.transfer to include SMART validation and hooks.
     function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
         address sender = _msgSender();
-        _beforeTransfer(sender, to, amount, false);
-        super._transfer(sender, to, amount);
-        _afterTransfer(sender, to, amount);
+        _transfer(sender, to, amount);
         return true;
     }
 
@@ -120,10 +114,7 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
         if (toList.length != amounts.length) revert LengthMismatch();
         address sender = _msgSender(); // Cache sender for efficiency
         for (uint256 i = 0; i < toList.length; i++) {
-            // Use internal functions for consistency and to ensure hooks are called
-            _beforeTransfer(sender, toList[i], amounts[i], false);
-            super._transfer(sender, toList[i], amounts[i]); // Call ERC20's internal transfer
-            _afterTransfer(sender, toList[i], amounts[i]);
+            _transfer(sender, toList[i], amounts[i]);
         }
     }
 
@@ -140,10 +131,8 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
         returns (bool)
     {
         address spender = _msgSender();
-        _beforeTransfer(from, to, amount, false);
-        super._spendAllowance(from, spender, amount);
-        super._transfer(from, to, amount);
-        _afterTransfer(from, to, amount);
+        _spendAllowance(from, spender, amount);
+        _transfer(from, to, amount);
         return true;
     }
 
@@ -179,6 +168,44 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
         return __decimals; // Use state variable from _SMARTLogic
     }
 
+    /**
+     * @dev Overrides ERC20._update to centralize all token movement hooks.
+     * This implementation detects the operation type based on 'from' and 'to' addresses
+     * and calls the appropriate hooks.
+     *
+     * This is called by _mint, _burn, and _transfer operations after their validations.
+     */
+    function _update(address from, address to, uint256 value) internal virtual override(ERC20) {
+        if (from == address(0)) {
+            // Mint operation
+            if (!__isForcedTransfer) {
+                _beforeMint(to, value);
+            }
+            super._update(from, to, value);
+            if (!__isForcedTransfer) {
+                _afterMint(to, value);
+            }
+        } else if (to == address(0)) {
+            // Burn operation
+            if (!__isForcedTransfer) {
+                _beforeBurn(from, value);
+            }
+            super._update(from, to, value);
+            if (!__isForcedTransfer) {
+                _afterBurn(from, value);
+            }
+        } else {
+            // Transfer operation (default to non-forced)
+            if (!__isForcedTransfer) {
+                _beforeTransfer(from, to, value);
+            }
+            super._update(from, to, value);
+            if (!__isForcedTransfer) {
+                _afterTransfer(from, to, value);
+            }
+        }
+    }
+
     // --- Hooks ---
 
     /// @inheritdoc SMARTHooks
@@ -194,24 +221,21 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
     }
 
     /// @inheritdoc SMARTHooks
-    function _beforeTransfer(
-        address from,
-        address to,
-        uint256 amount,
-        bool forced
-    )
-        internal
-        virtual
-        override(SMARTHooks)
-    {
-        _smart_beforeTransferLogic(from, to, amount, forced); // Call helper from base logic
-        super._beforeTransfer(from, to, amount, forced);
+    function _beforeTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
+        _smart_beforeTransferLogic(from, to, amount); // Call helper from base logic
+        super._beforeTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
     function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         _smart_afterTransferLogic(from, to, amount); // Call helper from base logic
         super._afterTransfer(from, to, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
+        // Call helper from base logic if needed
+        super._beforeBurn(from, amount);
     }
 
     /// @inheritdoc SMARTHooks
