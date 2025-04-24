@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import { MySMARTToken } from "./MySMARTToken.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { ISMART } from "./SMART/interface/ISMART.sol";
+import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 
 /// @title MySMARTTokenFactory
 /// @notice Factory contract for deploying MySMARTToken instances
@@ -58,28 +59,33 @@ contract MySMARTTokenFactory is ReentrancyGuard {
         nonReentrant
         returns (address token)
     {
-        // Check if address is already deployed
-        address predicted = predictAddress(msg.sender, name, symbol, decimals, requiredClaimTopics, modulePairs);
+        bytes32 salt = _calculateSalt(name, symbol, decimals, identityRegistry, compliance);
+
+        // Get initialization bytecode with constructor parameters
+        bytes memory bytecode = abi.encodePacked(
+            type(MySMARTToken).creationCode,
+            abi.encode(
+                name,
+                symbol,
+                decimals,
+                address(0), // onchainID
+                identityRegistry,
+                compliance,
+                requiredClaimTopics,
+                modulePairs,
+                msg.sender
+            )
+        );
+
+        // Predict address before deployment
+        address predicted = Create2.computeAddress(salt, keccak256(bytecode));
 
         if (isAddressDeployed(predicted)) revert AddressAlreadyDeployed();
 
-        bytes32 salt = _calculateSalt(name, symbol, decimals, identityRegistry, compliance);
+        // Deploy the contract using Create2
+        token = Create2.deploy(0, salt, bytecode);
 
-        MySMARTToken newToken = new MySMARTToken{ salt: salt }(
-            name,
-            symbol,
-            decimals,
-            address(0), // needs to be set later
-            identityRegistry,
-            compliance,
-            requiredClaimTopics,
-            modulePairs,
-            msg.sender
-        );
-
-        token = address(newToken);
         isFactoryToken[token] = true;
-
         emit SMARTTokenCreated(token, msg.sender);
     }
 
@@ -105,35 +111,22 @@ contract MySMARTTokenFactory is ReentrancyGuard {
     {
         bytes32 salt = _calculateSalt(name, symbol, decimals, identityRegistry, compliance);
 
-        predicted = address(
-            uint160(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(
-                            bytes1(0xff),
-                            address(this),
-                            salt,
-                            keccak256(
-                                abi.encodePacked(
-                                    type(MySMARTToken).creationCode,
-                                    abi.encode(
-                                        name,
-                                        symbol,
-                                        decimals,
-                                        address(0), // onchainID
-                                        identityRegistry,
-                                        compliance,
-                                        requiredClaimTopics,
-                                        modulePairs,
-                                        sender
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
+        bytes memory bytecode = abi.encodePacked(
+            type(MySMARTToken).creationCode,
+            abi.encode(
+                name,
+                symbol,
+                decimals,
+                address(0), // onchainID
+                identityRegistry,
+                compliance,
+                requiredClaimTopics,
+                modulePairs,
+                sender
             )
         );
+
+        return Create2.computeAddress(salt, keccak256(bytecode));
     }
 
     /// @notice Calculates the salt for CREATE2 deployment
