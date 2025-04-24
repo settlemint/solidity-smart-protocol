@@ -14,11 +14,9 @@ import { _SMARTAuthorizationHooks } from "./_SMARTAuthorizationHooks.sol";
 ///      It does not include constructors or initializers itself.
 abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     // --- Errors ---
-    error InvalidComplianceAddress();
-    error InvalidIdentityRegistryAddress();
-    error InvalidModuleAddress();
+    error ZeroAddressNotAllowed();
     error InvalidModuleImplementation();
-    error ModuleAlreadyAddedOnInit();
+    error DuplicateModule(address module);
     error MintNotCompliant();
     error TransferNotCompliant();
     error ModuleAlreadyAdded();
@@ -59,14 +57,14 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
 
     function setCompliance(address compliance_) external virtual override {
         _authorizeUpdateComplianceSettings();
-        if (compliance_ == address(0)) revert InvalidComplianceAddress();
+        if (compliance_ == address(0)) revert ZeroAddressNotAllowed();
         __compliance = ISMARTCompliance(compliance_);
         emit ComplianceAdded(address(__compliance));
     }
 
     function setIdentityRegistry(address identityRegistry_) external virtual override {
         _authorizeUpdateVerificationSettings();
-        if (identityRegistry_ == address(0)) revert InvalidIdentityRegistryAddress();
+        if (identityRegistry_ == address(0)) revert ZeroAddressNotAllowed();
         __identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
         emit IdentityRegistryAdded(address(__identityRegistry));
     }
@@ -183,8 +181,8 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         internal
         virtual
     {
-        if (compliance_ == address(0)) revert InvalidComplianceAddress();
-        if (identityRegistry_ == address(0)) revert InvalidIdentityRegistryAddress();
+        if (compliance_ == address(0)) revert ZeroAddressNotAllowed();
+        if (identityRegistry_ == address(0)) revert ZeroAddressNotAllowed();
 
         __name = name_;
         __symbol = symbol_;
@@ -203,7 +201,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
             _validateModuleAndParams(module, params);
 
             // Check for duplicates during initialization
-            if (__moduleIndex[module] != 0) revert ModuleAlreadyAddedOnInit();
+            if (__moduleIndex[module] != 0) revert DuplicateModule(module);
 
             // Add module and store parameters
             __complianceModuleList.push(module);
@@ -248,7 +246,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     //// @dev Internal function to validate a module's interface support AND its parameters.
     ///      Reverts with appropriate error if validation fails.
     function _validateModuleAndParams(address _module, bytes memory _params) private view {
-        if (_module == address(0)) revert InvalidModuleAddress();
+        if (_module == address(0)) revert ZeroAddressNotAllowed();
 
         bool supportsInterface;
         try IERC165(_module).supportsInterface(type(ISMARTComplianceModule).interfaceId) returns (bool supported) {
