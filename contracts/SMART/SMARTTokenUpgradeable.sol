@@ -203,7 +203,7 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTPausableUpgradeable, ERC20Upgradeable)
+        override(SMARTUpgradeable, SMARTPausableUpgradeable, ERC20Upgradeable)
     {
         // Note: SMARTUpgradeable also overrides _update, but SMARTPausable's takes precedence for the pause check.
         // Both eventually call ERC20Upgradeable._update

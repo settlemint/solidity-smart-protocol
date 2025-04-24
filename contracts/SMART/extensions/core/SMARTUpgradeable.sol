@@ -93,9 +93,7 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     /// @inheritdoc ISMART
     /// @dev Requires owner privileges.
     function mint(address to, uint256 amount) external virtual override {
-        _beforeMint(to, amount);
         _mint(to, amount);
-        _afterMint(to, amount);
     }
 
     /// @inheritdoc ISMART
@@ -184,6 +182,44 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     /// @inheritdoc ERC20Upgradeable
     function decimals() public view virtual override(ERC20Upgradeable, _SMARTLogic, IERC20Metadata) returns (uint8) {
         return super.decimals(); // Delegate to _SMARTLogic's implementation via inheritance
+    }
+
+    /**
+     * @dev Overrides ERC20._update to centralize all token movement hooks.
+     * This implementation detects the operation type based on 'from' and 'to' addresses
+     * and calls the appropriate hooks.
+     *
+     * This is called by _mint, _burn, and _transfer operations after their validations.
+     */
+    function _update(address from, address to, uint256 value) internal virtual override(ERC20Upgradeable) {
+        if (from == address(0)) {
+            // Mint operation
+            if (!__isForcedUpdate) {
+                _beforeMint(to, value);
+            }
+            super._update(from, to, value);
+            if (!__isForcedUpdate) {
+                _afterMint(to, value);
+            }
+        } else if (to == address(0)) {
+            // Burn operation
+            if (!__isForcedUpdate) {
+                _beforeBurn(from, value);
+            }
+            super._update(from, to, value);
+            if (!__isForcedUpdate) {
+                _afterBurn(from, value);
+            }
+        } else {
+            // Transfer operation (default to non-forced)
+            if (!__isForcedUpdate) {
+                _beforeTransfer(from, to, value);
+            }
+            super._update(from, to, value);
+            if (!__isForcedUpdate) {
+                _afterTransfer(from, to, value);
+            }
+        }
     }
 
     // --- Hooks ---
