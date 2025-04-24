@@ -16,24 +16,6 @@ import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";
 abstract contract SMARTBurnable is SMARTExtension, _SMARTBurnableLogic {
     // No constructor needed unless initialization is required
 
-    // --- State-Changing Functions ---
-
-    /// @notice Burns a specific amount of tokens from a user's address (Owner only).
-    /// @param userAddress The address to burn tokens from.
-    /// @param amount The amount of tokens to burn.
-    /// @dev Requires caller to be the owner. Matches IERC3643 signature.
-    function burn(address userAddress, uint256 amount) public virtual {
-        _burnInternal(userAddress, amount); // Calls base logic
-    }
-
-    /// @notice Burns tokens from multiple addresses in a single transaction (Owner only).
-    /// @param userAddresses The addresses to burn tokens from.
-    /// @param amounts The amounts of tokens to burn from each address.
-    /// @dev Requires caller to be the owner.
-    function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
-        _batchBurnInternal(userAddresses, amounts); // Calls base logic
-    }
-
     // --- Hooks ---
 
     /// @dev Internal validation hook for burning tokens.

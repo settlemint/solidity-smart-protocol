@@ -43,30 +43,26 @@ abstract contract SMARTPausableUpgradeable is
 
     // --- State-Changing Functions ---
 
-    /// @notice Pauses the contract (Owner only).
-    function pause() public virtual {
-        _authorizePause();
-        _pause(); // Call PausableUpgradeable internal function
+    function _pausable_executePause() internal virtual override(_SMARTPausableLogic) {
+        return PausableUpgradeable._pause();
     }
 
-    /// @notice Unpauses the contract (Owner only).
-    function unpause() public virtual {
-        _authorizePause();
-        _unpause(); // Call PausableUpgradeable internal function
+    function _pausable_executeUnpause() internal virtual override(_SMARTPausableLogic) {
+        return PausableUpgradeable._unpause();
     }
 
     // --- View Functions ---
 
     /// @dev Returns true if the contract is paused, and false otherwise.
     function paused() public view virtual override(PausableUpgradeable, _SMARTPausableLogic) returns (bool) {
-        return super.paused(); // Delegate to PausableUpgradeable.paused()
+        return PausableUpgradeable.paused(); // Delegate to PausableUpgradeable.paused()
     }
 
     // --- Hooks ---
 
     /// @inheritdoc SMARTHooks
     function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_beforeMintLogic(); // Call helper from base logic
+        _pausable_validateNotPaused(); // Call helper from base logic
         super._beforeMint(to, amount); // Call downstream validation
     }
 
@@ -81,14 +77,19 @@ abstract contract SMARTPausableUpgradeable is
         virtual
         override(SMARTHooks)
     {
-        _pausable_beforeTransferLogic(); // Call helper from base logic
+        _pausable_validateNotPaused(); // Call helper from base logic
         super._beforeTransfer(from, to, amount, forced); // Call downstream validation
     }
 
     /// @inheritdoc SMARTHooks
     function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _pausable_beforeBurnLogic(); // Call helper from base logic
+        _pausable_validateNotPaused(); // Call helper from base logic
         super._beforeBurn(from, amount);
+    }
+
+    function _beforeRedeem(address from, uint256 amount) internal virtual override(SMARTHooks) {
+        _pausable_validateNotPaused(); // Call helper from base logic
+        super._beforeRedeem(from, amount);
     }
 
     /**

@@ -10,22 +10,32 @@ abstract contract _SMARTPausableLogic is _SMARTPausableAuthorizationHooks {
     // --- Errors ---
     error TokenPaused();
 
+    // --- State-Changing Functions ---
+    /// @notice Pauses the contract (Owner only).
+    function pause() public virtual {
+        _authorizePause();
+        _pausable_executePause();
+    }
+
+    /// @notice Unpauses the contract (Owner only).
+    function unpause() public virtual {
+        _authorizePause();
+        _pausable_executeUnpause();
+    }
+
     // --- Abstract Functions ---
     /// @dev Returns true if the contract is paused, and false otherwise.
     ///      Must be implemented by the concrete contract (usually via inheriting Pausable/PausableUpgradeable).
     function paused() public view virtual returns (bool);
 
+    function _pausable_executePause() internal virtual;
+
+    function _pausable_executeUnpause() internal virtual;
+
     // --- Internal Functions ---
+
     // Hook Helper Functions
-    function _pausable_beforeMintLogic() internal view virtual {
-        if (paused()) revert TokenPaused();
-    }
-
-    function _pausable_beforeTransferLogic() internal view virtual {
-        if (paused()) revert TokenPaused();
-    }
-
-    function _pausable_beforeBurnLogic() internal view virtual {
+    function _pausable_validateNotPaused() internal view virtual {
         if (paused()) revert TokenPaused();
     }
 }

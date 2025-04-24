@@ -171,7 +171,7 @@ contract SMARTToken is
     )
         internal
         virtual
-        override(SMARTRedeemable, SMARTCustodian, SMARTHooks)
+        override(SMARTRedeemable, SMARTPausable, SMARTCustodian, SMARTHooks)
     {
         super._beforeRedeem(owner, amount);
     }

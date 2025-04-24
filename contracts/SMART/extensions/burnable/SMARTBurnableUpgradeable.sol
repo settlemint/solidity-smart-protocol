@@ -27,24 +27,6 @@ abstract contract SMARTBurnableUpgradeable is Initializable, SMARTExtensionUpgra
         // No specific state to initialize for Burnable itself,
     }
 
-    /// @notice Burns a specific amount of tokens from a user's address
-    /// @param userAddress The address to burn tokens from
-    /// @param amount The amount of tokens to burn
-    /// @dev Requires caller to be the owner. Matches IERC3643 signature.
-    function burn(address userAddress, uint256 amount) public virtual {
-        // Call the internal implementation from the base logic contract
-        _burnInternal(userAddress, amount);
-    }
-
-    /// @notice Burns tokens from multiple addresses in a single transaction
-    /// @param userAddresses The addresses to burn tokens from
-    /// @param amounts The amounts of tokens to burn from each address
-    /// @dev Requires caller to be the owner.
-    function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
-        // Call the internal implementation from the base logic contract
-        _batchBurnInternal(userAddresses, amounts);
-    }
-
     // --- Hook Implementations ---
     // Implement the abstract functions required by _SMARTBurnableLogic
     // by calling the functions provided by SMARTExtensionUpgradeable and relying on ERC20Upgradeable's _burn.
