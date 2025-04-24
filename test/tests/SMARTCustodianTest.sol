@@ -488,7 +488,6 @@ abstract contract SMARTCustodianTest is SMARTTest {
         _mintInitialBalances();
         vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.forcedTransferAsExecutor(address(token), clientBE, clientBE, clientJP, 1 ether);
-        vm.stopPrank();
     }
 
     // =====================================================================
