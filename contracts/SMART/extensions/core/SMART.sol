@@ -1,15 +1,24 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+// OpenZeppelin imports
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ISMART } from "../../interface/ISMART.sol";
-import { SMARTExtension } from "../common/SMARTExtension.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { LengthMismatch } from "../common/CommonErrors.sol";
-import { _SMARTLogic } from "./internal/_SMARTLogic.sol";
+
+// Interface imports
+import { ISMART } from "../../interface/ISMART.sol";
+
+// Base contract imports
+import { SMARTExtension } from "../common/SMARTExtension.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
+
+// Internal implementation imports
+import { _SMARTLogic } from "./internal/_SMARTLogic.sol";
+
+// Error imports
+import { LengthMismatch } from "../common/CommonErrors.sol";
 
 /// @title SMART
 /// @notice Standard (non-upgradeable) implementation of the core SMART token functionality.

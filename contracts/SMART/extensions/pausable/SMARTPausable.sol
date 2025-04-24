@@ -1,14 +1,22 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { SMARTExtension } from "./../common/SMARTExtension.sol";
-import { ERC20Pausable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+// OpenZeppelin imports
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Pausable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { _SMARTPausableLogic } from "./internal/_SMARTPausableLogic.sol";
+
+// Base contract imports
+import { SMARTExtension } from "./../common/SMARTExtension.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
+
+// Internal implementation imports
+import { _SMARTPausableLogic } from "./internal/_SMARTPausableLogic.sol";
+
+// Error imports
 import { Unauthorized } from "./../common/CommonErrors.sol";
+
 /// @title SMARTPausable
 /// @notice Standard (non-upgradeable) extension that adds pausable functionality.
 /// @dev Inherits from OZ ERC20Pausable, Ownable, SMARTExtension, and _SMARTPausableLogic.

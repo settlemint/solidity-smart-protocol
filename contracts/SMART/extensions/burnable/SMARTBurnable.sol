@@ -1,25 +1,25 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-// Removed ERC20Burnable import - no longer inherited directly
-// import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import { SMARTExtension } from "./../common/SMARTExtension.sol";
+// OpenZeppelin imports
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { LengthMismatch } from "./../common/CommonErrors.sol";
-import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol"; // Import base logic
+
+// Base contract imports
+import { SMARTExtension } from "./../common/SMARTExtension.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
+
+// Internal implementation imports
+import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";
+
+// Error imports
+import { LengthMismatch } from "./../common/CommonErrors.sol";
+
 /// @title SMARTBurnable
 /// @notice Standard (non-upgradeable) extension that adds burnable functionality to SMART tokens.
 /// @dev Inherits from Ownable, SMARTExtension, and _SMARTBurnableLogic.
 ///      Relies on the main contract inheriting ERC20 to provide the internal _burn function.
-/// @dev Does not inherit ERC20Burnable directly to avoid exposing public `burn(value)` and `burnFrom(account, value)`,
-///      which conflict with the IERC3643 requirement for an owner-controlled `burn(address, amount)` function.
 
-abstract contract SMARTBurnable is
-    SMARTExtension,
-    Ownable,
-    _SMARTBurnableLogic // Inherit base logic
-{
+abstract contract SMARTBurnable is SMARTExtension, Ownable, _SMARTBurnableLogic {
     // No constructor needed unless initialization is required
 
     // --- State-Changing Functions ---

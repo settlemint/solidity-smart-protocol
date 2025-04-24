@@ -1,15 +1,24 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+// OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol"; // Needed for
-import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
-import { _SMARTCustodianLogic } from "./internal/_SMARTCustodianLogic.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+
+// Interface imports
 import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
 import { IIdentity } from "../../../onchainid/interface/IIdentity.sol";
-import { LengthMismatch } from "./../common/CommonErrors.sol";
+
+// Base contract imports
+import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
+
+// Internal implementation imports
+import { _SMARTCustodianLogic } from "./internal/_SMARTCustodianLogic.sol";
+
+// Error imports
+import { LengthMismatch } from "./../common/CommonErrors.sol";
 
 /// @title SMARTCustodianUpgradeable
 /// @notice Upgradeable extension that adds custodian features.

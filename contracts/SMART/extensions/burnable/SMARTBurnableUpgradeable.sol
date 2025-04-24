@@ -1,29 +1,29 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+// OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-// Removed ERC20BurnableUpgradeable import - no longer inherited directly
-// import { ERC20BurnableUpgradeable } from
-//     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
-import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol"; // Import base logic
-import { LengthMismatch } from "./../common/CommonErrors.sol";
+
+// Base contract imports
+import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
+
+// Internal implementation imports
+import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";
+
+// Error imports
+import { LengthMismatch } from "./../common/CommonErrors.sol";
 
 /// @title SMARTBurnableUpgradeable
 /// @notice Upgradeable extension that adds burnable functionality to SMART tokens.
 /// @dev Inherits from Initializable, OwnableUpgradeable, SMARTExtensionUpgradeable, and _SMARTBurnableLogic.
 /// @dev Relies on the main contract inheriting ERC20Upgradeable to provide the internal _burn function.
-/// @dev Does not inherit ERC20BurnableUpgradeable directly to avoid exposing public `burn(value)` and
-/// `burnFrom(account, value)`,
-///      which conflict with the IERC3643 requirement for an owner-controlled `burn(address, amount)` function.
 abstract contract SMARTBurnableUpgradeable is
     Initializable,
-    // ERC20BurnableUpgradeable removed from inheritance
     SMARTExtensionUpgradeable,
     OwnableUpgradeable,
-    _SMARTBurnableLogic // Inherit base logic
+    _SMARTBurnableLogic
 {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {

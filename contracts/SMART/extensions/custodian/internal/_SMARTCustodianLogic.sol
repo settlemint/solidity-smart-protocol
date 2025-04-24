@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+// OpenZeppelin imports
+import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+
+// Interface imports
 import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistry.sol";
 import { IIdentity } from "../../../../onchainid/interface/IIdentity.sol";
-import { LengthMismatch, Unauthorized } from "../../common/CommonErrors.sol";
-import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+
+// Internal implementation imports
 import { _SMARTCustodianAuthorizationHooks } from "./_SMARTCustodianAuthorizationHooks.sol";
+
+// Error imports
+import { LengthMismatch, Unauthorized } from "../../common/CommonErrors.sol";
 
 /// @title _SMARTCustodianLogic
 /// @notice Base logic contract for SMARTCustodian functionality.

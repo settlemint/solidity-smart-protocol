@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+// Internal implementation imports
 import { _SMARTBurnableAuthorizationHooks } from "./internal/_SMARTBurnableAuthorizationHooks.sol";
 /// @title SMARTAccessControlAuthorization
 /// @notice Abstract authorization implementation for SMART tokens using OpenZeppelin's AccessControl,

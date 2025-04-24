@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+// OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol"; // Upgradeable extension base
-import { _SMARTExtension } from "./../common/_SMARTExtension.sol";
-import { _SMARTRedeemableLogic } from "./internal/_SMARTRedeemableLogic.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+
+// Interface imports
 import { _Context } from "./../common/interfaces/_Context.sol";
+
+// Base contract imports
+import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
+import { _SMARTExtension } from "./../common/_SMARTExtension.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
+
+// Internal implementation imports
+import { _SMARTRedeemableLogic } from "./internal/_SMARTRedeemableLogic.sol";
 
 /// @title SMARTRedeemableUpgradeable
 /// @notice Upgradeable extension that adds redeemable functionality to SMART tokens.
