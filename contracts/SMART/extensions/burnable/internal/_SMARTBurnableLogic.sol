@@ -11,6 +11,9 @@ import { _SMARTBurnableAuthorizationHooks } from "./_SMARTBurnableAuthorizationH
 abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthorizationHooks {
     // --- State-Changing Functions ---
 
+    // -- Events --
+    event BurnCompleted(address indexed from, uint256 amount);
+
     // @notice Burns a specific amount of tokens from a user's address (Owner only).
     /// @param userAddress The address to burn tokens from.
     /// @param amount The amount of tokens to burn.
@@ -41,6 +44,7 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthoriz
     function _burnInternal(address userAddress, uint256 amount) internal virtual {
         _authorizeBurn();
         _burnable_executeBurn(userAddress, amount);
+        emit BurnCompleted(userAddress, amount);
     }
 
     /// @dev Internal implementation for burning tokens from multiple addresses.

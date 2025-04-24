@@ -39,8 +39,8 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     // --- Events ---
     // Events defined in ISMART (e.g., UpdatedTokenInformation) are implicitly included and emitted by internal logic.
     event TransferCompleted(address indexed from, address indexed to, uint256 amount);
-    event MintValidated(address indexed to, uint256 amount);
     event MintCompleted(address indexed to, uint256 amount);
+
     event RequiredClaimTopicsUpdated(uint256[] requiredClaimTopics); // Added event
 
     // --- View Functions ---
@@ -252,7 +252,6 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         _authorizeMintToken(); // TODO check if this is the right location for this check
         if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
         if (!__compliance.canTransfer(address(this), address(0), to, amount)) revert MintNotCompliant();
-        emit MintValidated(to, amount);
     }
 
     function _smart_afterMintLogic(address to, uint256 amount) internal virtual {

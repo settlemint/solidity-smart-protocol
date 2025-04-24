@@ -181,7 +181,7 @@ contract SMARTToken is
     /**
      * @dev Explicitly call the Pausable implementation which includes the `whenNotPaused` check.
      */
-    function _update(address from, address to, uint256 value) internal virtual override(SMARTPausable, SMART, ERC20) {
+    function _update(address from, address to, uint256 value) internal virtual override(SMART, SMARTPausable, ERC20) {
         super._update(from, to, value);
     }
 
