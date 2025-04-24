@@ -62,31 +62,6 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
     // --- State-Changing Functions ---
 
     /// @inheritdoc ISMART
-    function setName(string calldata name_) external virtual override {
-        _setName(name_);
-    }
-
-    /// @inheritdoc ISMART
-    function setSymbol(string calldata symbol_) external virtual override {
-        _setSymbol(symbol_);
-    }
-
-    /// @inheritdoc ISMART
-    function setOnchainID(address onchainID_) external virtual override {
-        _setOnchainID(onchainID_);
-    }
-
-    /// @inheritdoc ISMART
-    function setIdentityRegistry(address identityRegistry_) external virtual override {
-        _setIdentityRegistry(identityRegistry_);
-    }
-
-    /// @inheritdoc ISMART
-    function setCompliance(address compliance_) external virtual override {
-        _setCompliance(compliance_);
-    }
-
-    /// @inheritdoc ISMART
     /// @dev Requires owner privileges.
     function mint(address to, uint256 amount) external virtual override {
         _mint(to, amount);
@@ -134,21 +109,6 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
         _spendAllowance(from, spender, amount);
         _transfer(from, to, amount);
         return true;
-    }
-
-    /// @inheritdoc ISMART
-    function addComplianceModule(address module, bytes calldata params) external virtual override {
-        _addComplianceModule(module, params);
-    }
-
-    /// @inheritdoc ISMART
-    function removeComplianceModule(address module) external virtual override {
-        _removeComplianceModule(module);
-    }
-
-    /// @inheritdoc ISMART
-    function setParametersForComplianceModule(address module, bytes calldata params) external virtual override {
-        _setParametersForComplianceModule(module, params);
     }
 
     // --- View Functions ---

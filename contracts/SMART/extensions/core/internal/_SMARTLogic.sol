@@ -43,17 +43,96 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
 
     event RequiredClaimTopicsUpdated(uint256[] requiredClaimTopics); // Added event
 
+    // -- State-Changing Functions --
+
+    function setName(string memory name_) external virtual override {
+        _auhtorizeUpdateTokenSettings();
+        __name = name_;
+        emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
+    }
+
+    function setSymbol(string memory symbol_) external virtual override {
+        _auhtorizeUpdateTokenSettings();
+        __symbol = symbol_;
+        emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
+    }
+
+    function setCompliance(address compliance_) external virtual override {
+        _authorizeUpdateComplianceSettings();
+        if (compliance_ == address(0)) revert InvalidComplianceAddress();
+        __compliance = ISMARTCompliance(compliance_);
+        emit ComplianceAdded(address(__compliance));
+    }
+
+    function setIdentityRegistry(address identityRegistry_) external virtual override {
+        _authorizeUpdateVerificationSettings();
+        if (identityRegistry_ == address(0)) revert InvalidIdentityRegistryAddress();
+        __identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
+        emit IdentityRegistryAdded(address(__identityRegistry));
+    }
+
+    function setOnchainID(address onchainID_) external virtual override {
+        _auhtorizeUpdateTokenSettings();
+        __onchainID = onchainID_;
+        emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
+    }
+
+    function setParametersForComplianceModule(address _module, bytes memory _params) external virtual override {
+        _authorizeUpdateComplianceSettings();
+        if (__moduleIndex[_module] == 0) revert ModuleNotFound();
+        _validateModuleAndParams(_module, _params);
+        __moduleParameters[_module] = _params;
+        emit ModuleParametersUpdated(_module, _params);
+    }
+
+    function addComplianceModule(address _module, bytes memory _params) external virtual override {
+        _authorizeUpdateComplianceSettings();
+        _validateModuleAndParams(_module, _params);
+        if (__moduleIndex[_module] != 0) revert ModuleAlreadyAdded();
+
+        __complianceModuleList.push(_module);
+        __moduleIndex[_module] = __complianceModuleList.length;
+        __moduleParameters[_module] = _params;
+
+        emit ComplianceModuleAdded(_module, _params);
+    }
+
+    function removeComplianceModule(address _module) external virtual override {
+        _authorizeUpdateComplianceSettings();
+        uint256 index = __moduleIndex[_module];
+        if (index == 0) revert ModuleNotFound();
+
+        uint256 listIndex = index - 1;
+        uint256 lastIndex = __complianceModuleList.length - 1;
+        if (listIndex != lastIndex) {
+            address lastModule = __complianceModuleList[lastIndex];
+            __complianceModuleList[listIndex] = lastModule;
+            __moduleIndex[lastModule] = listIndex + 1;
+        }
+        __complianceModuleList.pop();
+        delete __moduleIndex[_module];
+        delete __moduleParameters[_module];
+
+        emit ComplianceModuleRemoved(_module);
+    }
+
+    function setRequiredClaimTopics(uint256[] memory requiredClaimTopics_) external virtual override {
+        _authorizeUpdateVerificationSettings();
+        __requiredClaimTopics = requiredClaimTopics_;
+        emit RequiredClaimTopicsUpdated(__requiredClaimTopics);
+    }
+
     // --- View Functions ---
 
-    function name() public view virtual override returns (string memory) {
+    function name() external view virtual override returns (string memory) {
         return __name;
     }
 
-    function symbol() public view virtual override returns (string memory) {
+    function symbol() external view virtual override returns (string memory) {
         return __symbol;
     }
 
-    function decimals() public view virtual override returns (uint8) {
+    function decimals() external view virtual override returns (uint8) {
         return __decimals;
     }
 
@@ -152,101 +231,6 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         emit RequiredClaimTopicsUpdated(requiredClaimTopics_); // Emit initial topics
     }
 
-    /// @dev Internal function to validate a module's interface support AND its parameters.
-    ///      Reverts with appropriate error if validation fails.
-    function _validateModuleAndParams(address _module, bytes memory _params) internal view virtual {
-        if (_module == address(0)) revert InvalidModuleAddress();
-
-        bool supportsInterface;
-        try IERC165(_module).supportsInterface(type(ISMARTComplianceModule).interfaceId) returns (bool supported) {
-            supportsInterface = supported;
-        } catch {
-            revert InvalidModuleImplementation();
-        }
-        if (!supportsInterface) {
-            revert InvalidModuleImplementation();
-        }
-
-        ISMARTComplianceModule(_module).validateParameters(_params);
-    }
-
-    function _addComplianceModule(address _module, bytes memory _params) internal virtual {
-        _authorizeUpdateComplianceSettings();
-        _validateModuleAndParams(_module, _params);
-        if (__moduleIndex[_module] != 0) revert ModuleAlreadyAdded();
-
-        __complianceModuleList.push(_module);
-        __moduleIndex[_module] = __complianceModuleList.length;
-        __moduleParameters[_module] = _params;
-
-        emit ComplianceModuleAdded(_module, _params);
-    }
-
-    function _removeComplianceModule(address _module) internal virtual {
-        _authorizeUpdateComplianceSettings();
-        uint256 index = __moduleIndex[_module];
-        if (index == 0) revert ModuleNotFound();
-
-        uint256 listIndex = index - 1;
-        uint256 lastIndex = __complianceModuleList.length - 1;
-        if (listIndex != lastIndex) {
-            address lastModule = __complianceModuleList[lastIndex];
-            __complianceModuleList[listIndex] = lastModule;
-            __moduleIndex[lastModule] = listIndex + 1;
-        }
-        __complianceModuleList.pop();
-        delete __moduleIndex[_module];
-        delete __moduleParameters[_module];
-
-        emit ComplianceModuleRemoved(_module);
-    }
-
-    function _setParametersForComplianceModule(address _module, bytes memory _params) internal virtual {
-        _authorizeUpdateComplianceSettings();
-        if (__moduleIndex[_module] == 0) revert ModuleNotFound();
-        _validateModuleAndParams(_module, _params);
-        __moduleParameters[_module] = _params;
-        emit ModuleParametersUpdated(_module, _params);
-    }
-
-    function _setOnchainID(address onchainID_) internal virtual {
-        _auhtorizeUpdateTokenSettings();
-        __onchainID = onchainID_;
-        emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
-    }
-
-    function _setIdentityRegistry(address identityRegistry_) internal virtual {
-        _authorizeUpdateVerificationSettings();
-        if (identityRegistry_ == address(0)) revert InvalidIdentityRegistryAddress();
-        __identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
-        emit IdentityRegistryAdded(address(__identityRegistry));
-    }
-
-    function _setCompliance(address compliance_) internal virtual {
-        _authorizeUpdateComplianceSettings();
-        if (compliance_ == address(0)) revert InvalidComplianceAddress();
-        __compliance = ISMARTCompliance(compliance_);
-        emit ComplianceAdded(address(__compliance));
-    }
-
-    function _setRequiredClaimTopics(uint256[] memory requiredClaimTopics_) internal virtual {
-        _authorizeUpdateVerificationSettings();
-        __requiredClaimTopics = requiredClaimTopics_;
-        emit RequiredClaimTopicsUpdated(__requiredClaimTopics);
-    }
-
-    function _setName(string memory name_) internal virtual {
-        _auhtorizeUpdateTokenSettings();
-        __name = name_;
-        emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
-    }
-
-    function _setSymbol(string memory symbol_) internal virtual {
-        _auhtorizeUpdateTokenSettings();
-        __symbol = symbol_;
-        emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
-    }
-
     // Helper Functions for Hooks
     function _smart_beforeMintLogic(address to, uint256 amount) internal virtual {
         _authorizeMintToken(); // TODO check if this is the right location for this check
@@ -271,5 +255,23 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
 
     function _smart_afterBurnLogic(address from, uint256 amount) internal virtual {
         __compliance.destroyed(address(this), from, amount);
+    }
+
+    //// @dev Internal function to validate a module's interface support AND its parameters.
+    ///      Reverts with appropriate error if validation fails.
+    function _validateModuleAndParams(address _module, bytes memory _params) private view {
+        if (_module == address(0)) revert InvalidModuleAddress();
+
+        bool supportsInterface;
+        try IERC165(_module).supportsInterface(type(ISMARTComplianceModule).interfaceId) returns (bool supported) {
+            supportsInterface = supported;
+        } catch {
+            revert InvalidModuleImplementation();
+        }
+        if (!supportsInterface) {
+            revert InvalidModuleImplementation();
+        }
+
+        ISMARTComplianceModule(_module).validateParameters(_params);
     }
 }

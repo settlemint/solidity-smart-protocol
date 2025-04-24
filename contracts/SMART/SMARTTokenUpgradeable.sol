@@ -245,7 +245,7 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTBurnableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks) // SMARTUpgradeable
+        override(SMARTCustodianUpgradeable, SMARTHooks) // SMARTUpgradeable
             // does not implement _beforeBurn
     {
         super._beforeBurn(from, amount);
@@ -284,14 +284,7 @@ contract SMARTTokenUpgradeable is
     }
 
     /// @inheritdoc SMARTHooks
-    function _afterBurn(
-        address from,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTUpgradeable, SMARTBurnableUpgradeable, SMARTHooks)
-    {
+    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTUpgradeable, SMARTHooks) {
         // SMARTCustodianUpgradeable, SMARTPausableUpgradeable do not implement _afterBurn
         super._afterBurn(from, amount);
     }

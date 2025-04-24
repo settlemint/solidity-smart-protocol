@@ -18,8 +18,8 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthoriz
     /// @param userAddress The address to burn tokens from.
     /// @param amount The amount of tokens to burn.
     /// @dev Requires caller to be the owner. Matches IERC3643 signature.
-    function burn(address userAddress, uint256 amount) public virtual {
-        _burnInternal(userAddress, amount); // Calls base logic
+    function burn(address userAddress, uint256 amount) external virtual {
+        __burnable_burn(userAddress, amount);
     }
 
     /// @notice Burns tokens from multiple addresses in a single transaction (Owner only).
@@ -27,7 +27,10 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthoriz
     /// @param amounts The amounts of tokens to burn from each address.
     /// @dev Requires caller to be the owner.
     function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
-        _batchBurnInternal(userAddresses, amounts); // Calls base logic
+        if (userAddresses.length != amounts.length) revert LengthMismatch();
+        for (uint256 i = 0; i < userAddresses.length; i++) {
+            __burnable_burn(userAddresses[i], amounts[i]);
+        }
     }
 
     // --- Abstract Hooks ---
@@ -37,21 +40,9 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthoriz
     ///      and ERC20Burnable(Upgradeable).
     function _burnable_executeBurn(address from, uint256 amount) internal virtual;
 
-    // --- Internal Functions ---
-
-    /// @dev Internal implementation for burning a specific amount of tokens.
-    ///      Relies on concrete contract providing `_beforeBurn`, `_burn`, `_afterBurn`.
-    function _burnInternal(address userAddress, uint256 amount) internal virtual {
+    function __burnable_burn(address from, uint256 amount) private {
         _authorizeBurn();
-        _burnable_executeBurn(userAddress, amount);
-        emit BurnCompleted(userAddress, amount);
-    }
-
-    /// @dev Internal implementation for burning tokens from multiple addresses.
-    function _batchBurnInternal(address[] calldata userAddresses, uint256[] calldata amounts) internal virtual {
-        if (userAddresses.length != amounts.length) revert LengthMismatch();
-        for (uint256 i = 0; i < userAddresses.length; i++) {
-            _burnInternal(userAddresses[i], amounts[i]);
-        }
+        _burnable_executeBurn(from, amount);
+        emit BurnCompleted(from, amount);
     }
 }

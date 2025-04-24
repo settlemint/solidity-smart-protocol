@@ -48,8 +48,6 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         internal
         onlyInitializing
     {
-        __SMARTExtension_init();
-
         // Initialize the core SMART logic state via the base logic contract
         __SMART_init_unchained(
             name_,
@@ -64,31 +62,6 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     }
 
     // --- State-Changing Functions ---
-
-    /// @inheritdoc ISMART
-    function setName(string calldata name_) external virtual override {
-        _setName(name_);
-    }
-
-    /// @inheritdoc ISMART
-    function setSymbol(string calldata symbol_) external virtual override {
-        _setSymbol(symbol_);
-    }
-
-    /// @inheritdoc ISMART
-    function setOnchainID(address onchainID_) external virtual override {
-        _setOnchainID(onchainID_);
-    }
-
-    /// @inheritdoc ISMART
-    function setIdentityRegistry(address identityRegistry_) external virtual override {
-        _setIdentityRegistry(identityRegistry_);
-    }
-
-    /// @inheritdoc ISMART
-    function setCompliance(address compliance_) external virtual override {
-        _setCompliance(compliance_);
-    }
 
     /// @inheritdoc ISMART
     /// @dev Requires owner privileges.
@@ -138,21 +111,6 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         super._spendAllowance(from, spender, amount);
         super._transfer(from, to, amount);
         return true;
-    }
-
-    /// @inheritdoc ISMART
-    function addComplianceModule(address module, bytes calldata params) external virtual override {
-        _addComplianceModule(module, params);
-    }
-
-    /// @inheritdoc ISMART
-    function removeComplianceModule(address module) external virtual override {
-        _removeComplianceModule(module);
-    }
-
-    /// @inheritdoc ISMART
-    function setParametersForComplianceModule(address module, bytes calldata params) external virtual override {
-        _setParametersForComplianceModule(module, params);
     }
 
     // --- View Functions ---
@@ -253,8 +211,4 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         _smart_afterBurnLogic(from, amount); // Call helper from base logic
         super._afterBurn(from, amount);
     }
-
-    // --- Internal Functions ---
-    /// @dev Placeholder for potential SMARTExtensionUpgradeable initializer logic.
-    function __SMARTExtension_init() internal onlyInitializing { }
 }

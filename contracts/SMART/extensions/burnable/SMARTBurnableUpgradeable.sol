@@ -31,20 +31,6 @@ abstract contract SMARTBurnableUpgradeable is Initializable, SMARTExtensionUpgra
     // Implement the abstract functions required by _SMARTBurnableLogic
     // by calling the functions provided by SMARTExtensionUpgradeable and relying on ERC20Upgradeable's _burn.
 
-    /// @dev Internal validation hook for burning tokens.
-    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        // No specific logic helper to call from _SMARTBurnableLogic for validation
-        // Add any burnable-specific validation here if needed
-        super._beforeBurn(from, amount); // Call downstream validation
-    }
-
-    /// @dev Internal hook called after burning tokens.
-    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        // No specific logic helper to call from _SMARTBurnableLogic for this hook
-        // Add any burnable-specific actions here if needed
-        super._afterBurn(from, amount); // Call downstream hooks
-    }
-
     /// @dev Provides the actual burn implementation by calling ERC20Upgradeable's internal _burn.
     ///      This assumes the contract inheriting this extension also inherits ERC20Upgradeable.
     function _burnable_executeBurn(

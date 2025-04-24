@@ -73,6 +73,10 @@ interface ISMART is IERC20, IERC20Metadata {
     /// @param _module The address of the module to remove
     function removeComplianceModule(address _module) external;
 
+    /// @notice Sets the required claim topics for the token
+    /// @param _requiredClaimTopics The list of claim topics that must be verified for the token
+    function setRequiredClaimTopics(uint256[] calldata _requiredClaimTopics) external;
+
     /// Getters
     function onchainID() external view returns (address);
     function identityRegistry() external view returns (ISMARTIdentityRegistry);
