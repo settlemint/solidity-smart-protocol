@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 // Interface imports
@@ -22,7 +21,7 @@ import { LengthMismatch } from "./../common/CommonErrors.sol";
 
 /// @title SMARTCustodianUpgradeable
 /// @notice Upgradeable extension that adds custodian features.
-/// @dev Inherits from SMARTExtensionUpgradeable, OwnableUpgradeable, and _SMARTCustodianLogic.
+/// @dev Inherits from SMARTExtensionUpgradeable and _SMARTCustodianLogic.
 abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgradeable, _SMARTCustodianLogic {
     // State, Errors, Events are inherited from _SMARTCustodianLogic
 
@@ -34,9 +33,7 @@ abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgr
 
     // --- Initializer ---
     /// @dev Initializer for the custodian extension.
-    function __SMARTCustodian_init() internal onlyInitializing {
-        // Initialization logic for Ownable, etc., is expected in the main contract's initializer.
-    }
+    function __SMARTCustodian_init() internal onlyInitializing { }
 
     // --- State-Changing Functions ---
 

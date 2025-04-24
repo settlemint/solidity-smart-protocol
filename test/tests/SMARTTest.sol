@@ -14,7 +14,6 @@ import { TokenUtils } from "./utils/TokenUtils.sol";
 import { InfrastructureUtils } from "./utils/InfrastructureUtils.sol";
 import { MockedComplianceModule } from "./mocks/MockedComplianceModule.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 abstract contract SMARTTest is Test {
     // --- State Variables ---
@@ -159,11 +158,5 @@ abstract contract SMARTTest is Test {
 
     function test_InitialState() public {
         require(address(token) != address(0), "Token not deployed");
-        // Cast to Ownable to access the owner() function
-        assertEq(Ownable(address(token)).owner(), tokenIssuer, "Incorrect owner");
-        // Add checks for name, symbol, decimals if they are standard
-        // assertEq(token.name(), "Expected Name", "Incorrect name");
-        // assertEq(token.symbol(), "Expected Symbol", "Incorrect symbol");
-        // assertEq(token.decimals(), 18, "Incorrect decimals");
     }
 }

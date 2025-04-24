@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+// OpenZeppelin imports
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
+// Interface imports
 import { ISMARTComplianceModule } from "../interface/ISMARTComplianceModule.sol";
 import { ISMART } from "../interface/ISMART.sol";
 import { ISMARTIdentityRegistry } from "../interface/ISMARTIdentityRegistry.sol";
-import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @title AbstractComplianceModule

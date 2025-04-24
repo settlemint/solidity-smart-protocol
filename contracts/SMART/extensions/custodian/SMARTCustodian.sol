@@ -21,7 +21,7 @@ import { LengthMismatch } from "./../common/CommonErrors.sol";
 
 /// @title SMARTCustodian
 /// @notice Standard (non-upgradeable) extension that adds custodian features.
-/// @dev Inherits from SMARTExtension, Ownable, and _SMARTCustodianLogic.
+/// @dev Inherits from SMARTExtension, and _SMARTCustodianLogic.
 abstract contract SMARTCustodian is SMARTExtension, _SMARTCustodianLogic {
     // --- State-Changing Functions ---
 

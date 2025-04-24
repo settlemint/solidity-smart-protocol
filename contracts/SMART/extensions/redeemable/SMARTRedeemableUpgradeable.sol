@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 // Interface imports
@@ -35,7 +34,6 @@ abstract contract SMARTRedeemableUpgradeable is
     ///      Typically called by the main contract's initializer.
     function __SMARTRedeemable_init() internal onlyInitializing {
         // No specific state to initialize for Redeemable itself,
-        // but ensures Ownable is initialized by the main contract.
     }
 
     // @dev Abstract function representing the actual burn operation (e.g., ERC20Burnable._burn).

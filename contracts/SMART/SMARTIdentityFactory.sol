@@ -2,21 +2,20 @@
 
 pragma solidity ^0.8.27;
 
-// import { Identity } from "../onchainid/Identity.sol"; // No longer needed directly
-// import { IIdentity } from "../onchainid/interface/IIdentity.sol"; // No longer needed directly
-import { IERC734 } from "../onchainid/interface/IERC734.sol";
-import { IdentityProxy } from "../onchainid/proxy/IdentityProxy.sol"; // Import IdentityProxy
-import { IImplementationAuthority } from "../onchainid/interface/IImplementationAuthority.sol"; // Import
-    // IImplementationAuthority
-// import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol"; // Remove ERC1967Proxy
+// OpenZeppelin imports
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-// import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol"; // Remove
-// UUPSUpgradeable
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+
+// Interface imports
+import { IERC734 } from "../onchainid/interface/IERC734.sol";
+import { IImplementationAuthority } from "../onchainid/interface/IImplementationAuthority.sol";
+
+// Implementation imports
+import { IdentityProxy } from "../onchainid/proxy/IdentityProxy.sol";
 
 // --- Errors ---
 error ZeroAddressNotAllowed();
@@ -24,17 +23,12 @@ error SaltAlreadyTaken();
 error WalletAlreadyLinked();
 error WalletInManagementKeys();
 error TokenAlreadyLinked();
-// error InvalidImplementationAddress(); // Remove or rename
-error InvalidAuthorityAddress(); // New error
+error InvalidAuthorityAddress();
 
 /// @title SMARTIdentityFactory
 /// @notice Factory for creating deterministic OnchainID identities (using IdentityProxy) for wallets and tokens,
 /// managed by an ImplementationAuthority.
-contract SMARTIdentityFactory is
-    Initializable,
-    ERC2771ContextUpgradeable,
-    OwnableUpgradeable // Remove UUPSUpgradeable
-{
+contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, OwnableUpgradeable {
     // --- Storage Variables ---
     // address private _identityImplementation; // Remove direct implementation address
     address private _implementationAuthority; // Store authority address

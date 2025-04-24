@@ -7,7 +7,6 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { ERC20PausableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
@@ -21,7 +20,7 @@ import { Unauthorized } from "../common/CommonErrors.sol";
 
 /// @title SMARTPausableUpgradeable
 /// @notice Upgradeable extension that adds pausable functionality.
-/// @dev Inherits from OZ ERC20PausableUpgradeable, OwnableUpgradeable, SMARTExtensionUpgradeable, and
+/// @dev Inherits from OZ ERC20PausableUpgradeable, SMARTExtensionUpgradeable, and
 /// _SMARTPausableLogic.
 
 abstract contract SMARTPausableUpgradeable is

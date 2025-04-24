@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
@@ -17,14 +16,9 @@ import { LengthMismatch } from "./../common/CommonErrors.sol";
 
 /// @title SMARTBurnableUpgradeable
 /// @notice Upgradeable extension that adds burnable functionality to SMART tokens.
-/// @dev Inherits from Initializable, OwnableUpgradeable, SMARTExtensionUpgradeable, and _SMARTBurnableLogic.
+/// @dev Inherits from Initializable, SMARTExtensionUpgradeable, and _SMARTBurnableLogic.
 /// @dev Relies on the main contract inheriting ERC20Upgradeable to provide the internal _burn function.
-abstract contract SMARTBurnableUpgradeable is
-    Initializable,
-    SMARTExtensionUpgradeable,
-    OwnableUpgradeable,
-    _SMARTBurnableLogic
-{
+abstract contract SMARTBurnableUpgradeable is Initializable, SMARTExtensionUpgradeable, _SMARTBurnableLogic {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -34,14 +28,13 @@ abstract contract SMARTBurnableUpgradeable is
     ///      Typically called by the main contract's initializer.
     function __SMARTBurnable_init() internal onlyInitializing {
         // No specific state to initialize for Burnable itself,
-        // but ensures Ownable is initialized by the main contract.
     }
 
     /// @notice Burns a specific amount of tokens from a user's address
     /// @param userAddress The address to burn tokens from
     /// @param amount The amount of tokens to burn
     /// @dev Requires caller to be the owner. Matches IERC3643 signature.
-    function burn(address userAddress, uint256 amount) public virtual onlyOwner {
+    function burn(address userAddress, uint256 amount) public virtual {
         // Call the internal implementation from the base logic contract
         _burnInternal(userAddress, amount);
     }
@@ -50,7 +43,7 @@ abstract contract SMARTBurnableUpgradeable is
     /// @param userAddresses The addresses to burn tokens from
     /// @param amounts The amounts of tokens to burn from each address
     /// @dev Requires caller to be the owner.
-    function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) public virtual onlyOwner {
+    function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
         // Call the internal implementation from the base logic contract
         _batchBurnInternal(userAddresses, amounts);
     }

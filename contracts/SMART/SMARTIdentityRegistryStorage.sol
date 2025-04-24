@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { IERC3643IdentityRegistryStorage } from "../ERC-3643/IERC3643IdentityRegistryStorage.sol";
-import { IIdentity } from "../onchainid/interface/IIdentity.sol";
+// OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { AccessControlDefaultAdminRulesUpgradeable } from
@@ -10,6 +9,10 @@ import { AccessControlDefaultAdminRulesUpgradeable } from
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+
+// Interface imports
+import { IERC3643IdentityRegistryStorage } from "../ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { IIdentity } from "../onchainid/interface/IIdentity.sol";
 
 // --- Errors ---
 error InvalidIdentityWalletAddress();

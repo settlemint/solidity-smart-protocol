@@ -5,7 +5,6 @@ pragma solidity ^0.8.27;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Interface imports
 import { ISMART } from "../../interface/ISMART.sol";
@@ -23,7 +22,7 @@ import { LengthMismatch } from "../common/CommonErrors.sol";
 /// @title SMART
 /// @notice Standard (non-upgradeable) implementation of the core SMART token functionality.
 /// @dev Inherits core logic from _SMARTLogic and standard OZ contracts.
-abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
+abstract contract SMART is SMARTExtension, _SMARTLogic {
     // --- Custom Errors ---
     // Errors are inherited from _SMARTLogic
 
@@ -47,7 +46,6 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
         address initialOwner_
     )
         ERC20(name_, symbol_)
-        Ownable(initialOwner_)
     {
         // Initialize the core SMART logic state
         __SMART_init_unchained(
@@ -65,33 +63,33 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     // --- State-Changing Functions ---
 
     /// @inheritdoc ISMART
-    function setName(string calldata name_) external virtual override onlyOwner {
+    function setName(string calldata name_) external virtual override {
         _setName(name_);
     }
 
     /// @inheritdoc ISMART
-    function setSymbol(string calldata symbol_) external virtual override onlyOwner {
+    function setSymbol(string calldata symbol_) external virtual override {
         _setSymbol(symbol_);
     }
 
     /// @inheritdoc ISMART
-    function setOnchainID(address onchainID_) external virtual override onlyOwner {
+    function setOnchainID(address onchainID_) external virtual override {
         _setOnchainID(onchainID_);
     }
 
     /// @inheritdoc ISMART
-    function setIdentityRegistry(address identityRegistry_) external virtual override onlyOwner {
+    function setIdentityRegistry(address identityRegistry_) external virtual override {
         _setIdentityRegistry(identityRegistry_);
     }
 
     /// @inheritdoc ISMART
-    function setCompliance(address compliance_) external virtual override onlyOwner {
+    function setCompliance(address compliance_) external virtual override {
         _setCompliance(compliance_);
     }
 
     /// @inheritdoc ISMART
     /// @dev Requires owner privileges.
-    function mint(address to, uint256 amount) external virtual override onlyOwner {
+    function mint(address to, uint256 amount) external virtual override {
         _beforeMint(to, amount);
         _mint(to, amount);
         _afterMint(to, amount);
@@ -99,7 +97,7 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
 
     /// @inheritdoc ISMART
     /// @dev Requires owner privileges.
-    function batchMint(address[] calldata toList, uint256[] calldata amounts) external virtual override onlyOwner {
+    function batchMint(address[] calldata toList, uint256[] calldata amounts) external virtual override {
         if (toList.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < toList.length; i++) {
             _beforeMint(toList[i], amounts[i]);
@@ -151,25 +149,17 @@ abstract contract SMART is SMARTExtension, Ownable, _SMARTLogic {
     }
 
     /// @inheritdoc ISMART
-    function addComplianceModule(address module, bytes calldata params) external virtual override onlyOwner {
+    function addComplianceModule(address module, bytes calldata params) external virtual override {
         _addComplianceModule(module, params);
     }
 
     /// @inheritdoc ISMART
-    function removeComplianceModule(address module) external virtual override onlyOwner {
+    function removeComplianceModule(address module) external virtual override {
         _removeComplianceModule(module);
     }
 
     /// @inheritdoc ISMART
-    function setParametersForComplianceModule(
-        address module,
-        bytes calldata params
-    )
-        external
-        virtual
-        override
-        onlyOwner
-    {
+    function setParametersForComplianceModule(address module, bytes calldata params) external virtual override {
         _setParametersForComplianceModule(module, params);
     }
 

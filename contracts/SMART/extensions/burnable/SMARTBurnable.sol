@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-// OpenZeppelin imports
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-
 // Base contract imports
 import { SMARTExtension } from "./../common/SMARTExtension.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
@@ -16,10 +13,10 @@ import { LengthMismatch } from "./../common/CommonErrors.sol";
 
 /// @title SMARTBurnable
 /// @notice Standard (non-upgradeable) extension that adds burnable functionality to SMART tokens.
-/// @dev Inherits from Ownable, SMARTExtension, and _SMARTBurnableLogic.
+/// @dev Inherits from SMARTExtension, and _SMARTBurnableLogic.
 ///      Relies on the main contract inheriting ERC20 to provide the internal _burn function.
 
-abstract contract SMARTBurnable is SMARTExtension, Ownable, _SMARTBurnableLogic {
+abstract contract SMARTBurnable is SMARTExtension, _SMARTBurnableLogic {
     // No constructor needed unless initialization is required
 
     // --- State-Changing Functions ---
@@ -28,7 +25,7 @@ abstract contract SMARTBurnable is SMARTExtension, Ownable, _SMARTBurnableLogic 
     /// @param userAddress The address to burn tokens from.
     /// @param amount The amount of tokens to burn.
     /// @dev Requires caller to be the owner. Matches IERC3643 signature.
-    function burn(address userAddress, uint256 amount) public virtual onlyOwner {
+    function burn(address userAddress, uint256 amount) public virtual {
         _burnInternal(userAddress, amount); // Calls base logic
     }
 
@@ -36,7 +33,7 @@ abstract contract SMARTBurnable is SMARTExtension, Ownable, _SMARTBurnableLogic 
     /// @param userAddresses The addresses to burn tokens from.
     /// @param amounts The amounts of tokens to burn from each address.
     /// @dev Requires caller to be the owner.
-    function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) public virtual onlyOwner {
+    function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
         _batchBurnInternal(userAddresses, amounts); // Calls base logic
     }
 

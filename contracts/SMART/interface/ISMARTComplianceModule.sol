@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+// OpenZeppelin imports
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /// @title ISMARTComplianceModule

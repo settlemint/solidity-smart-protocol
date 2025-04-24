@@ -1,31 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+// OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import { SMARTUpgradeable } from "./extensions/core/SMARTUpgradeable.sol";
-import { SMARTPausableUpgradeable } from "./extensions/pausable/SMARTPausableUpgradeable.sol";
-import { SMARTBurnableUpgradeable } from "./extensions/burnable/SMARTBurnableUpgradeable.sol";
-import { SMARTCustodianUpgradeable } from "./extensions/custodian/SMARTCustodianUpgradeable.sol";
-import { ISMART } from "./interface/ISMART.sol"; // Assuming ISMART interface is compatible
+import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
+// Interface imports
+import { ISMART } from "./interface/ISMART.sol";
+
+// Core extensions
+import { SMARTUpgradeable } from "./extensions/core/SMARTUpgradeable.sol";
+import { SMARTExtensionUpgradeable } from "./extensions/common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
-import { SMARTRedeemableUpgradeable } from "./extensions/redeemable/SMARTRedeemableUpgradeable.sol";
-import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { SMARTAccessControlAuthorization } from "./extensions/core/SMARTAccessControlAuthorization.sol";
-import { SMARTBurnableAccessControlAuthorization } from
-    "./extensions/burnable/SMARTBurnableAccessControlAuthorization.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
+// Feature extensions
+import { SMARTPausableUpgradeable } from "./extensions/pausable/SMARTPausableUpgradeable.sol";
 import { SMARTPausableAccessControlAuthorization } from
     "./extensions/pausable/SMARTPausableAccessControlAuthorization.sol";
+import { SMARTBurnableUpgradeable } from "./extensions/burnable/SMARTBurnableUpgradeable.sol";
+import { SMARTBurnableAccessControlAuthorization } from
+    "./extensions/burnable/SMARTBurnableAccessControlAuthorization.sol";
+import { SMARTCustodianUpgradeable } from "./extensions/custodian/SMARTCustodianUpgradeable.sol";
 import { SMARTCustodianAccessControlAuthorization } from
     "./extensions/custodian/SMARTCustodianAccessControlAuthorization.sol";
+import { SMARTRedeemableUpgradeable } from "./extensions/redeemable/SMARTRedeemableUpgradeable.sol";
+
 /// @title SMARTTokenUpgradeable
 /// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
-
 contract SMARTTokenUpgradeable is
     Initializable,
     UUPSUpgradeable,
@@ -69,17 +77,7 @@ contract SMARTTokenUpgradeable is
         public
         initializer
     {
-        // --- Call internal initializers in dependency order ---
-
-        // 1. Initialize Ownable first (inherited via multiple paths, call once)
-        __Ownable_init(initialOwner_);
-
-        // 2. Initialize ERC20 basic features
-        // Note: name/symbol/decimals state is primarily managed by _SMARTLogic via __SMART_init_unchained,
-        // but calling __ERC20_init is standard practice for its setup.
         __ERC20_init(name_, symbol_);
-
-        // 3. Initialize the core SMART logic state via SMARTUpgradeable's internal initializer
         __SMARTUpgradeable_init(
             name_,
             symbol_,
@@ -90,16 +88,10 @@ contract SMARTTokenUpgradeable is
             requiredClaimTopics_,
             initialModulePairs_
         );
-
-        // 4. Initialize Extensions (order among these usually doesn't matter)
-        // Check if SMARTExtensionUpgradeable.sol has an initializer like __SMARTExtension_init() and call if necessary.
-        // __SMARTExtension_init(); // Uncomment if SMARTExtensionUpgradeable needs initialization
         __SMARTCustodian_init();
-        __SMARTPausable_init(); // Internally calls __Pausable_init
+        __SMARTPausable_init();
         __SMARTBurnable_init();
-        __SMARTRedeemable_init(); // Initialize Redeemable
-
-        // 5. Initialize UUPS (must be after Ownable is initialized)
+        __SMARTRedeemable_init();
         __UUPSUpgradeable_init();
         __AccessControl_init();
 
@@ -353,8 +345,8 @@ contract SMARTTokenUpgradeable is
     function _authorizeUpgrade(address newImplementation)
         internal
         virtual
-        override(SMARTUpgradeable, UUPSUpgradeable)
-        onlyOwner
+        override(UUPSUpgradeable)
+        onlyRole(DEFAULT_ADMIN_ROLE)
     { }
 
     // Gap for future storage variables to allow safer upgrades.

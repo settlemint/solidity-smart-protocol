@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+// Internal implementation imports
 import { _SMARTAuthorizationHooks } from "./internal/_SMARTAuthorizationHooks.sol";
 
 /// @title SMARTAccessControlAuthorization

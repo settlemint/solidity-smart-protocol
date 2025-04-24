@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { IERC3643TrustedIssuersRegistry } from "../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
-import { IClaimIssuer } from "../onchainid/interface/IClaimIssuer.sol";
+// OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { AccessControlDefaultAdminRulesUpgradeable } from
@@ -10,6 +9,10 @@ import { AccessControlDefaultAdminRulesUpgradeable } from
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+
+// Interface imports
+import { IERC3643TrustedIssuersRegistry } from "../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { IClaimIssuer } from "../onchainid/interface/IClaimIssuer.sol";
 
 // --- Errors ---
 error InvalidIssuerAddress();
