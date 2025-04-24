@@ -124,15 +124,15 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
 
     // --- View Functions ---
 
-    function name() external view virtual override returns (string memory) {
+    function name() public view virtual override returns (string memory) {
         return __name;
     }
 
-    function symbol() external view virtual override returns (string memory) {
+    function symbol() public view virtual override returns (string memory) {
         return __symbol;
     }
 
-    function decimals() external view virtual override returns (uint8) {
+    function decimals() public view virtual override returns (uint8) {
         return __decimals;
     }
 
@@ -259,7 +259,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
 
     //// @dev Internal function to validate a module's interface support AND its parameters.
     ///      Reverts with appropriate error if validation fails.
-    function _validateModuleAndParams(address _module, bytes memory _params) private view {
+    function _validateModuleAndParams(address _module, bytes memory _params) internal view {
         if (_module == address(0)) revert InvalidModuleAddress();
 
         bool supportsInterface;
