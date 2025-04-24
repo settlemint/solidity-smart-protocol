@@ -17,40 +17,14 @@ import { _SMARTPausableLogic } from "./internal/_SMARTPausableLogic.sol";
 /// @notice Standard (non-upgradeable) extension that adds pausable functionality.
 /// @dev Inherits from OZ ERC20Pausable, SMARTExtension, and _SMARTPausableLogic.
 
-abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, _SMARTPausableLogic {
-    // --- State-Changing Functions ---
-
-    function _pausable_executePause() internal virtual override(_SMARTPausableLogic) {
-        Pausable._pause();
-    }
-
-    function _pausable_executeUnpause() internal virtual override(_SMARTPausableLogic) {
-        Pausable._unpause();
-    }
-
-    // --- View Functions ---
-
-    /// @dev Returns true if the contract is paused, and false otherwise.
-    function paused() public view virtual override(Pausable, _SMARTPausableLogic) returns (bool) {
-        return Pausable.paused();
-    }
-
+abstract contract SMARTPausable is SMARTExtension, _SMARTPausableLogic {
     // --- Hooks ---
 
     /**
      * @dev Overrides _update to resolve conflict between ERC20Pausable and SMARTExtension,
      * ensuring the whenNotPaused modifier is applied.
      */
-    function _update(
-        address from,
-        address to,
-        uint256 value
-    )
-        internal
-        virtual
-        override(ERC20Pausable, ERC20)
-        whenNotPaused
-    {
+    function _update(address from, address to, uint256 value) internal virtual override(ERC20) whenNotPaused {
         super._update(from, to, value);
     }
 }

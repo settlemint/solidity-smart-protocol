@@ -14,8 +14,6 @@ import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";
 ///      Relies on the main contract inheriting ERC20 to provide the internal _burn function.
 
 abstract contract SMARTBurnable is SMARTExtension, _SMARTBurnableLogic {
-    // No constructor needed unless initialization is required
-
     // --- Hooks ---
 
     /// @dev Provides the actual burn implementation by calling ERC20's internal _burn.

@@ -22,11 +22,6 @@ abstract contract SMARTRedeemableUpgradeable is
     SMARTExtensionUpgradeable,
     _SMARTRedeemableLogic
 {
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     /// @dev Initializer for the redeemable extension.
     ///      Typically called by the main contract's initializer.
     function __SMARTRedeemable_init() internal onlyInitializing {

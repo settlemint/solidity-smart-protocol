@@ -25,12 +25,6 @@ import { LengthMismatch } from "../common/CommonErrors.sol";
 /// @notice Upgradeable implementation of the core SMART token functionality using UUPS proxy pattern.
 /// @dev Inherits core logic from _SMARTLogic and upgradeable OZ contracts.
 abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, UUPSUpgradeable, _SMARTLogic {
-    // --- Constructor ---
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers(); // Prevent implementation contract initialization
-    }
-
     // --- Initializer ---
     /// @dev Internal initializer for SMARTUpgradeable state.
     ///      Initializes the core SMART logic via _SMARTLogic's initializer.

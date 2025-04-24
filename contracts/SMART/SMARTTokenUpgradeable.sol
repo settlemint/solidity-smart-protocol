@@ -89,7 +89,6 @@ contract SMARTTokenUpgradeable is
             initialModulePairs_
         );
         __SMARTCustodian_init();
-        __SMARTPausable_init();
         __SMARTBurnable_init();
         __SMARTRedeemable_init();
         __UUPSUpgradeable_init();

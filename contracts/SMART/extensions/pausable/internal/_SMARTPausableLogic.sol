@@ -8,27 +8,40 @@ import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 /// @notice Base logic contract for SMARTPausable functionality.
 /// @dev Contains validation hooks checking the paused state.
 abstract contract _SMARTPausableLogic is _SMARTExtension, _SMARTPausableAuthorizationHooks {
-    // --- State-Changing Functions ---
-    /// @notice Pauses the contract (Owner only).
-    function pause() external virtual {
-        _authorizePause();
-        _pausable_executePause();
+    // State variable to track pause status
+    bool private _paused;
+
+    // Events for pause state changes
+    event Paused(address account);
+    event Unpaused(address account);
+
+    // Implement abstract functions
+    function paused() public view returns (bool) {
+        return _paused;
     }
 
-    /// @notice Unpauses the contract (Owner only).
-    function unpause() external virtual {
+    function pause() external {
         _authorizePause();
-        _pausable_executeUnpause();
+        require(!_paused, "Contract is already paused");
+        _paused = true;
+        emit Paused(msg.sender);
     }
 
-    // --- Abstract Functions ---
-    /// @dev Returns true if the contract is paused, and false otherwise.
-    ///      Must be implemented by the concrete contract (usually via inheriting Pausable/PausableUpgradeable).
-    function paused() public view virtual returns (bool);
+    function unpause() external {
+        _authorizePause();
+        require(_paused, "Contract is not paused");
+        _paused = false;
+        emit Unpaused(msg.sender);
+    }
 
-    function _pausable_executePause() internal virtual;
+    // Add custom modifiers that use the pause state
+    modifier whenNotPaused() {
+        require(!paused(), "Contract is paused");
+        _;
+    }
 
-    function _pausable_executeUnpause() internal virtual;
-
-    // --- Internal Functions ---
+    modifier whenPaused() {
+        require(paused(), "Contract is not paused");
+        _;
+    }
 }

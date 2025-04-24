@@ -24,12 +24,6 @@ import { LengthMismatch } from "./../common/CommonErrors.sol";
 abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgradeable, _SMARTCustodianLogic {
     // State, Errors, Events are inherited from _SMARTCustodianLogic
 
-    // --- Constructor ---
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     // --- Initializer ---
     /// @dev Initializer for the custodian extension.
     function __SMARTCustodian_init() internal onlyInitializing { }

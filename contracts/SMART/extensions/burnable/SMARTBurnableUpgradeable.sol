@@ -16,11 +16,6 @@ import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";
 /// @dev Inherits from Initializable, SMARTExtensionUpgradeable, and _SMARTBurnableLogic.
 /// @dev Relies on the main contract inheriting ERC20Upgradeable to provide the internal _burn function.
 abstract contract SMARTBurnableUpgradeable is Initializable, SMARTExtensionUpgradeable, _SMARTBurnableLogic {
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     /// @dev Initializer for the burnable extension.
     ///      Typically called by the main contract's initializer.
     function __SMARTBurnable_init() internal onlyInitializing {
