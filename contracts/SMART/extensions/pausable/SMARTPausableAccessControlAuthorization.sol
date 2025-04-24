@@ -4,6 +4,9 @@ pragma solidity ^0.8.27;
 // Internal implementation imports
 import { _SMARTPausableAuthorizationHooks } from "./internal/_SMARTPausableAuthorizationHooks.sol";
 
+// Common errors
+import { Unauthorized } from "../common/CommonErrors.sol";
+
 /// @title SMARTAccessControlAuthorization
 /// @notice Abstract authorization implementation for SMART tokens using OpenZeppelin's AccessControl,
 ///         compatible with both standard and upgradeable contracts.
@@ -14,8 +17,8 @@ abstract contract SMARTPausableAccessControlAuthorization is _SMARTPausableAutho
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // --- Authorization Hooks Implementation ---
-    function _authorizePause() internal view virtual override returns (bool) {
-        return hasRole(PAUSER_ROLE, _msgSender());
+    function _authorizePause() internal view virtual override {
+        if (!hasRole(PAUSER_ROLE, _msgSender())) revert Unauthorized();
     }
 
     function _msgSender() internal view virtual returns (address);

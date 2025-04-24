@@ -4,6 +4,9 @@ pragma solidity ^0.8.27;
 // Internal implementation imports
 import { _SMARTAuthorizationHooks } from "./internal/_SMARTAuthorizationHooks.sol";
 
+// Common errors
+import { Unauthorized } from "../common/CommonErrors.sol";
+
 /// @title SMARTAccessControlAuthorization
 /// @notice Abstract authorization implementation for SMART tokens using OpenZeppelin's AccessControl,
 ///         compatible with both standard and upgradeable contracts.
@@ -19,23 +22,23 @@ abstract contract SMARTAccessControlAuthorization is _SMARTAuthorizationHooks {
     // --- Authorization Hooks Implementation ---
 
     /// @dev Checks if the caller has the TOKEN_ADMIN_ROLE.
-    function _auhtorizeUpdateTokenSettings() internal view virtual override returns (bool) {
-        return hasRole(TOKEN_ADMIN_ROLE, _msgSender());
+    function _auhtorizeUpdateTokenSettings() internal view virtual override {
+        if (!hasRole(TOKEN_ADMIN_ROLE, _msgSender())) revert Unauthorized();
     }
 
     /// @dev Checks if the caller has the COMPLIANCE_ADMIN_ROLE.
-    function _authorizeUpdateComplianceSettings() internal view virtual override returns (bool) {
-        return hasRole(COMPLIANCE_ADMIN_ROLE, _msgSender());
+    function _authorizeUpdateComplianceSettings() internal view virtual override {
+        if (!hasRole(COMPLIANCE_ADMIN_ROLE, _msgSender())) revert Unauthorized();
     }
 
     /// @dev Checks if the caller has the VERIFICATION_ADMIN_ROLE.
-    function _authorizeUpdateVerificationSettings() internal view virtual override returns (bool) {
-        return hasRole(VERIFICATION_ADMIN_ROLE, _msgSender());
+    function _authorizeUpdateVerificationSettings() internal view virtual override {
+        if (!hasRole(VERIFICATION_ADMIN_ROLE, _msgSender())) revert Unauthorized();
     }
 
     /// @dev Checks if the caller has the MINTER_ROLE.
-    function _authorizeMintToken() internal view virtual override returns (bool) {
-        return hasRole(MINTER_ROLE, _msgSender());
+    function _authorizeMintToken() internal view virtual override {
+        if (!hasRole(MINTER_ROLE, _msgSender())) revert Unauthorized();
     }
 
     function _msgSender() internal view virtual returns (address);

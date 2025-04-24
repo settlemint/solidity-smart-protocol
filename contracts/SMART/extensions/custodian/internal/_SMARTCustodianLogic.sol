@@ -64,13 +64,13 @@ abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {
     // --- Internal Functions ---
 
     function _setAddressFrozen(address userAddress, bool freeze) internal virtual {
-        if (!_authorizeFreezeAddress()) revert Unauthorized();
+        _authorizeFreezeAddress();
         __frozen[userAddress] = freeze;
         emit AddressFrozen(userAddress, freeze);
     }
 
     function _freezePartialTokens(address userAddress, uint256 amount) internal virtual {
-        if (!_authorizeFreezePartialTokens()) revert Unauthorized();
+        _authorizeFreezePartialTokens();
         uint256 currentFrozen = __frozenTokens[userAddress];
         // Use abstract getter for balance
         uint256 availableBalance = _getBalance(userAddress) - currentFrozen;
@@ -82,7 +82,7 @@ abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {
     }
 
     function _unfreezePartialTokens(address userAddress, uint256 amount) internal virtual {
-        if (!_authorizeFreezeAddress()) revert Unauthorized();
+        _authorizeFreezeAddress();
         uint256 currentFrozen = __frozenTokens[userAddress];
         if (currentFrozen < amount) {
             revert InsufficientFrozenTokens(currentFrozen, amount);
@@ -92,7 +92,7 @@ abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {
     }
 
     function _forcedTransfer(address from, address to, uint256 amount) internal virtual {
-        if (!_authorizeForcedTransfer()) revert Unauthorized();
+        _authorizeForcedTransfer();
         // Validation is expected to be called by the concrete contract's `_beforeTransfer` override first.
         uint256 currentFrozen = __frozenTokens[from];
         uint256 currentBalance = _getBalance(from);
@@ -115,7 +115,7 @@ abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {
     }
 
     function _recoveryAddress(address lostWallet, address newWallet, address investorOnchainID) internal virtual {
-        if (!_authorizeRecoveryAddress()) revert Unauthorized();
+        _authorizeRecoveryAddress();
         uint256 balance = _getBalance(lostWallet);
         if (balance == 0) revert NoTokensToRecover();
 

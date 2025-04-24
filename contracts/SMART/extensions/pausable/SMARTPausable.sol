@@ -25,13 +25,13 @@ abstract contract SMARTPausable is ERC20Pausable, SMARTExtension, _SMARTPausable
 
     /// @notice Pauses the contract (Owner only).
     function pause() public virtual {
-        if (!_authorizePause()) revert Unauthorized();
+        _authorizePause();
         _pause();
     }
 
     /// @notice Unpauses the contract (Owner only).
     function unpause() public virtual {
-        if (!_authorizePause()) revert Unauthorized();
+        _authorizePause();
         _unpause();
     }
 

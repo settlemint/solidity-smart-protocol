@@ -4,6 +4,9 @@ pragma solidity ^0.8.27;
 // Internal implementation imports
 import { _SMARTCustodianAuthorizationHooks } from "./internal/_SMARTCustodianAuthorizationHooks.sol";
 
+// Common errors
+import { Unauthorized } from "../common/CommonErrors.sol";
+
 /// @title SMARTAccessControlAuthorization
 /// @notice Abstract authorization implementation for SMART tokens using OpenZeppelin's AccessControl,
 ///         compatible with both standard and upgradeable contracts.
@@ -16,20 +19,20 @@ abstract contract SMARTCustodianAccessControlAuthorization is _SMARTCustodianAut
     bytes32 public constant RECOVERY_ROLE = keccak256("RECOVERY_ROLE");
 
     // --- Authorization Hooks Implementation ---
-    function _authorizeFreezeAddress() internal view virtual override returns (bool) {
-        return hasRole(FREEZER_ROLE, _msgSender());
+    function _authorizeFreezeAddress() internal view virtual override {
+        if (!hasRole(FREEZER_ROLE, _msgSender())) revert Unauthorized();
     }
 
-    function _authorizeFreezePartialTokens() internal view virtual override returns (bool) {
-        return hasRole(FREEZER_ROLE, _msgSender());
+    function _authorizeFreezePartialTokens() internal view virtual override {
+        if (!hasRole(FREEZER_ROLE, _msgSender())) revert Unauthorized();
     }
 
-    function _authorizeForcedTransfer() internal view virtual override returns (bool) {
-        return hasRole(FORCED_TRANSFER_ROLE, _msgSender());
+    function _authorizeForcedTransfer() internal view virtual override {
+        if (!hasRole(FORCED_TRANSFER_ROLE, _msgSender())) revert Unauthorized();
     }
 
-    function _authorizeRecoveryAddress() internal view virtual override returns (bool) {
-        return hasRole(RECOVERY_ROLE, _msgSender());
+    function _authorizeRecoveryAddress() internal view virtual override {
+        if (!hasRole(RECOVERY_ROLE, _msgSender())) revert Unauthorized();
     }
 
     function _msgSender() internal view virtual returns (address);

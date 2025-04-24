@@ -2,5 +2,5 @@
 pragma solidity ^0.8.27;
 
 abstract contract _SMARTBurnableAuthorizationHooks {
-    function _authorizeBurn() internal view virtual returns (bool);
+    function _authorizeBurn() internal view virtual;
 }

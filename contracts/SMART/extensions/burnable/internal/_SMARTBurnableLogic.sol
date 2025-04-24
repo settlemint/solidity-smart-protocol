@@ -21,7 +21,7 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthoriz
     /// @dev Internal implementation for burning a specific amount of tokens.
     ///      Relies on concrete contract providing `_beforeBurn`, `_burn`, `_afterBurn`.
     function _burnInternal(address userAddress, uint256 amount) internal virtual {
-        if (!_authorizeBurn()) revert Unauthorized();
+        _authorizeBurn();
         _beforeBurn(userAddress, amount);
         // We cannot call _burn directly here, hence _executeBurn.
         _burnable_executeBurn(userAddress, amount);

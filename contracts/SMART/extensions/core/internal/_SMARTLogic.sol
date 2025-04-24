@@ -172,7 +172,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     }
 
     function _addComplianceModule(address _module, bytes memory _params) internal virtual {
-        if (!_authorizeUpdateComplianceSettings()) revert Unauthorized();
+        _authorizeUpdateComplianceSettings();
         _validateModuleAndParams(_module, _params);
         if (__moduleIndex[_module] != 0) revert ModuleAlreadyAdded();
 
@@ -184,7 +184,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     }
 
     function _removeComplianceModule(address _module) internal virtual {
-        if (!_authorizeUpdateComplianceSettings()) revert Unauthorized();
+        _authorizeUpdateComplianceSettings();
         uint256 index = __moduleIndex[_module];
         if (index == 0) revert ModuleNotFound();
 
@@ -203,7 +203,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     }
 
     function _setParametersForComplianceModule(address _module, bytes memory _params) internal virtual {
-        if (!_authorizeUpdateComplianceSettings()) revert Unauthorized();
+        _authorizeUpdateComplianceSettings();
         if (__moduleIndex[_module] == 0) revert ModuleNotFound();
         _validateModuleAndParams(_module, _params);
         __moduleParameters[_module] = _params;
@@ -211,46 +211,46 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     }
 
     function _setOnchainID(address onchainID_) internal virtual {
-        if (!_auhtorizeUpdateTokenSettings()) revert Unauthorized();
+        _auhtorizeUpdateTokenSettings();
         __onchainID = onchainID_;
         emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
     }
 
     function _setIdentityRegistry(address identityRegistry_) internal virtual {
-        if (!_authorizeUpdateVerificationSettings()) revert Unauthorized();
+        _authorizeUpdateVerificationSettings();
         if (identityRegistry_ == address(0)) revert InvalidIdentityRegistryAddress();
         __identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
         emit IdentityRegistryAdded(address(__identityRegistry));
     }
 
     function _setCompliance(address compliance_) internal virtual {
-        if (!_authorizeUpdateComplianceSettings()) revert Unauthorized();
+        _authorizeUpdateComplianceSettings();
         if (compliance_ == address(0)) revert InvalidComplianceAddress();
         __compliance = ISMARTCompliance(compliance_);
         emit ComplianceAdded(address(__compliance));
     }
 
     function _setRequiredClaimTopics(uint256[] memory requiredClaimTopics_) internal virtual {
-        if (!_authorizeUpdateVerificationSettings()) revert Unauthorized();
+        _authorizeUpdateVerificationSettings();
         __requiredClaimTopics = requiredClaimTopics_;
         emit RequiredClaimTopicsUpdated(__requiredClaimTopics);
     }
 
     function _setName(string memory name_) internal virtual {
-        if (!_auhtorizeUpdateTokenSettings()) revert Unauthorized();
+        _auhtorizeUpdateTokenSettings();
         __name = name_;
         emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
     }
 
     function _setSymbol(string memory symbol_) internal virtual {
-        if (!_auhtorizeUpdateTokenSettings()) revert Unauthorized();
+        _auhtorizeUpdateTokenSettings();
         __symbol = symbol_;
         emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
     }
 
     // Helper Functions for Hooks
     function _smart_beforeMintLogic(address to, uint256 amount) internal virtual {
-        if (!_authorizeMintToken()) revert Unauthorized(); // TODO check if this is the right location for this check
+        _authorizeMintToken(); // TODO check if this is the right location for this check
         if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
         if (!__compliance.canTransfer(address(this), address(0), to, amount)) revert MintNotCompliant();
         emit MintValidated(to, amount);

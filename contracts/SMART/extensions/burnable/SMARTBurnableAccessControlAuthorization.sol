@@ -3,6 +3,10 @@ pragma solidity ^0.8.27;
 
 // Internal implementation imports
 import { _SMARTBurnableAuthorizationHooks } from "./internal/_SMARTBurnableAuthorizationHooks.sol";
+
+// Common errors
+import { Unauthorized } from "../common/CommonErrors.sol";
+
 /// @title SMARTAccessControlAuthorization
 /// @notice Abstract authorization implementation for SMART tokens using OpenZeppelin's AccessControl,
 ///         compatible with both standard and upgradeable contracts.
@@ -13,8 +17,8 @@ abstract contract SMARTBurnableAccessControlAuthorization is _SMARTBurnableAutho
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
     // --- Authorization Hooks Implementation ---
-    function _authorizeBurn() internal view virtual override returns (bool) {
-        return hasRole(BURNER_ROLE, _msgSender());
+    function _authorizeBurn() internal view virtual override {
+        if (!hasRole(BURNER_ROLE, _msgSender())) revert Unauthorized();
     }
 
     function _msgSender() internal view virtual returns (address);
