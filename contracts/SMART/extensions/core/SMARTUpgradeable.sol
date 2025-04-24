@@ -116,30 +116,18 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     // --- View Functions ---
 
     /// @inheritdoc ERC20Upgradeable
-    function name()
-        public
-        view
-        virtual
-        override(ERC20Upgradeable, _SMARTLogic, IERC20Metadata)
-        returns (string memory)
-    {
-        return super.name(); // Delegate to _SMARTLogic's implementation via inheritance
+    function name() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
+        return __name;
     }
 
     /// @inheritdoc ERC20Upgradeable
-    function symbol()
-        public
-        view
-        virtual
-        override(ERC20Upgradeable, _SMARTLogic, IERC20Metadata)
-        returns (string memory)
-    {
-        return super.symbol(); // Delegate to _SMARTLogic's implementation via inheritance
+    function symbol() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
+        return __symbol;
     }
 
     /// @inheritdoc ERC20Upgradeable
-    function decimals() public view virtual override(ERC20Upgradeable, _SMARTLogic, IERC20Metadata) returns (uint8) {
-        return super.decimals(); // Delegate to _SMARTLogic's implementation via inheritance
+    function decimals() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (uint8) {
+        return __decimals;
     }
 
     /**

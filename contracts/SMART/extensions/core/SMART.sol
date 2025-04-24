@@ -114,17 +114,17 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
     // --- View Functions ---
 
     /// @inheritdoc ERC20
-    function name() public view virtual override(ERC20, IERC20Metadata, _SMARTLogic) returns (string memory) {
+    function name() public view virtual override(ERC20, IERC20Metadata) returns (string memory) {
         return __name; // Use state variable from _SMARTLogic
     }
 
     /// @inheritdoc ERC20
-    function symbol() public view virtual override(ERC20, IERC20Metadata, _SMARTLogic) returns (string memory) {
+    function symbol() public view virtual override(ERC20, IERC20Metadata) returns (string memory) {
         return __symbol; // Use state variable from _SMARTLogic
     }
 
     /// @inheritdoc ERC20
-    function decimals() public view virtual override(ERC20, IERC20Metadata, _SMARTLogic) returns (uint8) {
+    function decimals() public view virtual override(ERC20, IERC20Metadata) returns (uint8) {
         return __decimals; // Use state variable from _SMARTLogic
     }
 

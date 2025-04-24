@@ -124,18 +124,6 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
 
     // --- View Functions ---
 
-    function name() public view virtual override returns (string memory) {
-        return __name;
-    }
-
-    function symbol() public view virtual override returns (string memory) {
-        return __symbol;
-    }
-
-    function decimals() public view virtual override returns (uint8) {
-        return __decimals;
-    }
-
     function onchainID() external view virtual override returns (address) {
         return __onchainID;
     }
