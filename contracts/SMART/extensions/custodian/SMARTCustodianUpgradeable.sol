@@ -34,107 +34,11 @@ abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgr
     /// @dev Initializer for the custodian extension.
     function __SMARTCustodian_init() internal onlyInitializing { }
 
-    // --- State-Changing Functions ---
-
-    function setAddressFrozen(address userAddress, bool freeze) public virtual {
-        _setAddressFrozen(userAddress, freeze); // Calls base logic
-    }
-
-    function freezePartialTokens(address userAddress, uint256 amount) public virtual {
-        _freezePartialTokens(userAddress, amount); // Calls base logic
-    }
-
-    function unfreezePartialTokens(address userAddress, uint256 amount) public virtual {
-        _unfreezePartialTokens(userAddress, amount); // Calls base logic
-    }
-
-    function batchSetAddressFrozen(address[] calldata userAddresses, bool[] calldata freeze) public virtual {
-        if (userAddresses.length != freeze.length) revert LengthMismatch();
-        for (uint256 i = 0; i < userAddresses.length; i++) {
-            _setAddressFrozen(userAddresses[i], freeze[i]); // Calls base logic
-        }
-    }
-
-    function batchFreezePartialTokens(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
-        if (userAddresses.length != amounts.length) revert LengthMismatch();
-        for (uint256 i = 0; i < userAddresses.length; i++) {
-            _freezePartialTokens(userAddresses[i], amounts[i]); // Calls base logic
-        }
-    }
-
-    function batchUnfreezePartialTokens(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
-        if (userAddresses.length != amounts.length) revert LengthMismatch();
-        for (uint256 i = 0; i < userAddresses.length; i++) {
-            _unfreezePartialTokens(userAddresses[i], amounts[i]); // Calls base logic
-        }
-    }
-
-    /// @dev Requires owner privileges.
-    function forcedTransfer(address from, address to, uint256 amount) public virtual returns (bool) {
-        _forcedTransfer(from, to, amount); // Call internal logic from base
-        return true;
-    }
-
-    /// @dev Requires owner privileges.
-    function batchForcedTransfer(
-        address[] calldata fromList,
-        address[] calldata toList,
-        uint256[] calldata amounts
-    )
-        public
-        virtual
-    {
-        if (!((fromList.length == toList.length) && (toList.length == amounts.length))) {
-            revert LengthMismatch();
-        }
-        for (uint256 i = 0; i < fromList.length; i++) {
-            forcedTransfer(fromList[i], toList[i], amounts[i]); // Calls single forcedTransfer
-        }
-    }
-
-    /// @dev Requires owner privileges.
-    function recoveryAddress(
-        address lostWallet,
-        address newWallet,
-        address investorOnchainID
-    )
-        public
-        virtual
-        returns (bool)
-    {
-        _recoveryAddress(lostWallet, newWallet, investorOnchainID); // Calls base logic
-        return true;
-    }
-
     // --- Hooks ---
 
-    /// @dev Returns the token balance of an address using ERC20Upgradeable.balanceOf.
+    /// @dev Returns the token balance of an address using ERC20.balanceOf.
     function _getBalance(address account) internal view virtual override(_SMARTCustodianLogic) returns (uint256) {
-        return balanceOf(account); // Use ERC20Upgradeable.balanceOf
-    }
-
-    /// @dev Returns the identity registry instance (must be provided by the inheriting SMART contract).
-    function _getIdentityRegistry()
-        internal
-        view
-        virtual
-        override(_SMARTCustodianLogic)
-        returns (ISMARTIdentityRegistry)
-    {
-        // Relies on the concrete SMARTUpgradeable contract implementing identityRegistry()
-        return this.identityRegistry();
-    }
-
-    /// @dev Returns the required claim topics (must be provided by the inheriting SMART contract).
-    function _getRequiredClaimTopics()
-        internal
-        view
-        virtual
-        override(_SMARTCustodianLogic)
-        returns (uint256[] memory)
-    {
-        // Relies on the concrete SMARTUpgradeable contract implementing requiredClaimTopics()
-        return this.requiredClaimTopics();
+        return balanceOf(account); // Use ERC20.balanceOf
     }
 
     /// @dev Executes the underlying token transfer using ERC20Upgradeable._update.

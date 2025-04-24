@@ -10,13 +10,13 @@ import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 abstract contract _SMARTPausableLogic is _SMARTExtension, _SMARTPausableAuthorizationHooks {
     // --- State-Changing Functions ---
     /// @notice Pauses the contract (Owner only).
-    function pause() public virtual {
+    function pause() external virtual {
         _authorizePause();
         _pausable_executePause();
     }
 
     /// @notice Unpauses the contract (Owner only).
-    function unpause() public virtual {
+    function unpause() external virtual {
         _authorizePause();
         _pausable_executeUnpause();
     }

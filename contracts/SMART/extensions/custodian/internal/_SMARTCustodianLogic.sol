@@ -12,6 +12,9 @@ import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 // Internal implementation imports
 import { _SMARTCustodianAuthorizationHooks } from "./_SMARTCustodianAuthorizationHooks.sol";
 
+// Common errors
+import { LengthMismatch } from "./../../common/CommonErrors.sol";
+
 /// @title _SMARTCustodianLogic
 /// @notice Base logic contract for SMARTCustodian functionality.
 abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthorizationHooks {
@@ -37,25 +40,97 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
 
     // --- Abstract Functions ---
 
-    /// @dev Returns the token balance of an address.
+    /// @dev Returns the token balance of an address using ERC20Upgradeable.balanceOf.
     function _getBalance(address account) internal view virtual returns (uint256);
-
-    /// @dev Returns the identity registry instance.
-    function _getIdentityRegistry() internal view virtual returns (ISMARTIdentityRegistry);
-
-    /// @dev Returns the required claim topics.
-    function _getRequiredClaimTopics() internal view virtual returns (uint256[] memory);
 
     /// @dev Executes the underlying token transfer (e.g., ERC20._update).
     function _executeTransferUpdate(address from, address to, uint256 amount) internal virtual;
 
+    // --- State-Changing Functions ---
+
+    function setAddressFrozen(address userAddress, bool freeze) external virtual {
+        _setAddressFrozen(userAddress, freeze); // Calls base logic
+    }
+
+    function freezePartialTokens(address userAddress, uint256 amount) external virtual {
+        _freezePartialTokens(userAddress, amount); // Calls base logic
+    }
+
+    function unfreezePartialTokens(address userAddress, uint256 amount) external virtual {
+        _unfreezePartialTokens(userAddress, amount); // Calls base logic
+    }
+
+    function batchSetAddressFrozen(address[] calldata userAddresses, bool[] calldata freeze) external virtual {
+        if (userAddresses.length != freeze.length) revert LengthMismatch();
+        for (uint256 i = 0; i < userAddresses.length; i++) {
+            _setAddressFrozen(userAddresses[i], freeze[i]); // Calls base logic
+        }
+    }
+
+    function batchFreezePartialTokens(address[] calldata userAddresses, uint256[] calldata amounts) external virtual {
+        if (userAddresses.length != amounts.length) revert LengthMismatch();
+        for (uint256 i = 0; i < userAddresses.length; i++) {
+            _freezePartialTokens(userAddresses[i], amounts[i]); // Calls base logic
+        }
+    }
+
+    function batchUnfreezePartialTokens(
+        address[] calldata userAddresses,
+        uint256[] calldata amounts
+    )
+        external
+        virtual
+    {
+        if (userAddresses.length != amounts.length) revert LengthMismatch();
+        for (uint256 i = 0; i < userAddresses.length; i++) {
+            _unfreezePartialTokens(userAddresses[i], amounts[i]); // Calls base logic
+        }
+    }
+
+    /// @dev Requires owner privileges.
+    function forcedTransfer(address from, address to, uint256 amount) external virtual returns (bool) {
+        _forcedTransfer(from, to, amount); // Call internal logic from base
+        return true;
+    }
+
+    /// @dev Requires owner privileges.
+    function batchForcedTransfer(
+        address[] calldata fromList,
+        address[] calldata toList,
+        uint256[] calldata amounts
+    )
+        external
+        virtual
+    {
+        if (!((fromList.length == toList.length) && (toList.length == amounts.length))) {
+            revert LengthMismatch();
+        }
+        for (uint256 i = 0; i < fromList.length; i++) {
+            _forcedTransfer(fromList[i], toList[i], amounts[i]); // Calls single forcedTransfer
+        }
+    }
+
+    /// @dev Requires owner privileges.
+    function recoveryAddress(
+        address lostWallet,
+        address newWallet,
+        address investorOnchainID
+    )
+        external
+        virtual
+        returns (bool)
+    {
+        _recoveryAddress(lostWallet, newWallet, investorOnchainID); // Calls base logic
+        return true;
+    }
+
     // --- View Functions ---
 
-    function isFrozen(address userAddress) public view virtual returns (bool) {
+    function isFrozen(address userAddress) external view virtual returns (bool) {
         return __frozen[userAddress];
     }
 
-    function getFrozenTokens(address userAddress) public view virtual returns (uint256) {
+    function getFrozenTokens(address userAddress) external view virtual returns (uint256) {
         return __frozenTokens[userAddress];
     }
 
@@ -121,7 +196,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
         if (balance == 0) revert NoTokensToRecover();
 
         // Use abstract getters for context-dependent state
-        ISMARTIdentityRegistry registry = _getIdentityRegistry();
+        ISMARTIdentityRegistry registry = this.identityRegistry();
 
         if (!(registry.contains(lostWallet) || registry.contains(newWallet))) {
             revert RecoveryWalletsNotVerified();
@@ -167,6 +242,8 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
 
         emit RecoverySuccess(lostWallet, newWallet, investorOnchainID);
     }
+
+    // -- Internal Functions --
 
     // Helper Functions for Hooks
     function _custodian_beforeMintLogic(address to, uint256 /* amount */ ) internal virtual {

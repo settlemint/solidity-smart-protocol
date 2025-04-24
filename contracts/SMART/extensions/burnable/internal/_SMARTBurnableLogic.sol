@@ -40,7 +40,7 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthoriz
     ///      and ERC20Burnable(Upgradeable).
     function _burnable_executeBurn(address from, uint256 amount) internal virtual;
 
-    function __burnable_burn(address from, uint256 amount) internal virtual {
+    function __burnable_burn(address from, uint256 amount) private {
         _authorizeBurn();
         _burnable_executeBurn(from, amount);
         emit BurnCompleted(from, amount);

@@ -259,7 +259,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
 
     //// @dev Internal function to validate a module's interface support AND its parameters.
     ///      Reverts with appropriate error if validation fails.
-    function _validateModuleAndParams(address _module, bytes memory _params) internal view {
+    function _validateModuleAndParams(address _module, bytes memory _params) private view {
         if (_module == address(0)) revert InvalidModuleAddress();
 
         bool supportsInterface;
