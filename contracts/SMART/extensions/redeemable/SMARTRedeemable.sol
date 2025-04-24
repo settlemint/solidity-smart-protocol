@@ -4,9 +4,6 @@ pragma solidity ^0.8.27;
 // OpenZeppelin imports
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 
-// Interface imports
-import { _Context } from "./../common/interfaces/_Context.sol";
-
 // Base contract imports
 import { SMARTExtension } from "./../common/SMARTExtension.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
@@ -19,7 +16,7 @@ import { _SMARTRedeemableLogic } from "./internal/_SMARTRedeemableLogic.sol";
 /// @dev Provides hooks for adding custom logic before and after redemption.
 ///      Inherits from Context, SMARTExtension, and _SMARTRedeemableLogic.
 
-abstract contract SMARTRedeemable is SMARTExtension, _SMARTRedeemableLogic {
+abstract contract SMARTRedeemable is Context, SMARTExtension, _SMARTRedeemableLogic {
     // --- Hooks ---
 
     /// @dev Implements the abstract burn execution using ERC20._burn.
@@ -45,11 +42,11 @@ abstract contract SMARTRedeemable is SMARTExtension, _SMARTRedeemableLogic {
         super._afterRedeem(owner, amount);
     }
 
-    function _msgSender() internal view virtual override(_Context, Context) returns (address) {
+    function _msgSender() internal view virtual override(_SMARTRedeemableLogic, Context) returns (address) {
         return Context._msgSender();
     }
 
-    function _msgData() internal view virtual override(_Context, Context) returns (bytes calldata) {
+    function _msgData() internal view virtual override(_SMARTRedeemableLogic, Context) returns (bytes calldata) {
         return Context._msgData();
     }
 }

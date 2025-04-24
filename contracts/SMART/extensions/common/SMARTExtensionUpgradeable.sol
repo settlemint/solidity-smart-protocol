@@ -5,9 +5,6 @@ pragma solidity ^0.8.27;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
-// Interface imports
-import { ISMART } from "../../interface/ISMART.sol";
-
 // Base contract imports
 import { _SMARTExtension } from "./_SMARTExtension.sol";
 
@@ -20,8 +17,4 @@ abstract contract SMARTExtensionUpgradeable is Initializable, _SMARTExtension, E
     constructor() {
         _disableInitializers();
     }
-
-    // --- Gap ---
-    /// @dev Gap for upgradeability.
-    uint256[50] private __gap;
 }

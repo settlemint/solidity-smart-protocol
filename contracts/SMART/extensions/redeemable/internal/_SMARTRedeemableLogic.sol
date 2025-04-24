@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { _Context } from "./../../common/interfaces/_Context.sol";
 import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
 /// @title _SMARTRedeemableLogic
 /// @notice Base logic contract for SMARTRedeemable functionality.
 /// @dev Contains the core redemption flow and abstract hooks.
 
-abstract contract _SMARTRedeemableLogic is _SMARTExtension, _Context {
+abstract contract _SMARTRedeemableLogic is _SMARTExtension {
     // --- Events ---
 
     /// @notice Emitted when tokens are redeemed.
@@ -35,4 +34,8 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension, _Context {
 
     /// @dev Abstract function representing the actual burn operation (e.g., ERC20Burnable._burn).
     function _redeemable_executeBurn(address from, uint256 amount) internal virtual;
+
+    function _msgSender() internal view virtual returns (address);
+
+    function _msgData() internal view virtual returns (bytes calldata);
 }

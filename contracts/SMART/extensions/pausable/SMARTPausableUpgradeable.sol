@@ -106,8 +106,4 @@ abstract contract SMARTPausableUpgradeable is
     {
         super._update(from, to, value); // Delegate to ERC20PausableUpgradeable._update
     }
-
-    // --- Gap ---
-    /// @dev Gap for upgradeability.
-    uint256[50] private __gap;
 }

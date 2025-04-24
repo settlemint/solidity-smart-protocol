@@ -5,9 +5,6 @@ pragma solidity ^0.8.27;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
-// Interface imports
-import { _Context } from "./../common/interfaces/_Context.sol";
-
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
 import { _SMARTExtension } from "./../common/_SMARTExtension.sol";
@@ -61,14 +58,17 @@ abstract contract SMARTRedeemableUpgradeable is
         super._afterRedeem(owner, amount);
     }
 
-    function _msgSender() internal view virtual override(_Context, ContextUpgradeable) returns (address) {
+    function _msgSender() internal view virtual override(_SMARTRedeemableLogic, ContextUpgradeable) returns (address) {
         return ContextUpgradeable._msgSender();
     }
 
-    function _msgData() internal view virtual override(_Context, ContextUpgradeable) returns (bytes calldata) {
+    function _msgData()
+        internal
+        view
+        virtual
+        override(_SMARTRedeemableLogic, ContextUpgradeable)
+        returns (bytes calldata)
+    {
         return ContextUpgradeable._msgData();
     }
-
-    // --- Gap for upgradeability ---
-    uint256[50] private __gap;
 }

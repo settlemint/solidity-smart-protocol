@@ -235,10 +235,6 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         super._afterBurn(from, amount);
     }
 
-    // --- Gap ---
-    /// @dev Gap for upgradeability.
-    uint256[50] private __gap;
-
     // --- Internal Functions ---
     /// @dev Placeholder for potential SMARTExtensionUpgradeable initializer logic.
     function __SMARTExtension_init() internal onlyInitializing { }

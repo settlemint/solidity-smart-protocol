@@ -4,9 +4,6 @@ pragma solidity ^0.8.27;
 // OpenZeppelin imports
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-// Interface imports
-import { ISMART } from "./../../interface/ISMART.sol";
-
 // Base contract imports
 import { _SMARTExtension } from "./_SMARTExtension.sol";
 

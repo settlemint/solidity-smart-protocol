@@ -7,7 +7,6 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 
 // Interface imports
 import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
-import { IIdentity } from "../../../onchainid/interface/IIdentity.sol";
 
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
@@ -186,8 +185,4 @@ abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgr
         _custodian_beforeRedeemLogic(from, amount); // Call helper from base logic
         super._beforeRedeem(from, amount);
     }
-
-    // --- Gap ---
-    /// @dev Gap for upgradeability.
-    uint256[50] private __gap;
 }

@@ -11,9 +11,6 @@ import { SMARTHooks } from "./../common/SMARTHooks.sol";
 // Internal implementation imports
 import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";
 
-// Error imports
-import { LengthMismatch } from "./../common/CommonErrors.sol";
-
 /// @title SMARTBurnableUpgradeable
 /// @notice Upgradeable extension that adds burnable functionality to SMART tokens.
 /// @dev Inherits from Initializable, SMARTExtensionUpgradeable, and _SMARTBurnableLogic.
@@ -80,7 +77,4 @@ abstract contract SMARTBurnableUpgradeable is Initializable, SMARTExtensionUpgra
         // which MUST be inherited by the final contract using this extension.
         _burn(from, amount);
     }
-
-    // --- Gap for upgradeability ---
-    uint256[50] private __gap;
 }

@@ -8,9 +8,6 @@ import { SMARTHooks } from "./../common/SMARTHooks.sol";
 // Internal implementation imports
 import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";
 
-// Error imports
-import { LengthMismatch } from "./../common/CommonErrors.sol";
-
 /// @title SMARTBurnable
 /// @notice Standard (non-upgradeable) extension that adds burnable functionality to SMART tokens.
 /// @dev Inherits from SMARTExtension, and _SMARTBurnableLogic.

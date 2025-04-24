@@ -2,9 +2,7 @@
 pragma solidity ^0.8.27;
 
 // Interface imports
-import { ISMART } from "../../interface/ISMART.sol";
 import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
-import { IIdentity } from "../../../onchainid/interface/IIdentity.sol";
 
 // Base contract imports
 import { SMARTExtension } from "../common/SMARTExtension.sol";
