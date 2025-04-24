@@ -18,7 +18,8 @@ abstract contract SMARTPausableAccessControlAuthorization is _SMARTPausableAutho
 
     // --- Authorization Hooks Implementation ---
     function _authorizePause() internal view virtual override {
-        if (!hasRole(PAUSER_ROLE, _msgSender())) revert Unauthorized();
+        address sender = _msgSender();
+        if (!hasRole(PAUSER_ROLE, sender)) revert Unauthorized(sender);
     }
 
     function _msgSender() internal view virtual returns (address);

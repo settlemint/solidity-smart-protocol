@@ -32,7 +32,7 @@ abstract contract SMARTBurnableTest is SMARTTest {
     function test_Burn_AccessControl_Reverts() public {
         _mintInitialBalances();
         vm.startPrank(clientBE); // Non-owner
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.burnTokenAsExecutor(address(token), clientBE, clientBE, 10 ether);
         vm.stopPrank();
     }

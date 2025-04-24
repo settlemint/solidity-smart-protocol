@@ -74,7 +74,7 @@ abstract contract SMARTPausableTest is SMARTTest {
 
     function test_Pause_AccessControl_Reverts() public {
         assertFalse(tokenUtils.isPaused(address(token)));
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.pauseToken(address(token), clientBE);
         assertFalse(tokenUtils.isPaused(address(token)));
     }

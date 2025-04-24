@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { LengthMismatch, Unauthorized } from "../../common/CommonErrors.sol";
+import { LengthMismatch } from "../../common/CommonErrors.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 import { _SMARTBurnableAuthorizationHooks } from "./_SMARTBurnableAuthorizationHooks.sol";
 /// @title _SMARTBurnableLogic

@@ -15,9 +15,6 @@ import { SMARTHooks } from "../common/SMARTHooks.sol";
 // Internal implementation imports
 import { _SMARTPausableLogic } from "./internal/_SMARTPausableLogic.sol";
 
-// Error imports
-import { Unauthorized } from "../common/CommonErrors.sol";
-
 /// @title SMARTPausableUpgradeable
 /// @notice Upgradeable extension that adds pausable functionality.
 /// @dev Inherits from OZ ERC20PausableUpgradeable, SMARTExtensionUpgradeable, and

@@ -85,12 +85,10 @@ abstract contract SMARTCustodianTest is SMARTTest {
     }
 
     function test_FreezeAddress_AccessControl_Reverts() public {
-        vm.startPrank(clientBE); // Non-owner
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.setAddressFrozenAsExecutor(address(token), clientBE, clientBE, true);
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.setAddressFrozenAsExecutor(address(token), clientBE, clientBE, false);
-        vm.stopPrank();
     }
 
     // =====================================================================
@@ -317,9 +315,9 @@ abstract contract SMARTCustodianTest is SMARTTest {
 
     function test_PartialFreeze_AccessControl_Reverts() public {
         _mintInitialBalances();
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.freezePartialTokensAsExecutor(address(token), clientBE, clientBE, 1 ether);
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.unfreezePartialTokensAsExecutor(address(token), clientBE, clientBE, 1 ether);
         vm.stopPrank();
     }
@@ -488,7 +486,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
 
     function test_ForcedTransfer_AccessControl_Reverts() public {
         _mintInitialBalances();
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.forcedTransferAsExecutor(address(token), clientBE, clientBE, clientJP, 1 ether);
         vm.stopPrank();
     }
@@ -599,8 +597,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         address newWallet = makeAddr("New Wallet BE");
         address investorOnchainID = identityUtils.getIdentity(lostWallet);
 
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientJP));
         tokenUtils.recoveryAddressAsExecutor(address(token), clientJP, clientJP, newWallet, investorOnchainID);
-        vm.stopPrank();
     }
 }

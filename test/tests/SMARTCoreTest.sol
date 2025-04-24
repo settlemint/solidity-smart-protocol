@@ -20,7 +20,7 @@ abstract contract SMARTCoreTest is SMARTTest {
 
     function test_Mint_AccessControl_Reverts() public {
         vm.startPrank(clientBE); // Non-owner
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         token.mint(clientBE, 100 ether);
         vm.stopPrank();
     }

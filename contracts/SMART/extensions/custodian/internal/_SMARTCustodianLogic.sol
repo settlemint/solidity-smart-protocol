@@ -11,9 +11,6 @@ import { IIdentity } from "../../../../onchainid/interface/IIdentity.sol";
 // Internal implementation imports
 import { _SMARTCustodianAuthorizationHooks } from "./_SMARTCustodianAuthorizationHooks.sol";
 
-// Error imports
-import { Unauthorized } from "../../common/CommonErrors.sol";
-
 /// @title _SMARTCustodianLogic
 /// @notice Base logic contract for SMARTCustodian functionality.
 abstract contract _SMARTCustodianLogic is _SMARTCustodianAuthorizationHooks {

@@ -23,22 +23,26 @@ abstract contract SMARTAccessControlAuthorization is _SMARTAuthorizationHooks {
 
     /// @dev Checks if the caller has the TOKEN_ADMIN_ROLE.
     function _auhtorizeUpdateTokenSettings() internal view virtual override {
-        if (!hasRole(TOKEN_ADMIN_ROLE, _msgSender())) revert Unauthorized();
+        address sender = _msgSender();
+        if (!hasRole(TOKEN_ADMIN_ROLE, sender)) revert Unauthorized(sender);
     }
 
     /// @dev Checks if the caller has the COMPLIANCE_ADMIN_ROLE.
     function _authorizeUpdateComplianceSettings() internal view virtual override {
-        if (!hasRole(COMPLIANCE_ADMIN_ROLE, _msgSender())) revert Unauthorized();
+        address sender = _msgSender();
+        if (!hasRole(COMPLIANCE_ADMIN_ROLE, sender)) revert Unauthorized(sender);
     }
 
     /// @dev Checks if the caller has the VERIFICATION_ADMIN_ROLE.
     function _authorizeUpdateVerificationSettings() internal view virtual override {
-        if (!hasRole(VERIFICATION_ADMIN_ROLE, _msgSender())) revert Unauthorized();
+        address sender = _msgSender();
+        if (!hasRole(VERIFICATION_ADMIN_ROLE, sender)) revert Unauthorized(sender);
     }
 
     /// @dev Checks if the caller has the MINTER_ROLE.
     function _authorizeMintToken() internal view virtual override {
-        if (!hasRole(MINTER_ROLE, _msgSender())) revert Unauthorized();
+        address sender = _msgSender();
+        if (!hasRole(MINTER_ROLE, sender)) revert Unauthorized(sender);
     }
 
     function _msgSender() internal view virtual returns (address);

@@ -18,7 +18,8 @@ abstract contract SMARTBurnableAccessControlAuthorization is _SMARTBurnableAutho
 
     // --- Authorization Hooks Implementation ---
     function _authorizeBurn() internal view virtual override {
-        if (!hasRole(BURNER_ROLE, _msgSender())) revert Unauthorized();
+        address sender = _msgSender();
+        if (!hasRole(BURNER_ROLE, sender)) revert Unauthorized(sender);
     }
 
     function _msgSender() internal view virtual returns (address);

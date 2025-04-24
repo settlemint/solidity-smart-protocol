@@ -6,7 +6,6 @@ import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistr
 import { ISMARTCompliance } from "../../../interface/ISMARTCompliance.sol";
 import { ISMARTComplianceModule } from "../../../interface/ISMARTComplianceModule.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { Unauthorized } from "../../common/CommonErrors.sol";
 import { _SMARTAuthorizationHooks } from "./_SMARTAuthorizationHooks.sol";
 
 /// @title _SMARTLogic

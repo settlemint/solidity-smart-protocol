@@ -14,4 +14,5 @@
 ## TODO
 
 - Should modules be upgradeable?
-- Should unauthorized error have the sender? should it be thrown in the authorization hooks then? Because now we don't have msgSender in the implementations
+- Permit
+- Allowance

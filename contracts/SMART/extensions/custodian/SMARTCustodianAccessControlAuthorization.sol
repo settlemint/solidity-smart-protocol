@@ -20,19 +20,23 @@ abstract contract SMARTCustodianAccessControlAuthorization is _SMARTCustodianAut
 
     // --- Authorization Hooks Implementation ---
     function _authorizeFreezeAddress() internal view virtual override {
-        if (!hasRole(FREEZER_ROLE, _msgSender())) revert Unauthorized();
+        address sender = _msgSender();
+        if (!hasRole(FREEZER_ROLE, sender)) revert Unauthorized(sender);
     }
 
     function _authorizeFreezePartialTokens() internal view virtual override {
-        if (!hasRole(FREEZER_ROLE, _msgSender())) revert Unauthorized();
+        address sender = _msgSender();
+        if (!hasRole(FREEZER_ROLE, sender)) revert Unauthorized(sender);
     }
 
     function _authorizeForcedTransfer() internal view virtual override {
-        if (!hasRole(FORCED_TRANSFER_ROLE, _msgSender())) revert Unauthorized();
+        address sender = _msgSender();
+        if (!hasRole(FORCED_TRANSFER_ROLE, sender)) revert Unauthorized(sender);
     }
 
     function _authorizeRecoveryAddress() internal view virtual override {
-        if (!hasRole(RECOVERY_ROLE, _msgSender())) revert Unauthorized();
+        address sender = _msgSender();
+        if (!hasRole(RECOVERY_ROLE, sender)) revert Unauthorized(sender);
     }
 
     function _msgSender() internal view virtual returns (address);
