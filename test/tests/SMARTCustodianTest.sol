@@ -599,7 +599,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         address newWallet = makeAddr("New Wallet BE");
         address investorOnchainID = identityUtils.getIdentity(lostWallet);
 
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientJP));
+        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector));
         tokenUtils.recoveryAddressAsExecutor(address(token), clientJP, clientJP, newWallet, investorOnchainID);
         vm.stopPrank();
     }
