@@ -63,8 +63,7 @@ contract SMARTToken is
             identityRegistry_,
             compliance_,
             requiredClaimTopics_,
-            initialModulePairs_,
-            initialOwner_
+            initialModulePairs_
         )
     {
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
