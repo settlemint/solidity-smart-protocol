@@ -109,9 +109,9 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
         }
 
         // Delegate the actual update to the concrete contract
-        __isForcedTransfer = true;
+        __isForcedUpdate = true;
         _executeTransferUpdate(from, to, amount);
-        __isForcedTransfer = false;
+        __isForcedUpdate = false;
         // Note: _afterTransfer hook is expected to be called by the concrete contract after this.
     }
 
@@ -132,9 +132,9 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
         bool walletFrozen = __frozen[lostWallet];
 
         // Delegate the actual update to the concrete contract
-        __isForcedTransfer = true;
+        __isForcedUpdate = true;
         _executeTransferUpdate(lostWallet, newWallet, balance);
-        __isForcedTransfer = false;
+        __isForcedUpdate = false;
 
         // Transfer frozen tokens state
         if (frozenTokens > 0) {

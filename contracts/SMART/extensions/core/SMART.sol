@@ -178,29 +178,29 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
     function _update(address from, address to, uint256 value) internal virtual override(ERC20) {
         if (from == address(0)) {
             // Mint operation
-            if (!__isForcedTransfer) {
+            if (!__isForcedUpdate) {
                 _beforeMint(to, value);
             }
             super._update(from, to, value);
-            if (!__isForcedTransfer) {
+            if (!__isForcedUpdate) {
                 _afterMint(to, value);
             }
         } else if (to == address(0)) {
             // Burn operation
-            if (!__isForcedTransfer) {
+            if (!__isForcedUpdate) {
                 _beforeBurn(from, value);
             }
             super._update(from, to, value);
-            if (!__isForcedTransfer) {
+            if (!__isForcedUpdate) {
                 _afterBurn(from, value);
             }
         } else {
             // Transfer operation (default to non-forced)
-            if (!__isForcedTransfer) {
+            if (!__isForcedUpdate) {
                 _beforeTransfer(from, to, value);
             }
             super._update(from, to, value);
-            if (!__isForcedTransfer) {
+            if (!__isForcedUpdate) {
                 _afterTransfer(from, to, value);
             }
         }
