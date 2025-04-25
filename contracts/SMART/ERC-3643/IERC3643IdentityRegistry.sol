@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { IIdentity } from "./../onchainid/interface/IIdentity.sol";
+import { IIdentity } from "./../../onchainid/interface/IIdentity.sol";
 import { IERC3643IdentityRegistryStorage } from "./IERC3643IdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./IERC3643TrustedIssuersRegistry.sol";
 import { IERC3643ClaimTopicsRegistry } from "./IERC3643ClaimTopicsRegistry.sol";

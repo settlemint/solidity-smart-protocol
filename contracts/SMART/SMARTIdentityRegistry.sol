@@ -15,8 +15,8 @@ import { ISMARTIdentityRegistry } from "./interface/ISMARTIdentityRegistry.sol";
 import { ISMART } from "./interface/ISMART.sol";
 import { IIdentity } from "./../onchainid/interface/IIdentity.sol";
 import { IClaimIssuer } from "./../onchainid/interface/IClaimIssuer.sol";
-import { IERC3643IdentityRegistryStorage } from "./../ERC-3643/IERC3643IdentityRegistryStorage.sol";
-import { IERC3643TrustedIssuersRegistry } from "./../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { IERC3643IdentityRegistryStorage } from "./ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { IERC3643TrustedIssuersRegistry } from "./ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
 // --- Errors ---
 error InvalidStorageAddress();
