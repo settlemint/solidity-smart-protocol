@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
-import { AbstractComplianceModule } from "../../../contracts/SMART/compliance/AbstractComplianceModule.sol";
+import { AbstractComplianceModule } from "../../../contracts/compliance/AbstractComplianceModule.sol";
 
 /**
  * @title MockedComplianceModule

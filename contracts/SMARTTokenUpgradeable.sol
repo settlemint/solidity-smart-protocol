@@ -159,20 +159,6 @@ contract SMARTTokenUpgradeable is
         return super.transfer(to, amount);
     }
 
-    /// @inheritdoc ERC20Upgradeable
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    )
-        public
-        virtual
-        override(SMARTUpgradeable, ERC20Upgradeable, IERC20)
-        returns (bool)
-    {
-        return super.transferFrom(from, to, amount);
-    }
-
     function hasRole(
         bytes32 role,
         address account

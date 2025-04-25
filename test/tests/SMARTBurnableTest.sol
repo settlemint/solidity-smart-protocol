@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { SMARTTest } from "./SMARTTest.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { Unauthorized } from "../../contracts/SMART/extensions/common/CommonErrors.sol";
+import { Unauthorized } from "../../contracts/extensions/common/CommonErrors.sol";
 
 abstract contract SMARTBurnableTest is SMARTTest {
     function test_Burn_Success() public {

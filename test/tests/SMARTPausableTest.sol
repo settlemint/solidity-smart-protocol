@@ -4,9 +4,9 @@ pragma solidity ^0.8.24;
 import { SMARTTest } from "./SMARTTest.sol"; // Inherit from the logic base
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { _SMARTPausableLogic } from "../../contracts/SMART/extensions/pausable/internal/_SMARTPausableLogic.sol";
-import { Unauthorized } from "../../contracts/SMART/extensions/common/CommonErrors.sol";
-import { TokenPaused, ExpectedPause } from "../../contracts/SMART/extensions/pausable/SMARTPausableErrors.sol";
+import { _SMARTPausableLogic } from "../../contracts/extensions/pausable/internal/_SMARTPausableLogic.sol";
+import { Unauthorized } from "../../contracts/extensions/common/CommonErrors.sol";
+import { TokenPaused, ExpectedPause } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
 
 abstract contract SMARTPausableTest is SMARTTest {
     function test_Pause_SetAndCheck() public {

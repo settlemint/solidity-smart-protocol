@@ -5,7 +5,7 @@ import { SMARTCoreTest } from "./tests/SMARTCoreTest.sol";
 import { SMARTBurnableTest } from "./tests/SMARTBurnableTest.sol";
 import { SMARTPausableTest } from "./tests/SMARTPausableTest.sol";
 import { SMARTCustodianTest } from "./tests/SMARTCustodianTest.sol";
-import { ISMART } from "../contracts/SMART/interface/ISMART.sol";
+import { ISMART } from "../contracts/interface/ISMART.sol";
 
 // Contract for testing the UPGRADEABLE SMART token implementation
 contract SMARTUpgradeableTest is SMARTCoreTest, SMARTBurnableTest, SMARTPausableTest, SMARTCustodianTest {

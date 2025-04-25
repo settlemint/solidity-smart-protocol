@@ -3,9 +3,9 @@ pragma solidity ^0.8.24;
 
 import { SMARTTest } from "./SMARTTest.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { ISMARTComplianceModule } from "../../contracts/SMART/interface/ISMARTComplianceModule.sol";
-import { ISMART } from "../../contracts/SMART/interface/ISMART.sol";
-import { Unauthorized } from "../../contracts/SMART/extensions/common/CommonErrors.sol";
+import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplianceModule.sol";
+import { ISMART } from "../../contracts/interface/ISMART.sol";
+import { Unauthorized } from "../../contracts/extensions/common/CommonErrors.sol";
 
 abstract contract SMARTCoreTest is SMARTTest {
     function test_Mint_Success() public {

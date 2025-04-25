@@ -104,10 +104,15 @@ jobs:
       - name: Install Node dependencies
         run: npm install
 
-      - name: Install Soldeer dependencies
+      - name: Install Soldeer dependencies (Soldeer)
         if: github.repository == 'settlemint/solidity-account-abstraction'
         run: |
           forge soldeer update
+
+      - name: Install Soldeer dependencies (Bun dependencies)
+        if: github.repository == 'settlemint/solidity-smart-protocol'
+        run: |
+          bun run dependencies
 
       - name: Run Forge build
         run: |

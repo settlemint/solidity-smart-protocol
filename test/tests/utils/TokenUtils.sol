@@ -3,16 +3,16 @@ pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { SMARTIdentityFactory } from "../../../contracts/SMART/SMARTIdentityFactory.sol";
-import { SMARTCompliance } from "../../../contracts/SMART/SMARTCompliance.sol";
-import { ISMART } from "../../../contracts/SMART/interface/ISMART.sol";
-import { SMARTToken } from "../../../contracts/SMART/SMARTToken.sol";
-import { SMARTTokenUpgradeable } from "../../../contracts/SMART/SMARTTokenUpgradeable.sol";
-import { SMARTIdentityRegistry } from "../../../contracts/SMART/SMARTIdentityRegistry.sol";
-import { SMARTPausable } from "../../../contracts/SMART/extensions/pausable/SMARTPausable.sol";
-import { SMARTBurnable } from "../../../contracts/SMART/extensions/burnable/SMARTBurnable.sol";
-import { SMARTRedeemable } from "../../../contracts/SMART/extensions/redeemable/SMARTRedeemable.sol";
-import { SMARTCustodian } from "../../../contracts/SMART/extensions/custodian/SMARTCustodian.sol";
+import { SMARTIdentityFactory } from "../../../contracts/SMARTIdentityFactory.sol";
+import { SMARTCompliance } from "../../../contracts/SMARTCompliance.sol";
+import { ISMART } from "../../../contracts/interface/ISMART.sol";
+import { SMARTToken } from "../../../contracts/SMARTToken.sol";
+import { SMARTTokenUpgradeable } from "../../../contracts/SMARTTokenUpgradeable.sol";
+import { SMARTIdentityRegistry } from "../../../contracts/SMARTIdentityRegistry.sol";
+import { SMARTPausable } from "../../../contracts/extensions/pausable/SMARTPausable.sol";
+import { SMARTBurnable } from "../../../contracts/extensions/burnable/SMARTBurnable.sol";
+import { SMARTRedeemable } from "../../../contracts/extensions/redeemable/SMARTRedeemable.sol";
+import { SMARTCustodian } from "../../../contracts/extensions/custodian/SMARTCustodian.sol";
 
 contract TokenUtils is Test {
     address internal _platformAdmin;

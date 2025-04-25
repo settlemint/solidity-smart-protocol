@@ -40,4 +40,5 @@
   forge-std = "1.9.5"
   "@openzeppelin-contracts" = "5.2.0"
   "@openzeppelin-contracts-upgradeable" = "5.2.0"
+  "@onchainid" = { version = "v2.2.1", git = "https://github.com/onchain-id/solidity.git", rev = "2.2.1" }
   # "@openzeppelin-community-contracts" = { version = "0.0.1", git = "https://github.com/OpenZeppelin/openzeppelin-community-contracts" }

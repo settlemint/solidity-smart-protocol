@@ -3,10 +3,10 @@ pragma solidity ^0.8.24;
 
 // Adjust import path assuming SMARTInfrastructureSetup will be in ./utils/
 import { Test } from "forge-std/Test.sol";
-import { ISMART } from "../../contracts/SMART/interface/ISMART.sol";
-import { ISMARTComplianceModule } from "../../contracts/SMART/interface/ISMARTComplianceModule.sol";
-import { ISMARTIdentityRegistry } from "../../contracts/SMART/interface/ISMARTIdentityRegistry.sol";
-import { SMARTIdentityRegistry } from "../../contracts/SMART/SMARTIdentityRegistry.sol";
+import { ISMART } from "../../contracts/interface/ISMART.sol";
+import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplianceModule.sol";
+import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
+import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
 import { TestConstants } from "./Constants.sol";
 import { ClaimUtils } from "./utils/ClaimUtils.sol";
 import { IdentityUtils } from "./utils/IdentityUtils.sol";

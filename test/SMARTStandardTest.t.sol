@@ -8,7 +8,7 @@ import { SMARTCoreTest } from "./tests/SMARTCoreTest.sol";
 import { SMARTBurnableTest } from "./tests/SMARTBurnableTest.sol";
 import { SMARTPausableTest } from "./tests/SMARTPausableTest.sol";
 import { SMARTCustodianTest } from "./tests/SMARTCustodianTest.sol";
-import { ISMART } from "../contracts/SMART/interface/ISMART.sol";
+import { ISMART } from "../contracts/interface/ISMART.sol";
 // Rename contract to reflect its purpose
 
 contract SMARTStandardTest is SMARTCoreTest, SMARTBurnableTest, SMARTPausableTest, SMARTCustodianTest {
