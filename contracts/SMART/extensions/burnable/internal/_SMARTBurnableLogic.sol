@@ -4,28 +4,35 @@ pragma solidity ^0.8.27;
 import { LengthMismatch } from "../../common/CommonErrors.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 import { _SMARTBurnableAuthorizationHooks } from "./_SMARTBurnableAuthorizationHooks.sol";
-/// @title _SMARTBurnableLogic
-/// @notice Base logic contract for SMARTBurnable functionality.
-/// @dev Contains internal implementations for burning tokens.
 
+/// @title Internal Logic for SMART Burnable Extension
+/// @notice Contains the core internal logic and event for burning tokens.
+/// @dev This contract provides the `burn` and `batchBurn` functions and defines
+///      abstract hooks for authorization and execution.
 abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthorizationHooks {
-    // --- State-Changing Functions ---
-
     // -- Events --
+
+    /// @notice Emitted when tokens are successfully burned.
+    /// @param from The address from which tokens were burned.
+    /// @param amount The amount of tokens burned.
     event BurnCompleted(address indexed from, uint256 amount);
 
-    // @notice Burns a specific amount of tokens from a user's address (Owner only).
+    // -- External Functions --
+
+    /// @notice Burns a specific amount of tokens from a user's address.
     /// @param userAddress The address to burn tokens from.
     /// @param amount The amount of tokens to burn.
-    /// @dev Requires caller to be the owner. Matches IERC3643 signature.
+    /// @dev Requires authorization via the `_authorizeBurn` hook.
+    ///      Matches the function signature intent of ERC3643 `operatorBurn`.
     function burn(address userAddress, uint256 amount) external virtual {
         __burnable_burn(userAddress, amount);
     }
 
-    /// @notice Burns tokens from multiple addresses in a single transaction (Owner only).
+    /// @notice Burns tokens from multiple addresses in a single transaction.
     /// @param userAddresses The addresses to burn tokens from.
     /// @param amounts The amounts of tokens to burn from each address.
-    /// @dev Requires caller to be the owner.
+    /// @dev Requires authorization via the `_authorizeBurn` hook for each burn.
+    ///      Reverts if the lengths of `userAddresses` and `amounts` do not match.
     function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
@@ -33,16 +40,21 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthoriz
         }
     }
 
-    // --- Abstract Hooks ---
+    // -- Internal Functions --
 
-    /// @dev Abstract function representing the actual burn operation (e.g., ERC20Burnable._burn).
-    ///      This needs to be implemented in the concrete contract inheriting this logic
-    ///      and ERC20Burnable(Upgradeable).
-    function _burnable_executeBurn(address from, uint256 amount) internal virtual;
-
+    /// @dev Internal function to perform the burn operation after authorization.
     function __burnable_burn(address from, uint256 amount) private {
-        _authorizeBurn();
-        _burnable_executeBurn(from, amount);
-        emit BurnCompleted(from, amount);
+        _authorizeBurn(); // Authorization check
+        _burnable_executeBurn(from, amount); // Execute the burn
+        emit BurnCompleted(from, amount); // Emit event
     }
+
+    // -- Abstract Hooks --
+
+    /// @dev Abstract function representing the actual token burning mechanism.
+    ///      Must be implemented by inheriting contracts to interact with the base token contract (e.g.,
+    /// ERC20/ERC20Upgradeable).
+    /// @param from The address from which tokens are burned.
+    /// @param amount The amount of tokens to burn.
+    function _burnable_executeBurn(address from, uint256 amount) internal virtual;
 }

@@ -146,7 +146,7 @@ contract SMARTToken is
         super._beforeTransfer(from, to, amount);
     }
 
-    function _beforeBurn(address from, uint256 amount) internal virtual override(SMART, SMARTCustodian, SMARTHooks) {
+    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTCustodian, SMARTHooks) {
         super._beforeBurn(from, amount);
     }
 

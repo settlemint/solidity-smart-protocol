@@ -8,12 +8,12 @@ import { ISMARTComplianceModule } from "../../../interface/ISMARTComplianceModul
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { _SMARTAuthorizationHooks } from "./_SMARTAuthorizationHooks.sol";
 
-/// @title _SMARTLogic
-/// @notice Base contract containing the core state, logic, and events for SMART tokens.
-/// @dev This contract is intended to be inherited by both standard and upgradeable SMART implementations.
-///      It does not include constructors or initializers itself.
+/// @title Internal Core Logic for SMART Tokens
+/// @notice Base contract containing the core state, logic, events, and authorization hooks for SMART tokens.
+/// @dev This abstract contract is intended to be inherited by both standard (SMART) and upgradeable (SMARTUpgradeable)
+///      implementations. It defines shared state variables, internal logic, and hooks for extensibility.
 abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
-    // --- Errors ---
+    // -- Errors --
     error ZeroAddressNotAllowed();
     error InvalidModuleImplementation();
     error DuplicateModule(address module);
@@ -22,39 +22,45 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     error ModuleAlreadyAdded();
     error ModuleNotFound();
 
-    // --- Storage Variables ---
-    string internal __name; // Store name mutable
-    string internal __symbol; // Store symbol mutable
-    uint8 internal __decimals; // Internal storage for decimals
-    address internal __onchainID; // Internal storage for onchainID
-    ISMARTIdentityRegistry internal __identityRegistry;
-    ISMARTCompliance internal __compliance;
-    mapping(address => uint256) internal __moduleIndex; // Store index + 1 for existence check
-    mapping(address => bytes) internal __moduleParameters; // Store parameters per module
-    address[] internal __complianceModuleList;
-    uint256[] internal __requiredClaimTopics;
+    // -- Storage Variables --
+    string internal __name; // Token name (mutable)
+    string internal __symbol; // Token symbol (mutable)
+    uint8 internal __decimals; // Token decimals
+    address internal __onchainID; // Optional on-chain identifier address
+    ISMARTIdentityRegistry internal __identityRegistry; // The identity registry contract
+    ISMARTCompliance internal __compliance; // The compliance contract
+    mapping(address => uint256) internal __moduleIndex; // Module address => index + 1 in __complianceModuleList (for
+        // existence check)
+    mapping(address => bytes) internal __moduleParameters; // Module address => associated parameters
+    address[] internal __complianceModuleList; // List of active compliance module addresses
+    uint256[] internal __requiredClaimTopics; // Claim topics required for verification
 
-    // --- Events ---
-    // Events defined in ISMART (e.g., UpdatedTokenInformation) are implicitly included and emitted by internal logic.
+    // -- Events --
+    // Events defined in ISMART (e.g., UpdatedTokenInformation, ComplianceModuleAdded) are emitted by internal logic.
     event TransferCompleted(address indexed from, address indexed to, uint256 amount);
     event MintCompleted(address indexed to, uint256 amount);
+    event RequiredClaimTopicsUpdated(uint256[] requiredClaimTopics);
 
-    event RequiredClaimTopicsUpdated(uint256[] requiredClaimTopics); // Added event
+    // -- State-Changing Functions (Admin/Authorized) --
 
-    // -- State-Changing Functions --
-
+    /// @inheritdoc ISMART
+    /// @dev Requires authorization via `_authorizeUpdateTokenSettings`.
     function setName(string memory name_) external virtual override {
-        _auhtorizeUpdateTokenSettings();
+        _authorizeUpdateTokenSettings();
         __name = name_;
         emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
     }
 
+    /// @inheritdoc ISMART
+    /// @dev Requires authorization via `_authorizeUpdateTokenSettings`.
     function setSymbol(string memory symbol_) external virtual override {
-        _auhtorizeUpdateTokenSettings();
+        _authorizeUpdateTokenSettings();
         __symbol = symbol_;
         emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
     }
 
+    /// @inheritdoc ISMART
+    /// @dev Requires authorization via `_authorizeUpdateComplianceSettings`.
     function setCompliance(address compliance_) external virtual override {
         _authorizeUpdateComplianceSettings();
         if (compliance_ == address(0)) revert ZeroAddressNotAllowed();
@@ -62,6 +68,8 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         emit ComplianceAdded(address(__compliance));
     }
 
+    /// @inheritdoc ISMART
+    /// @dev Requires authorization via `_authorizeUpdateVerificationSettings`.
     function setIdentityRegistry(address identityRegistry_) external virtual override {
         _authorizeUpdateVerificationSettings();
         if (identityRegistry_ == address(0)) revert ZeroAddressNotAllowed();
@@ -69,12 +77,16 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         emit IdentityRegistryAdded(address(__identityRegistry));
     }
 
+    /// @inheritdoc ISMART
+    /// @dev Requires authorization via `_authorizeUpdateTokenSettings`.
     function setOnchainID(address onchainID_) external virtual override {
-        _auhtorizeUpdateTokenSettings();
+        _authorizeUpdateTokenSettings();
         __onchainID = onchainID_;
         emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
     }
 
+    /// @inheritdoc ISMART
+    /// @dev Requires authorization via `_authorizeUpdateComplianceSettings`.
     function setParametersForComplianceModule(address _module, bytes memory _params) external virtual override {
         _authorizeUpdateComplianceSettings();
         if (__moduleIndex[_module] == 0) revert ModuleNotFound();
@@ -83,6 +95,8 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         emit ModuleParametersUpdated(_module, _params);
     }
 
+    /// @inheritdoc ISMART
+    /// @dev Requires authorization via `_authorizeUpdateComplianceSettings`.
     function addComplianceModule(address _module, bytes memory _params) external virtual override {
         _authorizeUpdateComplianceSettings();
         _validateModuleAndParams(_module, _params);
@@ -95,17 +109,20 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         emit ComplianceModuleAdded(_module, _params);
     }
 
+    /// @inheritdoc ISMART
+    /// @dev Requires authorization via `_authorizeUpdateComplianceSettings`.
     function removeComplianceModule(address _module) external virtual override {
         _authorizeUpdateComplianceSettings();
         uint256 index = __moduleIndex[_module];
         if (index == 0) revert ModuleNotFound();
 
+        // Efficiently remove from array by swapping with the last element
         uint256 listIndex = index - 1;
         uint256 lastIndex = __complianceModuleList.length - 1;
         if (listIndex != lastIndex) {
             address lastModule = __complianceModuleList[lastIndex];
             __complianceModuleList[listIndex] = lastModule;
-            __moduleIndex[lastModule] = listIndex + 1;
+            __moduleIndex[lastModule] = listIndex + 1; // Update index of the moved module
         }
         __complianceModuleList.pop();
         delete __moduleIndex[_module];
@@ -114,30 +131,37 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         emit ComplianceModuleRemoved(_module);
     }
 
+    /// @inheritdoc ISMART
+    /// @dev Requires authorization via `_authorizeUpdateVerificationSettings`.
     function setRequiredClaimTopics(uint256[] memory requiredClaimTopics_) external virtual override {
         _authorizeUpdateVerificationSettings();
         __requiredClaimTopics = requiredClaimTopics_;
         emit RequiredClaimTopicsUpdated(__requiredClaimTopics);
     }
 
-    // --- View Functions ---
+    // -- View Functions --
 
+    /// @inheritdoc ISMART
     function onchainID() external view virtual override returns (address) {
         return __onchainID;
     }
 
+    /// @inheritdoc ISMART
     function identityRegistry() external view virtual override returns (ISMARTIdentityRegistry) {
         return __identityRegistry;
     }
 
+    /// @inheritdoc ISMART
     function compliance() external view virtual override returns (ISMARTCompliance) {
         return __compliance;
     }
 
+    /// @inheritdoc ISMART
     function requiredClaimTopics() external view virtual override returns (uint256[] memory) {
         return __requiredClaimTopics;
     }
 
+    /// @inheritdoc ISMART
     function complianceModules() external view virtual override returns (ComplianceModuleParamPair[] memory) {
         uint256 length = __complianceModuleList.length;
         ComplianceModuleParamPair[] memory pairs = new ComplianceModuleParamPair[](length);
@@ -150,24 +174,36 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         return pairs;
     }
 
+    /// @inheritdoc ISMART
     function getParametersForComplianceModule(address _module) external view virtual override returns (bytes memory) {
         return __moduleParameters[_module];
     }
 
+    /// @inheritdoc ISMART
     function isValidComplianceModule(address _module, bytes calldata _params) external view virtual override {
-        _validateModuleAndParams(_module, _params); // Calls internal shared logic
+        _validateModuleAndParams(_module, _params);
     }
 
+    /// @inheritdoc ISMART
     function areValidComplianceModules(ComplianceModuleParamPair[] calldata _pairs) external view virtual override {
         for (uint256 i = 0; i < _pairs.length; i++) {
-            _validateModuleAndParams(_pairs[i].module, _pairs[i].params); // Calls internal shared logic
+            _validateModuleAndParams(_pairs[i].module, _pairs[i].params);
         }
     }
 
-    // --- Internal Functions ---
+    // -- Internal Setup Function --
 
-    /// @dev Internal function to set up the core SMART state.
-    ///      Called ONLY by the constructor (standard) or initializer (upgradeable).
+    /// @notice Internal function to initialize the core SMART state variables.
+    /// @dev Called ONLY by the constructor (in standard SMART) or initializer (in SMARTUpgradeable).
+    ///      Handles setting initial values and validating/registering initial compliance modules.
+    /// @param name_ Token name.
+    /// @param symbol_ Token symbol.
+    /// @param decimals_ Token decimals.
+    /// @param onchainID_ Optional on-chain identifier address.
+    /// @param identityRegistry_ Address of the identity registry contract.
+    /// @param compliance_ Address of the compliance contract.
+    /// @param requiredClaimTopics_ Initial list of required claim topics for verification.
+    /// @param initialModulePairs_ List of initial compliance modules and their parameters.
     function __SMART_init_unchained(
         string memory name_,
         string memory symbol_,
@@ -197,67 +233,98 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
             address module = initialModulePairs_[i].module;
             bytes memory params = initialModulePairs_[i].params;
 
-            // Validate module and parameters internally (reverts on failure)
-            _validateModuleAndParams(module, params);
-
-            // Check for duplicates during initialization
+            _validateModuleAndParams(module, params); // Reverts on failure
             if (__moduleIndex[module] != 0) revert DuplicateModule(module);
 
-            // Add module and store parameters
             __complianceModuleList.push(module);
             __moduleIndex[module] = __complianceModuleList.length; // Store index + 1
             __moduleParameters[module] = params;
-
             emit ComplianceModuleAdded(module, params);
         }
 
         emit IdentityRegistryAdded(identityRegistry_);
         emit ComplianceAdded(compliance_);
         emit UpdatedTokenInformation(name_, symbol_, decimals_, onchainID_);
-        emit RequiredClaimTopicsUpdated(requiredClaimTopics_); // Emit initial topics
+        emit RequiredClaimTopicsUpdated(requiredClaimTopics_);
     }
 
-    // Helper Functions for Hooks
+    // -- Internal Hook Helper Functions --
+
+    /// @notice Internal logic executed before a mint operation.
+    /// @dev Performs mint authorization check, recipient verification, and compliance checks.
+    ///      Called by the implementing contract's `_beforeMint` hook.
+    /// @param to The recipient address.
+    /// @param amount The amount being minted.
     function _smart_beforeMintLogic(address to, uint256 amount) internal virtual {
-        _authorizeMintToken(); // TODO check if this is the right location for this check
+        _authorizeMintToken(); // Check if caller is authorized to mint
         if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
         if (!__compliance.canTransfer(address(this), address(0), to, amount)) revert MintNotCompliant();
     }
 
+    /// @notice Internal logic executed after a mint operation.
+    /// @dev Notifies the compliance contract and emits the MintCompleted event.
+    ///      Called by the implementing contract's `_afterMint` hook.
+    /// @param to The recipient address.
+    /// @param amount The amount that was minted.
     function _smart_afterMintLogic(address to, uint256 amount) internal virtual {
         __compliance.created(address(this), to, amount);
         emit MintCompleted(to, amount);
     }
 
+    /// @notice Internal logic executed before a transfer operation (transfer, transferFrom).
+    /// @dev Performs recipient verification and compliance checks.
+    ///      Called by the implementing contract's `_beforeTransfer` hook.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount being transferred.
     function _smart_beforeTransferLogic(address from, address to, uint256 amount) internal virtual {
+        // Note: Sender verification is implicitly handled by ERC20 balance/allowance checks.
         if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
         if (!__compliance.canTransfer(address(this), from, to, amount)) revert TransferNotCompliant();
     }
 
+    /// @notice Internal logic executed after a transfer operation.
+    /// @dev Notifies the compliance contract and emits the TransferCompleted event.
+    ///      Called by the implementing contract's `_afterTransfer` hook.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount that was transferred.
     function _smart_afterTransferLogic(address from, address to, uint256 amount) internal virtual {
         __compliance.transferred(address(this), from, to, amount);
         emit TransferCompleted(from, to, amount);
     }
 
+    /// @notice Internal logic executed after a burn operation.
+    /// @dev Notifies the compliance contract about the destroyed tokens.
+    ///      Called by the implementing contract's `_afterBurn` hook.
+    /// @param from The address from which tokens were burned.
+    /// @param amount The amount that was burned.
     function _smart_afterBurnLogic(address from, uint256 amount) internal virtual {
         __compliance.destroyed(address(this), from, amount);
     }
 
-    //// @dev Internal function to validate a module's interface support AND its parameters.
+    // -- Internal Validation Function --
+
+    /// @dev Internal function to validate a compliance module's interface support AND its parameters.
     ///      Reverts with appropriate error if validation fails.
+    /// @param _module The address of the compliance module to validate.
+    /// @param _params The parameters to validate against the module.
     function _validateModuleAndParams(address _module, bytes memory _params) private view {
         if (_module == address(0)) revert ZeroAddressNotAllowed();
 
+        // Check if the module supports the ISMARTComplianceModule interface
         bool supportsInterface;
         try IERC165(_module).supportsInterface(type(ISMARTComplianceModule).interfaceId) returns (bool supported) {
             supportsInterface = supported;
         } catch {
-            revert InvalidModuleImplementation();
+            revert InvalidModuleImplementation(); // Revert if the supportsInterface call fails
         }
         if (!supportsInterface) {
-            revert InvalidModuleImplementation();
+            revert InvalidModuleImplementation(); // Revert if the interface is not supported
         }
 
+        // Validate the provided parameters using the module's validation function
+        // This external call can revert, which will propagate up.
         ISMARTComplianceModule(_module).validateParameters(_params);
     }
 }

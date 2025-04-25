@@ -8,26 +8,21 @@ import { SMARTHooks } from "./../common/SMARTHooks.sol";
 // Internal implementation imports
 import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";
 
-/// @title SMARTBurnable
-/// @notice Standard (non-upgradeable) extension that adds burnable functionality to SMART tokens.
-/// @dev Inherits from SMARTExtension, and _SMARTBurnableLogic.
-///      Relies on the main contract inheriting ERC20 to provide the internal _burn function.
+/// @title Standard SMART Burnable Extension
+/// @notice Adds token burning functionality to a standard (non-upgradeable) SMART token.
+/// @dev Implements the `_burnable_executeBurn` hook by calling the `_burn` function
+///      from the base ERC20 contract, which must be inherited by the final contract.
 
 abstract contract SMARTBurnable is SMARTExtension, _SMARTBurnableLogic {
-    // --- Hooks ---
+    // -- Internal Hook Implementation --
 
-    /// @dev Provides the actual burn implementation by calling ERC20's internal _burn.
-    ///      This assumes the contract inheriting this extension also inherits ERC20.
-    function _burnable_executeBurn(
-        address from,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(_SMARTBurnableLogic) // Implements the abstract function from the logic base
-    {
-        // Note: _burn is the internal function from the base ERC20 contract,
-        // which MUST be inherited by the final contract using this extension.
+    /// @dev Implements the core burn logic by calling the underlying ERC20 `_burn` function.
+    /// @param from The address from which tokens are burned.
+    /// @param amount The amount of tokens to burn.
+    /// @inheritdoc _SMARTBurnableLogic
+    function _burnable_executeBurn(address from, uint256 amount) internal virtual override {
+        // Note: Assumes the final contract inherits from a standard ERC20 implementation
+        // that provides the internal `_burn` function.
         _burn(from, amount);
     }
 }
