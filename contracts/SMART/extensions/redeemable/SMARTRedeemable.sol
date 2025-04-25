@@ -21,6 +21,7 @@ abstract contract SMARTRedeemable is Context, SMARTExtension, _SMARTRedeemableLo
 
     /// @dev Implements the abstract burn execution using ERC20._burn.
     function _redeemable_executeBurn(address from, uint256 amount) internal virtual override(_SMARTRedeemableLogic) {
+        _spendAllowance(from, _msgSender(), amount);
         _burn(from, amount);
     }
 
