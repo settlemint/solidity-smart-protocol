@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { _SMARTPausableAuthorizationHooks } from "./_SMARTPausableAuthorizationHooks.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
+import { TokenPaused, ExpectedPause } from "./../SMARTPausableErrors.sol";
 
 /// @title _SMARTPausableLogic
 /// @notice Base logic contract for SMARTPausable functionality.
@@ -36,12 +37,16 @@ abstract contract _SMARTPausableLogic is _SMARTExtension, _SMARTPausableAuthoriz
 
     // Add custom modifiers that use the pause state
     modifier whenNotPaused() {
-        require(!paused(), "Contract is paused");
+        if (paused()) {
+            revert TokenPaused();
+        }
         _;
     }
 
     modifier whenPaused() {
-        require(paused(), "Contract is not paused");
+        if (!paused()) {
+            revert ExpectedPause();
+        }
         _;
     }
 }
