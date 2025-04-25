@@ -14,5 +14,7 @@
 ## TODO
 
 - Should modules be upgradeable?
-- Permit
-- Allowance
+- Permit? or can we use ERC20 permit?
+- Allowance? or can we use ERC20 allowance?
+- Make compliance an extension?
+- Merge burn and redeem?
