@@ -71,8 +71,4 @@ abstract contract SMARTRedeemable is Context, SMARTExtension, _SMARTRedeemableLo
     function _msgData() internal view virtual override(Context, _SMARTRedeemableLogic) returns (bytes calldata) {
         return Context._msgData();
     }
-
-    // -- Abstract Dependencies --
-    // Required by _redeemable_executeBurn
-    // function _burn(address account, uint256 amount) internal virtual;
 }

@@ -87,8 +87,4 @@ abstract contract SMARTRedeemableUpgradeable is
     {
         return ContextUpgradeable._msgData();
     }
-
-    // -- Abstract Dependencies --
-    // Required by _redeemable_executeBurn
-    // function _burn(address account, uint256 amount) internal virtual;
 }
