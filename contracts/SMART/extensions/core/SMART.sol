@@ -114,24 +114,6 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
         }
     }
 
-    /// @inheritdoc ERC20
-    /// @dev Overrides ERC20.transferFrom to integrate SMART verification and compliance checks via hooks.
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    )
-        public
-        virtual
-        override(ERC20, IERC20)
-        returns (bool)
-    {
-        address spender = _msgSender();
-        _spendAllowance(from, spender, amount);
-        _transfer(from, to, amount); // Calls _update -> _beforeTransfer/_afterTransfer
-        return true;
-    }
-
     // --- View Functions ---
 
     /// @inheritdoc ERC20

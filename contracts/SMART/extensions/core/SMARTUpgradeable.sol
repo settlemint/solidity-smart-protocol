@@ -116,24 +116,6 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         }
     }
 
-    /// @inheritdoc ERC20Upgradeable
-    /// @dev Overrides ERC20Upgradeable.transferFrom to integrate SMART verification and compliance checks via hooks.
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    )
-        public
-        virtual
-        override(ERC20Upgradeable, IERC20)
-        returns (bool)
-    {
-        address spender = _msgSender();
-        super._spendAllowance(from, spender, amount); // Use super to call OZ's implementation
-        super._transfer(from, to, amount); // Use super to call transfer which calls overridden _update
-        return true;
-    }
-
     // -- View Functions (ERC20 Overrides) --
 
     /// @inheritdoc ERC20Upgradeable

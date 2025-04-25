@@ -83,19 +83,6 @@ contract SMARTToken is
         return super.transfer(to, amount);
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    )
-        public
-        virtual
-        override(SMART, ERC20, IERC20)
-        returns (bool)
-    {
-        return super.transferFrom(from, to, amount);
-    }
-
     // --- View Functions (Overrides) ---
     function name() public view virtual override(SMART, ERC20, IERC20Metadata) returns (string memory) {
         return super.name();
