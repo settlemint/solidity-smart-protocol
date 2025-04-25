@@ -13,57 +13,82 @@ import { SMARTHooks } from "../common/SMARTHooks.sol";
 // Internal implementation imports
 import { _SMARTRedeemableLogic } from "./internal/_SMARTRedeemableLogic.sol";
 
-/// @title SMARTRedeemableUpgradeable
-/// @notice Upgradeable extension that adds redeemable functionality to SMART tokens.
-/// @dev Relies on the main contract inheriting ERC20Upgradeable to provide the internal _burn function.
+/// @title Upgradeable SMART Redeemable Extension
+/// @notice Upgradeable extension allowing token holders to redeem (burn) their own tokens.
+/// @dev Inherits core redemption logic from `_SMARTRedeemableLogic`, `SMARTExtensionUpgradeable`, `ContextUpgradeable`,
+/// and `Initializable`.
+///      Implements the `_redeemable_executeBurn` function using the base ERC20Upgradeable `_burn` function.
+///      Provides virtual `_beforeRedeem` and `_afterRedeem` hooks for further customization.
+///      Expects the final contract to inherit `ERC20Upgradeable` (with a `_burn` function) and core `SMARTUpgradeable`
+/// logic.
 abstract contract SMARTRedeemableUpgradeable is
     Initializable,
     ContextUpgradeable,
     SMARTExtensionUpgradeable,
     _SMARTRedeemableLogic
 {
-    /// @dev Initializer for the redeemable extension.
-    ///      Typically called by the main contract's initializer.
+    // Note: Assumes the final contract inherits ERC20Upgradeable (with _burn) and SMARTUpgradeable
+
+    // -- Initializer --
+    /// @notice Initializes the redeemable extension specific state (currently none).
+    /// @dev Should be called within the main contract's `initialize` function.
+    ///      Uses the `onlyInitializing` modifier.
     function __SMARTRedeemable_init() internal onlyInitializing {
-        // No specific state to initialize for Redeemable itself,
+        // Intentionally empty: No specific state initialization needed for the redeemable extension itself.
     }
 
-    // @dev Abstract function representing the actual burn operation (e.g., ERC20Burnable._burn).
-    function _redeemable_executeBurn(address from, uint256 amount) internal virtual override(_SMARTRedeemableLogic) {
+    // -- Internal Hook Implementations --
+
+    /// @notice Implementation of the abstract burn execution using the base ERC20Upgradeable `_burn` function.
+    /// @dev Assumes the inheriting contract includes an ERC20Upgradeable implementation with an internal `_burn`
+    /// function.
+    /// @inheritdoc _SMARTRedeemableLogic
+    function _redeemable_executeBurn(address from, uint256 amount) internal virtual override {
+        // Allowance check is typically NOT needed for self-burn/redeem.
         _burn(from, amount);
     }
 
+    // -- Hooks (Overrides) --
+
     /// @notice Hook called before token redemption.
-    /// @dev Can be overridden by inheriting contracts to add custom pre-redemption logic (e.g., check redemption
-    /// conditions, trigger trade).
+    /// @dev This is a virtual override of the hook defined in `SMARTHooks`.
+    ///      Inheriting contracts can override this to add custom pre-redemption logic.
     /// @param owner The address redeeming the tokens.
     /// @param amount The amount of tokens being redeemed.
     function _beforeRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
-        // Placeholder for custom logic
         super._beforeRedeem(owner, amount);
     }
 
     /// @notice Hook called after token redemption.
-    /// @dev Can be overridden by inheriting contracts to add custom post-redemption logic (e.g., finalize trade, update
-    /// off-chain records).
+    /// @dev This is a virtual override of the hook defined in `SMARTHooks`.
+    ///      Inheriting contracts can override this to add custom post-redemption logic.
     /// @param owner The address that redeemed the tokens.
     /// @param amount The amount of tokens that were redeemed.
     function _afterRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
-        // Placeholder for custom logic
         super._afterRedeem(owner, amount);
     }
 
-    function _msgSender() internal view virtual override(_SMARTRedeemableLogic, ContextUpgradeable) returns (address) {
+    // -- Context Overrides --
+
+    /// @dev Overrides `_msgSender` to resolve inheritance conflict.
+    ///      Delegates to the `ContextUpgradeable` implementation.
+    function _msgSender() internal view virtual override(ContextUpgradeable, _SMARTRedeemableLogic) returns (address) {
         return ContextUpgradeable._msgSender();
     }
 
+    /// @dev Overrides `_msgData` to resolve inheritance conflict.
+    ///      Delegates to the `ContextUpgradeable` implementation.
     function _msgData()
         internal
         view
         virtual
-        override(_SMARTRedeemableLogic, ContextUpgradeable)
+        override(ContextUpgradeable, _SMARTRedeemableLogic)
         returns (bytes calldata)
     {
         return ContextUpgradeable._msgData();
     }
+
+    // -- Abstract Dependencies --
+    // Required by _redeemable_executeBurn
+    // function _burn(address account, uint256 amount) internal virtual;
 }
