@@ -39,7 +39,6 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     // Events defined in ISMART (e.g., UpdatedTokenInformation, ComplianceModuleAdded) are emitted by internal logic.
     event TransferCompleted(address indexed from, address indexed to, uint256 amount);
     event MintCompleted(address indexed to, uint256 amount);
-    event RequiredClaimTopicsUpdated(uint256[] requiredClaimTopics);
 
     // -- State-Changing Functions (Admin/Authorized) --
 

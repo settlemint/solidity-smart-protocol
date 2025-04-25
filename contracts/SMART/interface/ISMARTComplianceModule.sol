@@ -4,50 +4,30 @@ pragma solidity ^0.8.27;
 // OpenZeppelin imports
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-/// @title ISMARTComplianceModule
-/// @notice Interface for SMART compliance modules
+/// @title ISMART Compliance Module Interface
+/// @notice Defines the interface for individual compliance modules used by an ISMARTCompliance contract.
+///         Modules implement specific compliance rules or actions.
 interface ISMARTComplianceModule is IERC165 {
-    /// Custom Errors
+    // --- Custom Errors ---
+    /// @notice Reverted by `canTransfer` if the module's compliance check fails.
+    /// @param reason A descriptive reason for the compliance failure.
     error ComplianceCheckFailed(string reason);
+    /// @notice Reverted by `validateParameters` if the provided parameters are invalid for this module.
+    /// @param reason A descriptive reason why the parameters are invalid.
     error InvalidParameters(string reason);
 
-    /// Functions
-    /**
-     * @dev Action performed on the module during a transfer action
-     * @param _token Address of the token
-     * @param _from Address of the transfer sender
-     * @param _to Address of the transfer receiver
-     * @param _value Amount of tokens sent
-     * @param _params Token-specific parameters for this module
-     */
-    function transferred(address _token, address _from, address _to, uint256 _value, bytes calldata _params) external;
+    // --- Core Functions ---
 
     /**
-     * @dev Action performed on the module during a mint action
-     * @param _token Address of the token
-     * @param _to Address used for minting
-     * @param _value Amount of tokens minted
-     * @param _params Token-specific parameters for this module
-     */
-    function created(address _token, address _to, uint256 _value, bytes calldata _params) external;
-
-    /**
-     * @dev Action performed on the module during a burn action
-     * @param _token Address of the token
-     * @param _from Address on which tokens are burnt
-     * @param _value Amount of tokens burnt
-     * @param _params Token-specific parameters for this module
-     */
-    function destroyed(address _token, address _from, uint256 _value, bytes calldata _params) external;
-
-    /**
-     * @dev Performs a compliance check for a transaction.
-     *      Reverts with ComplianceCheckFailed(string reason) if the check fails.
-     * @param _token Address of the token
-     * @param _from Address of the transfer sender
-     * @param _to Address of the transfer receiver
-     * @param _value Amount of tokens sent
-     * @param _params Token-specific parameters for this module
+     * @notice Checks if a potential transfer complies with this module's rules.
+     * @dev This function MUST be view only and should not modify state.
+     *      It should revert with `ComplianceCheckFailed` if the transfer is not allowed by this module.
+     *      It is called by the main `ISMARTCompliance` contract's `canTransfer`.
+     * @param _token Address of the ISMART token contract.
+     * @param _from Address of the transfer sender (address(0) for mints).
+     * @param _to Address of the transfer receiver (address(0) for burns).
+     * @param _value Amount of tokens involved in the potential transfer.
+     * @param _params Token-specific parameters configured for this module instance.
      */
     function canTransfer(
         address _token,
@@ -60,15 +40,50 @@ interface ISMARTComplianceModule is IERC165 {
         view;
 
     /**
-     * @dev Validates the format and content of parameters intended for this module.
-     *      Reverts with InvalidParameters(string reason) if the parameters are invalid.
-     * @param _params The encoded parameters to validate.
+     * @notice Called by the main `ISMARTCompliance` contract AFTER a successful transfer occurs.
+     * @dev This function can modify the module's state if needed (e.g., update limits).
+     * @param _token Address of the ISMART token contract.
+     * @param _from Address of the transfer sender.
+     * @param _to Address of the transfer receiver.
+     * @param _value Amount of tokens transferred.
+     * @param _params Token-specific parameters configured for this module instance.
+     */
+    function transferred(address _token, address _from, address _to, uint256 _value, bytes calldata _params) external;
+
+    /**
+     * @notice Called by the main `ISMARTCompliance` contract AFTER a successful mint operation occurs.
+     * @dev This function can modify the module's state if needed.
+     * @param _token Address of the ISMART token contract.
+     * @param _to Address where tokens were minted.
+     * @param _value Amount of tokens minted.
+     * @param _params Token-specific parameters configured for this module instance.
+     */
+    function created(address _token, address _to, uint256 _value, bytes calldata _params) external;
+
+    /**
+     * @notice Called by the main `ISMARTCompliance` contract AFTER a successful burn/redeem operation occurs.
+     * @dev This function can modify the module's state if needed.
+     * @param _token Address of the ISMART token contract.
+     * @param _from Address from which tokens were burned.
+     * @param _value Amount of tokens burned.
+     * @param _params Token-specific parameters configured for this module instance.
+     */
+    function destroyed(address _token, address _from, uint256 _value, bytes calldata _params) external;
+
+    /**
+     * @notice Validates the format and content of configuration parameters intended for this module.
+     * @dev This function MUST be view only and should not modify state.
+     *      It is called by the ISMART token contract when adding a module (`addComplianceModule`)
+     *      or updating parameters (`setParametersForComplianceModule`).
+     *      It should revert with `InvalidParameters` if the parameters are not valid for this module.
+     * @param _params The ABI-encoded parameters to validate.
      */
     function validateParameters(bytes calldata _params) external view;
 
     /**
-     * @dev Getter for the name of the module
-     * @return string The name of the module
+     * @notice Returns the human-readable name of the compliance module.
+     * @dev Should be a pure function.
+     * @return The name of the module.
      */
     function name() external pure returns (string memory);
 }

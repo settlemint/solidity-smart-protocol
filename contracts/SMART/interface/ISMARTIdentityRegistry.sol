@@ -6,109 +6,107 @@ import { IIdentity } from "./../../onchainid/interface/IIdentity.sol";
 import { IERC3643IdentityRegistryStorage } from "./../../ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./../../ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
-/// Events
+// --- Events ---
 
-/// @dev This event is emitted when the IdentityRegistryStorage has been set for the IdentityRegistry.
-/// @param _identityStorage is the address of the Identity Registry Storage contract.
+/// @notice Emitted when the IdentityRegistryStorage address is set or updated.
+/// @param _identityStorage The address of the new Identity Registry Storage contract.
 event IdentityStorageSet(address indexed _identityStorage);
 
-/// @dev This event is emitted when the TrustedIssuersRegistry has been set for the IdentityRegistry.
-/// @param _trustedIssuersRegistry is the address of the Trusted Issuers Registry contract.
+/// @notice Emitted when the TrustedIssuersRegistry address is set or updated.
+/// @param _trustedIssuersRegistry The address of the new Trusted Issuers Registry contract.
 event TrustedIssuersRegistrySet(address indexed _trustedIssuersRegistry);
 
-/// @dev This event is emitted when an Identity is registered into the Identity Registry.
-/// @param _investorAddress is the address of the investor's wallet.
-/// @param _identity is the address of the Identity smart contract (onchainID).
+/// @notice Emitted when a new identity is registered for an investor address.
+/// @param _investorAddress The address of the investor's wallet being registered.
+/// @param _identity The address of the investor's Identity smart contract (onchainID).
 event IdentityRegistered(address indexed _investorAddress, IIdentity indexed _identity);
 
-/// @dev This event is emitted when an Identity is removed from the Identity Registry.
-/// @param _investorAddress is the address of the investor's wallet.
-/// @param _identity is the address of the Identity smart contract (onchainID).
+/// @notice Emitted when an identity registration is removed for an investor address.
+/// @param _investorAddress The address of the investor's wallet being removed.
+/// @param _identity The address of the Identity smart contract that was associated.
 event IdentityRemoved(address indexed _investorAddress, IIdentity indexed _identity);
 
-/// @dev This event is emitted when an Identity has been updated.
-/// @param _oldIdentity is the old Identity contract's address to update.
-/// @param _newIdentity is the new Identity contract's.
+/// @notice Emitted when the Identity contract associated with an investor address is updated.
+/// @param _oldIdentity The address of the previous Identity contract.
+/// @param _newIdentity The address of the new Identity contract.
 event IdentityUpdated(IIdentity indexed _oldIdentity, IIdentity indexed _newIdentity);
 
-/// @dev This event is emitted when an Identity's country has been updated.
-/// @param _investorAddress is the address on which the country has been updated
-/// @param _country is the numeric code (ISO 3166-1) of the new country
+/// @notice Emitted when the country associated with an investor address is updated.
+/// @param _investorAddress The investor address whose country was updated.
+/// @param _country The new numeric country code (ISO 3166-1 alpha-2).
 event CountryUpdated(address indexed _investorAddress, uint16 indexed _country);
 
+/// @title ISMART Identity Registry Interface
+/// @notice Defines the interface for an Identity Registry compatible with SMART tokens and ERC-3643.
+///         Manages the link between investor wallets, their on-chain Identity contracts, and verification status.
 interface ISMARTIdentityRegistry {
-    /// Functions
+    // --- Functions ---
 
-    /// Identity Registry Setters
+    // -- Configuration Setters (Admin/Owner) --
 
     /**
-     *  @dev Replace the actual identityRegistryStorage contract with a new one.
-     *  This function can only be called by the wallet set as owner of the smart contract
-     *  @param _identityRegistryStorage The address of the new Identity Registry Storage
-     *  emits `IdentityStorageSet` event
+     * @notice Sets or updates the address of the Identity Registry Storage contract.
+     * @dev Typically restricted to the contract owner.
+     * @param _identityRegistryStorage The address of the new `IERC3643IdentityRegistryStorage` implementation.
+     * Emits `IdentityStorageSet` event.
      */
     function setIdentityRegistryStorage(address _identityRegistryStorage) external;
 
     /**
-     *  @dev Replace the actual trustedIssuersRegistry contract with a new one.
-     *  This function can only be called by the wallet set as owner of the smart contract
-     *  @param _trustedIssuersRegistry The address of the new Trusted Issuers Registry
-     *  emits `TrustedIssuersRegistrySet` event
+     * @notice Sets or updates the address of the Trusted Issuers Registry contract.
+     * @dev Typically restricted to the contract owner.
+     * @param _trustedIssuersRegistry The address of the new `IERC3643TrustedIssuersRegistry` implementation.
+     * Emits `TrustedIssuersRegistrySet` event.
      */
     function setTrustedIssuersRegistry(address _trustedIssuersRegistry) external;
 
-    /// Registry Actions
+    // -- Identity Management (Agent/Registrar Role) --
+
     /**
-     *  @dev Register an identity contract corresponding to a user address.
-     *  Requires that the user doesn't have an identity contract already registered.
-     *  This function can only be called by a wallet set as agent of the smart contract
-     *  @param _userAddress The address of the user
-     *  @param _identity The address of the user's identity contract
-     *  @param _country The country of the investor
-     *  emits `IdentityRegistered` event
+     * @notice Registers an investor's wallet address, linking it to their on-chain Identity contract and country.
+     * @dev Requires agent/registrar privileges. Reverts if the address is already registered.
+     * @param _userAddress The investor's wallet address.
+     * @param _identity The address of the investor's `IIdentity` contract.
+     * @param _country The numeric country code (ISO 3166-1 alpha-2) of the investor.
+     * Emits `IdentityRegistered` event.
      */
     function registerIdentity(address _userAddress, IIdentity _identity, uint16 _country) external;
 
     /**
-     *  @dev Removes an user from the identity registry.
-     *  Requires that the user have an identity contract already deployed that will be deleted.
-     *  This function can only be called by a wallet set as agent of the smart contract
-     *  @param _userAddress The address of the user to be removed
-     *  emits `IdentityRemoved` event
+     * @notice Removes an identity registration for an investor address.
+     * @dev Requires agent/registrar privileges. Reverts if the address is not registered.
+     * @param _userAddress The investor's wallet address to remove.
+     * Emits `IdentityRemoved` event.
      */
     function deleteIdentity(address _userAddress) external;
 
     /**
-     *  @dev Updates the country corresponding to a user address.
-     *  Requires that the user should have an identity contract already deployed that will be replaced.
-     *  This function can only be called by a wallet set as agent of the smart contract
-     *  @param _userAddress The address of the user
-     *  @param _country The new country of the user
-     *  emits `CountryUpdated` event
+     * @notice Updates the country code associated with a registered investor address.
+     * @dev Requires agent/registrar privileges. Reverts if the address is not registered.
+     * @param _userAddress The investor's wallet address.
+     * @param _country The new numeric country code (ISO 3166-1 alpha-2).
+     * Emits `CountryUpdated` event.
      */
     function updateCountry(address _userAddress, uint16 _country) external;
 
     /**
-     *  @dev Updates an identity contract corresponding to a user address.
-     *  Requires that the user address should be the owner of the identity contract.
-     *  Requires that the user should have an identity contract already deployed that will be replaced.
-     *  This function can only be called by a wallet set as agent of the smart contract
-     *  @param _userAddress The address of the user
-     *  @param _identity The address of the user's new identity contract
-     *  emits `IdentityUpdated` event
+     * @notice Updates the on-chain Identity contract associated with a registered investor address.
+     * @dev Requires agent/registrar privileges. Reverts if the address is not registered.
+     *      Often used during identity recovery or updates.
+     * @param _userAddress The investor's wallet address.
+     * @param _identity The address of the investor's new `IIdentity` contract.
+     * Emits `IdentityUpdated` event.
      */
     function updateIdentity(address _userAddress, IIdentity _identity) external;
 
     /**
-     *  @dev function allowing to register identities in batch
-     *  This function can only be called by a wallet set as agent of the smart contract
-     *  Requires that none of the users has an identity contract already registered.
-     *  IMPORTANT : THIS TRANSACTION COULD EXCEED GAS LIMIT IF `_userAddresses.length` IS TOO HIGH,
-     *  USE WITH CARE OR YOU COULD LOSE TX FEES WITH AN "OUT OF GAS" TRANSACTION
-     *  @param _userAddresses The addresses of the users
-     *  @param _identities The addresses of the corresponding identity contracts
-     *  @param _countries The countries of the corresponding investors
-     *  emits _userAddresses.length `IdentityRegistered` events
+     * @notice Registers multiple identities in a single transaction.
+     * @dev Requires agent/registrar privileges. Reverts if any address is already registered.
+     *      Use with caution due to potential gas limits.
+     * @param _userAddresses Array of investor wallet addresses.
+     * @param _identities Array of corresponding `IIdentity` contract addresses.
+     * @param _countries Array of corresponding numeric country codes.
+     * Emits multiple `IdentityRegistered` events.
      */
     function batchRegisterIdentity(
         address[] calldata _userAddresses,
@@ -117,46 +115,50 @@ interface ISMARTIdentityRegistry {
     )
         external;
 
-    /// Registry Consultation
+    // -- Registry Consultation (Views) --
 
     /**
-     *  @dev This functions checks whether a wallet has its Identity registered or not
-     *  in the Identity Registry.
-     *  @param _userAddress The address of the user to be checked.
-     *  @return 'True' if the address is contained in the Identity Registry, 'false' if not.
+     * @notice Checks if an investor wallet address is registered in the registry.
+     * @param _userAddress The address to check.
+     * @return True if the address is registered, false otherwise.
      */
     function contains(address _userAddress) external view returns (bool);
 
     /**
-     *  @dev This functions checks whether an identity contract
-     *  corresponding to the provided user address has the required claims or not based
-     *  on the data fetched from trusted issuers registry and from the claim topics registry
-     *  @param _userAddress The address of the user to be verified.
-     *  @param requiredClaimTopics The array of required claim topics to verify
-     *  @return 'True' if the address is verified, 'false' if not.
+     * @notice Checks if a registered investor address is considered verified based on required claim topics.
+     * @dev Verification involves checking the associated `IIdentity` contract for valid claims
+     *      matching the `requiredClaimTopics`, issued by trusted issuers listed in the `TrustedIssuersRegistry`.
+     * @param _userAddress The investor address to verify.
+     * @param requiredClaimTopics An array of claim topic IDs that must be present and valid.
+     * @return True if the address holds all required valid claims, false otherwise.
      */
     function isVerified(address _userAddress, uint256[] memory requiredClaimTopics) external view returns (bool);
 
     /**
-     *  @dev Returns the onchainID of an investor.
-     *  @param _userAddress The wallet of the investor
+     * @notice Retrieves the `IIdentity` contract address associated with a registered investor address.
+     * @param _userAddress The investor's wallet address.
+     * @return The address of the associated `IIdentity` contract.
      */
     function identity(address _userAddress) external view returns (IIdentity);
 
     /**
-     *  @dev Returns the country code of an investor.
-     *  @param _userAddress The wallet of the investor
+     * @notice Retrieves the numeric country code associated with a registered investor address.
+     * @param _userAddress The investor's wallet address.
+     * @return The numeric country code (ISO 3166-1 alpha-2).
      */
     function investorCountry(address _userAddress) external view returns (uint16);
 
-    // identity registry getters
+    // -- Component Getters (Views) --
+
     /**
-     *  @dev Returns the IdentityRegistryStorage linked to the current IdentityRegistry.
+     * @notice Returns the address of the currently linked Identity Registry Storage contract.
+     * @return The address of the `IERC3643IdentityRegistryStorage` contract.
      */
     function identityStorage() external view returns (IERC3643IdentityRegistryStorage);
 
     /**
-     *  @dev Returns the TrustedIssuersRegistry linked to the current IdentityRegistry.
+     * @notice Returns the address of the currently linked Trusted Issuers Registry contract.
+     * @return The address of the `IERC3643TrustedIssuersRegistry` contract.
      */
     function issuersRegistry() external view returns (IERC3643TrustedIssuersRegistry);
 }
