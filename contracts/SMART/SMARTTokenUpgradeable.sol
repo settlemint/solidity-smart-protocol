@@ -307,6 +307,7 @@ contract SMARTTokenUpgradeable is
         virtual
         override(
             SMARTRedeemableUpgradeable,
+            SMARTPausableUpgradeable,
             ContextUpgradeable,
             SMARTAccessControlAuthorization,
             SMARTBurnableAccessControlAuthorization,

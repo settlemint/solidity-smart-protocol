@@ -191,6 +191,7 @@ contract SMARTToken is
         virtual
         override(
             SMARTAccessControlAuthorization,
+            SMARTPausable,
             SMARTBurnableAccessControlAuthorization,
             SMARTPausableAccessControlAuthorization,
             SMARTCustodianAccessControlAuthorization,
