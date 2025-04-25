@@ -11,11 +11,11 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 
 // Interface imports
-import { IERC734 } from "../onchainid/interface/IERC734.sol";
-import { IImplementationAuthority } from "../onchainid/interface/IImplementationAuthority.sol";
+import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
+import { IImplementationAuthority } from "@onchainid/contracts/interface/IImplementationAuthority.sol";
 
 // Implementation imports
-import { IdentityProxy } from "../onchainid/proxy/IdentityProxy.sol";
+import { IdentityProxy } from "@onchainid/contracts/proxy/IdentityProxy.sol";
 
 // --- Errors ---
 error ZeroAddressNotAllowed();

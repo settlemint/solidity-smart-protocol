@@ -10,11 +10,14 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 
+// OnchainID imports
+import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
+import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
+
 // Interface imports
 import { ISMARTIdentityRegistry } from "./interface/ISMARTIdentityRegistry.sol";
 import { ISMART } from "./interface/ISMART.sol";
-import { IIdentity } from "./../onchainid/interface/IIdentity.sol";
-import { IClaimIssuer } from "./../onchainid/interface/IClaimIssuer.sol";
+
 import { IERC3643IdentityRegistryStorage } from "./interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
