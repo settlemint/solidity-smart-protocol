@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+/// @title Internal Authorization Hooks for SMART Custodian Extension
+/// @notice Defines internal hooks used by _SMARTCustodianLogic to authorize custodian operations.
+/// @dev This contract is intended to be inherited by specific authorization implementations.
 abstract contract _SMARTCustodianAuthorizationHooks {
-    /// @notice Authorization hook for freezing an address
+    /// @dev Hook to authorize freezing or unfreezing an entire address.
     function _authorizeFreezeAddress() internal view virtual;
 
-    /// @notice Authorization hook for freezing partial tokens
+    /// @dev Hook to authorize freezing or unfreezing a partial amount of tokens for an address.
     function _authorizeFreezePartialTokens() internal view virtual;
 
-    /// @notice Authorization hook for forced transfer operations
+    /// @dev Hook to authorize forced transfer operations.
     function _authorizeForcedTransfer() internal view virtual;
 
-    /// @notice Authorization hook for address recovery operations
-
+    /// @dev Hook to authorize address recovery operations.
     function _authorizeRecoveryAddress() internal view virtual;
 }
