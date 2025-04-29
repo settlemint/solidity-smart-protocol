@@ -42,6 +42,10 @@ interface ISMART is IERC20, IERC20Metadata {
     event ModuleParametersUpdated(address indexed _module, bytes _params);
     /// @notice Emitted when the list of required claim topics is updated.
     event RequiredClaimTopicsUpdated(uint256[] _requiredClaimTopics);
+    /// @notice Emitted when a token is transferred.
+    event TransferCompleted(address indexed from, address indexed to, uint256 amount);
+    /// @notice Emitted when a token is minted.
+    event MintCompleted(address indexed to, uint256 amount);
 
     // --- Configuration Setters (Admin/Authorized) ---
 

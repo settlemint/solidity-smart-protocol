@@ -10,22 +10,23 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { _SMARTAuthorizationHooks } from "./_SMARTAuthorizationHooks.sol";
 import { ZeroAddressNotAllowed } from "../../common/CommonErrors.sol";
+import {
+    InvalidModuleImplementation,
+    DuplicateModule,
+    MintNotCompliant,
+    TransferNotCompliant,
+    ModuleAlreadyAdded,
+    ModuleNotFound,
+    CannotRecoverSelf,
+    InsufficientTokenBalance
+} from "../SMARTErrors.sol";
+import { TokenRecovered } from "../SMARTEvents.sol";
 /// @title Internal Core Logic for SMART Tokens
 /// @notice Base contract containing the core state, logic, events, and authorization hooks for SMART tokens.
 /// @dev This abstract contract is intended to be inherited by both standard (SMART) and upgradeable (SMARTUpgradeable)
 ///      implementations. It defines shared state variables, internal logic, and hooks for extensibility.
 
 abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
-    // -- Errors --
-    error InvalidModuleImplementation();
-    error DuplicateModule(address module);
-    error MintNotCompliant();
-    error TransferNotCompliant();
-    error ModuleAlreadyAdded();
-    error ModuleNotFound();
-    error CannotRecoverSelf();
-    error InsufficientTokenBalance();
-
     // -- Storage Variables --
     string internal __name; // Token name (mutable)
     string internal __symbol; // Token symbol (mutable)
@@ -38,14 +39,6 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     mapping(address => bytes) internal __moduleParameters; // Module address => associated parameters
     address[] internal __complianceModuleList; // List of active compliance module addresses
     uint256[] internal __requiredClaimTopics; // Claim topics required for verification
-
-    // -- Events --
-    // Events defined in ISMART (e.g., UpdatedTokenInformation, ComplianceModuleAdded) are emitted by internal logic.
-    event TransferCompleted(address indexed from, address indexed to, uint256 amount);
-    event MintCompleted(address indexed to, uint256 amount);
-
-    /// @notice Emitted when mistakenly sent ERC20 tokens are recovered from the contract.
-    event TokenRecovered(address indexed token, address indexed to, uint256 amount);
 
     // -- State-Changing Functions (Admin/Authorized) --
 

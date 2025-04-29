@@ -7,6 +7,7 @@ import { SMARTIdentityFactory } from "../../../contracts/SMARTIdentityFactory.so
 import { SMARTCompliance } from "../../../contracts/SMARTCompliance.sol";
 import { ISMART } from "../../../contracts/interface/ISMART.sol";
 import { SMARTToken } from "../../../contracts/SMARTToken.sol";
+import { SMART } from "../../../contracts/extensions/core/SMART.sol";
 import { TestConstants } from "../Constants.sol";
 import { SMARTTokenUpgradeable } from "../../../contracts/SMARTTokenUpgradeable.sol";
 import { SMARTIdentityRegistry } from "../../../contracts/SMARTIdentityRegistry.sol";
@@ -173,6 +174,28 @@ contract TokenUtils is Test {
     function transferToken(address tokenAddress, address from, address to, uint256 amount) public {
         vm.startPrank(from);
         ISMART(tokenAddress).transfer(to, amount);
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Recovers ERC20 tokens from the token contract.
+     * @param tokenAddress The address of the token contract.
+     * @param tokenIssuer_ The address of the token issuer initiating the recovery.
+     * @param tokenToRecoverAddress The address of the ERC20 token to recover.
+     * @param to The address to recover the tokens to.
+     * @param amount The amount of tokens to recover.
+     */
+    function recoverERC20Token(
+        address tokenAddress,
+        address tokenIssuer_,
+        address tokenToRecoverAddress,
+        address to,
+        uint256 amount
+    )
+        public
+    {
+        vm.startPrank(tokenIssuer_);
+        SMART(tokenAddress).recoverERC20(tokenToRecoverAddress, to, amount);
         vm.stopPrank();
     }
 
