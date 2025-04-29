@@ -17,4 +17,7 @@ abstract contract _SMARTAuthorizationHooks {
 
     /// @dev Hook to authorize minting new tokens.
     function _authorizeMintToken() internal view virtual;
+
+    /// @dev Hook to authorize recovering mistakenly sent ERC20 tokens from the contract.
+    function _authorizeRecoverERC20() internal view virtual;
 }

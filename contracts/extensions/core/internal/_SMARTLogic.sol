@@ -6,21 +6,25 @@ import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistr
 import { ISMARTCompliance } from "../../../interface/ISMARTCompliance.sol";
 import { ISMARTComplianceModule } from "../../../interface/ISMARTComplianceModule.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { _SMARTAuthorizationHooks } from "./_SMARTAuthorizationHooks.sol";
-
+import { ZeroAddressNotAllowed } from "../../common/CommonErrors.sol";
 /// @title Internal Core Logic for SMART Tokens
 /// @notice Base contract containing the core state, logic, events, and authorization hooks for SMART tokens.
 /// @dev This abstract contract is intended to be inherited by both standard (SMART) and upgradeable (SMARTUpgradeable)
 ///      implementations. It defines shared state variables, internal logic, and hooks for extensibility.
+
 abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     // -- Errors --
-    error ZeroAddressNotAllowed();
     error InvalidModuleImplementation();
     error DuplicateModule(address module);
     error MintNotCompliant();
     error TransferNotCompliant();
     error ModuleAlreadyAdded();
     error ModuleNotFound();
+    error CannotRecoverSelf();
+    error InsufficientTokenBalance();
 
     // -- Storage Variables --
     string internal __name; // Token name (mutable)
@@ -39,6 +43,9 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     // Events defined in ISMART (e.g., UpdatedTokenInformation, ComplianceModuleAdded) are emitted by internal logic.
     event TransferCompleted(address indexed from, address indexed to, uint256 amount);
     event MintCompleted(address indexed to, uint256 amount);
+
+    /// @notice Emitted when mistakenly sent ERC20 tokens are recovered from the contract.
+    event TokenRecovered(address indexed token, address indexed to, uint256 amount);
 
     // -- State-Changing Functions (Admin/Authorized) --
 
@@ -136,6 +143,27 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         _authorizeUpdateVerificationSettings();
         __requiredClaimTopics = requiredClaimTopics_;
         emit RequiredClaimTopicsUpdated(__requiredClaimTopics);
+    }
+
+    /// @notice Recovers mistakenly sent ERC20 tokens from this contract's address.
+    /// @dev Requires authorization via `_authorizeRecoverERC20`. Cannot recover this contract's own token.
+    ///      Uses SafeERC20's safeTransfer.
+    /// @param token The address of the ERC20 token to recover.
+    /// @param to The recipient address for the recovered tokens.
+    /// @param amount The amount of tokens to recover.
+    function recoverERC20(address token, address to, uint256 amount) external virtual {
+        _authorizeRecoverERC20(); // Authorization check
+
+        if (token == address(this)) revert CannotRecoverSelf();
+        if (token == address(0)) revert ZeroAddressNotAllowed();
+        if (to == address(0)) revert ZeroAddressNotAllowed();
+        if (amount == 0) return;
+
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        if (balance < amount) revert InsufficientTokenBalance();
+
+        SafeERC20.safeTransfer(IERC20(token), to, amount);
+        emit TokenRecovered(token, to, amount);
     }
 
     // -- View Functions --

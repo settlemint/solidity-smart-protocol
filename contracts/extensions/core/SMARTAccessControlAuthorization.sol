@@ -57,6 +57,14 @@ abstract contract SMARTAccessControlAuthorization is _SMARTAuthorizationHooks {
         if (!hasRole(MINTER_ROLE, sender)) revert Unauthorized(sender);
     }
 
+    /// @dev Authorizes recovering mistakenly sent ERC20 tokens from the contract.
+    ///      Checks if the `_msgSender()` has the `RECOVER_ERC20_ROLE`.
+    /// @inheritdoc _SMARTAuthorizationHooks
+    function _authorizeRecoverERC20() internal view virtual override {
+        address sender = _msgSender();
+        if (!hasRole(TOKEN_ADMIN_ROLE, sender)) revert Unauthorized(sender);
+    }
+
     // -- Abstract Dependencies (from AccessControl) --
 
     /// @dev Returns the address of the current message sender.
