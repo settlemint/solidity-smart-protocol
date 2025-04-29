@@ -3,7 +3,10 @@ import IdentityRegistryModule from "./identityRegistry";
 import IdentityRegistryStorageModule from "./identityRegistryStorage";
 
 const ConfigurationModule = buildModule("ConfigurationModule", (m) => {
-	// Import dependencies
+	// Define the trustedForwarder parameter
+	const trustedForwarder = m.getParameter("trustedForwarder");
+
+	// Import dependencies. Parameters are passed implicitly.
 	const { proxy: registryProxy, contract: identityRegistry } = m.useModule(
 		IdentityRegistryModule,
 	);

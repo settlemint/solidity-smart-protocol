@@ -4,14 +4,17 @@ import IdentityRegistryStorageModule from "./identityRegistryStorage";
 import TrustedIssuersRegistryModule from "./trustedIssuersRegistry";
 
 const IdentityRegistryModule = buildModule("IdentityRegistryModule", (m) => {
+	// Define the trustedForwarder parameter
+	const trustedForwarder = m.getParameter("trustedForwarder");
+
 	const deployer = m.getAccount(0);
 
-	// Import dependencies
+	// Import dependencies. Parameters are passed implicitly.
 	const { proxy: storageProxy } = m.useModule(IdentityRegistryStorageModule);
 	const { proxy: issuersProxy } = m.useModule(TrustedIssuersRegistryModule);
 
-	// Deploy implementation contract
-	const registryImpl = m.contract("SMARTIdentityRegistry", []);
+	// Deploy implementation contract, passing the forwarder address
+	const registryImpl = m.contract("SMARTIdentityRegistry", [trustedForwarder]);
 
 	// Prepare initialization data
 	const registryInterface = new ethers.Interface([

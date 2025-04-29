@@ -35,11 +35,11 @@ contract InfrastructureUtils is Test {
     constructor(address platformAdmin) {
         // --- Deploy Implementations ---
         Identity identityImpl = new Identity(address(0), true); // Deploy Identity impl needed by authority
-        SMARTIdentityRegistryStorage storageImpl = new SMARTIdentityRegistryStorage();
-        SMARTTrustedIssuersRegistry issuersImpl = new SMARTTrustedIssuersRegistry();
-        SMARTCompliance complianceImpl = new SMARTCompliance();
-        SMARTIdentityFactory factoryImpl = new SMARTIdentityFactory();
-        SMARTIdentityRegistry registryImpl = new SMARTIdentityRegistry();
+        SMARTIdentityRegistryStorage storageImpl = new SMARTIdentityRegistryStorage(address(0));
+        SMARTTrustedIssuersRegistry issuersImpl = new SMARTTrustedIssuersRegistry(address(0));
+        SMARTCompliance complianceImpl = new SMARTCompliance(address(0));
+        SMARTIdentityFactory factoryImpl = new SMARTIdentityFactory(address(0));
+        SMARTIdentityRegistry registryImpl = new SMARTIdentityRegistry(address(0));
 
         // --- Deploy Proxies and Initialize using Helper ---
         vm.startPrank(platformAdmin); // Use admin for initialization and binding

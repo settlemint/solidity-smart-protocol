@@ -4,10 +4,15 @@ import { ethers } from "ethers";
 const IdentityRegistryStorageModule = buildModule(
 	"IdentityRegistryStorageModule",
 	(m) => {
+		// Define the trustedForwarder parameter
+		const trustedForwarder = m.getParameter("trustedForwarder");
+
 		const deployer = m.getAccount(0);
 
-		// Deploy implementation contract
-		const storageImpl = m.contract("SMARTIdentityRegistryStorage", []);
+		// Deploy implementation contract, passing the forwarder address
+		const storageImpl = m.contract("SMARTIdentityRegistryStorage", [
+			trustedForwarder,
+		]);
 
 		// Prepare initialization data
 		const storageInterface = new ethers.Interface([

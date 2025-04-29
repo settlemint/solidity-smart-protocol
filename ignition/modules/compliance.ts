@@ -2,10 +2,13 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { ethers } from "ethers";
 
 const ComplianceModule = buildModule("ComplianceModule", (m) => {
+	// Define the trustedForwarder parameter
+	const trustedForwarder = m.getParameter("trustedForwarder");
+
 	const deployer = m.getAccount(0);
 
-	// Deploy implementation contract
-	const complianceImpl = m.contract("SMARTCompliance", []);
+	// Deploy implementation contract, passing the forwarder address
+	const complianceImpl = m.contract("SMARTCompliance", [trustedForwarder]);
 
 	// Prepare initialization data
 	const complianceInterface = new ethers.Interface([

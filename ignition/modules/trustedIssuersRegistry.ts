@@ -4,10 +4,15 @@ import { ethers } from "ethers";
 const TrustedIssuersRegistryModule = buildModule(
 	"TrustedIssuersRegistryModule",
 	(m) => {
+		// Define the trustedForwarder parameter
+		const trustedForwarder = m.getParameter("trustedForwarder");
+
 		const deployer = m.getAccount(0);
 
-		// Deploy implementation contract
-		const issuersImpl = m.contract("SMARTTrustedIssuersRegistry", []);
+		// Deploy implementation contract, passing the forwarder address
+		const issuersImpl = m.contract("SMARTTrustedIssuersRegistry", [
+			trustedForwarder,
+		]);
 
 		// Prepare initialization data
 		const issuersInterface = new ethers.Interface([
