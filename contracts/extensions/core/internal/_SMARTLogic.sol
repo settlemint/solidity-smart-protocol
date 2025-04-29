@@ -287,8 +287,8 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     /// @param to The recipient address.
     /// @param amount The amount that was minted.
     function _smart_afterMintLogic(address to, uint256 amount) internal virtual {
-        __compliance.created(address(this), to, amount);
         emit MintCompleted(to, amount);
+        __compliance.created(address(this), to, amount);
     }
 
     /// @notice Internal logic executed before a transfer operation (transfer, transferFrom).
@@ -310,8 +310,8 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     /// @param to The recipient address.
     /// @param amount The amount that was transferred.
     function _smart_afterTransferLogic(address from, address to, uint256 amount) internal virtual {
-        __compliance.transferred(address(this), from, to, amount);
         emit TransferCompleted(from, to, amount);
+        __compliance.transferred(address(this), from, to, amount);
     }
 
     /// @notice Internal logic executed after a burn operation.
@@ -333,14 +333,12 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         if (_module == address(0)) revert ZeroAddressNotAllowed();
 
         // Check if the module supports the ISMARTComplianceModule interface
-        bool supportsInterface;
         try IERC165(_module).supportsInterface(type(ISMARTComplianceModule).interfaceId) returns (bool supported) {
-            supportsInterface = supported;
+            if (!supported) {
+                revert InvalidModuleImplementation(); // Revert if the interface is not supported
+            }
         } catch {
             revert InvalidModuleImplementation(); // Revert if the supportsInterface call fails
-        }
-        if (!supportsInterface) {
-            revert InvalidModuleImplementation(); // Revert if the interface is not supported
         }
 
         // Validate the provided parameters using the module's validation function

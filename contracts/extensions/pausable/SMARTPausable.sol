@@ -5,7 +5,6 @@ pragma solidity ^0.8.27;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // Note: We don't inherit ERC20Pausable directly to avoid state variable clashes if _SMARTPausableLogic is used.
 // Instead, we inherit Pausable logic via _SMARTPausableLogic and re-apply the modifier.
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 
 // Base contract imports

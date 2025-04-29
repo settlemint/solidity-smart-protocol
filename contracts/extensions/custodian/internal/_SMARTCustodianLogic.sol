@@ -339,6 +339,9 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
             emit AddressFrozen(newWallet, false);
         }
 
+        // Throw event before external calls to avoid reentrancy
+        emit RecoverySuccess(lostWallet, newWallet, investorOnchainID);
+
         // Update identity registry (Requires REGISTRAR_ROLE)
         if (lostWalletVerified) {
             uint16 country = registry.investorCountry(lostWallet);
@@ -353,8 +356,6 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
             // If lost wallet wasn't verified, but new one is, we don't need to do anything
             // If neither were verified initially, this state is unreachable due to the check above.
         }
-
-        emit RecoverySuccess(lostWallet, newWallet, investorOnchainID);
     }
 
     // -- Internal Hook Helper Functions --
