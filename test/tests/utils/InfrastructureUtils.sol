@@ -50,19 +50,22 @@ contract InfrastructureUtils is Test {
         // Storage Proxy
         bytes memory storageInitData = abi.encodeCall(SMARTIdentityRegistryStorage.initialize, (platformAdmin));
         identityRegistryStorage = SMARTIdentityRegistryStorage(_deployProxy(address(storageImpl), storageInitData));
+        vm.label(address(identityRegistryStorage), "Identity Registry Storage");
 
         // Issuers Proxy
         bytes memory issuersInitData = abi.encodeCall(SMARTTrustedIssuersRegistry.initialize, (platformAdmin));
         trustedIssuersRegistry = SMARTTrustedIssuersRegistry(_deployProxy(address(issuersImpl), issuersInitData));
+        vm.label(address(trustedIssuersRegistry), "Trusted Issuers Registry");
 
         // Compliance Proxy
         bytes memory complianceInitData = abi.encodeCall(SMARTCompliance.initialize, (platformAdmin));
         compliance = SMARTCompliance(_deployProxy(address(complianceImpl), complianceInitData));
-
+        vm.label(address(compliance), "Compliance");
         // Factory Proxy - Pass ImplementationAuthority address
         bytes memory factoryInitData =
             abi.encodeCall(SMARTIdentityFactory.initialize, (platformAdmin, address(implementationAuthority)));
         identityFactory = SMARTIdentityFactory(_deployProxy(address(factoryImpl), factoryInitData));
+        vm.label(address(identityFactory), "Identity Factory");
 
         // Registry Proxy
         bytes memory registryInitData = abi.encodeCall(
@@ -70,18 +73,20 @@ contract InfrastructureUtils is Test {
             (platformAdmin, address(identityRegistryStorage), address(trustedIssuersRegistry))
         );
         identityRegistry = SMARTIdentityRegistry(_deployProxy(address(registryImpl), registryInitData));
+        vm.label(address(identityRegistry), "Identity Registry");
 
         // Bind Registry to Storage
         identityRegistryStorage.bindIdentityRegistry(address(identityRegistry));
 
         // --- Deploy Other Contracts ---
         mockedComplianceModule = new MockedComplianceModule();
+        vm.label(address(mockedComplianceModule), "Mocked Compliance Module");
         countryAllowListComplianceModule = new CountryAllowListComplianceModule();
+        vm.label(address(countryAllowListComplianceModule), "Country Allow List Compliance Module");
         countryBlockListComplianceModule = new CountryBlockListComplianceModule();
+        vm.label(address(countryBlockListComplianceModule), "Country Block List Compliance Module");
 
         vm.stopPrank();
-
-        // --- Instantiate Utility Contracts ---
     }
 
     // --- Helper Functions ---

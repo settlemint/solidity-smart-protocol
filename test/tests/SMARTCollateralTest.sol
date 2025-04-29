@@ -7,6 +7,7 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { ClaimUtils } from "./utils/ClaimUtils.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { InsufficientCollateral } from "../../contracts/extensions/collateral/SMARTCollateralErrors.sol";
+import { console } from "forge-std/console.sol";
 
 abstract contract SMARTCollateralTest is SMARTTest {
     uint256 internal constant COLLATERAL_AMOUNT = 1_000_000 ether; // Example collateral amount
@@ -14,11 +15,10 @@ abstract contract SMARTCollateralTest is SMARTTest {
 
     // --- Test Cases ---
 
-    function test_Mint_Success_WithValidCollateralClaim() public {
+    function test_Collateral_Mint_Success_WithValidCollateralClaim() public {
         // 1. Issue a valid collateral claim to the token's identity
-        address tokenIdentityAddr = _getTokenIdentityAddress();
         uint256 expiry = block.timestamp + 1 days;
-        claimUtils.issueCollateralClaim(tokenIdentityAddr, tokenIssuer, COLLATERAL_AMOUNT, expiry);
+        claimUtils.issueCollateralClaim(address(token), tokenIssuer, COLLATERAL_AMOUNT, expiry);
 
         // 2. Mint tokens (amount <= collateral)
         // _mintInitialBalances(); // Avoid calling this here as it might interfere with collateral logic
@@ -33,12 +33,11 @@ abstract contract SMARTCollateralTest is SMARTTest {
         assertEq(token.totalSupply(), initialSupply + MINT_AMOUNT, "Total supply wrong after mint");
     }
 
-    function test_Mint_Fail_InsufficientCollateral() public {
+    function test_Collateral_Mint_Fail_InsufficientCollateral() public {
         // 1. Issue a collateral claim with an amount LESS than the intended mint amount
-        address tokenIdentityAddr = _getTokenIdentityAddress();
         uint256 insufficientCollateral = MINT_AMOUNT / 2;
         uint256 expiry = block.timestamp + 1 days;
-        claimUtils.issueCollateralClaim(tokenIdentityAddr, tokenIssuer, insufficientCollateral, expiry);
+        claimUtils.issueCollateralClaim(address(token), tokenIssuer, insufficientCollateral, expiry);
 
         // 2. Attempt to mint tokens (amount > collateral)
         uint256 currentSupply = token.totalSupply(); // Could be 0
@@ -48,11 +47,10 @@ abstract contract SMARTCollateralTest is SMARTTest {
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, MINT_AMOUNT);
     }
 
-    function test_Mint_Success_MultipleMintsWithinLimit() public {
+    function test_Collateral_Mint_Success_MultipleMintsWithinLimit() public {
         // 1. Issue a valid collateral claim
-        address tokenIdentityAddr = _getTokenIdentityAddress();
         uint256 expiry = block.timestamp + 1 days;
-        claimUtils.issueCollateralClaim(tokenIdentityAddr, tokenIssuer, COLLATERAL_AMOUNT, expiry);
+        claimUtils.issueCollateralClaim(address(token), tokenIssuer, COLLATERAL_AMOUNT, expiry);
 
         // 2. Mint first batch
         uint256 mintAmount1 = COLLATERAL_AMOUNT / 4;
@@ -68,12 +66,11 @@ abstract contract SMARTCollateralTest is SMARTTest {
         assertEq(supplyAfter2, supplyAfter1 + mintAmount2, "Supply 2 mismatch");
     }
 
-    function test_Mint_Fail_MultipleMintsExceedLimit() public {
+    function test_Collateral_Mint_Fail_MultipleMintsExceedLimit() public {
         // 1. Issue a valid collateral claim
-        address tokenIdentityAddr = _getTokenIdentityAddress();
         uint256 specificCollateral = 500 ether;
         uint256 expiry = block.timestamp + 1 days;
-        claimUtils.issueCollateralClaim(tokenIdentityAddr, tokenIssuer, specificCollateral, expiry);
+        claimUtils.issueCollateralClaim(address(token), tokenIssuer, specificCollateral, expiry);
 
         // 2. Mint first batch (within limit)
         uint256 mintAmount1 = specificCollateral / 2;
@@ -88,13 +85,15 @@ abstract contract SMARTCollateralTest is SMARTTest {
         tokenUtils.mintToken(address(token), tokenIssuer, clientJP, mintAmount2);
     }
 
-    function test_Mint_Fail_ExpiredCollateralClaim() public {
-        // 1. Issue a collateral claim with an expiry in the past
-        address tokenIdentityAddr = _getTokenIdentityAddress();
-        uint256 pastExpiry = block.timestamp - 1 days; // Expired
-        claimUtils.issueCollateralClaim(tokenIdentityAddr, tokenIssuer, COLLATERAL_AMOUNT, pastExpiry);
+    function test_Collateral_Mint_Fail_ExpiredCollateralClaim() public {
+        // 1. Issue a collateral claim with an expiry slightly in the future
+        uint256 futureExpiry = block.timestamp + 1 hours; // Set expiry 1 hour from now
+        claimUtils.issueCollateralClaim(address(token), tokenIssuer, COLLATERAL_AMOUNT, futureExpiry);
 
-        // 2. Attempt to mint tokens
+        // 2. Advance time past the expiry date using vm.warp
+        vm.warp(futureExpiry + 1); // Advance time to 1 second after expiry
+
+        // 3. Attempt to mint tokens - the claim should now be expired
         uint256 currentSupply = token.totalSupply();
         uint256 requiredSupply = currentSupply + MINT_AMOUNT;
 
@@ -105,7 +104,7 @@ abstract contract SMARTCollateralTest is SMARTTest {
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, MINT_AMOUNT);
     }
 
-    function test_Mint_Fail_NoCollateralClaim() public {
+    function test_Collateral_Mint_Fail_NoCollateralClaim() public {
         // 1. Do NOT issue any collateral claim
 
         // 2. Attempt to mint tokens
@@ -119,16 +118,13 @@ abstract contract SMARTCollateralTest is SMARTTest {
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, MINT_AMOUNT);
     }
 
-    function test_Mint_Fail_UntrustedIssuer() public {
-        // 1. Setup an untrusted issuer
-        address untrustedIssuerWallet = makeAddr("untrustedIssuerWallet");
+    function test_Collateral_Mint_Fail_UntrustedIssuer() public {
+        // Setup an untrusted issuer
         uint256 untrustedIssuerPK = 0xBAD155;
+        address untrustedIssuerWallet = vm.addr(untrustedIssuerPK);
         vm.label(untrustedIssuerWallet, "Untrusted Issuer Wallet");
 
-        // Deploy identity for the untrusted issuer
-
         // Deploy identity + add management key controlled by the wallet itself
-        vm.prank(platformAdmin);
         address untrustedIssuerIdentityAddr = identityUtils.createIdentity(untrustedIssuerWallet);
         vm.label(untrustedIssuerIdentityAddr, "Untrusted Issuer Identity");
 
@@ -141,13 +137,12 @@ abstract contract SMARTCollateralTest is SMARTTest {
             infrastructureUtils.identityFactory()
         );
 
-        address tokenIdentityAddr = _getTokenIdentityAddress();
         uint256 expiry = block.timestamp + 1 days;
 
         // Create the claim signature using the untrusted utils
-        untrustedClaimUtils.issueCollateralClaim(tokenIdentityAddr, tokenIssuer, COLLATERAL_AMOUNT, expiry);
+        untrustedClaimUtils.issueCollateralClaim(address(token), tokenIssuer, COLLATERAL_AMOUNT, expiry);
 
-        // 3. Attempt to mint tokens
+        // Attempt to mint tokens
         uint256 currentSupply = token.totalSupply();
         uint256 requiredSupply = currentSupply + MINT_AMOUNT;
 
@@ -158,12 +153,5 @@ abstract contract SMARTCollateralTest is SMARTTest {
             abi.encodeWithSelector(InsufficientCollateral.selector, requiredSupply, 0) // Available collateral is 0
         );
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, MINT_AMOUNT);
-    }
-
-    // Helper to get token identity address
-    function _getTokenIdentityAddress() internal view returns (address) {
-        // Cast token to SMART to access onchainID()
-        // Ensure 'token' is the correct variable holding the deployed SMART token instance
-        return ISMART(payable(address(token))).onchainID();
     }
 }

@@ -163,6 +163,8 @@ contract ClaimUtils is Test {
         address tokenIdentityAddr = _identityFactory.getTokenIdentity(tokenAddr_);
         require(tokenIdentityAddr != address(0), "ClaimUtils: Token identity not found");
 
+        // Add claim needs to be done by the token owner.
+        // When changing owner we also need to update the token identity keys.
         _issueClaimInternal(tokenIdentityAddr, tokenOwner_, claimTopic, claimData);
     }
 

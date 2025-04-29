@@ -21,42 +21,42 @@ abstract contract SMARTCustodianTest is SMARTTest {
     //                         ADDRESS FREEZE TESTS
     // =====================================================================
 
-    function test_FreezeAddress_SetAndCheck() public {
+    function test_Custodian_FreezeAddress_SetAndCheck() public {
         _setUpCustodianTest(); // Call setup explicitly
         assertFalse(tokenUtils.isFrozen(address(token), clientBE), "Should not be frozen initially");
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         assertTrue(tokenUtils.isFrozen(address(token), clientBE), "Should be frozen");
     }
 
-    function test_FreezeAddress_TransferFromFrozen_Reverts() public {
+    function test_Custodian_FreezeAddress_TransferFromFrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.SenderAddressFrozen.selector));
         tokenUtils.transferToken(address(token), clientBE, clientJP, 1 ether);
     }
 
-    function test_FreezeAddress_TransferToFrozen_Reverts() public {
+    function test_Custodian_FreezeAddress_TransferToFrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientJP, true);
         vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.RecipientAddressFrozen.selector));
         tokenUtils.transferToken(address(token), clientBE, clientJP, 1 ether);
     }
 
-    function test_FreezeAddress_MintToFrozen_Reverts() public {
+    function test_Custodian_FreezeAddress_MintToFrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.RecipientAddressFrozen.selector));
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, 1 ether);
     }
 
-    function test_FreezeAddress_RedeemFromFrozen_Reverts() public {
+    function test_Custodian_FreezeAddress_RedeemFromFrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.SenderAddressFrozen.selector));
         tokenUtils.redeemToken(address(token), clientBE, 1 ether);
     }
 
-    function test_FreezeAddress_UnfreezeAndCheck() public {
+    function test_Custodian_FreezeAddress_UnfreezeAndCheck() public {
         _setUpCustodianTest(); // Call setup explicitly
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         assertTrue(tokenUtils.isFrozen(address(token), clientBE), "Should be frozen before unfreeze");
@@ -64,7 +64,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertFalse(tokenUtils.isFrozen(address(token), clientBE), "Should be unfrozen");
     }
 
-    function test_FreezeAddress_OperationsAfterUnfreeze_Succeed() public {
+    function test_Custodian_FreezeAddress_OperationsAfterUnfreeze_Succeed() public {
         _setUpCustodianTest(); // Call setup explicitly
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, false);
@@ -95,7 +95,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertEq(token.balanceOf(clientBE), balBESnapRedeem - redeemAmount, "Redeem after unfreeze failed");
     }
 
-    function test_FreezeAddress_AccessControl_Reverts() public {
+    function test_Custodian_FreezeAddress_AccessControl_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.setAddressFrozenAsExecutor(address(token), clientBE, clientBE, true);
@@ -107,7 +107,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
     //                     PARTIAL TOKEN FREEZE TESTS
     // =====================================================================
 
-    function test_PartialFreeze_FreezeAndCheck() public {
+    function test_Custodian_PartialFreeze_FreezeAndCheck() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = 100 ether;
         assertEq(tokenUtils.getFrozenTokens(address(token), clientBE), 0, "Should have 0 frozen initially");
@@ -115,7 +115,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertEq(tokenUtils.getFrozenTokens(address(token), clientBE), freezeAmount, "Frozen amount incorrect");
     }
 
-    function test_PartialFreeze_FreezeMoreThanAvailable_Reverts() public {
+    function test_Custodian_PartialFreeze_FreezeMoreThanAvailable_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 currentBalance = token.balanceOf(clientBE);
         uint256 freezeAmount = currentBalance + 1 ether;
@@ -129,7 +129,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
     }
 
-    function test_PartialFreeze_UnfreezeAndCheck() public {
+    function test_Custodian_PartialFreeze_UnfreezeAndCheck() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = 100 ether;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -148,7 +148,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         );
     }
 
-    function test_PartialFreeze_UnfreezeMoreThanFrozen_Reverts() public {
+    function test_Custodian_PartialFreeze_UnfreezeMoreThanFrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = 100 ether;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -164,7 +164,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         tokenUtils.unfreezePartialTokens(address(token), tokenIssuer, clientBE, unfreezeAmount);
     }
 
-    function test_PartialFreeze_TransferLessThanUnfrozen_Succeeds() public {
+    function test_Custodian_PartialFreeze_TransferLessThanUnfrozen_Succeeds() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -183,7 +183,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertEq(tokenUtils.getFrozenTokens(address(token), clientBE), frozenSnap, "Frozen amount changed");
     }
 
-    function test_PartialFreeze_TransferExactlyUnfrozen_Succeeds() public {
+    function test_Custodian_PartialFreeze_TransferExactlyUnfrozen_Succeeds() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -202,7 +202,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertEq(tokenUtils.getFrozenTokens(address(token), clientBE), frozenSnap, "Frozen amount changed");
     }
 
-    function test_PartialFreeze_TransferMoreThanUnfrozen_Reverts() public {
+    function test_Custodian_PartialFreeze_TransferMoreThanUnfrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -218,7 +218,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         tokenUtils.transferToken(address(token), clientBE, clientJP, transferAmount);
     }
 
-    function test_PartialFreeze_BurnLessThanUnfrozen_Succeeds() public {
+    function test_Custodian_PartialFreeze_BurnLessThanUnfrozen_Succeeds() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -235,7 +235,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertEq(tokenUtils.getFrozenTokens(address(token), clientBE), frozenSnap, "Frozen amount changed on burn");
     }
 
-    function test_PartialFreeze_BurnExactlyUnfrozen_Succeeds() public {
+    function test_Custodian_PartialFreeze_BurnExactlyUnfrozen_Succeeds() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -252,7 +252,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertEq(tokenUtils.getFrozenTokens(address(token), clientBE), frozenSnap, "Frozen amount changed on burn");
     }
 
-    function test_PartialFreeze_BurnMoreThanUnfrozen_SucceedsAndUnfreezes() public {
+    function test_Custodian_PartialFreeze_BurnMoreThanUnfrozen_SucceedsAndUnfreezes() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 totalBalance = token.balanceOf(clientBE);
         uint256 freezeAmount = totalBalance / 2;
@@ -275,7 +275,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         );
     }
 
-    function test_PartialFreeze_BurnMoreThanTotal_Reverts() public {
+    function test_Custodian_PartialFreeze_BurnMoreThanTotal_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 totalBalance = token.balanceOf(clientBE);
         uint256 freezeAmount = totalBalance / 2;
@@ -290,7 +290,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         tokenUtils.burnToken(address(token), tokenIssuer, clientBE, burnAmount);
     }
 
-    function test_PartialFreeze_RedeemLessThanUnfrozen_Succeeds() public {
+    function test_Custodian_PartialFreeze_RedeemLessThanUnfrozen_Succeeds() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -308,7 +308,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertEq(tokenUtils.getFrozenTokens(address(token), clientBE), frozenSnap, "Frozen amount changed on redeem");
     }
 
-    function test_PartialFreeze_RedeemMoreThanUnfrozen_Reverts() public {
+    function test_Custodian_PartialFreeze_RedeemMoreThanUnfrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -325,7 +325,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         tokenUtils.redeemToken(address(token), clientBE, redeemAmount);
     }
 
-    function test_PartialFreeze_AccessControl_Reverts() public {
+    function test_Custodian_PartialFreeze_AccessControl_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.freezePartialTokensAsExecutor(address(token), clientBE, clientBE, 1 ether);
@@ -338,7 +338,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
     //                      FORCED TRANSFER TESTS
     // =====================================================================
 
-    function test_ForcedTransfer_Success() public {
+    function test_Custodian_ForcedTransfer_Success() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 transferAmount = 100 ether;
         uint256 balBESnap = token.balanceOf(clientBE);
@@ -350,7 +350,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertEq(token.balanceOf(clientJP), balJPSnap + transferAmount, "Receiver balance wrong");
     }
 
-    function test_ForcedTransfer_InsufficientTotalBalance_Reverts() public {
+    function test_Custodian_ForcedTransfer_InsufficientTotalBalance_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 currentSenderBalance = token.balanceOf(clientBE);
         uint256 excessiveAmount = currentSenderBalance + 1 wei;
@@ -363,7 +363,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         tokenUtils.forcedTransfer(address(token), tokenIssuer, clientBE, clientJP, excessiveAmount);
     }
 
-    function test_ForcedTransfer_FromFrozenSender_Succeeds() public {
+    function test_Custodian_ForcedTransfer_FromFrozenSender_Succeeds() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 transferAmount = 10 ether;
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
@@ -379,7 +379,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertTrue(tokenUtils.isFrozen(address(token), clientBE), "Sender should still be frozen");
     }
 
-    function test_ForcedTransfer_ToFrozenReceiver_Succeeds() public {
+    function test_Custodian_ForcedTransfer_ToFrozenReceiver_Succeeds() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 transferAmount = 10 ether;
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientJP, true);
@@ -397,7 +397,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
 
     // --- Forced Transfer with Partial Freeze Scenarios ---
 
-    function test_ForcedTransfer_PartialFreeze_LessThanUnfrozen_Succeeds() public {
+    function test_Custodian_ForcedTransfer_PartialFreeze_LessThanUnfrozen_Succeeds() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -416,7 +416,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertEq(tokenUtils.getFrozenTokens(address(token), clientBE), currentFrozen, "Frozen amount changed");
     }
 
-    function test_ForcedTransfer_PartialFreeze_ExactlyUnfrozen_Succeeds() public {
+    function test_Custodian_ForcedTransfer_PartialFreeze_ExactlyUnfrozen_Succeeds() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -435,7 +435,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         assertEq(tokenUtils.getFrozenTokens(address(token), clientBE), currentFrozen, "Frozen amount changed");
     }
 
-    function test_ForcedTransfer_PartialFreeze_MoreThanUnfrozen_SucceedsAndUnfreezes() public {
+    function test_Custodian_ForcedTransfer_PartialFreeze_MoreThanUnfrozen_SucceedsAndUnfreezes() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -460,7 +460,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         );
     }
 
-    function test_ForcedTransfer_PartialFreeze_ExactlyRemainingBalance_SucceedsAndUnfreezes() public {
+    function test_Custodian_ForcedTransfer_PartialFreeze_ExactlyRemainingBalance_SucceedsAndUnfreezes() public {
         _setUpCustodianTest(); // Call setup explicitly
         uint256 freezeAmount = token.balanceOf(clientBE) / 2;
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, clientBE, freezeAmount);
@@ -496,7 +496,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         );
     }
 
-    function test_ForcedTransfer_AccessControl_Reverts() public {
+    function test_Custodian_ForcedTransfer_AccessControl_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.forcedTransferAsExecutor(address(token), clientBE, clientBE, clientJP, 1 ether);
@@ -506,7 +506,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
     //                       ADDRESS RECOVERY TESTS
     // =====================================================================
 
-    function test_AddressRecovery_Success() public {
+    function test_Custodian_AddressRecovery_Success() public {
         _setUpCustodianTest(); // Call setup explicitly
         address lostWallet = clientBE;
         address newWallet = makeAddr("New Wallet BE");
@@ -533,7 +533,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         );
     }
 
-    function test_AddressRecovery_WithFrozenState_Success() public {
+    function test_Custodian_AddressRecovery_WithFrozenState_Success() public {
         _setUpCustodianTest(); // Call setup explicitly
         address lostWallet = clientJP;
         address newWallet = makeAddr("New Wallet JP");
@@ -566,7 +566,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         );
     }
 
-    function test_AddressRecovery_NoBalance_Reverts() public {
+    function test_Custodian_AddressRecovery_NoBalance_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         address lostWallet = clientBE;
         address newWallet = makeAddr("New Wallet BE");
@@ -583,7 +583,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
     }
 
-    function test_AddressRecovery_NewWalletFrozen_Reverts() public {
+    function test_Custodian_AddressRecovery_NewWalletFrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         address lostWallet = clientBE;
         address newWallet = makeAddr("New Wallet BE");
@@ -597,7 +597,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
     }
 
-    function test_AddressRecovery_AccessControl_Reverts() public {
+    function test_Custodian_AddressRecovery_AccessControl_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         address lostWallet = clientBE;
         address newWallet = makeAddr("New Wallet BE");

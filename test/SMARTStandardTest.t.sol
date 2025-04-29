@@ -8,10 +8,17 @@ import { SMARTCoreTest } from "./tests/SMARTCoreTest.sol";
 import { SMARTBurnableTest } from "./tests/SMARTBurnableTest.sol";
 import { SMARTPausableTest } from "./tests/SMARTPausableTest.sol";
 import { SMARTCustodianTest } from "./tests/SMARTCustodianTest.sol";
+import { SMARTCollateralTest } from "./tests/SMARTCollateralTest.sol";
 import { ISMART } from "../contracts/interface/ISMART.sol";
 // Rename contract to reflect its purpose
 
-contract SMARTStandardTest is SMARTCoreTest, SMARTBurnableTest, SMARTPausableTest, SMARTCustodianTest {
+contract SMARTStandardTest is
+    SMARTCoreTest,
+    SMARTBurnableTest,
+    SMARTPausableTest,
+    SMARTCustodianTest,
+    SMARTCollateralTest
+{
     function _setupToken() internal override {
         // Use TokenUtils to create the token, passing the bondFactory from base
         address bondAddress = tokenUtils.createToken(

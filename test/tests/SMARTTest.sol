@@ -103,6 +103,7 @@ abstract contract SMARTTest is Test {
         _setupToken();
 
         assertNotEq(address(token), address(0), "Token not deployed");
+        vm.label(address(token), "Token");
 
         // Grant REGISTRAR_ROLE to the token contract on the Identity Registry
         // Needed for custody address recovery
@@ -159,16 +160,23 @@ abstract contract SMARTTest is Test {
         claimTopics[1] = TestConstants.CLAIM_TOPIC_AML;
         claimTopics[2] = TestConstants.CLAIM_TOPIC_COLLATERAL;
         // Use claimIssuer address directly, createIssuerIdentity handles creating the on-chain identity
-        identityUtils.createIssuerIdentity(claimIssuer, claimTopics);
+        vm.label(claimIssuer, "Claim Issuer");
+        address claimIssuerIdentity = identityUtils.createIssuerIdentity(claimIssuer, claimTopics);
+        vm.label(claimIssuerIdentity, "Claim Issuer Identity");
 
         // Now issue claims TO the token issuer
         claimUtils.issueAllClaims(tokenIssuer);
 
         // Create the client identities
-        identityUtils.createClientIdentity(clientBE, TestConstants.COUNTRY_CODE_BE);
-        identityUtils.createClientIdentity(clientJP, TestConstants.COUNTRY_CODE_JP);
-        identityUtils.createClientIdentity(clientUS, TestConstants.COUNTRY_CODE_US);
-        identityUtils.createClientIdentity(clientUnverified, TestConstants.COUNTRY_CODE_BE);
+        address clientBEIdentity = identityUtils.createClientIdentity(clientBE, TestConstants.COUNTRY_CODE_BE);
+        vm.label(clientBEIdentity, "Client BE Identity");
+        address clientJPIdentity = identityUtils.createClientIdentity(clientJP, TestConstants.COUNTRY_CODE_JP);
+        vm.label(clientJPIdentity, "Client JP Identity");
+        address clientUSIdentity = identityUtils.createClientIdentity(clientUS, TestConstants.COUNTRY_CODE_US);
+        vm.label(clientUSIdentity, "Client US Identity");
+        address clientUnverifiedIdentity =
+            identityUtils.createClientIdentity(clientUnverified, TestConstants.COUNTRY_CODE_BE);
+        vm.label(clientUnverifiedIdentity, "Client Unverified Identity");
 
         // Issue claims to clients
         claimUtils.issueAllClaims(clientBE);

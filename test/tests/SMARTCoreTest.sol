@@ -14,7 +14,7 @@ abstract contract SMARTCoreTest is SMARTTest {
         _setupDefaultCollateralClaim();
     }
 
-    function test_Mint_Success() public {
+    function test_Core_Mint_Success() public {
         _setUpCoreTest();
         // manual mint, because _mintInitialBalances resets the compliance counter
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, INITIAL_MINT_AMOUNT);
@@ -25,7 +25,7 @@ abstract contract SMARTCoreTest is SMARTTest {
         assertEq(mockComplianceModule.createdCallCount(), 3, "Mock created hook count incorrect after initial mints");
     }
 
-    function test_Mint_AccessControl_Reverts() public {
+    function test_Core_Mint_AccessControl_Reverts() public {
         _setUpCoreTest();
         vm.startPrank(clientBE); // Non-owner
         vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
@@ -33,7 +33,7 @@ abstract contract SMARTCoreTest is SMARTTest {
         vm.stopPrank();
     }
 
-    function test_Transfer_Success() public {
+    function test_Core_Transfer_Success() public {
         _setUpCoreTest();
         _mintInitialBalances();
         uint256 transferAmount = 100 ether;
@@ -48,7 +48,7 @@ abstract contract SMARTCoreTest is SMARTTest {
         assertEq(mockComplianceModule.transferredCallCount(), hookCountSnap + 1, "Hook count wrong");
     }
 
-    function test_Transfer_InsufficientBalance_Reverts() public {
+    function test_Core_Transfer_InsufficientBalance_Reverts() public {
         _setUpCoreTest();
         _mintInitialBalances();
         uint256 senderBalance = token.balanceOf(clientBE);
@@ -62,7 +62,7 @@ abstract contract SMARTCoreTest is SMARTTest {
         tokenUtils.transferToken(address(token), clientBE, clientJP, transferAmount);
     }
 
-    function test_Transfer_ToUnverified_Reverts() public {
+    function test_Core_Transfer_ToUnverified_Reverts() public {
         _setUpCoreTest();
         _mintInitialBalances();
         uint256 transferAmount = 100 ether;
@@ -73,7 +73,7 @@ abstract contract SMARTCoreTest is SMARTTest {
         assertEq(mockComplianceModule.transferredCallCount(), hookCountSnap, "Hook count changed on verification fail");
     }
 
-    function test_Transfer_MockComplianceBlocked_Reverts() public {
+    function test_Core_Transfer_MockComplianceBlocked_Reverts() public {
         _setUpCoreTest();
         _mintInitialBalances();
         uint256 transferAmount = 100 ether;
