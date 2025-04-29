@@ -9,7 +9,16 @@ import { Unauthorized } from "../../contracts/extensions/common/CommonErrors.sol
 import { TokenPaused, ExpectedPause } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
 
 abstract contract SMARTPausableTest is SMARTTest {
+    // Renamed from setUp, removed override
+    function _setUpPausableTest() internal /* override */ {
+        super.setUp();
+        // Ensure token has default collateral set up for pausable tests
+        _setupDefaultCollateralClaim();
+        _mintInitialBalances();
+    }
+
     function test_Pause_SetAndCheck() public {
+        _setUpPausableTest(); // Call setup explicitly
         // Cast to SMARTPausable for view function
         assertFalse(tokenUtils.isPaused(address(token)), "Token should not be paused initially");
         tokenUtils.pauseToken(address(token), tokenIssuer);
@@ -18,27 +27,28 @@ abstract contract SMARTPausableTest is SMARTTest {
     }
 
     function test_Pause_MintWhilePaused_Reverts() public {
-        _mintInitialBalances();
+        _setUpPausableTest(); // Call setup explicitly
         tokenUtils.pauseToken(address(token), tokenIssuer);
         vm.expectRevert(abi.encodeWithSelector(TokenPaused.selector));
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, 1 ether);
     }
 
     function test_Pause_TransferWhilePaused_Reverts() public {
-        _mintInitialBalances();
+        _setUpPausableTest(); // Call setup explicitly
         tokenUtils.pauseToken(address(token), tokenIssuer);
         vm.expectRevert(abi.encodeWithSelector(TokenPaused.selector));
         tokenUtils.transferToken(address(token), clientBE, clientJP, 1 ether);
     }
 
     function test_Pause_BurnWhilePaused_Reverts() public {
-        _mintInitialBalances();
+        _setUpPausableTest(); // Call setup explicitly
         tokenUtils.pauseToken(address(token), tokenIssuer);
         vm.expectRevert(abi.encodeWithSelector(TokenPaused.selector));
         tokenUtils.burnToken(address(token), tokenIssuer, clientBE, 1 ether);
     }
 
     function test_Unpause_SetAndCheck() public {
+        _setUpPausableTest(); // Call setup explicitly
         tokenUtils.pauseToken(address(token), tokenIssuer);
         // Cast to SMARTPausable for view function
         assertTrue(tokenUtils.isPaused(address(token)), "Token should be paused before unpause");
@@ -48,7 +58,7 @@ abstract contract SMARTPausableTest is SMARTTest {
     }
 
     function test_Unpause_OperationsAfterUnpause_Succeed() public {
-        _mintInitialBalances();
+        _setUpPausableTest(); // Call setup explicitly
         tokenUtils.pauseToken(address(token), tokenIssuer);
         tokenUtils.unpauseToken(address(token), tokenIssuer);
 
@@ -74,6 +84,7 @@ abstract contract SMARTPausableTest is SMARTTest {
     }
 
     function test_Pause_AccessControl_Reverts() public {
+        _setUpPausableTest(); // Call setup explicitly
         assertFalse(tokenUtils.isPaused(address(token)));
         vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.pauseToken(address(token), clientBE);

@@ -7,6 +7,7 @@ import { SMARTIdentityFactory } from "../../../contracts/SMARTIdentityFactory.so
 import { SMARTCompliance } from "../../../contracts/SMARTCompliance.sol";
 import { ISMART } from "../../../contracts/interface/ISMART.sol";
 import { SMARTToken } from "../../../contracts/SMARTToken.sol";
+import { TestConstants } from "../Constants.sol";
 import { SMARTTokenUpgradeable } from "../../../contracts/SMARTTokenUpgradeable.sol";
 import { SMARTIdentityRegistry } from "../../../contracts/SMARTIdentityRegistry.sol";
 import { SMARTPausable } from "../../../contracts/extensions/pausable/SMARTPausable.sol";
@@ -64,6 +65,7 @@ contract TokenUtils is Test {
             address(_compliance),
             claimTopics,
             modulePairs,
+            TestConstants.CLAIM_TOPIC_COLLATERAL,
             tokenIssuer_
         );
         address tokenAddress = address(token);
@@ -111,6 +113,7 @@ contract TokenUtils is Test {
             address(_compliance),
             claimTopics,
             modulePairs,
+            TestConstants.CLAIM_TOPIC_COLLATERAL,
             tokenIssuer_ // Initial owner
         );
 

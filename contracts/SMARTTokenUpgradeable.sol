@@ -31,6 +31,7 @@ import { SMARTCustodianUpgradeable } from "./extensions/custodian/SMARTCustodian
 import { SMARTCustodianAccessControlAuthorization } from
     "./extensions/custodian/SMARTCustodianAccessControlAuthorization.sol";
 import { SMARTRedeemableUpgradeable } from "./extensions/redeemable/SMARTRedeemableUpgradeable.sol";
+import { SMARTCollateralUpgradeable } from "./extensions/collateral/SMARTCollateralUpgradeable.sol";
 
 /// @title SMARTTokenUpgradeable
 /// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
@@ -43,6 +44,7 @@ contract SMARTTokenUpgradeable is
     SMARTPausableAccessControlAuthorization,
     SMARTCustodianAccessControlAuthorization,
     SMARTCustodianUpgradeable,
+    SMARTCollateralUpgradeable,
     SMARTPausableUpgradeable,
     SMARTBurnableUpgradeable,
     SMARTRedeemableUpgradeable,
@@ -72,6 +74,7 @@ contract SMARTTokenUpgradeable is
         address compliance_,
         uint256[] memory requiredClaimTopics_,
         ISMART.ComplianceModuleParamPair[] memory initialModulePairs_,
+        uint256 collateralProofTopic_,
         address initialOwner_
     )
         public
@@ -93,6 +96,7 @@ contract SMARTTokenUpgradeable is
         __SMARTRedeemable_init();
         __UUPSUpgradeable_init();
         __AccessControl_init();
+        __SMARTCollateral_init(collateralProofTopic_);
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
         _grantRole(BURNER_ROLE, initialOwner_);
@@ -205,7 +209,7 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTCollateralUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._beforeMint(to, amount);
     }

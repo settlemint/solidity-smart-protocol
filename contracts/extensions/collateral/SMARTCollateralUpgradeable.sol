@@ -3,8 +3,6 @@ pragma solidity ^0.8.27;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
@@ -29,7 +27,7 @@ abstract contract SMARTCollateralUpgradeable is Initializable, SMARTExtensionUpg
     /// initializer.
     ///      Uses the `onlyInitializing` modifier from `_SMARTCollateral_init` indirectly via `_SMARTCollateral_init`.
     /// @param collateralProofTopic_ The ERC-735 claim topic ID for collateral verification.
-    function __SMARTCollateralUpgradeable_init(uint256 collateralProofTopic_) internal onlyInitializing {
+    function __SMARTCollateral_init(uint256 collateralProofTopic_) internal onlyInitializing {
         // Call the internal initializer from the logic contract
         _SMARTCollateral_init(collateralProofTopic_);
     }

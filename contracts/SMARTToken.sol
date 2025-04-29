@@ -29,9 +29,10 @@ import { SMARTCustodian } from "./extensions/custodian/SMARTCustodian.sol";
 import { SMARTCustodianAccessControlAuthorization } from
     "./extensions/custodian/SMARTCustodianAccessControlAuthorization.sol";
 import { SMARTRedeemable } from "./extensions/redeemable/SMARTRedeemable.sol";
-
+import { SMARTCollateral } from "./extensions/collateral/SMARTCollateral.sol";
 /// @title SMARTToken
 /// @notice A complete implementation of a SMART token with all available extensions
+
 contract SMARTToken is
     SMART,
     SMARTAccessControlAuthorization,
@@ -39,6 +40,7 @@ contract SMARTToken is
     SMARTPausableAccessControlAuthorization,
     SMARTCustodianAccessControlAuthorization,
     SMARTCustodian,
+    SMARTCollateral,
     SMARTPausable,
     SMARTBurnable,
     SMARTRedeemable,
@@ -53,6 +55,7 @@ contract SMARTToken is
         address compliance_,
         uint256[] memory requiredClaimTopics_,
         ISMART.ComplianceModuleParamPair[] memory initialModulePairs_,
+        uint256 collateralProofTopic_,
         address initialOwner_
     )
         SMART(
@@ -65,6 +68,7 @@ contract SMARTToken is
             requiredClaimTopics_,
             initialModulePairs_
         )
+        SMARTCollateral(collateralProofTopic_)
     {
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
         _grantRole(BURNER_ROLE, initialOwner_);
@@ -117,7 +121,14 @@ contract SMARTToken is
 
     // --- Hooks ---
 
-    function _beforeMint(address to, uint256 amount) internal virtual override(SMART, SMARTCustodian, SMARTHooks) {
+    function _beforeMint(
+        address to,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMART, SMARTCollateral, SMARTCustodian, SMARTHooks)
+    {
         super._beforeMint(to, amount);
     }
 

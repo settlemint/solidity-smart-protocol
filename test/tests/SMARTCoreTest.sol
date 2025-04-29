@@ -8,7 +8,14 @@ import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { Unauthorized } from "../../contracts/extensions/common/CommonErrors.sol";
 
 abstract contract SMARTCoreTest is SMARTTest {
+    function _setUpCoreTest() internal /* override */ {
+        super.setUp();
+        // Ensure token has default collateral set up for core tests
+        _setupDefaultCollateralClaim();
+    }
+
     function test_Mint_Success() public {
+        _setUpCoreTest();
         // manual mint, because _mintInitialBalances resets the compliance counter
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, INITIAL_MINT_AMOUNT);
         tokenUtils.mintToken(address(token), tokenIssuer, clientJP, INITIAL_MINT_AMOUNT);
@@ -19,6 +26,7 @@ abstract contract SMARTCoreTest is SMARTTest {
     }
 
     function test_Mint_AccessControl_Reverts() public {
+        _setUpCoreTest();
         vm.startPrank(clientBE); // Non-owner
         vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         token.mint(clientBE, 100 ether);
@@ -26,6 +34,7 @@ abstract contract SMARTCoreTest is SMARTTest {
     }
 
     function test_Transfer_Success() public {
+        _setUpCoreTest();
         _mintInitialBalances();
         uint256 transferAmount = 100 ether;
         uint256 balBESnap = token.balanceOf(clientBE);
@@ -40,6 +49,7 @@ abstract contract SMARTCoreTest is SMARTTest {
     }
 
     function test_Transfer_InsufficientBalance_Reverts() public {
+        _setUpCoreTest();
         _mintInitialBalances();
         uint256 senderBalance = token.balanceOf(clientBE);
         uint256 transferAmount = senderBalance + 1 ether;
@@ -53,6 +63,7 @@ abstract contract SMARTCoreTest is SMARTTest {
     }
 
     function test_Transfer_ToUnverified_Reverts() public {
+        _setUpCoreTest();
         _mintInitialBalances();
         uint256 transferAmount = 100 ether;
         uint256 hookCountSnap = mockComplianceModule.transferredCallCount();
@@ -63,6 +74,7 @@ abstract contract SMARTCoreTest is SMARTTest {
     }
 
     function test_Transfer_MockComplianceBlocked_Reverts() public {
+        _setUpCoreTest();
         _mintInitialBalances();
         uint256 transferAmount = 100 ether;
         uint256 balBESnap = token.balanceOf(clientBE);

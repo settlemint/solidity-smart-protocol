@@ -5,27 +5,61 @@ import { Test } from "forge-std/Test.sol";
 import { SMARTIdentityRegistry } from "../../../contracts/SMARTIdentityRegistry.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
-import { TestConstants } from "./../Constants.sol"; // Import the constants library
+import { TestConstants } from "./../Constants.sol";
+import { SMARTToken } from "../../../contracts/SMARTToken.sol";
+import { SMARTIdentityFactory } from "../../../contracts/SMARTIdentityFactory.sol";
 
 contract ClaimUtils is Test {
-    address internal _platformAdmin; // May be needed for setup steps if any
+    address internal _platformAdmin;
+    address internal _claimIssuer;
     uint256 internal _claimIssuerPrivateKey;
     SMARTIdentityRegistry internal _identityRegistry;
+    SMARTIdentityFactory internal _identityFactory;
 
-    // Constants moved here for clarity, or could be kept in Base/Test
-    // uint256 public constant CLAIM_TOPIC_KYC = 1; // Removed, now in Base
-    // uint256 public constant CLAIM_TOPIC_AML = 2; // Removed, now in Base
-    // uint256 public constant ECDSA_TYPE = 1;      // Removed, now in Base
-
-    constructor(address platformAdmin_, uint256 claimIssuerPrivateKey_, SMARTIdentityRegistry identityRegistry_) {
+    constructor(
+        address platformAdmin_,
+        address claimIssuer_,
+        uint256 claimIssuerPrivateKey_,
+        SMARTIdentityRegistry identityRegistry_,
+        SMARTIdentityFactory identityFactory_
+    ) {
         _platformAdmin = platformAdmin_;
+        _claimIssuer = claimIssuer_;
         _claimIssuerPrivateKey = claimIssuerPrivateKey_;
         _identityRegistry = identityRegistry_;
+        _identityFactory = identityFactory_;
     }
 
     /**
      * @notice Creates the claim data, hash, and signature for an ERC735 claim.
      * @dev Uses the private key stored in this utility contract.
+     * @param clientIdentityAddr The address of the client's identity contract.
+     * @param claimTopic The topic of the claim.
+     * @param claimData The ABI encoded data of the claim.
+     * @return data The ABI encoded claim data (passed through).
+     * @return signature The packed ECDSA signature (r, s, v).
+     */
+    function _createClaimSignatureInternal(
+        address clientIdentityAddr,
+        uint256 claimTopic,
+        bytes memory claimData // Changed parameter name for clarity
+    )
+        internal // Changed visibility to internal as it's a helper
+        view
+        returns (bytes memory data, bytes memory signature)
+    {
+        data = claimData; // Use the provided encoded data
+        bytes32 dataHash = keccak256(abi.encode(clientIdentityAddr, claimTopic, data));
+        bytes32 prefixedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", dataHash));
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_claimIssuerPrivateKey, prefixedHash);
+        signature = abi.encodePacked(r, s, v);
+
+        return (data, signature);
+    }
+
+    /**
+     * @notice Creates the claim data, hash, and signature for a standard string-based ERC735 claim.
      * @param clientIdentityAddr The address of the client's identity contract.
      * @param claimTopic The topic of the claim.
      * @param claimDataString The string data of the claim.
@@ -41,17 +75,9 @@ contract ClaimUtils is Test {
         view
         returns (bytes memory data, bytes memory signature)
     {
-        data = abi.encode(claimDataString);
-        bytes32 dataHash = keccak256(abi.encode(clientIdentityAddr, claimTopic, data));
-        bytes32 prefixedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", dataHash));
-
-        // Note: vm.sign requires the private key, which is stored in this contract
-        // However, vm is accessed via inheritance, so we need the key passed or stored.
-        // Re-reading the design, the key IS stored via constructor.
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_claimIssuerPrivateKey, prefixedHash);
-        signature = abi.encodePacked(r, s, v);
-
-        return (data, signature);
+        bytes memory encodedData = abi.encode(claimDataString);
+        // Call the internal helper
+        return _createClaimSignatureInternal(clientIdentityAddr, claimTopic, encodedData);
     }
 
     /**
@@ -79,28 +105,26 @@ contract ClaimUtils is Test {
     }
 
     /**
-     * @notice Issues a claim from the configured issuer to a client.
-     * @param issuerIdentityAddr_ The identity contract address of the claim issuer.
+     * @notice Issues a claim from the configured issuer to a client using pre-encoded data.
      * @param clientWalletAddress_ The wallet address of the client receiving the claim.
      * @param claimTopic The topic of the claim.
-     * @param claimDataString The string data for the claim.
+     * @param claimData The ABI encoded data for the claim.
      */
-    function issueClaim(
-        address issuerIdentityAddr_, // Issuer's identity contract address
+    function _issueClaimInternal(
+        address clientIdentityAddress,
         address clientWalletAddress_,
         uint256 claimTopic,
-        string memory claimDataString
+        bytes memory claimData // Takes encoded data directly
     )
-        public
+        internal // Changed visibility
     {
-        // 1. Get client's identity contract
-        IIdentity clientIdentity = _identityRegistry.identity(clientWalletAddress_);
-        address clientIdentityAddr = address(clientIdentity);
-        require(clientIdentityAddr != address(0), "ClaimUtils: Client identity not found");
+        address issuerIdentityAddr_ = _claimIssuerIdentity();
 
-        // 2. Create signature using the stored private key
+        IIdentity clientIdentity = IIdentity(clientIdentityAddress);
+
+        // 2. Create signature using the stored private key and the provided data/topic
         (bytes memory data, bytes memory signature) =
-            createClaimSignature(clientIdentityAddr, claimTopic, claimDataString);
+            _createClaimSignatureInternal(clientIdentityAddress, claimTopic, claimData); // Use internal creator
 
         // 3. Verify the claim is valid with the issuer's identity before adding
         bool isValid = verifyClaim(issuerIdentityAddr_, clientIdentity, claimTopic, signature, data);
@@ -108,39 +132,108 @@ contract ClaimUtils is Test {
 
         // 4. Client adds the claim to their identity (needs prank)
         vm.startPrank(clientWalletAddress_);
-        // Pass the issuer's *identity contract address* as the issuer parameter in addClaim
-        // Use ECDSA_TYPE from the constants library
         clientIdentity.addClaim(claimTopic, TestConstants.ECDSA_TYPE, issuerIdentityAddr_, signature, data, "");
         vm.stopPrank();
     }
 
+    function _issueInvestorIdentityClaimInternal(
+        address clientWalletAddress_,
+        uint256 claimTopic,
+        bytes memory claimData
+    )
+        internal
+    {
+        // 1. Get client's identity contract
+        IIdentity clientIdentity = _identityRegistry.identity(clientWalletAddress_);
+        address clientIdentityAddr = address(clientIdentity);
+        require(clientIdentityAddr != address(0), "ClaimUtils: Client identity not found");
+
+        _issueClaimInternal(clientIdentityAddr, clientWalletAddress_, claimTopic, claimData);
+    }
+
+    function _issueTokenIdentityClaimInternal(
+        address tokenAddr_,
+        address tokenOwner_,
+        uint256 claimTopic,
+        bytes memory claimData
+    )
+        internal
+    {
+        // 1. Get token's identity contract
+        address tokenIdentityAddr = _identityFactory.getTokenIdentity(tokenAddr_);
+        require(tokenIdentityAddr != address(0), "ClaimUtils: Token identity not found");
+
+        _issueClaimInternal(tokenIdentityAddr, tokenOwner_, claimTopic, claimData);
+    }
+
+    /**
+     * @notice Issues a standard string-based claim from the configured issuer to a client.
+     * @param clientWalletAddress_ The wallet address of the client receiving the claim.
+     * @param claimTopic The topic of the claim.
+     * @param claimDataString The string data for the claim.
+     */
+    function issueInvestorClaim(
+        address clientWalletAddress_,
+        uint256 claimTopic,
+        string memory claimDataString
+    )
+        public
+    {
+        bytes memory encodedData = abi.encode(claimDataString);
+        _issueInvestorIdentityClaimInternal(clientWalletAddress_, claimTopic, encodedData);
+    }
+
+    /**
+     * @notice Issues a collateral claim from the configured issuer to the token's identity.
+     * @dev The collateral claim is typically added to the *token's* identity, not a client's.
+     * @param tokenAddress_ The identity contract address associated with the SMART token.
+     * @param amount The collateral amount.
+     * @param expiryTimestamp The expiry timestamp (e.g., block.timestamp + 1 days).
+     */
+    function issueCollateralClaim(
+        address tokenAddress_, // Target is the token's identity
+        address tokenOwner_,
+        uint256 amount,
+        uint256 expiryTimestamp
+    )
+        public
+    {
+        bytes memory encodedData = abi.encode(amount, expiryTimestamp);
+        _issueTokenIdentityClaimInternal(tokenAddress_, tokenOwner_, TestConstants.CLAIM_TOPIC_COLLATERAL, encodedData);
+    }
+
     /**
      * @notice Issues a standard KYC claim.
-     * @param issuerIdentityAddr_ The identity contract address of the claim issuer.
      * @param clientWalletAddress_ The wallet address of the client receiving the claim.
      */
-    function issueKYCClaim(address issuerIdentityAddr_, address clientWalletAddress_) public {
+    function issueKYCClaim(address clientWalletAddress_) public {
         // Use CLAIM_TOPIC_KYC from the constants library
-        issueClaim(issuerIdentityAddr_, clientWalletAddress_, TestConstants.CLAIM_TOPIC_KYC, "Verified KYC by Issuer");
+        issueInvestorClaim(clientWalletAddress_, TestConstants.CLAIM_TOPIC_KYC, "Verified KYC by Issuer");
     }
 
     /**
      * @notice Issues a standard AML claim.
-     * @param issuerIdentityAddr_ The identity contract address of the claim issuer.
      * @param clientWalletAddress_ The wallet address of the client receiving the claim.
      */
-    function issueAMLClaim(address issuerIdentityAddr_, address clientWalletAddress_) public {
+    function issueAMLClaim(address clientWalletAddress_) public {
         // Use CLAIM_TOPIC_AML from the constants library
-        issueClaim(issuerIdentityAddr_, clientWalletAddress_, TestConstants.CLAIM_TOPIC_AML, "Verified AML by Issuer");
+        issueInvestorClaim(clientWalletAddress_, TestConstants.CLAIM_TOPIC_AML, "Verified AML by Issuer");
     }
 
     /**
      * @notice Issues both standard KYC and AML claims.
-     * @param issuerIdentityAddr_ The identity contract address of the claim issuer.
      * @param clientWalletAddress_ The wallet address of the client receiving the claim.
      */
-    function issueAllClaims(address issuerIdentityAddr_, address clientWalletAddress_) public {
-        issueKYCClaim(issuerIdentityAddr_, clientWalletAddress_);
-        issueAMLClaim(issuerIdentityAddr_, clientWalletAddress_);
+    function issueAllClaims(address clientWalletAddress_) public {
+        issueKYCClaim(clientWalletAddress_);
+        issueAMLClaim(clientWalletAddress_);
+    }
+
+    /**
+     * @notice Returns the identity contract address of the claim issuer.
+     * @return The address of the claim issuer's identity contract.
+     */
+    function _claimIssuerIdentity() internal view returns (address) {
+        return _identityFactory.getIdentity(_claimIssuer);
     }
 }

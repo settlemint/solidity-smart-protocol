@@ -6,8 +6,15 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 import { Unauthorized } from "../../contracts/extensions/common/CommonErrors.sol";
 
 abstract contract SMARTBurnableTest is SMARTTest {
-    function test_Burn_Success() public {
+    function _setUpBurnableTest() internal /* override */ {
+        super.setUp();
+        // Ensure token has default collateral set up for burn tests
+        _setupDefaultCollateralClaim();
         _mintInitialBalances();
+    }
+
+    function test_Burn_Success() public {
+        _setUpBurnableTest();
         uint256 burnAmount = 100 ether;
         uint256 balBESnap = token.balanceOf(clientBE);
         uint256 hookCountSnap = mockComplianceModule.destroyedCallCount();
@@ -19,7 +26,7 @@ abstract contract SMARTBurnableTest is SMARTTest {
     }
 
     function test_Burn_InsufficientBalance_Reverts() public {
-        _mintInitialBalances();
+        _setUpBurnableTest();
         uint256 senderBalance = token.balanceOf(clientBE);
         uint256 burnAmount = senderBalance + 1 ether;
 
@@ -30,7 +37,7 @@ abstract contract SMARTBurnableTest is SMARTTest {
     }
 
     function test_Burn_AccessControl_Reverts() public {
-        _mintInitialBalances();
+        _setUpBurnableTest();
         vm.startPrank(clientBE); // Non-owner
         vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
         tokenUtils.burnTokenAsExecutor(address(token), clientBE, clientBE, 10 ether);

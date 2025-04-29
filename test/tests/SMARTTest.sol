@@ -27,7 +27,7 @@ abstract contract SMARTTest is Test {
     address public clientJP;
     address public clientUS;
     address public clientUnverified;
-    address public claimIssuer; // Wallet address of the claim issuer
+    address public claimIssuer;
 
     // --- Test Data ---
     uint256[] public requiredClaimTopics;
@@ -55,6 +55,14 @@ abstract contract SMARTTest is Test {
         infrastructureUtils = new InfrastructureUtils(platformAdmin);
         mockComplianceModule = infrastructureUtils.mockedComplianceModule();
 
+        // --- Initialize Actors ---
+        tokenIssuer = makeAddr("Token issuer");
+        clientBE = makeAddr("Client BE");
+        clientJP = makeAddr("Client JP");
+        clientUS = makeAddr("Client US");
+        clientUnverified = makeAddr("Client Unverified");
+        claimIssuer = vm.addr(claimIssuerPrivateKey);
+
         // --- Setup utilities
         identityUtils = new IdentityUtils(
             platformAdmin,
@@ -62,21 +70,19 @@ abstract contract SMARTTest is Test {
             infrastructureUtils.identityRegistry(),
             infrastructureUtils.trustedIssuersRegistry()
         );
-        claimUtils = new ClaimUtils(platformAdmin, claimIssuerPrivateKey, infrastructureUtils.identityRegistry());
+        claimUtils = new ClaimUtils(
+            platformAdmin,
+            claimIssuer,
+            claimIssuerPrivateKey,
+            infrastructureUtils.identityRegistry(),
+            infrastructureUtils.identityFactory()
+        );
         tokenUtils = new TokenUtils(
             platformAdmin,
             infrastructureUtils.identityFactory(),
             infrastructureUtils.identityRegistry(),
             infrastructureUtils.compliance()
         );
-
-        // --- Initialize Actors ---
-        tokenIssuer = makeAddr("Token issuer");
-        clientBE = makeAddr("Client BE");
-        clientJP = makeAddr("Client JP");
-        clientUS = makeAddr("Client US");
-        clientUnverified = makeAddr("Client Unverified");
-        claimIssuer = vm.addr(claimIssuerPrivateKey); // Private key defined in SMARTInfrastructureSetup
 
         // --- Initialize Test Data FIRST ---
         requiredClaimTopics = new uint256[](2);
@@ -95,6 +101,7 @@ abstract contract SMARTTest is Test {
             ISMART.ComplianceModuleParamPair({ module: address(mockComplianceModule), params: abi.encode("") });
 
         _setupToken();
+
         assertNotEq(address(token), address(0), "Token not deployed");
 
         // Grant REGISTRAR_ROLE to the token contract on the Identity Registry
@@ -117,6 +124,23 @@ abstract contract SMARTTest is Test {
     function _setupToken() internal virtual { }
 
     // --- Helper Functions ---
+
+    /**
+     * @notice Issues a large, long-lived collateral claim to the token's identity.
+     * @dev Should be called by inheriting test suites in setUp() *after* _setupToken()
+     *      if they require the token to be generally mintable, unless they need
+     *      specific collateral scenarios (like SMARTCollateralTest).
+     */
+    function _setupDefaultCollateralClaim() internal {
+        require(address(token) != address(0), "Token must be set up before adding collateral claim");
+
+        // Use a very large amount and a long expiry
+        uint256 largeCollateralAmount = type(uint256).max / 2; // Avoid hitting absolute max
+        uint256 farFutureExpiry = block.timestamp + 3650 days; // ~10 years
+
+        claimUtils.issueCollateralClaim(address(token), tokenIssuer, largeCollateralAmount, farFutureExpiry);
+    }
+
     function _mintInitialBalances() internal {
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, INITIAL_MINT_AMOUNT);
         tokenUtils.mintToken(address(token), tokenIssuer, clientJP, INITIAL_MINT_AMOUNT);
@@ -127,16 +151,18 @@ abstract contract SMARTTest is Test {
 
     function _setupIdentities() internal {
         // (Reverted to original logic provided by user)
-        // Create the token issuer identity
+        // Create the token issuer identixty
         identityUtils.createClientIdentity(tokenIssuer, TestConstants.COUNTRY_CODE_BE);
         // Issue claims to the token issuer as well (assuming they need verification)
-        uint256[] memory claimTopics = new uint256[](2);
+        uint256[] memory claimTopics = new uint256[](3);
         claimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
         claimTopics[1] = TestConstants.CLAIM_TOPIC_AML;
+        claimTopics[2] = TestConstants.CLAIM_TOPIC_COLLATERAL;
         // Use claimIssuer address directly, createIssuerIdentity handles creating the on-chain identity
-        address claimIssuerIdentityAddress = identityUtils.createIssuerIdentity(claimIssuer, claimTopics);
+        identityUtils.createIssuerIdentity(claimIssuer, claimTopics);
+
         // Now issue claims TO the token issuer
-        claimUtils.issueAllClaims(claimIssuerIdentityAddress, tokenIssuer);
+        claimUtils.issueAllClaims(tokenIssuer);
 
         // Create the client identities
         identityUtils.createClientIdentity(clientBE, TestConstants.COUNTRY_CODE_BE);
@@ -145,11 +171,11 @@ abstract contract SMARTTest is Test {
         identityUtils.createClientIdentity(clientUnverified, TestConstants.COUNTRY_CODE_BE);
 
         // Issue claims to clients
-        claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientBE);
-        claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientJP);
-        claimUtils.issueAllClaims(claimIssuerIdentityAddress, clientUS);
+        claimUtils.issueAllClaims(clientBE);
+        claimUtils.issueAllClaims(clientJP);
+        claimUtils.issueAllClaims(clientUS);
         // Only issue KYC claim to the unverified client
-        claimUtils.issueKYCClaim(claimIssuerIdentityAddress, clientUnverified);
+        claimUtils.issueKYCClaim(clientUnverified);
     }
 
     // =====================================================================
