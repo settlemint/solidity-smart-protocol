@@ -24,6 +24,7 @@ Key components include:
 - **Verification Configuration**: Allows authorized roles to manage the identity registry address and required claim topics.
 - **Authorization Hooks**: Decouples core logic from specific access control mechanisms.
 - **Event Emission**: Emits detailed events for state changes (e.g., `UpdatedTokenInformation`, `ComplianceModuleAdded`, `TransferCompleted`).
+- **Token Recovery**: Includes a `recoverERC20` function (requiring `_authorizeRecoverERC20` permission) to safely transfer out other ERC20 tokens mistakenly sent to the contract address. It cannot recover the contract's own token.
 - **Standard & Upgradeable**: Provides both standard and UUPS upgradeable base contracts.
 
 ## Usage
