@@ -39,6 +39,12 @@ abstract contract SMARTRedeemableUpgradeable is
 
     // -- Internal Hook Implementations --
 
+    /// @notice Implementation of the abstract balance getter using standard ERC20.balanceOf.
+    /// @inheritdoc _SMARTRedeemableLogic
+    function _redeemable_getBalance(address account) internal view virtual override returns (uint256) {
+        return balanceOf(account); // Assumes ERC20.balanceOf is available
+    }
+
     /// @notice Implementation of the abstract burn execution using the base ERC20Upgradeable `_burn` function.
     /// @dev Assumes the inheriting contract includes an ERC20Upgradeable implementation with an internal `_burn`
     /// function.

@@ -17,6 +17,15 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension {
     /// @param amount The amount of tokens redeemed.
     event Redeemed(address indexed redeemer, uint256 amount);
 
+    // -- Abstract Functions (Dependencies) --
+
+    /// @notice Abstract function to retrieve the token balance of an account.
+    /// @dev Must be implemented by inheriting contracts to call the appropriate balance function (e.g.,
+    /// ERC20/ERC20Upgradeable.balanceOf).
+    /// @param account The address whose balance is queried.
+    /// @return The token balance of the account.
+    function _redeemable_getBalance(address account) internal view virtual returns (uint256);
+
     // -- State-Changing Functions --
 
     /// @notice Allows the caller (token holder) to redeem (burn) their own tokens.
@@ -42,7 +51,7 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension {
     /// @return True upon successful execution.
     function redeemAll() external virtual returns (bool) {
         address owner = _msgSender();
-        uint256 balance = this.balanceOf(owner);
+        uint256 balance = _redeemable_getBalance(owner);
         return redeem(balance);
     }
 
