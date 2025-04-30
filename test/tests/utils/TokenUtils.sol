@@ -74,7 +74,7 @@ contract TokenUtils is Test {
         vm.stopPrank();
 
         // 2. Create the token's on-chain identity
-        _createAndSetTokenOnchainID(tokenAddress, tokenIssuer_);
+        createAndSetTokenOnchainID(tokenAddress, tokenIssuer_);
 
         return tokenAddress;
     }
@@ -125,7 +125,7 @@ contract TokenUtils is Test {
         vm.stopPrank();
 
         // 4. Create the token's on-chain identity (using platform admin)
-        _createAndSetTokenOnchainID(tokenProxyAddress, tokenIssuer_);
+        createAndSetTokenOnchainID(tokenProxyAddress, tokenIssuer_);
 
         return tokenProxyAddress; // Return the proxy address
     }
@@ -492,7 +492,13 @@ contract TokenUtils is Test {
         vm.stopPrank();
     }
 
-    function _createAndSetTokenOnchainID(address tokenAddress, address tokenIssuer_) internal returns (address) {
+    /**
+     * @notice Creates and sets the on-chain ID for a token.
+     * @param tokenAddress The address of the token contract.
+     * @param tokenIssuer_ The address of the token issuer.
+     * @return The address of the token identity.
+     */
+    function createAndSetTokenOnchainID(address tokenAddress, address tokenIssuer_) internal returns (address) {
         // Ensure tokenAddress is the proxy address when dealing with upgradeable tokens
         vm.startPrank(_platformAdmin); // Platform admin creates the token identity
         // Use the specific token issuer's wallet address for identity creation
