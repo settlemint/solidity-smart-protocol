@@ -21,7 +21,10 @@ import { SMARTTest } from "./SMARTTest.sol";
 abstract contract SMARTCountryAllowListTest is SMARTTest {
     // Module-specific variables
     CountryAllowListComplianceModule public allowModule;
-    uint16[] public countryCodes;
+
+    // Test constants
+    uint256 private constant TRANSFER_AMOUNT_BE_TO_JP = 10 ether;
+    uint256 private constant TRANSFER_AMOUNT_JP_TO_BE = 5 ether;
 
     // Internal setup function, follows pattern of other test classes
     function _setUpCountryAllowList() internal {
@@ -34,13 +37,9 @@ abstract contract SMARTCountryAllowListTest is SMARTTest {
         // Setup CountryAllowListComplianceModule
         allowModule = infrastructureUtils.countryAllowListComplianceModule();
 
-        // Configure allowed countries (Belgium and Japan)
-        countryCodes = new uint16[](2);
-        countryCodes[0] = TestConstants.COUNTRY_CODE_BE;
-        countryCodes[1] = TestConstants.COUNTRY_CODE_JP;
-
-        // Set allowed countries in the module (globally)
+        // Set allowed countries in the module (globally) - using allowedCountries from SMARTTest
         vm.prank(platformAdmin);
+<<<<<<< HEAD
         allowModule.setGlobalAllowedCountries(countryCodes, true);
 =======
 
@@ -222,6 +221,9 @@ abstract contract SMARTTest is Test {
     function test_InitialState() public {
         require(address(token) != address(0), "Token not deployed");
 >>>>>>> dba41c5 (feat: tests for country allow list)
+=======
+        allowModule.setGlobalAllowedCountries(allowedCountries, true);
+>>>>>>> a746ce2 (blocklist test)
     }
 
     // =====================================================================
@@ -251,9 +253,10 @@ abstract contract SMARTTest is Test {
         vm.prank(tokenIssuer);
         token.addComplianceModule(
             address(allowModule),
-            abi.encode(countryCodes) // Pass BE and JP directly in the params
+            abi.encode(allowedCountries) // Use allowedCountries from SMARTTest
         );
 
+<<<<<<< HEAD
 <<<<<<< HEAD
         // Reset balances first to avoid double-minting issues in test suite
         uint256 currentBalBE = token.balanceOf(clientBE);
@@ -269,6 +272,8 @@ abstract contract SMARTTest is Test {
         _setupDefaultCollateralClaim();
 >>>>>>> dba41c5 (feat: tests for country allow list)
 
+=======
+>>>>>>> a746ce2 (blocklist test)
         // Mint tokens only to allowed countries (BE and JP)
         vm.startPrank(tokenIssuer);
         token.mint(clientBE, INITIAL_MINT_AMOUNT);
@@ -277,11 +282,11 @@ abstract contract SMARTTest is Test {
 
         // Test transfer between allowed countries (BE to JP)
         vm.prank(clientBE);
-        token.transfer(clientJP, 10 ether);
+        token.transfer(clientJP, TRANSFER_AMOUNT_BE_TO_JP);
 
         // Test transfer between allowed countries (JP to BE)
         vm.prank(clientJP);
-        token.transfer(clientBE, 5 ether);
+        token.transfer(clientBE, TRANSFER_AMOUNT_JP_TO_BE);
 
         // Try to mint to a client from US (not allowed country) - should fail
         vm.startPrank(tokenIssuer);
@@ -290,8 +295,41 @@ abstract contract SMARTTest is Test {
         vm.stopPrank();
 
         // Verify balances to confirm transfers worked as expected
-        assertEq(token.balanceOf(clientBE), INITIAL_MINT_AMOUNT - 10 ether + 5 ether, "BE balance incorrect");
-        assertEq(token.balanceOf(clientJP), INITIAL_MINT_AMOUNT + 10 ether - 5 ether, "JP balance incorrect");
+        assertEq(
+            token.balanceOf(clientBE),
+            INITIAL_MINT_AMOUNT - TRANSFER_AMOUNT_BE_TO_JP + TRANSFER_AMOUNT_JP_TO_BE,
+            "BE balance incorrect"
+        );
+        assertEq(
+            token.balanceOf(clientJP),
+            INITIAL_MINT_AMOUNT + TRANSFER_AMOUNT_BE_TO_JP - TRANSFER_AMOUNT_JP_TO_BE,
+            "JP balance incorrect"
+        );
         assertEq(token.balanceOf(clientUS), 0, "US balance should be zero");
+    }
+
+    function test_CountryAllowList_TransferToDisallowedCountry_Reverts() public {
+        // Call setup explicitly
+        _setUpCountryAllowList();
+
+        // Add the CountryAllowListComplianceModule to the token
+        vm.startPrank(tokenIssuer);
+        token.addComplianceModule(address(allowModule), abi.encode(allowedCountries));
+
+        // Mint tokens to an allowed country
+        token.mint(clientBE, INITIAL_MINT_AMOUNT);
+        vm.stopPrank();
+        // Try to transfer to a client from US (not allowed country) - should fail
+        vm.prank(clientBE);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ISMARTComplianceModule.ComplianceCheckFailed.selector, "Receiver country not in allowlist"
+            )
+        );
+        token.transfer(clientUS, INITIAL_MINT_AMOUNT);
+
+        // Verify balances remain unchanged
+        assertEq(token.balanceOf(clientBE), INITIAL_MINT_AMOUNT, "BE balance should be unchanged");
+        assertEq(token.balanceOf(clientUS), 0, "US balance should remain zero");
     }
 }
