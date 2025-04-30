@@ -11,7 +11,7 @@ import { ISMARTCompliance } from "./ISMARTCompliance.sol";
 import { ISMARTComplianceModule } from "./ISMARTComplianceModule.sol";
 
 // Structs
-import { ISMARTComplianceModuleParamPair } from "./structs/ISMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "./structs/SMARTComplianceModuleParamPair.sol";
 
 /// @title ISMART Token Interface
 /// @notice Defines the core interface for SMART tokens, combining standard ERC20/Metadata functionality
@@ -128,5 +128,5 @@ interface ISMART is IERC20, IERC20Metadata {
 
     /// @notice Gets the list of all active compliance modules and their parameters.
     /// @return An array of `ComplianceModuleParamPair` structs.
-    function complianceModules() external view returns (ISMARTComplianceModuleParamPair[] memory);
+    function complianceModules() external view returns (SMARTComplianceModuleParamPair[] memory);
 }

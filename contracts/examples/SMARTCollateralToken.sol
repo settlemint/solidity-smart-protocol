@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 // --- Imports for SMARTTokenBase ---
 import { SMART } from "../extensions/core/SMART.sol";
-import { ISMARTComplianceModuleParamPair } from "../interface/structs/ISMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "../interface/structs/SMARTComplianceModuleParamPair.sol";
 import { SMARTCollateral } from "../extensions/collateral/SMARTCollateral.sol";
 import { SMARTHooks } from "../extensions/common/SMARTHooks.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -21,7 +21,7 @@ contract SMARTCollateralToken is SMART, SMARTCollateral {
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ISMARTComplianceModuleParamPair[] memory initialModulePairs_,
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         uint256 collateralProofTopic_
     )
         SMART(

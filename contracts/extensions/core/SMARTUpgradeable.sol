@@ -10,7 +10,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 
 // Interface imports
 import { ISMART } from "../../interface/ISMART.sol";
-import { ISMARTComplianceModuleParamPair } from "../../interface/structs/ISMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
@@ -53,7 +53,7 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ISMARTComplianceModuleParamPair[] memory initialModulePairs_
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         internal
         onlyInitializing // Ensures this logic runs only during the initialization phase

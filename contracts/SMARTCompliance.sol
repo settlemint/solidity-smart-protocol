@@ -15,7 +15,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { ISMARTCompliance } from "./interface/ISMARTCompliance.sol";
 import { ISMARTComplianceModule } from "./interface/ISMARTComplianceModule.sol";
 import { ISMART } from "./interface/ISMART.sol";
-import { ISMARTComplianceModuleParamPair } from "./interface/structs/ISMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ZeroAddressNotAllowed } from "./extensions/common/CommonErrors.sol";
 
 /// @title SMART Compliance Contract
@@ -59,7 +59,7 @@ contract SMARTCompliance is
     function transferred(address _token, address _from, address _to, uint256 _amount) external override {
         // Note: Access control check (is _msgSender() the token?) might be needed depending on architecture.
         // Currently assumes only the bound token calls this.
-        ISMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
+        SMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
         for (uint256 i = 0; i < modulePairs.length; i++) {
             ISMARTComplianceModule(modulePairs[i].module).transferred(
                 _token, _from, _to, _amount, modulePairs[i].params
@@ -71,7 +71,7 @@ contract SMARTCompliance is
     /// @dev Iterates through all compliance modules registered with the token and calls their `created` hook.
     ///      This function is expected to be called ONLY by the associated ISMART token contract.
     function created(address _token, address _to, uint256 _amount) external override {
-        ISMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
+        SMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
         for (uint256 i = 0; i < modulePairs.length; i++) {
             ISMARTComplianceModule(modulePairs[i].module).created(_token, _to, _amount, modulePairs[i].params);
         }
@@ -81,7 +81,7 @@ contract SMARTCompliance is
     /// @dev Iterates through all compliance modules registered with the token and calls their `destroyed` hook.
     ///      This function is expected to be called ONLY by the associated ISMART token contract.
     function destroyed(address _token, address _from, uint256 _amount) external override {
-        ISMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
+        SMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
         for (uint256 i = 0; i < modulePairs.length; i++) {
             ISMARTComplianceModule(modulePairs[i].module).destroyed(_token, _from, _amount, modulePairs[i].params);
         }
@@ -94,7 +94,7 @@ contract SMARTCompliance is
     }
 
     /// @inheritdoc ISMARTCompliance
-    function areValidComplianceModules(ISMARTComplianceModuleParamPair[] calldata _pairs)
+    function areValidComplianceModules(SMARTComplianceModuleParamPair[] calldata _pairs)
         external
         view
         virtual
@@ -121,7 +121,7 @@ contract SMARTCompliance is
         override
         returns (bool)
     {
-        ISMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
+        SMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
         for (uint256 i = 0; i < modulePairs.length; i++) {
             // Each module's canTransfer will revert if the check fails.
             ISMARTComplianceModule(modulePairs[i].module).canTransfer(

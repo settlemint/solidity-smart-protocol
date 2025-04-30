@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { ISMART } from "./ISMART.sol";
-import { ISMARTComplianceModuleParamPair } from "./structs/ISMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "./structs/SMARTComplianceModuleParamPair.sol";
 
 /// @title ISMART Compliance Interface
 /// @notice Defines the interface for the main compliance contract used by SMART tokens.
@@ -58,5 +58,5 @@ interface ISMARTCompliance {
     /// @notice Validates multiple compliance modules and their corresponding parameters.
     /// @dev Reverts if any pair in the array fails the checks performed by `isValidComplianceModule`.
     /// @param _pairs An array of module-parameter pairs to validate.
-    function areValidComplianceModules(ISMARTComplianceModuleParamPair[] calldata _pairs) external view;
+    function areValidComplianceModules(SMARTComplianceModuleParamPair[] calldata _pairs) external view;
 }

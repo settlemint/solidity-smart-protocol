@@ -4,8 +4,7 @@ pragma solidity ^0.8.24;
 import { Test } from "forge-std/Test.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { SMARTIdentityFactory } from "../../../contracts/SMARTIdentityFactory.sol";
-import { ISMARTComplianceModuleParamPair } from
-    "../../../contracts/interface/structs/ISMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "../../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMART } from "../../../contracts/interface/ISMART.sol";
 import { SMARTToken } from "../../../contracts/SMARTToken.sol";
 import { SMART } from "../../../contracts/extensions/core/SMART.sol";
@@ -49,7 +48,7 @@ contract TokenUtils is Test {
         string memory name,
         string memory symbol,
         uint256[] memory claimTopics,
-        ISMARTComplianceModuleParamPair[] memory modulePairs,
+        SMARTComplianceModuleParamPair[] memory modulePairs,
         address tokenIssuer_ // Allow overriding the default issuer per-token
     )
         public
@@ -93,7 +92,7 @@ contract TokenUtils is Test {
         string memory name,
         string memory symbol,
         uint256[] memory claimTopics,
-        ISMARTComplianceModuleParamPair[] memory modulePairs,
+        SMARTComplianceModuleParamPair[] memory modulePairs,
         address tokenIssuer_ // Allow overriding the default issuer per-token
     )
         public

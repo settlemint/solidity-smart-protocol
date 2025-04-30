@@ -8,7 +8,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 
 // Interface imports
 import { ISMART } from "../../interface/ISMART.sol";
-import { ISMARTComplianceModuleParamPair } from "../../interface/structs/ISMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Base contract imports
 import { SMARTExtension } from "../common/SMARTExtension.sol";
@@ -56,7 +56,7 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ISMARTComplianceModuleParamPair[] memory initialModulePairs_
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         ERC20(name_, symbol_) // Initialize ERC20 base
     {

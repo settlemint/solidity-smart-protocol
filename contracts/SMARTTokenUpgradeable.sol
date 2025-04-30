@@ -13,7 +13,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 
 // Interface imports
 import { ISMART } from "./interface/ISMART.sol";
-import { ISMARTComplianceModuleParamPair } from "./interface/structs/ISMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplianceModuleParamPair.sol";
 // Core extensions
 import { SMARTUpgradeable } from "./extensions/core/SMARTUpgradeable.sol";
 import { SMARTExtensionUpgradeable } from "./extensions/common/SMARTExtensionUpgradeable.sol";
@@ -73,7 +73,7 @@ contract SMARTTokenUpgradeable is
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ISMARTComplianceModuleParamPair[] memory initialModulePairs_,
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         uint256 collateralProofTopic_,
         address initialOwner_
     )

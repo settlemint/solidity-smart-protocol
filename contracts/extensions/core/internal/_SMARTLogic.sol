@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import { ISMART } from "../../../interface/ISMART.sol";
 import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistry.sol";
 import { ISMARTCompliance } from "../../../interface/ISMARTCompliance.sol";
-import { ISMARTComplianceModuleParamPair } from "../../../interface/structs/ISMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "../../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -181,13 +181,13 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     }
 
     /// @inheritdoc ISMART
-    function complianceModules() external view virtual override returns (ISMARTComplianceModuleParamPair[] memory) {
+    function complianceModules() external view virtual override returns (SMARTComplianceModuleParamPair[] memory) {
         uint256 length = __complianceModuleList.length;
-        ISMARTComplianceModuleParamPair[] memory pairs = new ISMARTComplianceModuleParamPair[](length);
+        SMARTComplianceModuleParamPair[] memory pairs = new SMARTComplianceModuleParamPair[](length);
 
         for (uint256 i = 0; i < length; i++) {
             address module = __complianceModuleList[i];
-            pairs[i] = ISMARTComplianceModuleParamPair({ module: module, params: __moduleParameters[module] });
+            pairs[i] = SMARTComplianceModuleParamPair({ module: module, params: __moduleParameters[module] });
         }
 
         return pairs;
@@ -214,7 +214,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ISMARTComplianceModuleParamPair[] memory initialModulePairs_
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         internal
         virtual

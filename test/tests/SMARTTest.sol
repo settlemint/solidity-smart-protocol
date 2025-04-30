@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import { Test } from "forge-std/Test.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
-import { ISMARTComplianceModuleParamPair } from "../../contracts/interface/structs/ISMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
 import { TestConstants } from "./Constants.sol";
@@ -33,7 +33,7 @@ abstract contract SMARTTest is Test {
     // --- Test Data ---
     uint256[] public requiredClaimTopics;
     uint16[] public allowedCountries;
-    ISMARTComplianceModuleParamPair[] public modulePairs;
+    SMARTComplianceModuleParamPair[] public modulePairs;
 
     // --- Private Keys ---
     uint256 internal claimIssuerPrivateKey = 0x12345;
@@ -97,9 +97,9 @@ abstract contract SMARTTest is Test {
         // --- Setup Identities AFTER requiredClaimTopics is initialized ---
         _setupIdentities();
 
-        modulePairs = new ISMARTComplianceModuleParamPair[](1);
+        modulePairs = new SMARTComplianceModuleParamPair[](1);
         modulePairs[0] =
-            ISMARTComplianceModuleParamPair({ module: address(mockComplianceModule), params: abi.encode("") });
+            SMARTComplianceModuleParamPair({ module: address(mockComplianceModule), params: abi.encode("") });
 
         _setupToken();
 
