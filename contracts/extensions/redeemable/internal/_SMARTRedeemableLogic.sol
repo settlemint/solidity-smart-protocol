@@ -25,7 +25,7 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension {
     ///      Relies on the inheriting contract to provide `_msgSender`.
     /// @param amount The amount of tokens the caller wishes to redeem.
     /// @return True upon successful execution.
-    function redeem(uint256 amount) external virtual returns (bool) {
+    function redeem(uint256 amount) public virtual returns (bool) {
         address owner = _msgSender();
         _beforeRedeem(owner, amount); // Standard SMARTHook
         _redeemable_executeBurn(owner, amount); // Abstract burn execution
@@ -33,6 +33,17 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension {
 
         emit Redeemed(owner, amount);
         return true;
+    }
+
+    /// @notice Allows the caller (token holder) to redeem (burn) their own tokens.
+    /// @dev Calls the `_beforeRedeem` hook, executes the burn via the abstract `_redeemable_executeBurn`,
+    ///      calls the `_afterRedeem` hook, and emits the `Redeemed` event.
+    ///      Relies on the inheriting contract to provide `_msgSender`.
+    /// @return True upon successful execution.
+    function redeemAll() external virtual returns (bool) {
+        address owner = _msgSender();
+        uint256 balance = this.balanceOf(owner);
+        return redeem(balance);
     }
 
     // -- Abstract Functions (Dependencies) --
