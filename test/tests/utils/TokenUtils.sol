@@ -498,7 +498,7 @@ contract TokenUtils is Test {
      * @param tokenIssuer_ The address of the token issuer.
      * @return The address of the token identity.
      */
-    function createAndSetTokenOnchainID(address tokenAddress, address tokenIssuer_) internal returns (address) {
+    function createAndSetTokenOnchainID(address tokenAddress, address tokenIssuer_) public returns (address) {
         // Ensure tokenAddress is the proxy address when dealing with upgradeable tokens
         vm.startPrank(_platformAdmin); // Platform admin creates the token identity
         // Use the specific token issuer's wallet address for identity creation
