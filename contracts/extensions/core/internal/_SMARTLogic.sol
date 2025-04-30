@@ -17,7 +17,8 @@ import {
     ModuleAlreadyAdded,
     ModuleNotFound,
     CannotRecoverSelf,
-    InsufficientTokenBalance
+    InsufficientTokenBalance,
+    InvalidDecimals
 } from "../SMARTErrors.sol";
 import { TokenRecovered } from "../SMARTEvents.sol";
 /// @title Internal Core Logic for SMART Tokens
@@ -221,6 +222,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     {
         if (compliance_ == address(0)) revert ZeroAddressNotAllowed();
         if (identityRegistry_ == address(0)) revert ZeroAddressNotAllowed();
+        if (decimals_ > 18) revert InvalidDecimals(decimals_);
 
         __name = name_;
         __symbol = symbol_;
