@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 // --- Imports for SMARTTokenBase ---
 import { SMART } from "../extensions/core/SMART.sol";
-import { ISMART } from "../interface/ISMART.sol";
+import { ISMARTComplianceModuleParamPair } from "../interface/structs/ISMARTComplianceModuleParamPair.sol";
 
 /// @title SMARTCoreToken
 /// @notice A basic SMART token implementation with core features only.
@@ -16,7 +16,7 @@ contract SMARTCoreToken is SMART {
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ISMART.ComplianceModuleParamPair[] memory initialModulePairs_
+        ISMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         SMART(
             name_,

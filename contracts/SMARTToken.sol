@@ -11,7 +11,7 @@ import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol"
 // Interface imports
 import { ISMART } from "./interface/ISMART.sol";
 import { ISMARTIdentityRegistry } from "./interface/ISMARTIdentityRegistry.sol";
-
+import { ISMARTComplianceModuleParamPair } from "./interface/structs/ISMARTComplianceModuleParamPair.sol";
 // Core extensions
 import { SMART } from "./extensions/core/SMART.sol";
 import { SMARTExtension } from "./extensions/common/SMARTExtension.sol";
@@ -54,7 +54,7 @@ contract SMARTToken is
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ISMART.ComplianceModuleParamPair[] memory initialModulePairs_,
+        ISMARTComplianceModuleParamPair[] memory initialModulePairs_,
         uint256 collateralProofTopic_,
         address initialOwner_
     )

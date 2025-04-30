@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 // --- Imports for SMARTTokenBase ---
 import { SMART } from "../extensions/core/SMART.sol";
-import { ISMART } from "../interface/ISMART.sol";
+import { ISMARTComplianceModuleParamPair } from "../interface/structs/ISMARTComplianceModuleParamPair.sol";
 import { SMARTCustodian } from "../extensions/custodian/SMARTCustodian.sol";
 import { SMARTHooks } from "../extensions/common/SMARTHooks.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -32,7 +32,7 @@ contract SMARTCustodianTokenWithAuthorization is
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ISMART.ComplianceModuleParamPair[] memory initialModulePairs_,
+        ISMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address initialOwner_
     )
         SMART(

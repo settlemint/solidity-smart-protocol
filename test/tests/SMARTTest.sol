@@ -4,7 +4,8 @@ pragma solidity ^0.8.24;
 // Adjust import path assuming SMARTInfrastructureSetup will be in ./utils/
 import { Test } from "forge-std/Test.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
-import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplianceModule.sol";
+import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
+import { ISMARTComplianceModuleParamPair } from "../../contracts/interface/structs/ISMARTComplianceModuleParamPair.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
 import { TestConstants } from "./Constants.sol";
@@ -32,7 +33,7 @@ abstract contract SMARTTest is Test {
     // --- Test Data ---
     uint256[] public requiredClaimTopics;
     uint16[] public allowedCountries;
-    ISMART.ComplianceModuleParamPair[] public modulePairs;
+    ISMARTComplianceModuleParamPair[] public modulePairs;
 
     // --- Private Keys ---
     uint256 internal claimIssuerPrivateKey = 0x12345;
@@ -96,9 +97,9 @@ abstract contract SMARTTest is Test {
         // --- Setup Identities AFTER requiredClaimTopics is initialized ---
         _setupIdentities();
 
-        modulePairs = new ISMART.ComplianceModuleParamPair[](1);
+        modulePairs = new ISMARTComplianceModuleParamPair[](1);
         modulePairs[0] =
-            ISMART.ComplianceModuleParamPair({ module: address(mockComplianceModule), params: abi.encode("") });
+            ISMARTComplianceModuleParamPair({ module: address(mockComplianceModule), params: abi.encode("") });
 
         _setupToken();
 

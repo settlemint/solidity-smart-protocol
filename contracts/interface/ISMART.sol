@@ -10,6 +10,9 @@ import { ISMARTIdentityRegistry } from "./ISMARTIdentityRegistry.sol";
 import { ISMARTCompliance } from "./ISMARTCompliance.sol";
 import { ISMARTComplianceModule } from "./ISMARTComplianceModule.sol";
 
+// Structs
+import { ISMARTComplianceModuleParamPair } from "./structs/ISMARTComplianceModuleParamPair.sol";
+
 /// @title ISMART Token Interface
 /// @notice Defines the core interface for SMART tokens, combining standard ERC20/Metadata functionality
 ///         with identity verification, compliance checks, and modular compliance features.
@@ -17,13 +20,6 @@ interface ISMART is IERC20, IERC20Metadata {
     // --- Custom Errors ---
     /// @notice Reverted when a transfer or mint recipient does not meet the required verification status.
     error RecipientNotVerified();
-
-    // --- Structs ---
-    /// @notice Represents a pair of a compliance module address and its associated configuration parameters.
-    struct ComplianceModuleParamPair {
-        address module;
-        bytes params;
-    }
 
     // --- Events ---
     /// @notice Emitted when the identity registry contract address is updated.
@@ -112,20 +108,6 @@ interface ISMART is IERC20, IERC20Metadata {
     /// @param _module The address of the module to remove.
     function removeComplianceModule(address _module) external;
 
-    // --- Compliance Module Validation (Views) ---
-
-    /// @notice Validates if a module implements the required interface AND if the provided parameters are valid for it.
-    /// @dev Reverts if the module address is invalid, does not support `ISMARTComplianceModule`, or if parameters are
-    /// rejected by the module's `validateParameters`.
-    /// @param _module The address of the module to validate.
-    /// @param _params The parameters to validate against the module.
-    function isValidComplianceModule(address _module, bytes calldata _params) external view;
-
-    /// @notice Validates multiple compliance modules and their corresponding parameters.
-    /// @dev Reverts if any pair in the array fails the checks performed by `isValidComplianceModule`.
-    /// @param _pairs An array of module-parameter pairs to validate.
-    function areValidComplianceModules(ComplianceModuleParamPair[] calldata _pairs) external view;
-
     // --- Getters ---
 
     /// @notice Gets the optional on-chain identifier address associated with the token.
@@ -146,10 +128,5 @@ interface ISMART is IERC20, IERC20Metadata {
 
     /// @notice Gets the list of all active compliance modules and their parameters.
     /// @return An array of `ComplianceModuleParamPair` structs.
-    function complianceModules() external view returns (ComplianceModuleParamPair[] memory);
-
-    /// @notice Gets the configuration parameters for a specific active compliance module.
-    /// @param _module The address of the module.
-    /// @return The ABI-encoded parameters stored for the module.
-    function getParametersForComplianceModule(address _module) external view returns (bytes memory);
+    function complianceModules() external view returns (ISMARTComplianceModuleParamPair[] memory);
 }

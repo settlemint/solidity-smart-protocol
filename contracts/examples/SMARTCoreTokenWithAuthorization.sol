@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 // --- Imports for SMARTTokenBase ---
 import { SMART } from "../extensions/core/SMART.sol";
-import { ISMART } from "../interface/ISMART.sol";
+import { ISMARTComplianceModuleParamPair } from "../interface/structs/ISMARTComplianceModuleParamPair.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { SMARTAccessControlAuthorization } from "../extensions/core/SMARTAccessControlAuthorization.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
@@ -19,7 +19,7 @@ contract SMARTCoreTokenWithAuthorization is SMART, SMARTAccessControlAuthorizati
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ISMART.ComplianceModuleParamPair[] memory initialModulePairs_,
+        ISMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address initialOwner_
     )
         SMART(

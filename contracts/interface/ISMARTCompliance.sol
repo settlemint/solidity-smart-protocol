@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.27;
 
+import { ISMART } from "./ISMART.sol";
+import { ISMARTComplianceModuleParamPair } from "./structs/ISMARTComplianceModuleParamPair.sol";
+
 /// @title ISMART Compliance Interface
 /// @notice Defines the interface for the main compliance contract used by SMART tokens.
 ///         This contract is responsible for checking transfer legality and potentially logging/acting on transfers.
+
 interface ISMARTCompliance {
     /// @notice Checks if a transfer is compliant according to the rules enforced by this contract and its modules.
     /// @dev This function MUST be view only and should not modify state. It should revert if the transfer is not
@@ -41,4 +45,18 @@ interface ISMARTCompliance {
     /// @param _from The address whose tokens were burned.
     /// @param _amount The amount of tokens burned.
     function destroyed(address _token, address _from, uint256 _amount) external;
+
+    // --- Compliance Module Validation (Views) ---
+
+    /// @notice Validates if a module implements the required interface AND if the provided parameters are valid for it.
+    /// @dev Reverts if the module address is invalid, does not support `ISMARTComplianceModule`, or if parameters are
+    /// rejected by the module's `validateParameters`.
+    /// @param _module The address of the module to validate.
+    /// @param _params The parameters to validate against the module.
+    function isValidComplianceModule(address _module, bytes calldata _params) external view;
+
+    /// @notice Validates multiple compliance modules and their corresponding parameters.
+    /// @dev Reverts if any pair in the array fails the checks performed by `isValidComplianceModule`.
+    /// @param _pairs An array of module-parameter pairs to validate.
+    function areValidComplianceModules(ISMARTComplianceModuleParamPair[] calldata _pairs) external view;
 }

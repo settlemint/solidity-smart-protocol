@@ -4,14 +4,13 @@ pragma solidity ^0.8.27;
 import { ISMART } from "../../../interface/ISMART.sol";
 import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistry.sol";
 import { ISMARTCompliance } from "../../../interface/ISMARTCompliance.sol";
-import { ISMARTComplianceModule } from "../../../interface/ISMARTComplianceModule.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { ISMARTComplianceModuleParamPair } from "../../../interface/structs/ISMARTComplianceModuleParamPair.sol";
+
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { _SMARTAuthorizationHooks } from "./_SMARTAuthorizationHooks.sol";
 import { ZeroAddressNotAllowed } from "../../common/CommonErrors.sol";
 import {
-    InvalidModuleImplementation,
     DuplicateModule,
     MintNotCompliant,
     TransferNotCompliant,
@@ -89,7 +88,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     function setParametersForComplianceModule(address _module, bytes memory _params) external virtual override {
         _authorizeUpdateComplianceSettings();
         if (__moduleIndex[_module] == 0) revert ModuleNotFound();
-        _validateModuleAndParams(_module, _params);
+        __compliance.isValidComplianceModule(_module, _params);
         __moduleParameters[_module] = _params;
         emit ModuleParametersUpdated(_module, _params);
     }
@@ -98,7 +97,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     /// @dev Requires authorization via `_authorizeUpdateComplianceSettings`.
     function addComplianceModule(address _module, bytes memory _params) external virtual override {
         _authorizeUpdateComplianceSettings();
-        _validateModuleAndParams(_module, _params);
+        __compliance.isValidComplianceModule(_module, _params);
         if (__moduleIndex[_module] != 0) revert ModuleAlreadyAdded();
 
         __complianceModuleList.push(_module);
@@ -182,33 +181,16 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     }
 
     /// @inheritdoc ISMART
-    function complianceModules() external view virtual override returns (ComplianceModuleParamPair[] memory) {
+    function complianceModules() external view virtual override returns (ISMARTComplianceModuleParamPair[] memory) {
         uint256 length = __complianceModuleList.length;
-        ComplianceModuleParamPair[] memory pairs = new ComplianceModuleParamPair[](length);
+        ISMARTComplianceModuleParamPair[] memory pairs = new ISMARTComplianceModuleParamPair[](length);
 
         for (uint256 i = 0; i < length; i++) {
             address module = __complianceModuleList[i];
-            pairs[i] = ComplianceModuleParamPair({ module: module, params: __moduleParameters[module] });
+            pairs[i] = ISMARTComplianceModuleParamPair({ module: module, params: __moduleParameters[module] });
         }
 
         return pairs;
-    }
-
-    /// @inheritdoc ISMART
-    function getParametersForComplianceModule(address _module) external view virtual override returns (bytes memory) {
-        return __moduleParameters[_module];
-    }
-
-    /// @inheritdoc ISMART
-    function isValidComplianceModule(address _module, bytes calldata _params) external view virtual override {
-        _validateModuleAndParams(_module, _params);
-    }
-
-    /// @inheritdoc ISMART
-    function areValidComplianceModules(ComplianceModuleParamPair[] calldata _pairs) external view virtual override {
-        for (uint256 i = 0; i < _pairs.length; i++) {
-            _validateModuleAndParams(_pairs[i].module, _pairs[i].params);
-        }
     }
 
     // -- Internal Setup Function --
@@ -232,7 +214,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         address identityRegistry_,
         address compliance_,
         uint256[] memory requiredClaimTopics_,
-        ComplianceModuleParamPair[] memory initialModulePairs_
+        ISMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         internal
         virtual
@@ -248,12 +230,13 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         __compliance = ISMARTCompliance(compliance_);
         __requiredClaimTopics = requiredClaimTopics_;
 
+        __compliance.areValidComplianceModules(initialModulePairs_);
+
         // Register initial modules and their parameters
         for (uint256 i = 0; i < initialModulePairs_.length; i++) {
             address module = initialModulePairs_[i].module;
             bytes memory params = initialModulePairs_[i].params;
 
-            _validateModuleAndParams(module, params); // Reverts on failure
             if (__moduleIndex[module] != 0) revert DuplicateModule(module);
 
             __complianceModuleList.push(module);
@@ -321,28 +304,5 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
     /// @param amount The amount that was burned.
     function _smart_afterBurnLogic(address from, uint256 amount) internal virtual {
         __compliance.destroyed(address(this), from, amount);
-    }
-
-    // -- Internal Validation Function --
-
-    /// @dev Internal function to validate a compliance module's interface support AND its parameters.
-    ///      Reverts with appropriate error if validation fails.
-    /// @param _module The address of the compliance module to validate.
-    /// @param _params The parameters to validate against the module.
-    function _validateModuleAndParams(address _module, bytes memory _params) private view {
-        if (_module == address(0)) revert ZeroAddressNotAllowed();
-
-        // Check if the module supports the ISMARTComplianceModule interface
-        try IERC165(_module).supportsInterface(type(ISMARTComplianceModule).interfaceId) returns (bool supported) {
-            if (!supported) {
-                revert InvalidModuleImplementation(); // Revert if the interface is not supported
-            }
-        } catch {
-            revert InvalidModuleImplementation(); // Revert if the supportsInterface call fails
-        }
-
-        // Validate the provided parameters using the module's validation function
-        // This external call can revert, which will propagate up.
-        ISMARTComplianceModule(_module).validateParameters(_params);
     }
 }
