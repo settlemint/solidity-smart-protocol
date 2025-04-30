@@ -19,13 +19,6 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension {
 
     // -- Abstract Functions (Dependencies) --
 
-    /// @notice Abstract function to retrieve the token balance of an account.
-    /// @dev Must be implemented by inheriting contracts to call the appropriate balance function (e.g.,
-    /// ERC20/ERC20Upgradeable.balanceOf).
-    /// @param account The address whose balance is queried.
-    /// @return The token balance of the account.
-    function _redeemable_getBalance(address account) internal view virtual returns (uint256);
-
     // -- State-Changing Functions --
 
     /// @notice Allows the caller (token holder) to redeem (burn) their own tokens.
@@ -37,7 +30,7 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension {
     function redeem(uint256 amount) public virtual returns (bool) {
         address owner = _msgSender();
         _beforeRedeem(owner, amount); // Standard SMARTHook
-        _redeemable_executeBurn(owner, amount); // Abstract burn execution
+        _redeem(owner, amount); // Abstract burn execution
         _afterRedeem(owner, amount); // Standard SMARTHook
 
         emit Redeemed(owner, amount);
@@ -51,18 +44,25 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension {
     /// @return True upon successful execution.
     function redeemAll() external virtual returns (bool) {
         address owner = _msgSender();
-        uint256 balance = _redeemable_getBalance(owner);
+        uint256 balance = _getRedeemableBalance(owner);
         return redeem(balance);
     }
 
     // -- Abstract Functions (Dependencies) --
+
+    /// @notice Abstract function to retrieve the token balance of an account.
+    /// @dev Must be implemented by inheriting contracts to call the appropriate balance function (e.g.,
+    /// ERC20/ERC20Upgradeable.balanceOf).
+    /// @param account The address whose balance is queried.
+    /// @return The token balance of the account.
+    function _getRedeemableBalance(address account) internal view virtual returns (uint256);
 
     /// @notice Abstract function representing the actual token burning mechanism.
     /// @dev Must be implemented by inheriting contracts to interact with the base token contract's burn function (e.g.,
     /// ERC20Burnable._burn).
     /// @param from The address whose tokens are being burned (the redeemer).
     /// @param amount The amount of tokens to burn.
-    function _redeemable_executeBurn(address from, uint256 amount) internal virtual;
+    function _redeem(address from, uint256 amount) internal virtual;
 
     /// @dev Abstract function to get the message sender (redeemer).
     ///      Needs implementation by inheriting contract (e.g., via Context/ContextUpgradeable).

@@ -25,7 +25,7 @@ abstract contract SMARTRedeemable is Context, SMARTExtension, _SMARTRedeemableLo
 
     /// @notice Implementation of the abstract balance getter using standard ERC20.balanceOf.
     /// @inheritdoc _SMARTRedeemableLogic
-    function _redeemable_getBalance(address account) internal view virtual override returns (uint256) {
+    function _getRedeemableBalance(address account) internal view virtual override returns (uint256) {
         return balanceOf(account); // Assumes ERC20.balanceOf is available
     }
 
@@ -33,7 +33,7 @@ abstract contract SMARTRedeemable is Context, SMARTExtension, _SMARTRedeemableLo
     /// @dev Assumes the inheriting contract includes an ERC20 implementation with an internal `_burn` function (e.g.,
     /// from ERC20Burnable).
     /// @inheritdoc _SMARTRedeemableLogic
-    function _redeemable_executeBurn(address from, uint256 amount) internal virtual override {
+    function _redeem(address from, uint256 amount) internal virtual override {
         // Allowance check is typically NOT needed for self-burn/redeem.
         // The balance check is implicitly handled by the _burn function.
         // _spendAllowance(from, _msgSender(), amount);
