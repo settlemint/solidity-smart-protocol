@@ -26,6 +26,7 @@ Build your own blockchain usecase with ease.
 - Allowance? or can we use ERC20 allowance?
 - Make compliance an extension?
 - Merge burn and redeem?
+- Add tests for historical balances
 
 ## Get started
 
