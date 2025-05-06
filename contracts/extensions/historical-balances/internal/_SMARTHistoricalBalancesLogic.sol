@@ -149,21 +149,10 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension {
     /// @param to The address that received the minted tokens.
     /// @param amount The amount of tokens minted.
     function _historical_balances_afterMintLogic(address to, uint256 amount) internal virtual {
-        // super._afterMint(to, amount); // This call should be in the actual hook override, not in the logic part.
-
         uint208 castAmount = SafeCast.toUint208(amount);
-        uint208 oldTotalSupply;
-        uint208 newTotalSupply;
-        uint208 oldBalanceTo;
-        uint208 newBalanceTo;
 
-        (oldTotalSupply, newTotalSupply) = _push(_totalSupplyCheckpoints, _add, castAmount);
-        // Emitting event for total supply change
-        // emit CheckpointUpdated(address(0), oldTotalSupply, newTotalSupply); // Consider if address(0) is the best way
-
-        (oldBalanceTo, newBalanceTo) = _push(_balanceCheckpoints[to], _add, castAmount);
-        // Emitting event for recipient's balance change
-        // emit CheckpointUpdated(to, oldBalanceTo, newBalanceTo);
+        _push(_totalSupplyCheckpoints, _add, castAmount);
+        _push(_balanceCheckpoints[to], _add, castAmount);
     }
 
     /// @dev Internal logic executed after a burn operation to update historical total supply and burner's balance.
@@ -171,19 +160,10 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension {
     /// @param from The address whose tokens were burned.
     /// @param amount The amount of tokens burned.
     function _historical_balances_afterBurnLogic(address from, uint256 amount) internal virtual {
-        // super._afterBurn(from, amount); // This call should be in the actual hook override, not in the logic part.
-
         uint208 castAmount = SafeCast.toUint208(amount);
-        uint208 oldTotalSupply;
-        uint208 newTotalSupply;
-        uint208 oldBalanceFrom;
-        uint208 newBalanceFrom;
 
-        (oldTotalSupply, newTotalSupply) = _push(_totalSupplyCheckpoints, _subtract, castAmount);
-        // emit CheckpointUpdated(address(0), oldTotalSupply, newTotalSupply);
-
-        (oldBalanceFrom, newBalanceFrom) = _push(_balanceCheckpoints[from], _subtract, castAmount);
-        // emit CheckpointUpdated(from, oldBalanceFrom, newBalanceFrom);
+        _push(_totalSupplyCheckpoints, _subtract, castAmount);
+        _push(_balanceCheckpoints[from], _subtract, castAmount);
     }
 
     /// @dev Internal logic executed after a transfer operation to update historical balances of the sender and
@@ -193,19 +173,10 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension {
     /// @param to The address that received the tokens.
     /// @param amount The amount of tokens transferred.
     function _historical_balances_afterTransferLogic(address from, address to, uint256 amount) internal virtual {
-        // super._afterTransfer(from, to, amount); // This call should be in the actual hook override, not in the logic
-        // part.
-
         uint208 castAmount = SafeCast.toUint208(amount);
-        uint208 oldBalanceFrom;
-        uint208 newBalanceFrom;
-        uint208 oldBalanceTo;
-        uint208 newBalanceTo;
 
-        (oldBalanceFrom, newBalanceFrom) = _push(_balanceCheckpoints[from], _subtract, castAmount);
-        // emit CheckpointUpdated(from, oldBalanceFrom, newBalanceFrom);
-
-        (oldBalanceTo, newBalanceTo) = _push(_balanceCheckpoints[to], _add, castAmount);
+        _push(_balanceCheckpoints[from], _subtract, castAmount);
+        _push(_balanceCheckpoints[to], _add, castAmount);
         // emit CheckpointUpdated(to, oldBalanceTo, newBalanceTo);
     }
 }
