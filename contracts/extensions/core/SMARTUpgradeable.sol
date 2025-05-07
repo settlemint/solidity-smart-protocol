@@ -146,34 +146,9 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
      * @param value The amount being transferred/minted/burned.
      */
     function _update(address from, address to, uint256 value) internal virtual override(ERC20Upgradeable) {
-        if (from == address(0)) {
-            // Mint
-            if (!__isForcedUpdate) {
-                _beforeMint(to, value);
-            }
-            super._update(from, to, value); // Perform ERC20 update
-            if (!__isForcedUpdate) {
-                _afterMint(to, value);
-            }
-        } else if (to == address(0)) {
-            // Burn
-            if (!__isForcedUpdate) {
-                _beforeBurn(from, value);
-            }
-            super._update(from, to, value); // Perform ERC20 update
-            if (!__isForcedUpdate) {
-                _afterBurn(from, value);
-            }
-        } else {
-            // Transfer
-            if (!__isForcedUpdate) {
-                _beforeTransfer(from, to, value);
-            }
-            super._update(from, to, value); // Perform ERC20 update
-            if (!__isForcedUpdate) {
-                _afterTransfer(from, to, value);
-            }
-        }
+        _smart_beforeUpdateLogic(from, to, value);
+        super._update(from, to, value); // Perform ERC20 update
+        _smart_afterUpdateLogic(from, to, value);
     }
 
     /// @inheritdoc SMARTHooks

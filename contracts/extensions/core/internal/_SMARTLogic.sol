@@ -48,7 +48,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
     function setName(string memory name_) external virtual override {
         _authorizeUpdateTokenSettings();
         __name = name_;
-        emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
+        emit UpdatedTokenInformation(_smartSender(), __name, __symbol, __decimals, __onchainID);
     }
 
     /// @inheritdoc ISMART
@@ -56,7 +56,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
     function setSymbol(string memory symbol_) external virtual override {
         _authorizeUpdateTokenSettings();
         __symbol = symbol_;
-        emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
+        emit UpdatedTokenInformation(_smartSender(), __name, __symbol, __decimals, __onchainID);
     }
 
     /// @inheritdoc ISMART
@@ -65,7 +65,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
         _authorizeUpdateComplianceSettings();
         if (compliance_ == address(0)) revert ZeroAddressNotAllowed();
         __compliance = ISMARTCompliance(compliance_);
-        emit ComplianceAdded(address(__compliance));
+        emit ComplianceAdded(_smartSender(), address(__compliance));
     }
 
     /// @inheritdoc ISMART
@@ -74,7 +74,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
         _authorizeUpdateVerificationSettings();
         if (identityRegistry_ == address(0)) revert ZeroAddressNotAllowed();
         __identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
-        emit IdentityRegistryAdded(address(__identityRegistry));
+        emit IdentityRegistryAdded(_smartSender(), address(__identityRegistry));
     }
 
     /// @inheritdoc ISMART
@@ -82,7 +82,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
     function setOnchainID(address onchainID_) external virtual override {
         _authorizeUpdateTokenSettings();
         __onchainID = onchainID_;
-        emit UpdatedTokenInformation(__name, __symbol, __decimals, __onchainID);
+        emit UpdatedTokenInformation(_smartSender(), __name, __symbol, __decimals, __onchainID);
     }
 
     /// @inheritdoc ISMART
@@ -92,7 +92,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
         if (__moduleIndex[_module] == 0) revert ModuleNotFound();
         __compliance.isValidComplianceModule(_module, _params);
         __moduleParameters[_module] = _params;
-        emit ModuleParametersUpdated(_module, _params);
+        emit ModuleParametersUpdated(_smartSender(), _module, _params);
     }
 
     /// @inheritdoc ISMART
@@ -106,7 +106,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
         __moduleIndex[_module] = __complianceModuleList.length;
         __moduleParameters[_module] = _params;
 
-        emit ComplianceModuleAdded(_module, _params);
+        emit ComplianceModuleAdded(_smartSender(), _module, _params);
     }
 
     /// @inheritdoc ISMART
@@ -128,7 +128,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
         delete __moduleIndex[_module];
         delete __moduleParameters[_module];
 
-        emit ComplianceModuleRemoved(_module);
+        emit ComplianceModuleRemoved(_smartSender(), _module);
     }
 
     /// @inheritdoc ISMART
@@ -136,7 +136,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
     function setRequiredClaimTopics(uint256[] memory requiredClaimTopics_) external virtual override {
         _authorizeUpdateVerificationSettings();
         __requiredClaimTopics = requiredClaimTopics_;
-        emit RequiredClaimTopicsUpdated(__requiredClaimTopics);
+        emit RequiredClaimTopicsUpdated(_smartSender(), __requiredClaimTopics);
     }
 
     /// @notice Recovers mistakenly sent ERC20 tokens from this contract's address.
@@ -235,6 +235,8 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
 
         __compliance.areValidComplianceModules(initialModulePairs_);
 
+        address initiator = _smartSender();
+
         // Register initial modules and their parameters
         for (uint256 i = 0; i < initialModulePairs_.length; i++) {
             address module = initialModulePairs_[i].module;
@@ -245,16 +247,66 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
             __complianceModuleList.push(module);
             __moduleIndex[module] = __complianceModuleList.length; // Store index + 1
             __moduleParameters[module] = params;
-            emit ComplianceModuleAdded(module, params);
+            emit ComplianceModuleAdded(initiator, module, params);
         }
 
-        emit IdentityRegistryAdded(identityRegistry_);
-        emit ComplianceAdded(compliance_);
-        emit UpdatedTokenInformation(name_, symbol_, decimals_, onchainID_);
-        emit RequiredClaimTopicsUpdated(requiredClaimTopics_);
+        emit IdentityRegistryAdded(initiator, identityRegistry_);
+        emit ComplianceAdded(initiator, compliance_);
+        emit UpdatedTokenInformation(initiator, name_, symbol_, decimals_, onchainID_);
+        emit RequiredClaimTopicsUpdated(initiator, requiredClaimTopics_);
     }
 
     // -- Internal Hook Helper Functions --
+
+    /// @notice Internal logic executed before an update operation.
+    /// @dev Handles mint, burn, and transfer operations.
+    ///      Called by the implementing contract's `_beforeUpdate` hook.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount being updated.
+    function _smart_beforeUpdateLogic(address from, address to, uint256 amount) internal virtual {
+        if (from == address(0)) {
+            // Mint
+            if (!__isForcedUpdate) {
+                _beforeMint(to, amount);
+            }
+        } else if (to == address(0)) {
+            // Burn
+            if (!__isForcedUpdate) {
+                _beforeBurn(from, amount);
+            }
+        } else {
+            // Transfer
+            if (!__isForcedUpdate) {
+                _beforeTransfer(from, to, amount);
+            }
+        }
+    }
+
+    /// @notice Internal logic executed after an update operation.
+    /// @dev Handles mint, burn, and transfer operations.
+    ///      Called by the implementing contract's `_afterUpdate` hook.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount being updated.
+    function _smart_afterUpdateLogic(address from, address to, uint256 amount) internal virtual {
+        if (from == address(0)) {
+            // Mint
+            if (!__isForcedUpdate) {
+                _afterMint(to, amount);
+            }
+        } else if (to == address(0)) {
+            // Burn
+            if (!__isForcedUpdate) {
+                _afterBurn(from, amount);
+            }
+        } else {
+            // Transfer
+            if (!__isForcedUpdate) {
+                _afterTransfer(from, to, amount);
+            }
+        }
+    }
 
     /// @notice Internal logic executed before a mint operation.
     /// @dev Performs mint authorization check, recipient verification, and compliance checks.
@@ -273,7 +325,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
     /// @param to The recipient address.
     /// @param amount The amount that was minted.
     function _smart_afterMintLogic(address to, uint256 amount) internal virtual {
-        emit MintCompleted(to, amount);
+        emit MintCompleted(_smartSender(), to, amount);
         __compliance.created(address(this), to, amount);
     }
 
@@ -296,7 +348,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
     /// @param to The recipient address.
     /// @param amount The amount that was transferred.
     function _smart_afterTransferLogic(address from, address to, uint256 amount) internal virtual {
-        emit TransferCompleted(from, to, amount);
+        emit TransferCompleted(_smartSender(), from, to, amount);
         __compliance.transferred(address(this), from, to, amount);
     }
 
