@@ -51,16 +51,16 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
      * @return The current timepoint as a `uint48`.
      */
     function clock() public view virtual returns (uint48) {
-        return Time.blockNumber();
+        return SafeCast.toUint48(block.timestamp);
     }
 
     /**
      * @dev Returns a machine-readable description of the clock source and mode.
-     * @return A string describing the clock mode (e.g., "mode=blocknumber&from=default").
+     * @return A string describing the clock mode (e.g., "mode=timestamp").
      */
     // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE() public view virtual returns (string memory) {
-        return "mode=blocknumber&from=default";
+        return "mode=timestamp";
     }
 
     // -- View Functions --
