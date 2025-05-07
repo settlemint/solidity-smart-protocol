@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
 import { SMARTHooks } from "./../../common/SMARTHooks.sol";
 import { FutureLookup } from "./../SMARTHistoricalBalancesErrors.sol";
+import { ISMARTHistoricalBalances } from "./../ISMARTHistoricalBalances.sol";
 
 import { Checkpoints } from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -15,7 +16,7 @@ import { Time } from "@openzeppelin/contracts/utils/types/Time.sol";
 ///      at different timepoints (block numbers by default). It provides functions to query these historical values.
 ///      It integrates with standard SMARTHooks (`_afterMint`, `_afterBurn`, `_afterTransfer`)
 ///      via internal logic functions (`_historical_balances_afterMintLogic`, etc.).
-abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension {
+abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistoricalBalances {
     using Checkpoints for Checkpoints.Trace208;
 
     // -- State Variables --
