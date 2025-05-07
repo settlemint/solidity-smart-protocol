@@ -7,6 +7,8 @@ import { SMARTComplianceModuleParamPair } from "../interface/structs/SMARTCompli
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { SMARTAccessControlAuthorization } from "../extensions/core/SMARTAccessControlAuthorization.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
+import { SMARTExtensionAccessControlAuthorization } from
+    "../extensions/common/SMARTExtensionAccessControlAuthorization.sol";
 
 /// @title SMARTCoreTokenWithAuthorization
 /// @notice A basic SMART token implementation with core features only.
@@ -36,7 +38,13 @@ contract SMARTCoreTokenWithAuthorization is SMART, SMARTAccessControlAuthorizati
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
     }
 
-    function _msgSender() internal view virtual override(Context, SMARTAccessControlAuthorization) returns (address) {
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(Context, SMARTExtensionAccessControlAuthorization)
+        returns (address)
+    {
         return super._msgSender();
     }
 
@@ -47,7 +55,7 @@ contract SMARTCoreTokenWithAuthorization is SMART, SMARTAccessControlAuthorizati
         public
         view
         virtual
-        override(AccessControl, SMARTAccessControlAuthorization)
+        override(AccessControl, SMARTExtensionAccessControlAuthorization)
         returns (bool)
     {
         return super.hasRole(role, account);

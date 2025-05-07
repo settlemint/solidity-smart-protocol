@@ -4,6 +4,9 @@ pragma solidity ^0.8.27;
 // openzeppelin imports
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
+// SMART imports
+import { SMARTExtensionAccessControlAuthorization } from "../common/SMARTExtensionAccessControlAuthorization.sol";
+
 // Internal implementation imports
 import { _SMARTBurnableAuthorizationHooks } from "./internal/_SMARTBurnableAuthorizationHooks.sol";
 
@@ -11,7 +14,10 @@ import { _SMARTBurnableAuthorizationHooks } from "./internal/_SMARTBurnableAutho
 /// @notice Implements authorization logic for the SMART Burnable extension using OpenZeppelin's AccessControl.
 /// @dev Defines the `BURNER_ROLE` and requires the caller of burn operations to have this role.
 ///      Compatible with both standard and upgradeable AccessControl implementations.
-abstract contract SMARTBurnableAccessControlAuthorization is _SMARTBurnableAuthorizationHooks {
+abstract contract SMARTBurnableAccessControlAuthorization is
+    _SMARTBurnableAuthorizationHooks,
+    SMARTExtensionAccessControlAuthorization
+{
     // -- Roles --
 
     /// @notice Role required to execute burn operations.
@@ -27,15 +33,4 @@ abstract contract SMARTBurnableAccessControlAuthorization is _SMARTBurnableAutho
         address sender = _msgSender();
         if (!hasRole(BURNER_ROLE, sender)) revert IAccessControl.AccessControlUnauthorizedAccount(sender, BURNER_ROLE);
     }
-
-    // -- Abstract Dependencies (from AccessControl) --
-
-    /// @dev Returns the address of the current message sender.
-    function _msgSender() internal view virtual returns (address);
-
-    /// @dev Checks if an account has a specific role.
-    /// @param role The role identifier.
-    /// @param account The address to check.
-    /// @return True if the account has the role, false otherwise.
-    function hasRole(bytes32 role, address account) public view virtual returns (bool);
 }

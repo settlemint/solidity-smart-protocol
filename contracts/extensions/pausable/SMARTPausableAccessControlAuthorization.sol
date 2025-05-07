@@ -4,6 +4,9 @@ pragma solidity ^0.8.27;
 // openzeppelin imports
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
+// SMART imports
+import { SMARTExtensionAccessControlAuthorization } from "../common/SMARTExtensionAccessControlAuthorization.sol";
+
 // Internal implementation imports
 import { _SMARTPausableAuthorizationHooks } from "./internal/_SMARTPausableAuthorizationHooks.sol";
 
@@ -12,7 +15,10 @@ import { _SMARTPausableAuthorizationHooks } from "./internal/_SMARTPausableAutho
 /// @dev Defines the `PAUSER_ROLE` and implements the `_authorizePause` hook from `_SMARTPausableAuthorizationHooks`.
 ///      Compatible with both standard and upgradeable AccessControl implementations.
 
-abstract contract SMARTPausableAccessControlAuthorization is _SMARTPausableAuthorizationHooks {
+abstract contract SMARTPausableAccessControlAuthorization is
+    _SMARTPausableAuthorizationHooks,
+    SMARTExtensionAccessControlAuthorization
+{
     // --- Roles ---
     /// @notice Role required to pause or unpause the contract.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
@@ -25,17 +31,4 @@ abstract contract SMARTPausableAccessControlAuthorization is _SMARTPausableAutho
         address sender = _msgSender();
         if (!hasRole(PAUSER_ROLE, sender)) revert IAccessControl.AccessControlUnauthorizedAccount(sender, PAUSER_ROLE);
     }
-
-    // --- Abstract Dependencies (from AccessControl) ---
-
-    /// @dev Returns the address of the current message sender.
-    ///      Needs to be implemented by the inheriting contract (usually provided by OZ AccessControl).
-    function _msgSender() internal view virtual returns (address);
-
-    /// @dev Checks if an account has a specific role.
-    ///      Needs to be implemented by the inheriting contract (usually provided by OZ AccessControl).
-    /// @param role The role identifier.
-    /// @param account The address to check.
-    /// @return True if the account has the role, false otherwise.
-    function hasRole(bytes32 role, address account) public view virtual returns (bool);
 }

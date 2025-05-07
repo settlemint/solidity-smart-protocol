@@ -14,11 +14,14 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 // Interface imports
 import { ISMART } from "./interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplianceModuleParamPair.sol";
+
 // Core extensions
 import { SMARTUpgradeable } from "./extensions/core/SMARTUpgradeable.sol";
 import { SMARTExtensionUpgradeable } from "./extensions/common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
 import { SMARTAccessControlAuthorization } from "./extensions/core/SMARTAccessControlAuthorization.sol";
+import { SMARTExtensionAccessControlAuthorization } from
+    "./extensions/common/SMARTExtensionAccessControlAuthorization.sol";
 
 // Feature extensions
 import { SMARTPausableUpgradeable } from "./extensions/pausable/SMARTPausableUpgradeable.sol";
@@ -169,13 +172,7 @@ contract SMARTTokenUpgradeable is
     )
         public
         view
-        override(
-            SMARTAccessControlAuthorization,
-            SMARTBurnableAccessControlAuthorization,
-            SMARTPausableAccessControlAuthorization,
-            SMARTCustodianAccessControlAuthorization,
-            AccessControlUpgradeable
-        )
+        override(SMARTExtensionAccessControlAuthorization, AccessControlUpgradeable)
         returns (bool)
     {
         return super.hasRole(role, account);
@@ -295,13 +292,7 @@ contract SMARTTokenUpgradeable is
         internal
         view
         virtual
-        override(
-            ContextUpgradeable,
-            SMARTAccessControlAuthorization,
-            SMARTBurnableAccessControlAuthorization,
-            SMARTPausableAccessControlAuthorization,
-            SMARTCustodianAccessControlAuthorization
-        )
+        override(ContextUpgradeable, SMARTExtensionAccessControlAuthorization)
         returns (address)
     {
         return super._msgSender();

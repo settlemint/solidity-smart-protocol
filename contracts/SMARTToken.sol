@@ -12,11 +12,14 @@ import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol"
 import { ISMART } from "./interface/ISMART.sol";
 import { ISMARTIdentityRegistry } from "./interface/ISMARTIdentityRegistry.sol";
 import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplianceModuleParamPair.sol";
+
 // Core extensions
 import { SMART } from "./extensions/core/SMART.sol";
 import { SMARTExtension } from "./extensions/common/SMARTExtension.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
 import { SMARTAccessControlAuthorization } from "./extensions/core/SMARTAccessControlAuthorization.sol";
+import { SMARTExtensionAccessControlAuthorization } from
+    "./extensions/common/SMARTExtensionAccessControlAuthorization.sol";
 
 // Feature extensions
 import { SMARTPausable } from "./extensions/pausable/SMARTPausable.sol";
@@ -107,13 +110,7 @@ contract SMARTToken is
         public
         view
         virtual
-        override(
-            SMARTAccessControlAuthorization,
-            SMARTBurnableAccessControlAuthorization,
-            SMARTPausableAccessControlAuthorization,
-            SMARTCustodianAccessControlAuthorization,
-            AccessControl
-        )
+        override(SMARTExtensionAccessControlAuthorization, AccessControl)
         returns (bool)
     {
         return AccessControl.hasRole(role, account);
@@ -187,13 +184,7 @@ contract SMARTToken is
         internal
         view
         virtual
-        override(
-            SMARTAccessControlAuthorization,
-            SMARTBurnableAccessControlAuthorization,
-            SMARTPausableAccessControlAuthorization,
-            SMARTCustodianAccessControlAuthorization,
-            Context
-        )
+        override(SMARTExtensionAccessControlAuthorization, Context)
         returns (address)
     {
         return Context._msgSender();

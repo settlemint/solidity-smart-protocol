@@ -13,6 +13,8 @@ import { SMARTAccessControlAuthorization } from "../extensions/core/SMARTAccessC
 import { SMARTBurnableAccessControlAuthorization } from
     "../extensions/burnable/SMARTBurnableAccessControlAuthorization.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
+import { SMARTExtensionAccessControlAuthorization } from
+    "../extensions/common/SMARTExtensionAccessControlAuthorization.sol";
 
 /// @title SMARTBurnableTokenWithAuthorization
 /// @notice A basic SMART token implementation with core features only.
@@ -113,7 +115,7 @@ contract SMARTBurnableTokenWithAuthorization is
         internal
         view
         virtual
-        override(Context, SMARTAccessControlAuthorization, SMARTBurnableAccessControlAuthorization)
+        override(Context, SMARTExtensionAccessControlAuthorization)
         returns (address)
     {
         return super._msgSender();
@@ -126,7 +128,7 @@ contract SMARTBurnableTokenWithAuthorization is
         public
         view
         virtual
-        override(AccessControl, SMARTAccessControlAuthorization, SMARTBurnableAccessControlAuthorization)
+        override(AccessControl, SMARTExtensionAccessControlAuthorization)
         returns (bool)
     {
         return super.hasRole(role, account);

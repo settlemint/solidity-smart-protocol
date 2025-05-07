@@ -13,6 +13,8 @@ import { SMARTAccessControlAuthorization } from "../extensions/core/SMARTAccessC
 import { SMARTPausableAccessControlAuthorization } from
     "../extensions/pausable/SMARTPausableAccessControlAuthorization.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
+import { SMARTExtensionAccessControlAuthorization } from
+    "../extensions/common/SMARTExtensionAccessControlAuthorization.sol";
 
 /// @title SMARTPausableTokenWithAuthorization
 /// @notice A basic SMART token implementation with core features only.
@@ -110,7 +112,7 @@ contract SMARTPausableTokenWithAuthorization is
         internal
         view
         virtual
-        override(Context, SMARTAccessControlAuthorization, SMARTPausableAccessControlAuthorization)
+        override(Context, SMARTExtensionAccessControlAuthorization)
         returns (address)
     {
         return super._msgSender();
@@ -123,7 +125,7 @@ contract SMARTPausableTokenWithAuthorization is
         public
         view
         virtual
-        override(AccessControl, SMARTAccessControlAuthorization, SMARTPausableAccessControlAuthorization)
+        override(AccessControl, SMARTExtensionAccessControlAuthorization)
         returns (bool)
     {
         return super.hasRole(role, account);
