@@ -1,22 +1,16 @@
-// SPDX-License-Identifier: CC0-1.0
+// SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.27;
 
 import { LengthMismatch } from "../../common/CommonErrors.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 import { _SMARTBurnableAuthorizationHooks } from "./_SMARTBurnableAuthorizationHooks.sol";
-
+import { BurnCompleted } from "./../SMARTBurnableEvents.sol";
 /// @title Internal Logic for SMART Burnable Extension
 /// @notice Contains the core internal logic and event for burning tokens.
 /// @dev This contract provides the `burn` and `batchBurn` functions and defines
 ///      abstract hooks for authorization and execution.
+
 abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthorizationHooks {
-    // -- Events --
-
-    /// @notice Emitted when tokens are successfully burned.
-    /// @param from The address from which tokens were burned.
-    /// @param amount The amount of tokens burned.
-    event BurnCompleted(address indexed from, uint256 amount);
-
     // -- External Functions --
 
     /// @notice Burns a specific amount of tokens from a user's address.

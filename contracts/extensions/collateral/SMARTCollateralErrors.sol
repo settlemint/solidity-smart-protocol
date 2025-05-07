@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CC0-1.0
+// SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.27;
 
 /// @notice Reverts if the required total supply (current + minted amount) exceeds the collateral amount found in a

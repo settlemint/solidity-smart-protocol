@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CC0-1.0
+// SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.27;
 
 import { ISMART } from "./ISMART.sol";
