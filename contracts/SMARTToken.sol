@@ -189,19 +189,13 @@ contract SMARTToken is
         virtual
         override(
             SMARTAccessControlAuthorization,
-            SMARTPausable,
             SMARTBurnableAccessControlAuthorization,
             SMARTPausableAccessControlAuthorization,
             SMARTCustodianAccessControlAuthorization,
-            Context,
-            SMARTRedeemable
+            Context
         )
         returns (address)
     {
         return Context._msgSender();
-    }
-
-    function _msgData() internal view virtual override(Context, SMARTRedeemable) returns (bytes calldata) {
-        return Context._msgData();
     }
 }

@@ -114,18 +114,8 @@ contract SMARTRedeemableTokenWithAuthorization is
         super._update(from, to, value);
     }
 
-    function _msgSender()
-        internal
-        view
-        virtual
-        override(Context, SMARTRedeemable, SMARTAccessControlAuthorization)
-        returns (address)
-    {
+    function _msgSender() internal view virtual override(Context, SMARTAccessControlAuthorization) returns (address) {
         return super._msgSender();
-    }
-
-    function _msgData() internal view virtual override(SMARTRedeemable, Context) returns (bytes calldata) {
-        return super._msgData();
     }
 
     function hasRole(

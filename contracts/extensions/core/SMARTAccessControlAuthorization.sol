@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.27;
 
+// openzeppelin imports
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+
 // Internal implementation imports
 import { _SMARTAuthorizationHooks } from "./internal/_SMARTAuthorizationHooks.sol";
-
-// Common errors
-import { Unauthorized } from "../common/CommonErrors.sol";
 
 /// @title Access Control Authorization for Core SMART Functionality
 /// @notice Implements authorization logic for the core SMART operations using OpenZeppelin's AccessControl.
@@ -30,7 +30,9 @@ abstract contract SMARTAccessControlAuthorization is _SMARTAuthorizationHooks {
     /// @inheritdoc _SMARTAuthorizationHooks
     function _authorizeUpdateTokenSettings() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(TOKEN_ADMIN_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(TOKEN_ADMIN_ROLE, sender)) {
+            revert IAccessControl.AccessControlUnauthorizedAccount(sender, TOKEN_ADMIN_ROLE);
+        }
     }
 
     /// @dev Authorizes updates to compliance settings.
@@ -38,7 +40,9 @@ abstract contract SMARTAccessControlAuthorization is _SMARTAuthorizationHooks {
     /// @inheritdoc _SMARTAuthorizationHooks
     function _authorizeUpdateComplianceSettings() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(COMPLIANCE_ADMIN_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(COMPLIANCE_ADMIN_ROLE, sender)) {
+            revert IAccessControl.AccessControlUnauthorizedAccount(sender, COMPLIANCE_ADMIN_ROLE);
+        }
     }
 
     /// @dev Authorizes updates to verification settings.
@@ -46,7 +50,9 @@ abstract contract SMARTAccessControlAuthorization is _SMARTAuthorizationHooks {
     /// @inheritdoc _SMARTAuthorizationHooks
     function _authorizeUpdateVerificationSettings() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(VERIFICATION_ADMIN_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(VERIFICATION_ADMIN_ROLE, sender)) {
+            revert IAccessControl.AccessControlUnauthorizedAccount(sender, VERIFICATION_ADMIN_ROLE);
+        }
     }
 
     /// @dev Authorizes minting of new tokens.
@@ -54,7 +60,7 @@ abstract contract SMARTAccessControlAuthorization is _SMARTAuthorizationHooks {
     /// @inheritdoc _SMARTAuthorizationHooks
     function _authorizeMintToken() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(MINTER_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(MINTER_ROLE, sender)) revert IAccessControl.AccessControlUnauthorizedAccount(sender, MINTER_ROLE);
     }
 
     /// @dev Authorizes recovering mistakenly sent ERC20 tokens from the contract.
@@ -62,7 +68,9 @@ abstract contract SMARTAccessControlAuthorization is _SMARTAuthorizationHooks {
     /// @inheritdoc _SMARTAuthorizationHooks
     function _authorizeRecoverERC20() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(TOKEN_ADMIN_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(TOKEN_ADMIN_ROLE, sender)) {
+            revert IAccessControl.AccessControlUnauthorizedAccount(sender, TOKEN_ADMIN_ROLE);
+        }
     }
 
     // -- Abstract Dependencies (from AccessControl) --

@@ -55,10 +55,4 @@ abstract contract SMARTPausableUpgradeable is Initializable, SMARTExtensionUpgra
         // super._update will call the next _update in the inheritance chain (e.g., SMARTUpgradeable's _update)
         super._update(from, to, value);
     }
-
-    /// @dev Overrides `_msgSender` to resolve inheritance conflict between `_SMARTPausableLogic` and base contracts.
-    ///      Delegates to the base implementation (ultimately from OZ ContextUpgradeable).
-    function _msgSender() internal view virtual override(ContextUpgradeable, _SMARTPausableLogic) returns (address) {
-        return super._msgSender();
-    }
 }

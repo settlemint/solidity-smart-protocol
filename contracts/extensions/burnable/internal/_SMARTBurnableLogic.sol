@@ -40,7 +40,7 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthoriz
     function __burnable_burn(address from, uint256 amount) private {
         _authorizeBurn(); // Authorization check
         _burnable_executeBurn(from, amount); // Execute the burn
-        emit BurnCompleted(from, amount); // Emit event
+        emit BurnCompleted(_smartSender(), from, amount); // Emit event
     }
 
     // -- Abstract Hooks --

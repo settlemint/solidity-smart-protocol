@@ -21,12 +21,13 @@ import {
     InvalidDecimals
 } from "../SMARTErrors.sol";
 import { TokenRecovered } from "../SMARTEvents.sol";
+import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 /// @title Internal Core Logic for SMART Tokens
 /// @notice Base contract containing the core state, logic, events, and authorization hooks for SMART tokens.
 /// @dev This abstract contract is intended to be inherited by both standard (SMART) and upgradeable (SMARTUpgradeable)
 ///      implementations. It defines shared state variables, internal logic, and hooks for extensibility.
 
-abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
+abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
     // -- Storage Variables --
     string internal __name; // Token name (mutable)
     string internal __symbol; // Token symbol (mutable)
@@ -156,7 +157,7 @@ abstract contract _SMARTLogic is ISMART, _SMARTAuthorizationHooks {
         if (balance < amount) revert InsufficientTokenBalance();
 
         SafeERC20.safeTransfer(IERC20(token), to, amount);
-        emit TokenRecovered(token, to, amount);
+        emit TokenRecovered(_smartSender(), token, to, amount);
     }
 
     // -- View Functions --

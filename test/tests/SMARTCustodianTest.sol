@@ -4,9 +4,18 @@ pragma solidity ^0.8.24;
 import { SMARTTest } from "./SMARTTest.sol"; // Inherit from the logic base
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { _SMARTCustodianLogic } from "../../contracts/extensions/custodian/internal/_SMARTCustodianLogic.sol";
 import { TestConstants } from "./Constants.sol";
-import { Unauthorized } from "../../contracts/extensions/common/CommonErrors.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { SMARTCustodianAccessControlAuthorization } from
+    "../../contracts/extensions/custodian/SMARTCustodianAccessControlAuthorization.sol";
+import {
+    SenderAddressFrozen,
+    RecipientAddressFrozen,
+    FreezeAmountExceedsAvailableBalance,
+    InsufficientFrozenTokens,
+    NoTokensToRecover,
+    RecoveryTargetAddressFrozen
+} from "../../contracts/extensions/custodian/SMARTCustodianErrors.sol";
 
 abstract contract SMARTCustodianTest is SMARTTest {
     // Renamed from setUp, removed override
@@ -31,28 +40,28 @@ abstract contract SMARTCustodianTest is SMARTTest {
     function test_Custodian_FreezeAddress_TransferFromFrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
-        vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.SenderAddressFrozen.selector));
+        vm.expectRevert(abi.encodeWithSelector(SenderAddressFrozen.selector));
         tokenUtils.transferToken(address(token), clientBE, clientJP, 1 ether);
     }
 
     function test_Custodian_FreezeAddress_TransferToFrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientJP, true);
-        vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.RecipientAddressFrozen.selector));
+        vm.expectRevert(abi.encodeWithSelector(RecipientAddressFrozen.selector));
         tokenUtils.transferToken(address(token), clientBE, clientJP, 1 ether);
     }
 
     function test_Custodian_FreezeAddress_MintToFrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
-        vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.RecipientAddressFrozen.selector));
+        vm.expectRevert(abi.encodeWithSelector(RecipientAddressFrozen.selector));
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, 1 ether);
     }
 
     function test_Custodian_FreezeAddress_RedeemFromFrozen_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, clientBE, true);
-        vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.SenderAddressFrozen.selector));
+        vm.expectRevert(abi.encodeWithSelector(SenderAddressFrozen.selector));
         tokenUtils.redeemToken(address(token), clientBE, 1 ether);
     }
 
@@ -97,9 +106,21 @@ abstract contract SMARTCustodianTest is SMARTTest {
 
     function test_Custodian_FreezeAddress_AccessControl_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                clientBE,
+                SMARTCustodianAccessControlAuthorization(address(token)).FREEZER_ROLE()
+            )
+        );
         tokenUtils.setAddressFrozenAsExecutor(address(token), clientBE, clientBE, true);
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                clientBE,
+                SMARTCustodianAccessControlAuthorization(address(token)).FREEZER_ROLE()
+            )
+        );
         tokenUtils.setAddressFrozenAsExecutor(address(token), clientBE, clientBE, false);
     }
 
@@ -121,7 +142,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         uint256 freezeAmount = currentBalance + 1 ether;
         vm.expectRevert(
             abi.encodeWithSelector(
-                _SMARTCustodianLogic.FreezeAmountExceedsAvailableBalance.selector,
+                FreezeAmountExceedsAvailableBalance.selector,
                 currentBalance, // Available balance (no frozen tokens yet)
                 freezeAmount
             )
@@ -156,7 +177,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         uint256 unfreezeAmount = freezeAmount + 1 ether;
         vm.expectRevert(
             abi.encodeWithSelector(
-                _SMARTCustodianLogic.InsufficientFrozenTokens.selector,
+                InsufficientFrozenTokens.selector,
                 freezeAmount, // Currently frozen
                 unfreezeAmount
             )
@@ -327,9 +348,21 @@ abstract contract SMARTCustodianTest is SMARTTest {
 
     function test_Custodian_PartialFreeze_AccessControl_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                clientBE,
+                SMARTCustodianAccessControlAuthorization(address(token)).FREEZER_ROLE()
+            )
+        );
         tokenUtils.freezePartialTokensAsExecutor(address(token), clientBE, clientBE, 1 ether);
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                clientBE,
+                SMARTCustodianAccessControlAuthorization(address(token)).FREEZER_ROLE()
+            )
+        );
         tokenUtils.unfreezePartialTokensAsExecutor(address(token), clientBE, clientBE, 1 ether);
         vm.stopPrank();
     }
@@ -498,7 +531,13 @@ abstract contract SMARTCustodianTest is SMARTTest {
 
     function test_Custodian_ForcedTransfer_AccessControl_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                clientBE,
+                SMARTCustodianAccessControlAuthorization(address(token)).FORCED_TRANSFER_ROLE()
+            )
+        );
         tokenUtils.forcedTransferAsExecutor(address(token), clientBE, clientBE, clientJP, 1 ether);
     }
 
@@ -579,7 +618,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         }
         assertEq(token.balanceOf(lostWallet), 0, "Failed to burn balance for test setup");
 
-        vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.NoTokensToRecover.selector));
+        vm.expectRevert(abi.encodeWithSelector(NoTokensToRecover.selector));
         tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
     }
 
@@ -593,7 +632,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
         identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, newWallet, true);
 
-        vm.expectRevert(abi.encodeWithSelector(_SMARTCustodianLogic.RecoveryTargetAddressFrozen.selector));
+        vm.expectRevert(abi.encodeWithSelector(RecoveryTargetAddressFrozen.selector));
         tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
     }
 
@@ -603,7 +642,13 @@ abstract contract SMARTCustodianTest is SMARTTest {
         address newWallet = makeAddr("New Wallet BE");
         address investorOnchainID = identityUtils.getIdentity(lostWallet);
 
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientJP));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                clientJP,
+                SMARTCustodianAccessControlAuthorization(address(token)).RECOVERY_ROLE()
+            )
+        );
         tokenUtils.recoveryAddressAsExecutor(address(token), clientJP, clientJP, newWallet, investorOnchainID);
     }
 }

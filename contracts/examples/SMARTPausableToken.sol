@@ -96,10 +96,6 @@ contract SMARTPausableToken is SMART, SMARTPausable {
         super._update(from, to, value);
     }
 
-    function _msgSender() internal view virtual override(Context, SMARTPausable) returns (address) {
-        return super._msgSender();
-    }
-
     // --- Authorization Hook Implementations ---
     // Implementing the abstract functions from _SMART*AuthorizationHooks
 

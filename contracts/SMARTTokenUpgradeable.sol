@@ -296,8 +296,6 @@ contract SMARTTokenUpgradeable is
         view
         virtual
         override(
-            SMARTRedeemableUpgradeable,
-            SMARTPausableUpgradeable,
             ContextUpgradeable,
             SMARTAccessControlAuthorization,
             SMARTBurnableAccessControlAuthorization,
@@ -307,17 +305,6 @@ contract SMARTTokenUpgradeable is
         returns (address)
     {
         return super._msgSender();
-    }
-
-    /// @dev Overrides required due to conflict with ContextUpgradeable inherited via multiple paths.
-    function _msgData()
-        internal
-        view
-        virtual
-        override(SMARTRedeemableUpgradeable, ContextUpgradeable)
-        returns (bytes calldata)
-    {
-        return super._msgData();
     }
 
     // --- UUPS Upgradeability ---

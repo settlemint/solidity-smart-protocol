@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.27;
 
+// openzeppelin imports
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+
 // Internal implementation imports
 import { _SMARTBurnableAuthorizationHooks } from "./internal/_SMARTBurnableAuthorizationHooks.sol";
-
-// Common errors
-import { Unauthorized } from "../common/CommonErrors.sol";
 
 /// @title Access Control Authorization for SMART Burnable Extension
 /// @notice Implements authorization logic for the SMART Burnable extension using OpenZeppelin's AccessControl.
@@ -25,7 +25,7 @@ abstract contract SMARTBurnableAccessControlAuthorization is _SMARTBurnableAutho
     /// @inheritdoc _SMARTBurnableAuthorizationHooks
     function _authorizeBurn() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(BURNER_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(BURNER_ROLE, sender)) revert IAccessControl.AccessControlUnauthorizedAccount(sender, BURNER_ROLE);
     }
 
     // -- Abstract Dependencies (from AccessControl) --

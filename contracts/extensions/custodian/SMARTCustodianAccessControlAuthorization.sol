@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.27;
 
+// openzeppelin imports
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+
 // Internal implementation imports
 import { _SMARTCustodianAuthorizationHooks } from "./internal/_SMARTCustodianAuthorizationHooks.sol";
-
-// Common errors
-import { Unauthorized } from "../common/CommonErrors.sol";
 
 /// @title Access Control Authorization for SMART Custodian Extension
 /// @notice Implements authorization logic for the SMART Custodian features using OpenZeppelin's AccessControl.
@@ -27,7 +27,9 @@ abstract contract SMARTCustodianAccessControlAuthorization is _SMARTCustodianAut
     /// @inheritdoc _SMARTCustodianAuthorizationHooks
     function _authorizeFreezeAddress() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(FREEZER_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(FREEZER_ROLE, sender)) {
+            revert IAccessControl.AccessControlUnauthorizedAccount(sender, FREEZER_ROLE);
+        }
     }
 
     /// @dev Authorizes freezing/unfreezing partial token amounts.
@@ -35,7 +37,9 @@ abstract contract SMARTCustodianAccessControlAuthorization is _SMARTCustodianAut
     /// @inheritdoc _SMARTCustodianAuthorizationHooks
     function _authorizeFreezePartialTokens() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(FREEZER_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(FREEZER_ROLE, sender)) {
+            revert IAccessControl.AccessControlUnauthorizedAccount(sender, FREEZER_ROLE);
+        }
     }
 
     /// @dev Authorizes executing a forced transfer.
@@ -43,7 +47,9 @@ abstract contract SMARTCustodianAccessControlAuthorization is _SMARTCustodianAut
     /// @inheritdoc _SMARTCustodianAuthorizationHooks
     function _authorizeForcedTransfer() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(FORCED_TRANSFER_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(FORCED_TRANSFER_ROLE, sender)) {
+            revert IAccessControl.AccessControlUnauthorizedAccount(sender, FORCED_TRANSFER_ROLE);
+        }
     }
 
     /// @dev Authorizes performing address recovery.
@@ -51,7 +57,9 @@ abstract contract SMARTCustodianAccessControlAuthorization is _SMARTCustodianAut
     /// @inheritdoc _SMARTCustodianAuthorizationHooks
     function _authorizeRecoveryAddress() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(RECOVERY_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(RECOVERY_ROLE, sender)) {
+            revert IAccessControl.AccessControlUnauthorizedAccount(sender, RECOVERY_ROLE);
+        }
     }
 
     /// @dev Returns the address of the current message sender.

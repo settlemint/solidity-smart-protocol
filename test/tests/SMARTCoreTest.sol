@@ -5,11 +5,11 @@ import { SMARTTest } from "./SMARTTest.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplianceModule.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
-
-import { Unauthorized, ZeroAddressNotAllowed } from "../../contracts/extensions/common/CommonErrors.sol";
+import { SMARTAccessControlAuthorization } from "../../contracts/extensions/core/SMARTAccessControlAuthorization.sol";
+import { ZeroAddressNotAllowed } from "../../contracts/extensions/common/CommonErrors.sol";
 import { CannotRecoverSelf, InsufficientTokenBalance } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { TokenRecovered } from "../../contracts/extensions/core/SMARTEvents.sol";
 
@@ -51,7 +51,13 @@ abstract contract SMARTCoreTest is SMARTTest {
     function test_Core_Mint_AccessControl_Reverts() public {
         _setUpCoreTest();
         vm.startPrank(clientBE); // Non-owner
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                clientBE,
+                SMARTAccessControlAuthorization(address(token)).MINTER_ROLE()
+            )
+        );
         token.mint(clientBE, 100 ether);
         vm.stopPrank();
     }
@@ -143,7 +149,13 @@ abstract contract SMARTCoreTest is SMARTTest {
         _setUpCoreTest();
         uint256 amountToRecover = 100 ether;
 
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientJP));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                clientJP,
+                SMARTAccessControlAuthorization(address(token)).TOKEN_ADMIN_ROLE()
+            )
+        );
         tokenUtils.recoverERC20Token(address(token), clientJP, address(mockForeignToken), clientBE, amountToRecover);
     }
 

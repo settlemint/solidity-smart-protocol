@@ -4,11 +4,12 @@ pragma solidity ^0.8.27;
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
-// import { _SMARTExtension } from "./../common/_SMARTExtension.sol"; // Not directly needed here
 import { SMARTHooks } from "../common/SMARTHooks.sol";
+import { SMARTContext } from "./../common/SMARTContext.sol";
 
 // Internal implementation imports
 import { _SMARTHistoricalBalancesLogic } from "./internal/_SMARTHistoricalBalancesLogic.sol";
@@ -23,7 +24,6 @@ import { _SMARTHistoricalBalancesLogic } from "./internal/_SMARTHistoricalBalanc
 ///      Includes an initializer `__SMARTHistoricalBalances_init`.
 abstract contract SMARTHistoricalBalancesUpgradeable is
     Initializable,
-    ContextUpgradeable,
     SMARTExtensionUpgradeable,
     _SMARTHistoricalBalancesLogic
 {
@@ -34,12 +34,7 @@ abstract contract SMARTHistoricalBalancesUpgradeable is
     }
 
     /// @dev Internal initializer without `onlyInitializing` guard for chained initialization.
-    function __SMARTHistoricalBalances_init_unchained() internal onlyInitializing {
-        // SMARTExtensionUpgradeable's initializer is called by the final contract via
-        // __SMARTUpgradeable_init_extensions
-        // ContextUpgradeable's initializer is empty
-        // _SMARTHistoricalBalancesLogic does not have its own initializer
-    }
+    function __SMARTHistoricalBalances_init_unchained() internal onlyInitializing { }
 
     /// @dev Hook that is called after any token minting.
     ///      Updates historical total supply and the recipient's balance.

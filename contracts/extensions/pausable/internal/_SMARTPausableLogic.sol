@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import { _SMARTPausableAuthorizationHooks } from "./_SMARTPausableAuthorizationHooks.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 import { TokenPaused, ExpectedPause } from "./../SMARTPausableErrors.sol";
+import { Paused, Unpaused } from "./../SMARTPausableEvents.sol";
 
 /// @title Internal Logic for SMART Pausable Extension
 /// @notice Base contract containing the core state, logic, events, and authorization hooks for pausable features.
@@ -14,14 +15,6 @@ abstract contract _SMARTPausableLogic is _SMARTExtension, _SMARTPausableAuthoriz
     // -- State Variables --
     /// @notice Internal flag indicating whether the contract is paused.
     bool private _paused;
-
-    // -- Events --
-    /// @notice Emitted when the contract is paused.
-    /// @param account The address that triggered the pause.
-    event Paused(address account);
-    /// @notice Emitted when the contract is unpaused.
-    /// @param account The address that triggered the unpause.
-    event Unpaused(address account);
 
     // -- View Functions --
 
@@ -38,7 +31,7 @@ abstract contract _SMARTPausableLogic is _SMARTExtension, _SMARTPausableAuthoriz
         _authorizePause();
         if (_paused) revert ExpectedPause(); // Should be ExpectedUnpause, or use a specific error
         _paused = true;
-        emit Paused(_msgSender()); // Use _msgSender() from context if available, else pass msg.sender
+        emit Paused(_smartSender()); // Use _msgSender() from context if available, else pass msg.sender
     }
 
     /// @notice Unpauses the contract, resuming normal operations.
@@ -47,7 +40,7 @@ abstract contract _SMARTPausableLogic is _SMARTExtension, _SMARTPausableAuthoriz
         _authorizePause();
         if (!_paused) revert TokenPaused(); // Should be ExpectedPause, or use a specific error
         _paused = false;
-        emit Unpaused(_msgSender()); // Use _msgSender() from context if available, else pass msg.sender
+        emit Unpaused(_smartSender()); // Use _msgSender() from context if available, else pass msg.sender
     }
 
     // -- Modifiers --
@@ -69,8 +62,4 @@ abstract contract _SMARTPausableLogic is _SMARTExtension, _SMARTPausableAuthoriz
         }
         _;
     }
-
-    // -- Abstract Dependencies --
-    // Assuming _msgSender() is provided by an inheriting contract (like AccessControl or Context)
-    function _msgSender() internal view virtual returns (address);
 }

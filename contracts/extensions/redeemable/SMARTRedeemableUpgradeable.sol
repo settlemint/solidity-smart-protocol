@@ -73,24 +73,4 @@ abstract contract SMARTRedeemableUpgradeable is
     function _afterRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
         super._afterRedeem(owner, amount);
     }
-
-    // -- Context Overrides --
-
-    /// @dev Overrides `_msgSender` to resolve inheritance conflict.
-    ///      Delegates to the `ContextUpgradeable` implementation.
-    function _msgSender() internal view virtual override(ContextUpgradeable, _SMARTRedeemableLogic) returns (address) {
-        return ContextUpgradeable._msgSender();
-    }
-
-    /// @dev Overrides `_msgData` to resolve inheritance conflict.
-    ///      Delegates to the `ContextUpgradeable` implementation.
-    function _msgData()
-        internal
-        view
-        virtual
-        override(ContextUpgradeable, _SMARTRedeemableLogic)
-        returns (bytes calldata)
-    {
-        return ContextUpgradeable._msgData();
-    }
 }

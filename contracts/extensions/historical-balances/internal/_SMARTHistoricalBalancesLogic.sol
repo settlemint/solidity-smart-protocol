@@ -5,6 +5,7 @@ import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
 import { SMARTHooks } from "./../../common/SMARTHooks.sol";
 import { FutureLookup } from "./../SMARTHistoricalBalancesErrors.sol";
 import { ISMARTHistoricalBalances } from "./../ISMARTHistoricalBalances.sol";
+import { CheckpointUpdated } from "./../SMARTHistoricalBalancesEvents.sol";
 
 import { Checkpoints } from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -26,22 +27,6 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
 
     // Track historical total supply
     Checkpoints.Trace208 private _totalSupplyCheckpoints;
-
-    // -- Events --
-
-    /**
-     * @dev Emitted when a balance checkpoint is created for an account or for the total supply.
-     * @param account The account for which a balance checkpoint was created. If address(0), it's a total supply
-     * checkpoint.
-     * @param oldBalance The balance before the operation that triggered the checkpoint.
-     * @param newBalance The balance after the operation that triggered the checkpoint.
-     */
-    event CheckpointUpdated(address indexed account, uint256 oldBalance, uint256 newBalance);
-    // Note: Original 'CheckpointCreated' event was less descriptive. 'CheckpointUpdated' might be more suitable,
-    // or we could have separate events if needed. For now, let's refine the existing one if it's used,
-    // or consider if it's truly necessary given OpenZeppelin's Checkpoints doesn't emit events on push.
-    // This event is not actually emitted in the provided code. Removing for now to align with OZ Checkpoints.
-    // If explicit eventing is desired, it needs to be added to the _push or logic functions.
 
     // -- Timekeeping --
 
@@ -116,10 +101,7 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
         // Push the new value
         newValue = op(previousValue, delta);
         store.push(clock(), newValue);
-        // Note: Event emission for CheckpointUpdated could be added here if desired.
-        // e.g., emit CheckpointUpdated(account, previousValue, newValue);
-        // However, determining 'account' here is tricky as this is a generic push.
-        // Event emission is better handled in the specific logic functions (_historical_balances_afterMintLogic, etc.)
+
         return (previousValue, newValue);
     }
 
@@ -153,7 +135,8 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
         uint208 castAmount = SafeCast.toUint208(amount);
 
         _push(_totalSupplyCheckpoints, _add, castAmount);
-        _push(_balanceCheckpoints[to], _add, castAmount);
+        (uint208 previousValue, uint208 newValue) = _push(_balanceCheckpoints[to], _add, castAmount);
+        emit CheckpointUpdated(_smartSender(), to, previousValue, newValue);
     }
 
     /// @dev Internal logic executed after a burn operation to update historical total supply and burner's balance.
@@ -164,7 +147,8 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
         uint208 castAmount = SafeCast.toUint208(amount);
 
         _push(_totalSupplyCheckpoints, _subtract, castAmount);
-        _push(_balanceCheckpoints[from], _subtract, castAmount);
+        (uint208 previousValue, uint208 newValue) = _push(_balanceCheckpoints[from], _subtract, castAmount);
+        emit CheckpointUpdated(_smartSender(), from, previousValue, newValue);
     }
 
     /// @dev Internal logic executed after a transfer operation to update historical balances of the sender and
@@ -175,9 +159,11 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     /// @param amount The amount of tokens transferred.
     function _historical_balances_afterTransferLogic(address from, address to, uint256 amount) internal virtual {
         uint208 castAmount = SafeCast.toUint208(amount);
+        address initiator = _smartSender();
 
-        _push(_balanceCheckpoints[from], _subtract, castAmount);
-        _push(_balanceCheckpoints[to], _add, castAmount);
-        // emit CheckpointUpdated(to, oldBalanceTo, newBalanceTo);
+        (uint208 previousValue, uint208 newValue) = _push(_balanceCheckpoints[from], _subtract, castAmount);
+        emit CheckpointUpdated(initiator, from, previousValue, newValue);
+        (previousValue, newValue) = _push(_balanceCheckpoints[to], _add, castAmount);
+        emit CheckpointUpdated(initiator, to, previousValue, newValue);
     }
 }

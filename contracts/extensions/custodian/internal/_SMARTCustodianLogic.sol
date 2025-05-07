@@ -9,57 +9,32 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 
 // Interface imports
 import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistry.sol";
-
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 
 // Internal implementation imports
 import { _SMARTCustodianAuthorizationHooks } from "./_SMARTCustodianAuthorizationHooks.sol";
-
-// Common errors
 import { LengthMismatch } from "./../../common/CommonErrors.sol";
-
+import {
+    FreezeAmountExceedsAvailableBalance,
+    InsufficientFrozenTokens,
+    NoTokensToRecover,
+    RecoveryWalletsNotVerified,
+    RecoveryTargetAddressFrozen,
+    RecipientAddressFrozen,
+    SenderAddressFrozen
+} from "./../SMARTCustodianErrors.sol";
+import { AddressFrozen, TokensFrozen, TokensUnfrozen, RecoverySuccess } from "./../SMARTCustodianEvents.sol";
 /// @title Internal Logic for SMART Custodian Extension
 /// @notice Base contract containing the core state, logic, events, and authorization hooks for custodian features.
 /// @dev This abstract contract is intended to be inherited by both standard (SMARTCustodian) and upgradeable
 ///      (SMARTCustodianUpgradeable) implementations. It defines shared state, logic, and hooks.
+
 abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthorizationHooks {
     // -- Storage Variables --
     /// @notice Mapping from address to its frozen status (true if frozen, false otherwise).
     mapping(address => bool) internal __frozen;
     /// @notice Mapping from address to the amount of tokens specifically frozen for that address.
     mapping(address => uint256) internal __frozenTokens;
-
-    // -- Errors --
-    error FreezeAmountExceedsAvailableBalance(uint256 available, uint256 requested);
-    error InsufficientFrozenTokens(uint256 frozenBalance, uint256 requested);
-    error InconsistentForcedTransferState();
-    error NoTokensToRecover();
-    error RecoveryWalletsNotVerified();
-    error RecoveryTargetAddressFrozen();
-    error RecipientAddressFrozen();
-    error SenderAddressFrozen();
-
-    // -- Events --
-    /// @notice Emitted when an address's full frozen status is changed.
-    /// @param userAddress The address whose status changed.
-    /// @param isFrozen The new frozen status (true if frozen, false if unfrozen).
-    event AddressFrozen(address indexed userAddress, bool indexed isFrozen);
-
-    /// @notice Emitted when assets are successfully recovered from a lost wallet to a new one.
-    /// @param lostWallet The address from which assets were recovered.
-    /// @param newWallet The address to which assets were transferred.
-    /// @param investorOnchainID The on-chain ID associated with the investor.
-    event RecoverySuccess(address indexed lostWallet, address indexed newWallet, address indexed investorOnchainID);
-
-    /// @notice Emitted when a specific amount of tokens is frozen for an address.
-    /// @param user The address for which tokens were frozen.
-    /// @param amount The amount of tokens frozen.
-    event TokensFrozen(address indexed user, uint256 amount);
-
-    /// @notice Emitted when a specific amount of tokens is unfrozen for an address.
-    /// @param user The address for which tokens were unfrozen.
-    /// @param amount The amount of tokens unfrozen.
-    event TokensUnfrozen(address indexed user, uint256 amount);
 
     // -- Abstract Functions (Dependencies) --
 
@@ -231,7 +206,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
     function _setAddressFrozen(address userAddress, bool freeze) internal virtual {
         _authorizeFreezeAddress();
         __frozen[userAddress] = freeze;
-        emit AddressFrozen(userAddress, freeze);
+        emit AddressFrozen(_smartSender(), userAddress, freeze);
     }
 
     /// @dev Internal logic to freeze a partial amount of tokens.
@@ -243,7 +218,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
             revert FreezeAmountExceedsAvailableBalance(availableBalance, amount);
         }
         __frozenTokens[userAddress] = currentFrozen + amount;
-        emit TokensFrozen(userAddress, amount);
+        emit TokensFrozen(_smartSender(), userAddress, amount);
     }
 
     /// @dev Internal core logic to unfreeze a partial amount of tokens (without auth check).
@@ -253,7 +228,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
             revert InsufficientFrozenTokens(currentFrozen, amount);
         }
         __frozenTokens[userAddress] = currentFrozen - amount;
-        emit TokensUnfrozen(userAddress, amount);
+        emit TokensUnfrozen(_smartSender(), userAddress, amount);
     }
 
     /// @dev Internal logic wrapper for a single forced transfer.
@@ -277,7 +252,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
             if (amount > freeBalance) {
                 uint256 neededFromFrozen = amount - freeBalance;
                 __frozenTokens[from] = currentFrozen - neededFromFrozen;
-                emit TokensUnfrozen(from, neededFromFrozen);
+                emit TokensUnfrozen(_smartSender(), from, neededFromFrozen);
             }
         }
 
@@ -321,26 +296,26 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, _SMARTCustodianAuthor
 
         // Transfer frozen tokens state
         if (frozenTokens > 0) {
-            emit TokensUnfrozen(lostWallet, frozenTokens);
+            emit TokensUnfrozen(_smartSender(), lostWallet, frozenTokens);
             __frozenTokens[lostWallet] = 0;
             __frozenTokens[newWallet] = frozenTokens;
-            emit TokensFrozen(newWallet, frozenTokens);
+            emit TokensFrozen(_smartSender(), newWallet, frozenTokens);
         }
 
         // Transfer frozen status state
         if (walletFrozen) {
             __frozen[newWallet] = true;
             __frozen[lostWallet] = false; // Ensure old wallet is unfrozen
-            emit AddressFrozen(newWallet, true);
-            emit AddressFrozen(lostWallet, false);
+            emit AddressFrozen(_smartSender(), newWallet, true);
+            emit AddressFrozen(_smartSender(), lostWallet, false);
         } else if (__frozen[newWallet]) {
             // Defensive: Ensure new wallet isn't incorrectly marked frozen if old wasn't
             __frozen[newWallet] = false;
-            emit AddressFrozen(newWallet, false);
+            emit AddressFrozen(_smartSender(), newWallet, false);
         }
 
         // Throw event before external calls to avoid reentrancy
-        emit RecoverySuccess(lostWallet, newWallet, investorOnchainID);
+        emit RecoverySuccess(_smartSender(), lostWallet, newWallet, investorOnchainID);
 
         // Update identity registry (Requires REGISTRAR_ROLE)
         if (lostWalletVerified) {

@@ -8,6 +8,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
 import { ISMART } from "./../../interface/ISMART.sol";
+import { SMARTContext } from "./../common/SMARTContext.sol";
 
 // Internal implementation imports
 import { _SMARTCollateralLogic } from "./internal/_SMARTCollateralLogic.sol";
@@ -43,7 +44,4 @@ abstract contract SMARTCollateralUpgradeable is Initializable, SMARTExtensionUpg
         _collateral_beforeMintLogic(amount); // Check collateral claim against required total supply
         super._beforeMint(to, amount); // Call the next hook in the inheritance chain
     }
-
-    // Gap for upgrade safety
-    uint256[50] private __gap;
 }

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.27;
 
+// openzeppelin imports
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+
 // Internal implementation imports
 import { _SMARTPausableAuthorizationHooks } from "./internal/_SMARTPausableAuthorizationHooks.sol";
-
-// Common errors
-import { Unauthorized } from "../common/CommonErrors.sol";
 
 /// @title Access Control Authorization for SMART Pausable Extension
 /// @notice Implements authorization logic for the SMART Pausable features using OpenZeppelin's AccessControl.
@@ -23,7 +23,7 @@ abstract contract SMARTPausableAccessControlAuthorization is _SMARTPausableAutho
     /// @inheritdoc _SMARTPausableAuthorizationHooks
     function _authorizePause() internal view virtual override {
         address sender = _msgSender();
-        if (!hasRole(PAUSER_ROLE, sender)) revert Unauthorized(sender);
+        if (!hasRole(PAUSER_ROLE, sender)) revert IAccessControl.AccessControlUnauthorizedAccount(sender, PAUSER_ROLE);
     }
 
     // --- Abstract Dependencies (from AccessControl) ---

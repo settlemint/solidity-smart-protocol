@@ -28,7 +28,7 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension {
     /// @param amount The amount of tokens the caller wishes to redeem.
     /// @return True upon successful execution.
     function redeem(uint256 amount) public virtual returns (bool) {
-        address owner = _msgSender();
+        address owner = _smartSender();
         _beforeRedeem(owner, amount); // Standard SMARTHook
         _redeem(owner, amount); // Abstract burn execution
         _afterRedeem(owner, amount); // Standard SMARTHook
@@ -43,7 +43,7 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension {
     ///      Relies on the inheriting contract to provide `_msgSender`.
     /// @return True upon successful execution.
     function redeemAll() external virtual returns (bool) {
-        address owner = _msgSender();
+        address owner = _smartSender();
         uint256 balance = _getRedeemableBalance(owner);
         return redeem(balance);
     }
@@ -63,12 +63,4 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension {
     /// @param from The address whose tokens are being burned (the redeemer).
     /// @param amount The amount of tokens to burn.
     function _redeem(address from, uint256 amount) internal virtual;
-
-    /// @dev Abstract function to get the message sender (redeemer).
-    ///      Needs implementation by inheriting contract (e.g., via Context/ContextUpgradeable).
-    function _msgSender() internal view virtual returns (address);
-
-    /// @dev Abstract function to get message data (unused by redeem logic itself, but required by SMARTHooks?).
-    ///      Needs implementation by inheriting contract (e.g., via Context/ContextUpgradeable).
-    function _msgData() internal view virtual returns (bytes calldata);
 }

@@ -110,7 +110,7 @@ contract SMARTPausableTokenWithAuthorization is
         internal
         view
         virtual
-        override(Context, SMARTAccessControlAuthorization, SMARTPausable, SMARTPausableAccessControlAuthorization)
+        override(Context, SMARTAccessControlAuthorization, SMARTPausableAccessControlAuthorization)
         returns (address)
     {
         return super._msgSender();

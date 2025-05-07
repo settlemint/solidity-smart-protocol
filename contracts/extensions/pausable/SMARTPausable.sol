@@ -40,10 +40,4 @@ abstract contract SMARTPausable is SMARTExtension, _SMARTPausableLogic {
         // super._update will call the next _update in the inheritance chain (e.g., SMART's _update)
         super._update(from, to, value);
     }
-
-    /// @dev Overrides `_msgSender` to resolve inheritance conflict between `_SMARTPausableLogic` and base contracts.
-    ///      Delegates to the base implementation (ultimately from OZ Context).
-    function _msgSender() internal view virtual override(Context, _SMARTPausableLogic) returns (address) {
-        return super._msgSender();
-    }
 }

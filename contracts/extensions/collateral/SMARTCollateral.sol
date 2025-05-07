@@ -5,7 +5,7 @@ pragma solidity ^0.8.27;
 import { SMARTExtension } from "./../common/SMARTExtension.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
 import { ISMART } from "./../../interface/ISMART.sol";
-
+import { SMARTContext } from "./../common/SMARTContext.sol";
 // Internal implementation imports
 import { _SMARTCollateralLogic } from "./internal/_SMARTCollateralLogic.sol";
 

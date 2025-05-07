@@ -5,8 +5,10 @@ import { SMARTTest } from "./SMARTTest.sol"; // Inherit from the logic base
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { _SMARTPausableLogic } from "../../contracts/extensions/pausable/internal/_SMARTPausableLogic.sol";
-import { Unauthorized } from "../../contracts/extensions/common/CommonErrors.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { TokenPaused, ExpectedPause } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
+import { SMARTPausableAccessControlAuthorization } from
+    "../../contracts/extensions/pausable/SMARTPausableAccessControlAuthorization.sol";
 
 abstract contract SMARTPausableTest is SMARTTest {
     // Renamed from setUp, removed override
@@ -86,7 +88,13 @@ abstract contract SMARTPausableTest is SMARTTest {
     function test_Pause_AccessControl_Reverts() public {
         _setUpPausableTest(); // Call setup explicitly
         assertFalse(tokenUtils.isPaused(address(token)));
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                clientBE,
+                SMARTPausableAccessControlAuthorization(address(token)).PAUSER_ROLE()
+            )
+        );
         tokenUtils.pauseToken(address(token), clientBE);
         assertFalse(tokenUtils.isPaused(address(token)));
     }

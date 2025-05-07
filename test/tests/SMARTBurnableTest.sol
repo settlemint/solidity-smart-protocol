@@ -3,7 +3,9 @@ pragma solidity ^0.8.24;
 
 import { SMARTTest } from "./SMARTTest.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { Unauthorized } from "../../contracts/extensions/common/CommonErrors.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { SMARTBurnableAccessControlAuthorization } from
+    "../../contracts/extensions/burnable/SMARTBurnableAccessControlAuthorization.sol";
 
 abstract contract SMARTBurnableTest is SMARTTest {
     function _setUpBurnableTest() internal /* override */ {
@@ -39,7 +41,13 @@ abstract contract SMARTBurnableTest is SMARTTest {
     function test_Burn_AccessControl_Reverts() public {
         _setUpBurnableTest();
         vm.startPrank(clientBE); // Non-owner
-        vm.expectRevert(abi.encodeWithSelector(Unauthorized.selector, clientBE));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                clientBE,
+                SMARTBurnableAccessControlAuthorization(address(token)).BURNER_ROLE()
+            )
+        );
         tokenUtils.burnTokenAsExecutor(address(token), clientBE, clientBE, 10 ether);
         vm.stopPrank();
     }

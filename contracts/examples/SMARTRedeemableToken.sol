@@ -107,14 +107,6 @@ contract SMARTRedeemableToken is SMART, SMARTRedeemable {
         super._update(from, to, value);
     }
 
-    function _msgSender() internal view virtual override(SMARTRedeemable, Context) returns (address) {
-        return super._msgSender();
-    }
-
-    function _msgData() internal view virtual override(SMARTRedeemable, Context) returns (bytes calldata) {
-        return super._msgData();
-    }
-
     // --- Authorization Hook Implementations ---
     // Implementing the abstract functions from _SMART*AuthorizationHooks
 

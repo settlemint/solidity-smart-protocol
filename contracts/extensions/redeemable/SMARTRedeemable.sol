@@ -63,18 +63,4 @@ abstract contract SMARTRedeemable is Context, SMARTExtension, _SMARTRedeemableLo
         // By default, calls the next hook in the inheritance chain (if any).
         super._afterRedeem(owner, amount);
     }
-
-    // -- Context Overrides --
-
-    /// @dev Overrides `_msgSender` to resolve inheritance conflict.
-    ///      Delegates to the `Context` implementation.
-    function _msgSender() internal view virtual override(Context, _SMARTRedeemableLogic) returns (address) {
-        return Context._msgSender();
-    }
-
-    /// @dev Overrides `_msgData` to resolve inheritance conflict.
-    ///      Delegates to the `Context` implementation.
-    function _msgData() internal view virtual override(Context, _SMARTRedeemableLogic) returns (bytes calldata) {
-        return Context._msgData();
-    }
 }
