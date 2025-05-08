@@ -17,37 +17,43 @@ const IdentityRegistryModule = buildModule("IdentityRegistryModule", (m) => {
 	// Deploy implementation contract, passing the forwarder address
 	const registryImpl = m.contract("SMARTIdentityRegistry", [trustedForwarder]);
 
-	// Prepare initialization data
-	const registryInterface = new ethers.Interface([
-		"function initialize(address initialOwner, address _identityStorage, address _issuersRegistry)",
-	]);
-	const registryInitData = registryInterface.encodeFunctionData("initialize", [
-		deployer, // initialOwner
-		storageProxy, // storage proxy address
-		issuersProxy, // issuers proxy address
-	]);
-
-	// Deploy proxy
+	// Deploy proxy with empty initialization data
+	const emptyInitData = "0x";
 	const registryProxy = m.contract(
 		"ERC1967Proxy",
-		[registryImpl, registryInitData],
+		[registryImpl, emptyInitData],
 		{
 			id: "RegistryProxy",
-			after: [storageProxy, issuersProxy], // Explicit dependency
+			after: [storageProxy, issuersProxy], // Explicit dependency for proxy deployment
 		},
 	);
 
-	// Return the contract instance at proxy address
+	// Get a contract instance at the proxy address
 	const identityRegistry = m.contractAt(
 		"SMARTIdentityRegistry",
 		registryProxy,
-		{ id: "IdentityRegistryAtProxy" },
+		{ id: "IdentityRegistryAtProxyUninitialized" },
+	);
+
+	// Call initialize with deployer, storageProxy, and issuersProxy
+	// All these are Futures and will be resolved by m.call
+	m.call(
+		identityRegistry,
+		"initialize",
+		[deployer, storageProxy, issuersProxy],
+		{
+			id: "InitializeIdentityRegistry",
+			// Ensure proxy is deployed, and dependencies for args (storageProxy, issuersProxy) are also met.
+			// `after` on `registryProxy` already covers storageProxy and issuersProxy for its own deployment.
+			// `m.call` will wait for `identityRegistry` (which depends on `registryProxy`) and its arguments.
+			after: [registryProxy], // Or simply identityRegistry which implies registryProxy
+		},
 	);
 
 	return {
 		implementation: registryImpl,
 		proxy: registryProxy,
-		contract: identityRegistry,
+		contract: identityRegistry, // This Future now represents an initialized contract
 	};
 });
 

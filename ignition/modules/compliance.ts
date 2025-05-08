@@ -11,33 +11,34 @@ const ComplianceModule = buildModule("ComplianceModule", (m) => {
 	// Deploy implementation contract, passing the forwarder address
 	const complianceImpl = m.contract("SMARTCompliance", [trustedForwarder]);
 
-	// Prepare initialization data
-	const complianceInterface = new ethers.Interface([
-		"function initialize(address initialOwner)",
-	]);
-	const complianceInitData = complianceInterface.encodeFunctionData(
-		"initialize",
-		[
-			deployer, // initialOwner
-		],
-	);
-
-	// Deploy proxy
+	// Deploy proxy with empty initialization data
+	const emptyInitData = "0x";
 	const complianceProxy = m.contract(
 		"ERC1967Proxy",
-		[complianceImpl, complianceInitData],
+		[complianceImpl, emptyInitData],
 		{ id: "ComplianceProxy" },
 	);
 
-	// Return the contract instance at proxy address
+	// Get a contract instance at the proxy address
 	const compliance = m.contractAt("SMARTCompliance", complianceProxy, {
-		id: "ComplianceAtProxy",
+		id: "ComplianceAtProxyUninitialized", // Renamed to reflect state
 	});
+
+	// Call initialize
+	m.call(compliance, "initialize", [deployer], {
+		id: "InitializeCompliance",
+		after: [complianceProxy], // Ensure proxy is deployed and contractAt is available
+	});
+
+	// Return the contract instance at proxy address (now initialized)
+	// We can return the same 'compliance' object as its state is effectively changed by the m.call
+	// or create a new reference if strictness about future resolution timing is paramount.
+	// For simplicity, reusing 'compliance' whose initialization is sequenced by 'm.call' is fine.
 
 	return {
 		implementation: complianceImpl,
 		proxy: complianceProxy,
-		contract: compliance,
+		contract: compliance, // This Future now represents an initialized contract
 	};
 });
 
