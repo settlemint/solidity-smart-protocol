@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.28;
 
 /// @notice Reverts if the required total supply (current + minted amount) exceeds the collateral amount found in a
 /// valid claim.

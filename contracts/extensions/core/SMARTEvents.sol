@@ -1,5 +1,5 @@
     // SPDX-License-Identifier: FSL-1.1-MIT
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.28;
 
 /// @notice Emitted when mistakenly sent ERC20 tokens are recovered from the contract.
 /// @param initiator The address that initiated the recovery operation.
