@@ -112,7 +112,7 @@ jobs:
       - name: Install Soldeer dependencies (Bun dependencies)
         if: github.repository == 'settlemint/solidity-smart-protocol'
         run: |
-          bun run dependencies
+          npm run dependencies
 
       - name: Run Forge build
         run: |
