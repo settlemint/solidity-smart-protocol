@@ -29,7 +29,7 @@
 		"/artifacts"
 	],
 	"scripts": {
-		"dependencies": "forge soldeer install && bun run patch:onchainid",
+		"dependencies": "forge soldeer install && npm run patch:onchainid",
 		"patch:onchainid": "./scripts/patch-onchainid.sh"
 	},
 	"dependencies": {
