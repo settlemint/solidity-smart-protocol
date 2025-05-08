@@ -7,8 +7,9 @@ dependencies
 ignition
 node_modules
 out
-test
-!test/utils
+test/*.sol
+test/*.ts
+test/tests
 defender.config.json
 Dockerfile
 foundry.toml
