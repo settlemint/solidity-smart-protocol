@@ -85,8 +85,7 @@ abstract contract SMARTTest is Test {
             platformAdmin,
             infrastructureUtils.identityFactory(),
             infrastructureUtils.identityRegistry(),
-            infrastructureUtils.compliance(),
-            TestConstants.CLAIM_TOPIC_COLLATERAL
+            infrastructureUtils.compliance()
         );
 
         // --- Initialize Test Data FIRST ---
