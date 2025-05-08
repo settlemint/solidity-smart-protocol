@@ -128,7 +128,7 @@ jobs:
       - name: Run Forge Coverage
         if: github.ref_name != 'main'
         run: |
-          forge coverage --report lcov --report summary
+          forge coverage --report lcov --report summary --ir-minimum
         id: coverage
 
       - name: Deploy to the local node
