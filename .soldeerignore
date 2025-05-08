@@ -7,7 +7,6 @@ dependencies
 ignition
 node_modules
 out
-scripts
 test
 !test/utils
 defender.config.json
