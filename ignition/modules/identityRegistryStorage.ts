@@ -5,7 +5,10 @@ const IdentityRegistryStorageModule = buildModule(
 	"IdentityRegistryStorageModule",
 	(m) => {
 		// Define the trustedForwarder parameter
-		const trustedForwarder = m.getParameter("trustedForwarder");
+		const trustedForwarder = m.getParameter(
+			"trustedForwarder",
+			"0x0000000000000000000000000000000000000000",
+		);
 
 		const deployer = m.getAccount(0);
 

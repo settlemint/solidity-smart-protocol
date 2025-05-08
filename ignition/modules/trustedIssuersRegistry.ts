@@ -1,11 +1,12 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { ethers } from "ethers";
+import { getTrustedForwarder } from "./forwarder";
 
 const TrustedIssuersRegistryModule = buildModule(
 	"TrustedIssuersRegistryModule",
 	(m) => {
 		// Define the trustedForwarder parameter
-		const trustedForwarder = m.getParameter("trustedForwarder");
+		const trustedForwarder = getTrustedForwarder(m);
 
 		const deployer = m.getAccount(0);
 
