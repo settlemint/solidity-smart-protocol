@@ -6,7 +6,6 @@ cache_forge
 dependencies
 node_modules
 out
-scripts
 defender.config.json
 Dockerfile
 hardhat.config.ts
