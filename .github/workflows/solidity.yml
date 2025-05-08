@@ -95,8 +95,6 @@ jobs:
             ./node_modules
             ~/.npm
             ~/.bun/install/cache
-            ./cache_forge
-            ./out
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
