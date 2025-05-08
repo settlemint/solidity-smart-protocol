@@ -1,4 +1,4 @@
-![logo](https://github.com/settlemint/solidity-empty/blob/main/OG_Solidity.jpg)
+# SMART Protocol
 
 ✨ [https://settlemint.com](https://settlemint.com) ✨
 
@@ -7,6 +7,17 @@ Build your own blockchain usecase with ease.
 [![CI status](https://github.com/settlemint/solidity-empty/actions/workflows/solidity.yml/badge.svg?event=push&branch=main)](https://github.com/settlemint/solidity-empty/actions?query=branch%3Amain) [![License](https://img.shields.io/npm/l/@settlemint/solidity-empty)](https://fsl.software) [![npm](https://img.shields.io/npm/dw/@settlemint/solidity-empty)](https://www.npmjs.com/package/@settlemint/solidity-empty) [![stars](https://img.shields.io/github/stars/settlemint/solidity-empty)](https://github.com/settlemint/solidity-empty)
 
 [Documentation](https://console.settlemint.com/documentation/) • [Discord](https://discord.com/invite/Mt5yqFrey9) • [NPM](https://www.npmjs.com/package/@settlemint/solidity-empty) • [Issues](https://github.com/settlemint/solidity-empty/issues)
+
+## Changes from ERC-3643
+
+- Token stores required claim topics and initial modules in the contract, allowing re-use of identity registry and compliance contract
+- Token is more modular following the OpenZeppelin modular pattern
+- Only modular compliance rules, but you can also choose to just create one compliance contract without the modules at all
+- Token doesn't need to be bound to compliance contract, added _token parameter to all functions
+- Removed the need to a separate claims topics registry, since we don't use it anymore
+- Token will be passed in isVerified function to check if the identity has all the necessary claim topics
+- Simplified the identity factory using proxy 1967 pattern.
+- SMARTRedeemable extension for self-burning tokens. ERC3643 isn't compliant with ERC20Burnable, it only has a burn(user, amount) function which is guarded by the owner. While ERC20Burnable has a burn(amount) and burnFrom(user, amount) function. We created a separate extension to also allow burning your own tokens in some situations.
 
 ## Get started
 
