@@ -247,7 +247,7 @@ jobs:
       - name: Push Soldeer
         run: |
           forge soldeer login --email ${{ env.SOLDEER_EMAIL }} --password ${{ env.SOLDEER_PASSWORD }}
-          forge soldeer push smart-protocol~${VERSION}
+          forge soldeer push smart-protocol~${VERSION} --skip-warnings
 
       - name: Create or update a comment
         if: ${{ github.event_name == 'pull_request' }}
