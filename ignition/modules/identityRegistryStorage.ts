@@ -5,7 +5,10 @@ const IdentityRegistryStorageModule = buildModule(
 	"IdentityRegistryStorageModule",
 	(m) => {
 		// Define the trustedForwarder parameter
-		const trustedForwarder = m.getParameter("trustedForwarder");
+		const trustedForwarder = m.getParameter(
+			"trustedForwarder",
+			"0x0000000000000000000000000000000000000000",
+		);
 
 		const deployer = m.getAccount(0);
 
@@ -14,27 +17,26 @@ const IdentityRegistryStorageModule = buildModule(
 			trustedForwarder,
 		]);
 
-		// Prepare initialization data
-		const storageInterface = new ethers.Interface([
-			"function initialize(address initialOwner)",
-		]);
-		const storageInitData = storageInterface.encodeFunctionData("initialize", [
-			deployer, // initialOwner
-		]);
-
-		// Deploy proxy
+		// Deploy proxy with empty initialization data
+		const emptyInitData = "0x";
 		const storageProxy = m.contract(
 			"ERC1967Proxy",
-			[storageImpl, storageInitData],
+			[storageImpl, emptyInitData],
 			{ id: "StorageProxy" },
 		);
 
-		// Return the contract instance at proxy address
+		// Get a contract instance at the proxy address
 		const identityRegistryStorage = m.contractAt(
 			"SMARTIdentityRegistryStorage",
 			storageProxy,
-			{ id: "StorageAtProxy" },
+			{ id: "StorageAtProxyUninitialized" },
 		);
+
+		// Call initialize
+		m.call(identityRegistryStorage, "initialize", [deployer], {
+			id: "InitializeStorage",
+			after: [storageProxy],
+		});
 
 		return {
 			implementation: storageImpl,

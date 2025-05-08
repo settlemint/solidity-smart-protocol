@@ -7,7 +7,6 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { ClaimUtils } from "./utils/ClaimUtils.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { InsufficientCollateral } from "../../contracts/extensions/collateral/SMARTCollateralErrors.sol";
-import { console } from "forge-std/console.sol";
 
 abstract contract SMARTCollateralTest is SMARTTest {
     uint256 internal constant COLLATERAL_AMOUNT = 1_000_000 ether; // Example collateral amount
