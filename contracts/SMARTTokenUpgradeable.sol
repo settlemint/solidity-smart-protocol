@@ -102,15 +102,15 @@ contract SMARTTokenUpgradeable is
         __SMARTCollateral_init(collateralProofTopic_);
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
-        _grantRole(BURNER_ROLE, initialOwner_);
-        _grantRole(MINTER_ROLE, initialOwner_);
-        _grantRole(COMPLIANCE_ADMIN_ROLE, initialOwner_);
-        _grantRole(VERIFICATION_ADMIN_ROLE, initialOwner_);
-        _grantRole(TOKEN_ADMIN_ROLE, initialOwner_);
-        _grantRole(FREEZER_ROLE, initialOwner_);
-        _grantRole(FORCED_TRANSFER_ROLE, initialOwner_);
-        _grantRole(RECOVERY_ROLE, initialOwner_);
-        _grantRole(PAUSER_ROLE, initialOwner_);
+        // _grantRole(BURNER_ROLE, initialOwner_);
+        // _grantRole(MINTER_ROLE, initialOwner_);
+        // _grantRole(COMPLIANCE_ADMIN_ROLE, initialOwner_);
+        // _grantRole(VERIFICATION_ADMIN_ROLE, initialOwner_);
+        // _grantRole(TOKEN_ADMIN_ROLE, initialOwner_);
+        // _grantRole(FREEZER_ROLE, initialOwner_);
+        // _grantRole(FORCED_TRANSFER_ROLE, initialOwner_);
+        // _grantRole(RECOVERY_ROLE, initialOwner_);
+        // _grantRole(PAUSER_ROLE, initialOwner_);
     }
 
     // --- Overrides for Conflicting Functions ---
