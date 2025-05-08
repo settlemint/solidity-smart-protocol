@@ -7,7 +7,6 @@ dependencies
 ignition
 node_modules
 out
-scripts
 test/*.sol
 test/*.ts
 test/tests
