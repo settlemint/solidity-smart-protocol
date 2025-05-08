@@ -40,3 +40,4 @@ ignition/deployments/chain-*
 
 # Soldeer
 /dependencies
+.DS_Store

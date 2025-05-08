@@ -244,6 +244,10 @@ jobs:
           strategy: all
           tag: ${{ env.TAG }}
 
+      - name: Push Soldeer
+        run: |
+          forge soldeer push @smart-protocol~${VERSION}
+
       - name: Create or update a comment
         if: ${{ github.event_name == 'pull_request' }}
         uses: taoliujun/action-unique-comment@v1
