@@ -12,8 +12,7 @@ import { SMARTAccessControlAuthorization } from "../../contracts/extensions/core
 import { ZeroAddressNotAllowed } from "../../contracts/extensions/common/CommonErrors.sol";
 import { CannotRecoverSelf, InsufficientTokenBalance } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { TokenRecovered } from "../../contracts/extensions/core/SMARTEvents.sol";
-
-import { MockedERC20Token } from "./mocks/MockedERC20Token.sol";
+import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
 
 abstract contract SMARTCoreTest is SMARTTest {
     using SafeERC20 for IERC20;

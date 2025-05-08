@@ -2,11 +2,11 @@
 pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
-import { SMARTIdentityFactory } from "../../../contracts/SMARTIdentityFactory.sol";
-import { SMARTIdentityRegistry } from "../../../contracts/SMARTIdentityRegistry.sol";
-import { SMARTTrustedIssuersRegistry } from "../../../contracts/SMARTTrustedIssuersRegistry.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
+import { SMARTIdentityFactory } from "../../contracts/SMARTIdentityFactory.sol";
+import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
+import { SMARTTrustedIssuersRegistry } from "../../contracts/SMARTTrustedIssuersRegistry.sol";
 
 contract IdentityUtils is Test {
     address internal _platformAdmin;

@@ -3,36 +3,38 @@ pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { SMARTIdentityFactory } from "../../../contracts/SMARTIdentityFactory.sol";
-import { SMARTComplianceModuleParamPair } from "../../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
-import { ISMART } from "../../../contracts/interface/ISMART.sol";
-import { SMARTToken } from "../../../contracts/SMARTToken.sol";
-import { SMART } from "../../../contracts/extensions/core/SMART.sol";
-import { SMARTCompliance } from "../../../contracts/SMARTCompliance.sol";
-import { TestConstants } from "../Constants.sol";
-import { SMARTTokenUpgradeable } from "../../../contracts/SMARTTokenUpgradeable.sol";
-import { SMARTIdentityRegistry } from "../../../contracts/SMARTIdentityRegistry.sol";
-import { SMARTPausable } from "../../../contracts/extensions/pausable/SMARTPausable.sol";
-import { SMARTBurnable } from "../../../contracts/extensions/burnable/SMARTBurnable.sol";
-import { SMARTRedeemable } from "../../../contracts/extensions/redeemable/SMARTRedeemable.sol";
-import { SMARTCustodian } from "../../../contracts/extensions/custodian/SMARTCustodian.sol";
+import { SMARTIdentityFactory } from "../../contracts/SMARTIdentityFactory.sol";
+import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
+import { ISMART } from "../../contracts/interface/ISMART.sol";
+import { SMARTToken } from "../../contracts/SMARTToken.sol";
+import { SMART } from "../../contracts/extensions/core/SMART.sol";
+import { SMARTCompliance } from "../../contracts/SMARTCompliance.sol";
+import { SMARTTokenUpgradeable } from "../../contracts/SMARTTokenUpgradeable.sol";
+import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
+import { SMARTPausable } from "../../contracts/extensions/pausable/SMARTPausable.sol";
+import { SMARTBurnable } from "../../contracts/extensions/burnable/SMARTBurnable.sol";
+import { SMARTRedeemable } from "../../contracts/extensions/redeemable/SMARTRedeemable.sol";
+import { SMARTCustodian } from "../../contracts/extensions/custodian/SMARTCustodian.sol";
 
 contract TokenUtils is Test {
     address internal _platformAdmin;
     SMARTIdentityFactory internal _identityFactory;
     SMARTCompliance internal _compliance; // Reference if needed, though factory uses it
     SMARTIdentityRegistry internal _identityRegistry;
+    uint256 internal _collateralClaimTopic;
 
     constructor(
         address platformAdmin_,
         SMARTIdentityFactory identityFactory_,
         SMARTIdentityRegistry identityRegistry_,
-        SMARTCompliance compliance_ // Pass compliance even if factory uses it, might be needed elsewhere
+        SMARTCompliance compliance_, // Pass compliance even if factory uses it, might be needed elsewhere
+        uint256 collateralClaimTopic_
     ) {
         _platformAdmin = platformAdmin_;
         _identityFactory = identityFactory_;
         _compliance = compliance_;
         _identityRegistry = identityRegistry_;
+        _collateralClaimTopic = collateralClaimTopic_;
     }
 
     /**
@@ -67,7 +69,7 @@ contract TokenUtils is Test {
             address(_compliance),
             claimTopics,
             modulePairs,
-            TestConstants.CLAIM_TOPIC_COLLATERAL,
+            _collateralClaimTopic,
             tokenIssuer_
         );
         address tokenAddress = address(token);
@@ -115,7 +117,7 @@ contract TokenUtils is Test {
             address(_compliance),
             claimTopics,
             modulePairs,
-            TestConstants.CLAIM_TOPIC_COLLATERAL,
+            _collateralClaimTopic,
             tokenIssuer_ // Initial owner
         );
 

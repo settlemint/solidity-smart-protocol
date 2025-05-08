@@ -2,32 +2,43 @@
 pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
-import { SMARTIdentityRegistry } from "../../../contracts/SMARTIdentityRegistry.sol";
+import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
-import { TestConstants } from "./../Constants.sol";
-import { SMARTToken } from "../../../contracts/SMARTToken.sol";
-import { SMARTIdentityFactory } from "../../../contracts/SMARTIdentityFactory.sol";
+import { SMARTIdentityFactory } from "../../contracts/SMARTIdentityFactory.sol";
 
 contract ClaimUtils is Test {
+    // Signature Schemes (ERC735)
+    uint256 public constant ECDSA_TYPE = 1;
+
     address internal _platformAdmin;
     address internal _claimIssuer;
     uint256 internal _claimIssuerPrivateKey;
     SMARTIdentityRegistry internal _identityRegistry;
     SMARTIdentityFactory internal _identityFactory;
 
+    uint256 internal _collateralClaimTopic;
+    uint256 internal _kycClaimTopic;
+    uint256 internal _amlClaimTopic;
+
     constructor(
         address platformAdmin_,
         address claimIssuer_,
         uint256 claimIssuerPrivateKey_,
         SMARTIdentityRegistry identityRegistry_,
-        SMARTIdentityFactory identityFactory_
+        SMARTIdentityFactory identityFactory_,
+        uint256 collateralClaimTopic_,
+        uint256 kycClaimTopic_,
+        uint256 amlClaimTopic_
     ) {
         _platformAdmin = platformAdmin_;
         _claimIssuer = claimIssuer_;
         _claimIssuerPrivateKey = claimIssuerPrivateKey_;
         _identityRegistry = identityRegistry_;
         _identityFactory = identityFactory_;
+        _collateralClaimTopic = collateralClaimTopic_;
+        _kycClaimTopic = kycClaimTopic_;
+        _amlClaimTopic = amlClaimTopic_;
     }
 
     /**
@@ -132,7 +143,7 @@ contract ClaimUtils is Test {
 
         // 4. Client adds the claim to their identity (needs prank)
         vm.startPrank(clientWalletAddress_);
-        clientIdentity.addClaim(claimTopic, TestConstants.ECDSA_TYPE, issuerIdentityAddr_, signature, data, "");
+        clientIdentity.addClaim(claimTopic, ECDSA_TYPE, issuerIdentityAddr_, signature, data, "");
         vm.stopPrank();
     }
 
@@ -201,7 +212,7 @@ contract ClaimUtils is Test {
         public
     {
         bytes memory encodedData = abi.encode(amount, expiryTimestamp);
-        _issueTokenIdentityClaimInternal(tokenAddress_, tokenOwner_, TestConstants.CLAIM_TOPIC_COLLATERAL, encodedData);
+        _issueTokenIdentityClaimInternal(tokenAddress_, tokenOwner_, _collateralClaimTopic, encodedData);
     }
 
     /**
@@ -210,7 +221,7 @@ contract ClaimUtils is Test {
      */
     function issueKYCClaim(address clientWalletAddress_) public {
         // Use CLAIM_TOPIC_KYC from the constants library
-        issueInvestorClaim(clientWalletAddress_, TestConstants.CLAIM_TOPIC_KYC, "Verified KYC by Issuer");
+        issueInvestorClaim(clientWalletAddress_, _kycClaimTopic, "Verified KYC by Issuer");
     }
 
     /**
@@ -219,7 +230,7 @@ contract ClaimUtils is Test {
      */
     function issueAMLClaim(address clientWalletAddress_) public {
         // Use CLAIM_TOPIC_AML from the constants library
-        issueInvestorClaim(clientWalletAddress_, TestConstants.CLAIM_TOPIC_AML, "Verified AML by Issuer");
+        issueInvestorClaim(clientWalletAddress_, _amlClaimTopic, "Verified AML by Issuer");
     }
 
     /**

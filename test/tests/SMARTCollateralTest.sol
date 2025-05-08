@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { TestConstants } from "./Constants.sol";
+import { TestConstants } from "../Constants.sol";
 import { SMARTTest } from "./SMARTTest.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
-import { ClaimUtils } from "./utils/ClaimUtils.sol";
+import { ClaimUtils } from "../utils/ClaimUtils.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { InsufficientCollateral } from "../../contracts/extensions/collateral/SMARTCollateralErrors.sol";
 
@@ -133,7 +133,10 @@ abstract contract SMARTCollateralTest is SMARTTest {
             untrustedIssuerWallet,
             untrustedIssuerPK,
             infrastructureUtils.identityRegistry(),
-            infrastructureUtils.identityFactory()
+            infrastructureUtils.identityFactory(),
+            TestConstants.CLAIM_TOPIC_COLLATERAL,
+            TestConstants.CLAIM_TOPIC_KYC,
+            TestConstants.CLAIM_TOPIC_AML
         );
 
         uint256 expiry = block.timestamp + 1 days;

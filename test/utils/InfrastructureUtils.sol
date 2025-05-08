@@ -4,18 +4,18 @@ pragma solidity ^0.8.24;
 import { Test } from "forge-std/Test.sol";
 import { Identity } from "@onchainid/contracts/Identity.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
-import { SMARTIdentityRegistryStorage } from "../../../contracts/SMARTIdentityRegistryStorage.sol";
-import { SMARTTrustedIssuersRegistry } from "../../../contracts/SMARTTrustedIssuersRegistry.sol";
-import { SMARTIdentityRegistry } from "../../../contracts/SMARTIdentityRegistry.sol";
-import { SMARTCompliance } from "../../../contracts/SMARTCompliance.sol";
-import { SMARTIdentityFactory } from "../../../contracts/SMARTIdentityFactory.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
-import { ISMART } from "../../../contracts/interface/ISMART.sol";
-import { CountryAllowListComplianceModule } from "../../../contracts/compliance/CountryAllowListComplianceModule.sol";
-import { CountryBlockListComplianceModule } from "../../../contracts/compliance/CountryBlockListComplianceModule.sol";
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { MockedComplianceModule } from "../mocks/MockedComplianceModule.sol";
 import { ImplementationAuthority } from "@onchainid/contracts/proxy/ImplementationAuthority.sol";
+import { SMARTIdentityRegistryStorage } from "../../contracts/SMARTIdentityRegistryStorage.sol";
+import { SMARTTrustedIssuersRegistry } from "../../contracts/SMARTTrustedIssuersRegistry.sol";
+import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
+import { SMARTCompliance } from "../../contracts/SMARTCompliance.sol";
+import { SMARTIdentityFactory } from "../../contracts/SMARTIdentityFactory.sol";
+import { ISMART } from "../../contracts/interface/ISMART.sol";
+import { CountryAllowListComplianceModule } from "../../contracts/compliance/CountryAllowListComplianceModule.sol";
+import { CountryBlockListComplianceModule } from "../../contracts/compliance/CountryBlockListComplianceModule.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { MockedComplianceModule } from "./mocks/MockedComplianceModule.sol";
 
 contract InfrastructureUtils is Test {
     // Core Contract Instances (now holding proxy addresses)
