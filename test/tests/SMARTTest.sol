@@ -8,12 +8,12 @@ import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
-import { TestConstants } from "./Constants.sol";
-import { ClaimUtils } from "./utils/ClaimUtils.sol";
-import { IdentityUtils } from "./utils/IdentityUtils.sol";
-import { TokenUtils } from "./utils/TokenUtils.sol";
-import { InfrastructureUtils } from "./utils/InfrastructureUtils.sol";
-import { MockedComplianceModule } from "./mocks/MockedComplianceModule.sol";
+import { TestConstants } from "../Constants.sol";
+import { ClaimUtils } from "../utils/ClaimUtils.sol";
+import { IdentityUtils } from "../utils/IdentityUtils.sol";
+import { TokenUtils } from "../utils/TokenUtils.sol";
+import { InfrastructureUtils } from "../utils/InfrastructureUtils.sol";
+import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 abstract contract SMARTTest is Test {
@@ -76,13 +76,17 @@ abstract contract SMARTTest is Test {
             claimIssuer,
             claimIssuerPrivateKey,
             infrastructureUtils.identityRegistry(),
-            infrastructureUtils.identityFactory()
+            infrastructureUtils.identityFactory(),
+            TestConstants.CLAIM_TOPIC_COLLATERAL,
+            TestConstants.CLAIM_TOPIC_KYC,
+            TestConstants.CLAIM_TOPIC_AML
         );
         tokenUtils = new TokenUtils(
             platformAdmin,
             infrastructureUtils.identityFactory(),
             infrastructureUtils.identityRegistry(),
-            infrastructureUtils.compliance()
+            infrastructureUtils.compliance(),
+            TestConstants.CLAIM_TOPIC_COLLATERAL
         );
 
         // --- Initialize Test Data FIRST ---

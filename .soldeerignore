@@ -9,6 +9,7 @@ node_modules
 out
 scripts
 test
+!test/utils
 defender.config.json
 Dockerfile
 foundry.toml
