@@ -1,11 +1,12 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { ethers } from "ethers";
+import { getTrustedForwarder } from "./forwarder";
 
 const TrustedIssuersRegistryModule = buildModule(
 	"TrustedIssuersRegistryModule",
 	(m) => {
 		// Define the trustedForwarder parameter
-		const trustedForwarder = m.getParameter("trustedForwarder");
+		const trustedForwarder = getTrustedForwarder(m);
 
 		const deployer = m.getAccount(0);
 
@@ -14,27 +15,26 @@ const TrustedIssuersRegistryModule = buildModule(
 			trustedForwarder,
 		]);
 
-		// Prepare initialization data
-		const issuersInterface = new ethers.Interface([
-			"function initialize(address initialOwner)",
-		]);
-		const issuersInitData = issuersInterface.encodeFunctionData("initialize", [
-			deployer, // initialOwner
-		]);
-
-		// Deploy proxy
+		// Deploy proxy with empty initialization data
+		const emptyInitData = "0x";
 		const issuersProxy = m.contract(
 			"ERC1967Proxy",
-			[issuersImpl, issuersInitData],
+			[issuersImpl, emptyInitData],
 			{ id: "IssuersProxy" },
 		);
 
-		// Return the contract instance at proxy address
+		// Get a contract instance at the proxy address
 		const trustedIssuersRegistry = m.contractAt(
 			"SMARTTrustedIssuersRegistry",
 			issuersProxy,
-			{ id: "IssuersAtProxy" },
+			{ id: "IssuersAtProxyUninitialized" },
 		);
+
+		// Call initialize
+		m.call(trustedIssuersRegistry, "initialize", [deployer], {
+			id: "InitializeIssuersRegistry",
+			after: [issuersProxy],
+		});
 
 		return {
 			implementation: issuersImpl,

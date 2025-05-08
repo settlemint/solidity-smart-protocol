@@ -9,8 +9,7 @@ const SMARTModule = buildModule("SMARTModule", (m) => {
 	// Define the trustedForwarder parameter
 	const trustedForwarder = m.getParameter(
 		"trustedForwarder",
-		// Provide a default value (e.g., address(0) or a specific address) if desired
-		// ethers.constants.AddressZero
+		"0x0000000000000000000000000000000000000000",
 	);
 
 	console.log(`Deploying SMART contracts with account: ${m.getAccount(0)}`);
