@@ -88,29 +88,24 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension {
                         address trustedIssuerAddress = address(trustedIssuerInstance);
 
                         if (claimIssuer == trustedIssuerAddress) {
-                            // Ask the trusted issuer contract if the claim is still valid (accounts for revocation).
-                            bool issuerSaysValid = false;
-                            try trustedIssuerInstance.isClaimValid(tokenID, topic, signature, data) returns (
-                                bool isValid
-                            ) {
-                                issuerSaysValid = isValid;
-                            } catch { /* Treat revert/error from issuer call as invalid claim */ }
+                            // Use the helper function to validate and decode this specific claim attempt.
+                            (bool claimValidated, uint256 validatedAmount, uint256 validatedExpiry) =
+                            _validateAndDecodeSingleClaimAttempt(
+                                trustedIssuerInstance, // IClaimIssuer
+                                tokenID, // IIdentity (cast from this.onchainID())
+                                topic, // uint256 (retrieved from claim, already checked against collateralProofTopic)
+                                signature, // bytes memory
+                                data // bytes memory
+                            );
 
-                            if (issuerSaysValid) {
-                                // Expect data to be abi.encode(uint256 amount, uint256 expiry).
-                                if (data.length == 64) {
-                                    (uint256 decodedAmount, uint256 decodedExpiry) =
-                                        abi.decode(data, (uint256, uint256));
-
-                                    // Check if the claim has expired.
-                                    if (decodedExpiry > block.timestamp) {
-                                        // Found a valid, non-expired claim from a trusted issuer.
-                                        return (decodedAmount, claimIssuer, decodedExpiry);
-                                    }
-                                }
+                            if (claimValidated) {
+                                // Found a valid, non-expired claim from a trusted issuer.
+                                return (validatedAmount, claimIssuer, validatedExpiry);
                             }
-                            // Optimization: If we found the matching trusted issuer for this claimId, no need to check
-                            // others.
+                            // Optimization: If we found the matching trusted issuer for this claimId,
+                            // and the claim attempt failed (e.g. revoked, expired, bad data),
+                            // no need to check other trusted issuers for this specific claimId.
+                            // We break to move to the next claimId or finish.
                             break;
                         }
                     }
@@ -120,6 +115,54 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension {
 
         // No valid claim found after checking all possibilities.
         return (0, address(0), 0);
+    }
+
+    // -- Private Helper Functions
+
+    /// @dev Validates a single claim attempt against a trusted issuer, decodes its data, and checks expiry.
+    /// @param _trustedIssuer The specific trusted issuer instance to check against.
+    /// @param _tokenIdentity The identity contract of the token holder.
+    /// @param _claimTopic The topic of the claim (must match collateralProofTopic).
+    /// @param _claimSignature The signature of the claim.
+    /// @param _claimData The data of the claim.
+    /// @return success True if the claim is valid, non-expired, and successfully decoded.
+    /// @return amount The decoded collateral amount if successful, otherwise 0.
+    /// @return expiryTimestamp The decoded expiry timestamp if successful, otherwise 0.
+    function _validateAndDecodeSingleClaimAttempt(
+        IClaimIssuer _trustedIssuer,
+        IIdentity _tokenIdentity,
+        uint256 _claimTopic,
+        bytes memory _claimSignature,
+        bytes memory _claimData
+    )
+        private
+        view
+        returns (bool success, uint256 amount, uint256 expiryTimestamp)
+    {
+        bool issuerSaysValid = false;
+        try _trustedIssuer.isClaimValid(_tokenIdentity, _claimTopic, _claimSignature, _claimData) returns (bool isValid)
+        {
+            issuerSaysValid = isValid;
+        } catch {
+            // Treat revert/error from issuer call as an invalid claim for this attempt.
+            return (false, 0, 0);
+        }
+
+        if (issuerSaysValid) {
+            // Expect data to be abi.encode(uint256 amount, uint256 expiry).
+            // Check data length to prevent abi.decode from reverting with incorrectly sized data.
+            if (_claimData.length == 64) {
+                (uint256 decodedAmount, uint256 decodedExpiry) = abi.decode(_claimData, (uint256, uint256));
+
+                // Check if the claim has expired.
+                if (decodedExpiry > block.timestamp) {
+                    // Claim is valid, not expired, and data decoded successfully.
+                    return (true, decodedAmount, decodedExpiry);
+                }
+            }
+        }
+        // If any check failed (not valid by issuer, wrong data length, or expired).
+        return (false, 0, 0);
     }
 
     // -- Internal Hook Helper Function --
