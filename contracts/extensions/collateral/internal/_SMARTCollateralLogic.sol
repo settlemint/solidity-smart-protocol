@@ -31,6 +31,148 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension {
         collateralProofTopic = collateralProofTopic_;
     }
 
+    // -- Private Helper Functions --
+
+    /// @dev Validates if a claim is valid via the trusted issuer and decodes its data.
+    /// @param issuer The trusted issuer to check with.
+    /// @param tokenIdentity The identity contract.
+    /// @param claimTopic The topic of the claim.
+    /// @param signature The signature of the claim.
+    /// @param data The data of the claim.
+    /// @return isValid True if claim is valid by the issuer.
+    function _checkClaimValidity(
+        IClaimIssuer issuer,
+        IIdentity tokenIdentity,
+        uint256 claimTopic,
+        bytes memory signature,
+        bytes memory data
+    )
+        private
+        view
+        returns (bool isValid)
+    {
+        try issuer.isClaimValid(tokenIdentity, claimTopic, signature, data) returns (bool valid) {
+            return valid;
+        } catch {
+            return false;
+        }
+    }
+
+    /// @dev Decodes claim data into amount and expiry timestamp.
+    /// @param data The encoded claim data.
+    /// @return decoded True if decoding was successful.
+    /// @return amount The decoded amount (0 if decode failed).
+    /// @return expiry The decoded expiry timestamp (0 if decode failed).
+    function _decodeClaimData(bytes memory data) private view returns (bool decoded, uint256 amount, uint256 expiry) {
+        if (data.length != 64) {
+            return (false, 0, 0);
+        }
+
+        (amount, expiry) = abi.decode(data, (uint256, uint256));
+
+        // Check if the claim has expired
+        if (expiry <= block.timestamp) {
+            return (false, 0, 0);
+        }
+
+        return (true, amount, expiry);
+    }
+
+    /// @dev Attempts to validate one claim against one issuer.
+    /// @param issuer The trusted issuer.
+    /// @param tokenIdentity The identity contract.
+    /// @param topic The claim topic.
+    /// @param signature The claim signature.
+    /// @param data The claim data.
+    /// @return success Whether validation succeeded.
+    /// @return amount The collateral amount if successful.
+    /// @return expiry The expiry timestamp if successful.
+    function _tryClaimWithIssuer(
+        IClaimIssuer issuer,
+        IIdentity tokenIdentity,
+        uint256 topic,
+        bytes memory signature,
+        bytes memory data
+    )
+        private
+        view
+        returns (bool success, uint256 amount, uint256 expiry)
+    {
+        bool isValid = _checkClaimValidity(issuer, tokenIdentity, topic, signature, data);
+
+        if (!isValid) {
+            return (false, 0, 0);
+        }
+
+        (bool decoded, uint256 decodedAmount, uint256 decodedExpiry) = _decodeClaimData(data);
+
+        if (!decoded) {
+            return (false, 0, 0);
+        }
+
+        return (true, decodedAmount, decodedExpiry);
+    }
+
+    /// @dev Checks a specific claimId for validity among trusted issuers.
+    /// @param tokenID The identity token.
+    /// @param claimId The ID of the claim to check.
+    /// @param trustedIssuers Array of trusted claim issuers.
+    /// @return validClaim Whether a valid claim was found.
+    /// @return amount The claim amount if valid.
+    /// @return issuer The issuer address if valid.
+    /// @return expiry The expiry timestamp if valid.
+    function _checkSingleClaim(
+        IIdentity tokenID,
+        bytes32 claimId,
+        IClaimIssuer[] memory trustedIssuers
+    )
+        private
+        view
+        returns (bool validClaim, uint256 amount, address issuer, uint256 expiry)
+    {
+        // Try to get the claim details
+        try tokenID.getClaim(claimId) returns (
+            uint256 topic,
+            uint256, // scheme unused
+            address claimIssuer,
+            bytes memory signature,
+            bytes memory data,
+            string memory // uri unused
+        ) {
+            // Only proceed if topic matches our collateral topic
+            if (topic != collateralProofTopic) {
+                return (false, 0, address(0), 0);
+            }
+
+            // Look for a matching trusted issuer
+            for (uint256 i = 0; i < trustedIssuers.length; i++) {
+                IClaimIssuer trustedIssuer = trustedIssuers[i];
+                address trustedIssuerAddr = address(trustedIssuer);
+
+                // Skip if this isn't the issuer of the claim
+                if (claimIssuer != trustedIssuerAddr) {
+                    continue;
+                }
+
+                // We found the matching issuer, try to validate the claim
+                (bool success, uint256 claimAmount, uint256 claimExpiry) =
+                    _tryClaimWithIssuer(trustedIssuer, tokenID, topic, signature, data);
+
+                if (success) {
+                    return (true, claimAmount, claimIssuer, claimExpiry);
+                }
+
+                // We found the right issuer but claim wasn't valid,
+                // no need to check other issuers for this claim
+                break;
+            }
+        } catch {
+            // getClaim reverted, skip this claim
+        }
+
+        return (false, 0, address(0), 0);
+    }
+
     // -- Public View Helper Function --
 
     /// @notice Finds the first valid collateral claim for a given identity address based on the configured topic.
@@ -68,57 +210,17 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension {
 
         bytes32[] memory claimIds = tokenID.getClaimIdsByTopic(collateralProofTopic);
 
+        // Iterate through claims and find the first valid one
         for (uint256 j = 0; j < claimIds.length; j++) {
-            bytes32 currentClaimId = claimIds[j];
+            (bool validClaim, uint256 claimAmount, address claimIssuer, uint256 claimExpiry) =
+                _checkSingleClaim(tokenID, claimIds[j], trustedIssuers);
 
-            // Attempt to retrieve the full claim details from the identity contract.
-            try tokenID.getClaim(currentClaimId) returns (
-                uint256 topic,
-                uint256, // scheme unused
-                address claimIssuer,
-                bytes memory signature,
-                bytes memory data,
-                string memory // uri unused
-            ) {
-                // Ensure the retrieved claim is for the correct topic.
-                if (topic == collateralProofTopic) {
-                    // Check if the claim's issuer is in our list of trusted issuers for this topic.
-                    for (uint256 i = 0; i < trustedIssuers.length; i++) {
-                        IClaimIssuer trustedIssuerInstance = trustedIssuers[i];
-                        address trustedIssuerAddress = address(trustedIssuerInstance);
-
-                        if (claimIssuer == trustedIssuerAddress) {
-                            // Ask the trusted issuer contract if the claim is still valid (accounts for revocation).
-                            bool issuerSaysValid = false;
-                            try trustedIssuerInstance.isClaimValid(tokenID, topic, signature, data) returns (
-                                bool isValid
-                            ) {
-                                issuerSaysValid = isValid;
-                            } catch { /* Treat revert/error from issuer call as invalid claim */ }
-
-                            if (issuerSaysValid) {
-                                // Expect data to be abi.encode(uint256 amount, uint256 expiry).
-                                if (data.length == 64) {
-                                    (uint256 decodedAmount, uint256 decodedExpiry) =
-                                        abi.decode(data, (uint256, uint256));
-
-                                    // Check if the claim has expired.
-                                    if (decodedExpiry > block.timestamp) {
-                                        // Found a valid, non-expired claim from a trusted issuer.
-                                        return (decodedAmount, claimIssuer, decodedExpiry);
-                                    }
-                                }
-                            }
-                            // Optimization: If we found the matching trusted issuer for this claimId, no need to check
-                            // others.
-                            break;
-                        }
-                    }
-                }
-            } catch { /* getClaim reverted (e.g., claim removed), continue to the next claimId */ }
+            if (validClaim) {
+                return (claimAmount, claimIssuer, claimExpiry);
+            }
         }
 
-        // No valid claim found after checking all possibilities.
+        // No valid claim found after checking all possibilities
         return (0, address(0), 0);
     }
 
