@@ -29,13 +29,11 @@
 		"/artifacts"
 	],
 	"scripts": {
-		"dependencies": "forge soldeer install && bun run patch:onchainid",
-		"patch:onchainid": "./scripts/patch-onchainid.sh"
+		"dependencies": "forge soldeer install && npm run patch:onchainid",
+		"patch:onchainid": "./scripts/patch-onchainid.sh",
+		"clean": "git clean -fdX -e '.env' -e '.env.*' -e '!.env' -e '!.env.*' && find . -type f \\( -name 'pnpm-lock.yaml' -o -name 'package-lock.json' -o -name 'yarn.lock' -o -name 'bun.lockb' -o -name 'bun.lock' \\) -exec rm -f {} + && npm install"
 	},
 	"dependencies": {
-		"@amxx/graphprotocol-utils": "1.2.0",
-		"@graphprotocol/graph-cli": "0.97.0",
-		"@graphprotocol/graph-ts": "0.38.0",
 		"@nomicfoundation/hardhat-foundry": "1.1.3",
 		"@nomicfoundation/hardhat-ignition-viem": "0.15.11",
 		"@nomicfoundation/hardhat-toolbox-viem": "3.0.0",
@@ -45,8 +43,6 @@
 		"@openzeppelin/subgraphs": "0.1.8-5"
 	},
 	"overrides": {
-		"@graphprotocol/graph-cli": "0.97.0",
-		"@graphprotocol/graph-ts": "0.38.0",
 		"elliptic": "6.6.1",
 		"ws": "8.18.2",
 		"adm-zip": "0.5.16",

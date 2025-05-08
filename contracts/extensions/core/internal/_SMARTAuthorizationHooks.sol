@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.28;
 
 /// @title Internal Authorization Hooks for Core SMART Functionality
 /// @notice Defines internal hooks used by _SMARTLogic to authorize state-changing operations.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.28;
 
 // OnchainID imports
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";

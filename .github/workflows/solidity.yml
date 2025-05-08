@@ -50,7 +50,7 @@ jobs:
   #       with:
   #         sarif: slither.sarif
   #         slither-args: --filter-paths "lib/" --filter-paths "node_modules/"
-  #         solc-version: ${{ vars.SOL_VERSION || '0.8.27' }}
+  #         solc-version: ${{ vars.SOL_VERSION || '0.8.28' }}
   #         fail-on: none
 
   #     - name: Upload findings to GitHub Advanced Security Dashboard
@@ -105,14 +105,8 @@ jobs:
         run: npm install
 
       - name: Install Soldeer dependencies (Soldeer)
-        if: github.repository == 'settlemint/solidity-account-abstraction'
         run: |
-          forge soldeer update
-
-      - name: Install Soldeer dependencies (Bun dependencies)
-        if: github.repository == 'settlemint/solidity-smart-protocol'
-        run: |
-          bun run dependencies
+          npm run dependencies
 
       - name: Run Forge build
         run: |
@@ -245,6 +239,10 @@ jobs:
           provenance: false
           strategy: all
           tag: ${{ env.TAG }}
+
+      - name: Push Soldeer
+        run: |
+          forge soldeer push @smart-protocol~${VERSION}
 
       - name: Create or update a comment
         if: ${{ github.event_name == 'pull_request' }}
