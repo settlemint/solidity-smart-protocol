@@ -6,10 +6,8 @@ import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy
 import { SMARTIdentityFactory } from "../../contracts/SMARTIdentityFactory.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
-import { SMARTToken } from "../../contracts/SMARTToken.sol";
 import { SMART } from "../../contracts/extensions/core/SMART.sol";
 import { SMARTCompliance } from "../../contracts/SMARTCompliance.sol";
-import { SMARTTokenUpgradeable } from "../../contracts/SMARTTokenUpgradeable.sol";
 import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
 import { SMARTPausable } from "../../contracts/extensions/pausable/SMARTPausable.sol";
 import { SMARTBurnable } from "../../contracts/extensions/burnable/SMARTBurnable.sol";
@@ -21,115 +19,17 @@ contract TokenUtils is Test {
     SMARTIdentityFactory internal _identityFactory;
     SMARTCompliance internal _compliance; // Reference if needed, though factory uses it
     SMARTIdentityRegistry internal _identityRegistry;
-    uint256 internal _collateralClaimTopic;
 
     constructor(
         address platformAdmin_,
         SMARTIdentityFactory identityFactory_,
         SMARTIdentityRegistry identityRegistry_,
-        SMARTCompliance compliance_, // Pass compliance even if factory uses it, might be needed elsewhere
-        uint256 collateralClaimTopic_
+        SMARTCompliance compliance_ // Pass compliance even if factory uses it, might be needed elsewhere
     ) {
         _platformAdmin = platformAdmin_;
         _identityFactory = identityFactory_;
         _compliance = compliance_;
         _identityRegistry = identityRegistry_;
-        _collateralClaimTopic = collateralClaimTopic_;
-    }
-
-    /**
-     * @notice Creates a new SMART token using a specified factory.
-     * @param name The token name.
-     * @param symbol The token symbol.
-     * @param claimTopics Required claim topics for holders.
-     * @param modulePairs Compliance modules and their parameters.
-     * @param tokenIssuer_ The wallet address of the issuer for this specific token creation.
-     * @return The address of the newly created token contract.
-     */
-    function createToken(
-        string memory name,
-        string memory symbol,
-        uint256[] memory claimTopics,
-        SMARTComplianceModuleParamPair[] memory modulePairs,
-        address tokenIssuer_ // Allow overriding the default issuer per-token
-    )
-        public
-        returns (
-            address // Returns the token contract address
-        )
-    {
-        // 1. Create the token contract
-        vm.startPrank(tokenIssuer_);
-        SMARTToken token = new SMARTToken(
-            name,
-            symbol,
-            18,
-            address(0),
-            address(_identityRegistry),
-            address(_compliance),
-            claimTopics,
-            modulePairs,
-            _collateralClaimTopic,
-            tokenIssuer_
-        );
-        address tokenAddress = address(token);
-        vm.stopPrank();
-
-        // 2. Create the token's on-chain identity
-        createAndSetTokenOnchainID(tokenAddress, tokenIssuer_);
-
-        return tokenAddress;
-    }
-
-    /**
-     * @notice Creates a new SMART token using a specified factory.
-     * @param name The token name.
-     * @param symbol The token symbol.
-     * @param claimTopics Required claim topics for holders.
-     * @param modulePairs Compliance modules and their parameters.
-     * @param tokenIssuer_ The wallet address of the issuer for this specific token creation.
-     * @return The address of the newly created token contract.
-     */
-    function createUpgradeableToken(
-        string memory name,
-        string memory symbol,
-        uint256[] memory claimTopics,
-        SMARTComplianceModuleParamPair[] memory modulePairs,
-        address tokenIssuer_ // Allow overriding the default issuer per-token
-    )
-        public
-        returns (
-            address // Returns the token contract address
-        )
-    {
-        // 1. Deploy the implementation contract (no constructor args for upgradeable)
-        vm.startPrank(tokenIssuer_);
-        SMARTTokenUpgradeable implementation = new SMARTTokenUpgradeable();
-
-        // 2. Encode the initializer call data
-        bytes memory initializeData = abi.encodeWithSelector(
-            implementation.initialize.selector,
-            name,
-            symbol,
-            18, // Standard decimals
-            address(0), // onchainID will be set by _createAndSetTokenOnchainID via proxy
-            address(_identityRegistry),
-            address(_compliance),
-            claimTopics,
-            modulePairs,
-            _collateralClaimTopic,
-            tokenIssuer_ // Initial owner
-        );
-
-        // 3. Deploy the ERC1967Proxy pointing to the implementation and initializing it
-        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initializeData);
-        address tokenProxyAddress = address(proxy);
-        vm.stopPrank();
-
-        // 4. Create the token's on-chain identity (using platform admin)
-        createAndSetTokenOnchainID(tokenProxyAddress, tokenIssuer_);
-
-        return tokenProxyAddress; // Return the proxy address
     }
 
     /**

@@ -12,6 +12,8 @@ import { SMARTCollateralTest } from "./tests/SMARTCollateralTest.sol";
 import { SMARTCountryAllowListTest } from "./tests/SMARTCountryAllowListTest.sol";
 import { SMARTCountryBlockListTest } from "./tests/SMARTCountryBlockListTest.sol";
 import { ISMART } from "../contracts/interface/ISMART.sol";
+import { SMARTToken } from "../contracts/SMARTToken.sol";
+import { TestConstants } from "./Constants.sol";
 // Rename contract to reflect its purpose
 
 contract SMARTStandardTest is
@@ -24,15 +26,26 @@ contract SMARTStandardTest is
     SMARTCountryBlockListTest
 {
     function _setupToken() internal override {
-        // Use TokenUtils to create the token, passing the bondFactory from base
-        address bondAddress = tokenUtils.createToken(
+        // 1. Create the token contract
+        vm.startPrank(tokenIssuer);
+        SMARTToken bond = new SMARTToken(
             "Test Bond",
             "TSTB",
+            18,
+            address(0),
+            address(infrastructureUtils.identityRegistry()),
+            address(infrastructureUtils.compliance()),
             requiredClaimTopics,
             modulePairs,
-            tokenIssuer // Use tokenIssuer address from base
+            TestConstants.CLAIM_TOPIC_COLLATERAL,
+            tokenIssuer
         );
+        address tokenAddress = address(bond);
+        vm.stopPrank();
 
-        token = ISMART(bondAddress);
+        // 2. Create the token's on-chain identity
+        tokenUtils.createAndSetTokenOnchainID(tokenAddress, tokenIssuer);
+
+        token = ISMART(tokenAddress);
     }
 }
