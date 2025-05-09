@@ -61,11 +61,19 @@ contract SMARTTrustedIssuersRegistry is
 
     // --- Events ---
     /// @notice Emitted when a new trusted issuer is added.
-    event TrustedIssuerAdded(address indexed _issuer, uint256[] _claimTopics);
+    /// @param initiator The address of the account that performed the addition.
+    /// @param _issuer The address of the issuer being added.
+    /// @param _claimTopics The claim topics the issuer is being added to.
+    event TrustedIssuerAdded(address indexed initiator, address indexed _issuer, uint256[] _claimTopics);
     /// @notice Emitted when a trusted issuer is removed.
-    event TrustedIssuerRemoved(address indexed _issuer);
+    /// @param initiator The address of the account that performed the removal.
+    /// @param _issuer The address of the issuer being removed.
+    event TrustedIssuerRemoved(address indexed initiator, address indexed _issuer);
     /// @notice Emitted when the claim topics for an existing trusted issuer are updated.
-    event ClaimTopicsUpdated(address indexed _issuer, uint256[] _claimTopics);
+    /// @param initiator The address of the account that performed the update.
+    /// @param _issuer The address of the issuer being updated.
+    /// @param _claimTopics The new claim topics for the issuer.
+    event ClaimTopicsUpdated(address indexed initiator, address indexed _issuer, uint256[] _claimTopics);
 
     // --- Constructor --- (Disable direct construction)
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -113,7 +121,7 @@ contract SMARTTrustedIssuersRegistry is
             _addIssuerToClaimTopic(_claimTopics[i], issuerAddress);
         }
 
-        emit TrustedIssuerAdded(issuerAddress, _claimTopics);
+        emit TrustedIssuerAdded(_msgSender(), issuerAddress, _claimTopics);
     }
 
     /// @inheritdoc IERC3643TrustedIssuersRegistry
@@ -135,7 +143,7 @@ contract SMARTTrustedIssuersRegistry is
         // Delete the issuer's main record
         delete _trustedIssuers[issuerAddress];
 
-        emit TrustedIssuerRemoved(issuerAddress);
+        emit TrustedIssuerRemoved(_msgSender(), issuerAddress);
     }
 
     /// @inheritdoc IERC3643TrustedIssuersRegistry
@@ -175,7 +183,7 @@ contract SMARTTrustedIssuersRegistry is
         // Update the stored claim topics list for the issuer
         _trustedIssuers[issuerAddress].claimTopics = _newClaimTopics;
 
-        emit ClaimTopicsUpdated(issuerAddress, _newClaimTopics);
+        emit ClaimTopicsUpdated(_msgSender(), issuerAddress, _newClaimTopics);
     }
 
     // --- View Functions ---

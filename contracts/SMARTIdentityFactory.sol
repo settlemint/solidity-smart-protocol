@@ -55,7 +55,9 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
     /// @param token The token contract address.
     event TokenIdentityCreated(address indexed initiator, address indexed identity, address indexed token);
     /// @notice Emitted when the ImplementationAuthority address is set or updated.
-    event ImplementationAuthoritySet(address indexed newAuthority);
+    /// @param initiator The address of the account that performed the update.
+    /// @param newAuthority The new address of the ImplementationAuthority.
+    event ImplementationAuthoritySet(address indexed initiator, address indexed newAuthority);
 
     // --- Constructor --- (Disable direct construction)
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -73,7 +75,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         __Ownable_init(initialOwner);
         // ERC2771Context is initialized by the constructor
         _implementationAuthority = implementationAuthority_;
-        emit ImplementationAuthoritySet(implementationAuthority_);
+        emit ImplementationAuthoritySet(_msgSender(), implementationAuthority_);
     }
 
     // --- State-Changing Functions (Owner Controlled) ---
