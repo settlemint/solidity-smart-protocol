@@ -23,29 +23,29 @@ interface ISMART is IERC20, IERC20Metadata {
 
     // --- Events ---
     /// @notice Emitted when the identity registry contract address is updated.
-    event IdentityRegistryAdded(address indexed initiator, address indexed _identityRegistry);
+    event IdentityRegistryAdded(address indexed sender, address indexed _identityRegistry);
     /// @notice Emitted when the main compliance contract address is updated.
-    event ComplianceAdded(address indexed initiator, address indexed _compliance);
+    event ComplianceAdded(address indexed sender, address indexed _compliance);
     /// @notice Emitted when core token information (name, symbol, decimals, onchainID) is updated.
     event UpdatedTokenInformation(
-        address indexed initiator,
+        address indexed sender,
         string indexed _newName,
         string _newSymbol,
         uint8 _newDecimals,
         address indexed _newOnchainID
     );
     /// @notice Emitted when a new compliance module is added to the token.
-    event ComplianceModuleAdded(address indexed initiator, address indexed _module, bytes _params);
+    event ComplianceModuleAdded(address indexed sender, address indexed _module, bytes _params);
     /// @notice Emitted when a compliance module is removed from the token.
-    event ComplianceModuleRemoved(address indexed initiator, address indexed _module);
+    event ComplianceModuleRemoved(address indexed sender, address indexed _module);
     /// @notice Emitted when the parameters for an existing compliance module are updated.
-    event ModuleParametersUpdated(address indexed initiator, address indexed _module, bytes _params);
+    event ModuleParametersUpdated(address indexed sender, address indexed _module, bytes _params);
     /// @notice Emitted when the list of required claim topics is updated.
-    event RequiredClaimTopicsUpdated(address indexed initiator, uint256[] _requiredClaimTopics);
+    event RequiredClaimTopicsUpdated(address indexed sender, uint256[] _requiredClaimTopics);
     /// @notice Emitted when a token is transferred.
-    event TransferCompleted(address indexed initiator, address indexed from, address indexed to, uint256 amount);
+    event TransferCompleted(address indexed sender, address indexed from, address indexed to, uint256 amount);
     /// @notice Emitted when a token is minted.
-    event MintCompleted(address indexed initiator, address indexed to, uint256 amount);
+    event MintCompleted(address indexed sender, address indexed to, uint256 amount);
 
     // --- Configuration Setters (Admin/Authorized) ---
 
