@@ -6,6 +6,8 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { TestConstants } from "../Constants.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { ISMARTCustodian } from "../../contracts/extensions/custodian/ISMARTCustodian.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { SMARTCustodianAccessControlAuthorization } from
     "../../contracts/extensions/custodian/SMARTCustodianAccessControlAuthorization.sol";
 import {
@@ -650,5 +652,13 @@ abstract contract SMARTCustodianTest is SMARTTest {
             )
         );
         tokenUtils.recoveryAddressAsExecutor(address(token), clientJP, clientJP, newWallet, investorOnchainID);
+    }
+
+    function test_SupportsInterface_Custodian() public {
+        _setUpCustodianTest(); // Use the specific setup for custodian tests
+        assertTrue(
+            IERC165(address(token)).supportsInterface(type(ISMARTCustodian).interfaceId),
+            "Token does not support ISMARTCustodian interface"
+        );
     }
 }

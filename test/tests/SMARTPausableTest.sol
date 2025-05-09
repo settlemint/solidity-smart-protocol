@@ -4,8 +4,9 @@ pragma solidity ^0.8.24;
 import { SMARTTest } from "./SMARTTest.sol"; // Inherit from the logic base
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { _SMARTPausableLogic } from "../../contracts/extensions/pausable/internal/_SMARTPausableLogic.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { ISMARTPausable } from "../../contracts/extensions/pausable/ISMARTPausable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { TokenPaused, ExpectedPause } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
 import { SMARTPausableAccessControlAuthorization } from
     "../../contracts/extensions/pausable/SMARTPausableAccessControlAuthorization.sol";
@@ -97,5 +98,13 @@ abstract contract SMARTPausableTest is SMARTTest {
         );
         tokenUtils.pauseToken(address(token), clientBE);
         assertFalse(tokenUtils.isPaused(address(token)));
+    }
+
+    function test_SupportsInterface_Pausable() public {
+        _setUpPausableTest(); // Use the specific setup for pausable tests
+        assertTrue(
+            IERC165(address(token)).supportsInterface(type(ISMARTPausable).interfaceId),
+            "Token does not support ISMARTPausable interface"
+        );
     }
 }

@@ -8,6 +8,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplianceModule.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { SMARTAccessControlAuthorization } from "../../contracts/extensions/core/SMARTAccessControlAuthorization.sol";
 import { ZeroAddressNotAllowed } from "../../contracts/extensions/common/CommonErrors.sol";
 import { CannotRecoverSelf, InsufficientTokenBalance } from "../../contracts/extensions/core/SMARTErrors.sol";
@@ -191,5 +192,13 @@ abstract contract SMARTCoreTest is SMARTTest {
 
         vm.expectRevert(abi.encodeWithSelector(InsufficientTokenBalance.selector));
         tokenUtils.recoverERC20Token(address(token), tokenIssuer, address(mockForeignToken), clientBE, amountToRecover);
+    }
+
+    function test_SupportsInterface_CoreSMART() public {
+        _setUpCoreTest(); // Use the specific setup for core tests
+        assertTrue(
+            IERC165(address(token)).supportsInterface(type(ISMART).interfaceId),
+            "Token does not support ISMART interface"
+        );
     }
 }

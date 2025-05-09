@@ -97,6 +97,7 @@ contract SMARTTokenUpgradeable is
         __SMARTCustodian_init();
         __SMARTBurnable_init();
         __SMARTRedeemable_init();
+        __SMARTPausable_init();
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __SMARTCollateral_init(collateralProofTopic_);

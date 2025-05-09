@@ -6,6 +6,8 @@ import { SMARTTest } from "./SMARTTest.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { ClaimUtils } from "../utils/ClaimUtils.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
+import { ISMARTCollateral } from "../../contracts/extensions/collateral/ISMARTCollateral.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { InsufficientCollateral } from "../../contracts/extensions/collateral/SMARTCollateralErrors.sol";
 
 abstract contract SMARTCollateralTest is SMARTTest {
@@ -155,5 +157,18 @@ abstract contract SMARTCollateralTest is SMARTTest {
             abi.encodeWithSelector(InsufficientCollateral.selector, requiredSupply, 0) // Available collateral is 0
         );
         tokenUtils.mintToken(address(token), tokenIssuer, clientBE, MINT_AMOUNT);
+    }
+
+    function test_SupportsInterface_Collateral() public {
+        // Note: Collateral tests often don't call super.setUp() in each test
+        // but rely on the inherited setUp from SMARTTest if it's sufficient
+        // or have specific setups. For interface check, a basic setup is fine.
+        super.setUp(); // Ensure basic token deployment
+        _setupDefaultCollateralClaim(); // Ensure collateral state is as expected for collateral functionality if needed
+
+        assertTrue(
+            IERC165(address(token)).supportsInterface(type(ISMARTCollateral).interfaceId),
+            "Token does not support ISMARTCollateral interface"
+        );
     }
 }
