@@ -15,7 +15,6 @@ abstract contract _SMARTExtension is ISMART, SMARTContext, SMARTHooks {
 
     /**
      * @dev Registers an interface ID internally for ERC165 support.
-     * Reverts if the interface ID is already registered.
      *
      * This function is `internal` and intended to be called by derived contracts,
      * typically during their initialization or setup phase, to declare supported interfaces.
