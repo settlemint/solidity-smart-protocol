@@ -120,6 +120,11 @@ contract SMARTToken is
         return AccessControl.hasRole(role, account);
     }
 
+    /// @dev Overrides ERC165 to ensure that the SMART implementation is used.
+    function supportsInterface(bytes4 interfaceId) public view virtual override(SMART, AccessControl) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
     // --- Hooks ---
 
     function _beforeMint(
@@ -182,11 +187,6 @@ contract SMARTToken is
      */
     function _update(address from, address to, uint256 value) internal virtual override(SMART, SMARTPausable, ERC20) {
         super._update(from, to, value);
-    }
-
-    /// @dev Overrides ERC165 to ensure that the SMART implementation is used.
-    function supportsInterface(bytes4 interfaceId) public view virtual override(SMART, AccessControl) returns (bool) {
-        return super.supportsInterface(interfaceId);
     }
 
     function _msgSender()

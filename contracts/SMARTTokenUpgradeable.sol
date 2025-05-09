@@ -178,6 +178,17 @@ contract SMARTTokenUpgradeable is
         return super.hasRole(role, account);
     }
 
+    /// @dev Overrides ERC165 to ensure that the SMARTUpgradeable implementation is used.
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(SMARTUpgradeable, AccessControlUpgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
     /**
      * @dev Overrides required due to diamond inheritance involving ERC20Pausable and SMARTExtension/ERC20.
      * We explicitly call the Pausable implementation which includes the `whenNotPaused` check.
@@ -194,17 +205,6 @@ contract SMARTTokenUpgradeable is
         // Note: SMARTUpgradeable also overrides _update, but SMARTPausable's takes precedence for the pause check.
         // Both eventually call ERC20Upgradeable._update
         super._update(from, to, value);
-    }
-
-    /// @dev Overrides ERC165 to ensure that the SMARTUpgradeable implementation is used.
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(SMARTUpgradeable, AccessControlUpgradeable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
     }
 
     // --- Overrides for Hook Functions ---

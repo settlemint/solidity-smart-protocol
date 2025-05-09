@@ -33,6 +33,7 @@ contract SMARTCustodianToken is SMART, SMARTCustodian {
             requiredClaimTopics_,
             initialModulePairs_
         )
+        SMARTCustodian()
     { }
 
     // --- State-Changing Functions (Overrides) ---

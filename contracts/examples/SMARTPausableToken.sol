@@ -33,6 +33,7 @@ contract SMARTPausableToken is SMART, SMARTPausable {
             requiredClaimTopics_,
             initialModulePairs_
         )
+        SMARTPausable()
     { }
 
     // --- State-Changing Functions (Overrides) ---
