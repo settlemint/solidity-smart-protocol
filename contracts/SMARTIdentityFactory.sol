@@ -45,15 +45,19 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
 
     // --- Events ---
     /// @notice Emitted when a new identity is created for an investor wallet.
+    /// @param initiator The address of the account that performed the creation.
     /// @param identity The address of the deployed IdentityProxy.
     /// @param wallet The investor wallet address.
-    event IdentityCreated(address indexed identity, address indexed wallet);
+    event IdentityCreated(address indexed initiator, address indexed identity, address indexed wallet);
     /// @notice Emitted when a new identity is created for a token contract.
+    /// @param initiator The address of the account that performed the creation.
     /// @param identity The address of the deployed IdentityProxy.
     /// @param token The token contract address.
-    event TokenIdentityCreated(address indexed identity, address indexed token);
+    event TokenIdentityCreated(address indexed initiator, address indexed identity, address indexed token);
     /// @notice Emitted when the ImplementationAuthority address is set or updated.
-    event ImplementationAuthoritySet(address indexed newAuthority);
+    /// @param initiator The address of the account that performed the update.
+    /// @param newAuthority The new address of the ImplementationAuthority.
+    event ImplementationAuthoritySet(address indexed initiator, address indexed newAuthority);
 
     // --- Constructor --- (Disable direct construction)
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -71,7 +75,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         __Ownable_init(initialOwner);
         // ERC2771Context is initialized by the constructor
         _implementationAuthority = implementationAuthority_;
-        emit ImplementationAuthoritySet(implementationAuthority_);
+        emit ImplementationAuthoritySet(_msgSender(), implementationAuthority_);
     }
 
     // --- State-Changing Functions (Owner Controlled) ---
@@ -102,7 +106,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         }
 
         _identities[_wallet] = identity;
-        emit IdentityCreated(identity, _wallet);
+        emit IdentityCreated(_msgSender(), identity, _wallet);
         return identity;
     }
 
@@ -124,7 +128,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
         address identity = _createIdentityInternal("Token", _token, _tokenOwner);
 
         _tokenIdentities[_token] = identity;
-        emit TokenIdentityCreated(identity, _token);
+        emit TokenIdentityCreated(_msgSender(), identity, _token);
         return identity;
     }
 

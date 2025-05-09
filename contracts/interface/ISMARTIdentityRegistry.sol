@@ -8,36 +8,6 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IERC3643IdentityRegistryStorage } from "./ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
-// --- Events ---
-
-/// @notice Emitted when the IdentityRegistryStorage address is set or updated.
-/// @param _identityStorage The address of the new Identity Registry Storage contract.
-event IdentityStorageSet(address indexed _identityStorage);
-
-/// @notice Emitted when the TrustedIssuersRegistry address is set or updated.
-/// @param _trustedIssuersRegistry The address of the new Trusted Issuers Registry contract.
-event TrustedIssuersRegistrySet(address indexed _trustedIssuersRegistry);
-
-/// @notice Emitted when a new identity is registered for an investor address.
-/// @param _investorAddress The address of the investor's wallet being registered.
-/// @param _identity The address of the investor's Identity smart contract (onchainID).
-event IdentityRegistered(address indexed _investorAddress, IIdentity indexed _identity);
-
-/// @notice Emitted when an identity registration is removed for an investor address.
-/// @param _investorAddress The address of the investor's wallet being removed.
-/// @param _identity The address of the Identity smart contract that was associated.
-event IdentityRemoved(address indexed _investorAddress, IIdentity indexed _identity);
-
-/// @notice Emitted when the Identity contract associated with an investor address is updated.
-/// @param _oldIdentity The address of the previous Identity contract.
-/// @param _newIdentity The address of the new Identity contract.
-event IdentityUpdated(IIdentity indexed _oldIdentity, IIdentity indexed _newIdentity);
-
-/// @notice Emitted when the country associated with an investor address is updated.
-/// @param _investorAddress The investor address whose country was updated.
-/// @param _country The new numeric country code (ISO 3166-1 alpha-2).
-event CountryUpdated(address indexed _investorAddress, uint16 indexed _country);
-
 /// @title ISMART Identity Registry Interface
 /// @notice Defines the interface for an Identity Registry compatible with SMART tokens and ERC-3643.
 ///         Manages the link between investor wallets, their on-chain Identity contracts, and verification status.
@@ -45,6 +15,42 @@ interface ISMARTIdentityRegistry {
     // --- Functions ---
 
     // -- Configuration Setters (Admin/Owner) --
+
+    // --- Events ---
+
+    /// @notice Emitted when the IdentityRegistryStorage address is set or updated.
+    /// @param initiator The address of the account that performed the update.
+    /// @param _identityStorage The address of the new Identity Registry Storage contract.
+    event IdentityStorageSet(address indexed initiator, address indexed _identityStorage);
+
+    /// @notice Emitted when the TrustedIssuersRegistry address is set or updated.
+    /// @param initiator The address of the account that performed the update.
+    /// @param _trustedIssuersRegistry The address of the new Trusted Issuers Registry contract.
+    event TrustedIssuersRegistrySet(address indexed initiator, address indexed _trustedIssuersRegistry);
+
+    /// @notice Emitted when a new identity is registered for an investor address.
+    /// @param initiator The address of the account that performed the registration.
+    /// @param _investorAddress The address of the investor's wallet being registered.
+    /// @param _identity The address of the investor's Identity smart contract (onchainID).
+    event IdentityRegistered(address indexed initiator, address indexed _investorAddress, IIdentity indexed _identity);
+
+    /// @notice Emitted when an identity registration is removed for an investor address.
+    /// @param initiator The address of the account that performed the removal.
+    /// @param _investorAddress The address of the investor's wallet being removed.
+    /// @param _identity The address of the Identity smart contract that was associated.
+    event IdentityRemoved(address indexed initiator, address indexed _investorAddress, IIdentity indexed _identity);
+
+    /// @notice Emitted when the Identity contract associated with an investor address is updated.
+    /// @param initiator The address of the account that performed the update.
+    /// @param _oldIdentity The address of the previous Identity contract.
+    /// @param _newIdentity The address of the new Identity contract.
+    event IdentityUpdated(address indexed initiator, IIdentity indexed _oldIdentity, IIdentity indexed _newIdentity);
+
+    /// @notice Emitted when the country associated with an investor address is updated.
+    /// @param initiator The address of the account that performed the update.
+    /// @param _investorAddress The investor address whose country was updated.
+    /// @param _country The new numeric country code (ISO 3166-1 alpha-2).
+    event CountryUpdated(address indexed initiator, address indexed _investorAddress, uint16 indexed _country);
 
     /**
      * @notice Sets or updates the address of the Identity Registry Storage contract.
