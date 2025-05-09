@@ -53,14 +53,6 @@ contract SMARTIdentityRegistry is
     /// @notice Address of the external registry holding trusted claim issuers.
     IERC3643TrustedIssuersRegistry private _trustedIssuersRegistry;
 
-    // --- Events ---
-    event IdentityStorageSet(address indexed _identityStorage);
-    event TrustedIssuersRegistrySet(address indexed _trustedIssuersRegistry);
-    event IdentityRegistered(address indexed _investorAddress, IIdentity indexed _identity);
-    event IdentityRemoved(address indexed _investorAddress, IIdentity indexed _identity);
-    event IdentityUpdated(IIdentity indexed _oldIdentity, IIdentity indexed _newIdentity);
-    event CountryUpdated(address indexed _investorAddress, uint16 indexed _country);
-
     // --- Constructor ---
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address trustedForwarder) ERC2771ContextUpgradeable(trustedForwarder) {
@@ -92,9 +84,9 @@ contract SMARTIdentityRegistry is
         _grantRole(REGISTRAR_ROLE, initialAdmin);
 
         _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
-        emit IdentityStorageSet(address(_identityStorage));
+        emit IdentityStorageSet(_msgSender(), address(_identityStorage));
         _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
-        emit TrustedIssuersRegistrySet(address(_trustedIssuersRegistry));
+        emit TrustedIssuersRegistrySet(_msgSender(), address(_trustedIssuersRegistry));
     }
 
     // --- State-Changing Functions ---
@@ -103,7 +95,7 @@ contract SMARTIdentityRegistry is
     function setIdentityRegistryStorage(address identityStorage_) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (identityStorage_ == address(0)) revert InvalidStorageAddress();
         _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
-        emit IdentityStorageSet(address(_identityStorage));
+        emit IdentityStorageSet(_msgSender(), address(_identityStorage));
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
@@ -115,7 +107,7 @@ contract SMARTIdentityRegistry is
     {
         if (trustedIssuersRegistry_ == address(0)) revert InvalidRegistryAddress();
         _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
-        emit TrustedIssuersRegistrySet(address(_trustedIssuersRegistry));
+        emit TrustedIssuersRegistrySet(_msgSender(), address(_trustedIssuersRegistry));
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
@@ -140,7 +132,7 @@ contract SMARTIdentityRegistry is
         IIdentity identityToDelete = IIdentity(_identityStorage.storedIdentity(_userAddress));
         _identityStorage.removeIdentityFromStorage(_userAddress);
 
-        emit IdentityRemoved(_userAddress, identityToDelete);
+        emit IdentityRemoved(_msgSender(), _userAddress, identityToDelete);
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
@@ -149,7 +141,7 @@ contract SMARTIdentityRegistry is
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
 
         _identityStorage.modifyStoredInvestorCountry(_userAddress, _country);
-        emit CountryUpdated(_userAddress, _country);
+        emit CountryUpdated(_msgSender(), _userAddress, _country);
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
@@ -161,7 +153,7 @@ contract SMARTIdentityRegistry is
         IIdentity oldInvestorIdentity = IIdentity(_identityStorage.storedIdentity(_userAddress));
         _identityStorage.modifyStoredIdentity(_userAddress, _identity);
 
-        emit IdentityUpdated(oldInvestorIdentity, _identity);
+        emit IdentityUpdated(_msgSender(), oldInvestorIdentity, _identity);
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
@@ -277,7 +269,7 @@ contract SMARTIdentityRegistry is
         if (this.contains(_userAddress)) revert IdentityAlreadyRegistered(_userAddress);
 
         _identityStorage.addIdentityToStorage(_userAddress, _identity, _country);
-        emit IdentityRegistered(_userAddress, _identity);
+        emit IdentityRegistered(_msgSender(), _userAddress, _identity);
     }
 
     function _msgSender()

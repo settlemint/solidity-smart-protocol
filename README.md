@@ -16,6 +16,7 @@ Build your own blockchain usecase with ease.
 - **Token-Agnostic Identity Verification**: Identity registry remains reusable across tokens and use cases—tokens dynamically pass required claim topics into the verification logic.
 - **Authorization Agnostic**: SMART is compatible with any authorization logic via hooks (e.g., OpenZeppelin `AccessControl`).
 - **Modern Upgrade Strategy**: All components use `UUPSUpgradeable`, eliminating centralized version control requirements.
+- **ERC-2771 Meta-Transaction Support**: Compatible with trusted forwarders for gasless transactions and improved UX.
 
 ## ⚖️ Overview Comparison
 
@@ -32,6 +33,7 @@ Build your own blockchain usecase with ease.
 | **Burning Logic** | Owner-guarded `burn(user, amount)` only | `SMARTBurnable` (owner burn) + `SMARTRedeemable` (self-burn) | Enables user redemption scenarios, which can be used for Bonds |
 | **Upgradeability** | Centralized via Implementation Authority | UUPSUpgradeable per contract | More decentralized and manageable upgrade control |
 | **Authorization** | Agent-based role system | Hook-based and access-control agnostic | Compatible with OpenZeppelin AccessControl or custom systems |
+| **Meta-Transaction Support** | Not specified in core standard | ERC-2771 compatible (trusted forwarders) | Enables gasless transactions via relayers |
 
 ## ✅ Conclusion
 
