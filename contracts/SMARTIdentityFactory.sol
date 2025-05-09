@@ -24,6 +24,7 @@ error WalletAlreadyLinked(address wallet);
 error WalletInManagementKeys(); // Consider if still needed
 error TokenAlreadyLinked(address token);
 error InvalidAuthorityAddress();
+error DeploymentAddressMismatch();
 
 /// @title SMART Identity Factory
 /// @notice Factory for creating deterministic OnchainID identities (using IdentityProxy)
@@ -233,7 +234,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
 
         address deployedAddress = Create2.deploy(0, _saltBytes, deploymentBytecode);
 
-        require(deployedAddress == predictedAddr, "SMARTIdentityFactory: Deployment address mismatch");
+        if (deployedAddress != predictedAddr) revert DeploymentAddressMismatch();
         return deployedAddress;
     }
 
