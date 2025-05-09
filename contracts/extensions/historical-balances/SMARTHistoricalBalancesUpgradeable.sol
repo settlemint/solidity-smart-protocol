@@ -33,9 +33,6 @@ abstract contract SMARTHistoricalBalancesUpgradeable is
         __SMARTHistoricalBalances_init_unchained();
     }
 
-    /// @dev Internal initializer without `onlyInitializing` guard for chained initialization.
-    function __SMARTHistoricalBalances_init_unchained() internal onlyInitializing { }
-
     /// @dev Hook that is called after any token minting.
     ///      Updates historical total supply and the recipient's balance.
     /// @param to The address that received the minted tokens.

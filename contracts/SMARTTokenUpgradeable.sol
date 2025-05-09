@@ -97,6 +97,7 @@ contract SMARTTokenUpgradeable is
         __SMARTCustodian_init();
         __SMARTBurnable_init();
         __SMARTRedeemable_init();
+        __SMARTPausable_init();
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __SMARTCollateral_init(collateralProofTopic_);
@@ -176,6 +177,17 @@ contract SMARTTokenUpgradeable is
         returns (bool)
     {
         return super.hasRole(role, account);
+    }
+
+    /// @dev Overrides ERC165 to ensure that the SMARTUpgradeable implementation is used.
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(SMARTUpgradeable, AccessControlUpgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 
     /**

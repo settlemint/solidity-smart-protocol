@@ -47,6 +47,7 @@ contract SMARTBurnableTokenWithAuthorization is
             requiredClaimTopics_,
             initialModulePairs_
         )
+        SMARTBurnable()
     {
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
     }
@@ -132,5 +133,10 @@ contract SMARTBurnableTokenWithAuthorization is
         returns (bool)
     {
         return super.hasRole(role, account);
+    }
+
+    /// @dev Overrides ERC165 to ensure that the SMART implementation is used.
+    function supportsInterface(bytes4 interfaceId) public view virtual override(SMART, AccessControl) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }

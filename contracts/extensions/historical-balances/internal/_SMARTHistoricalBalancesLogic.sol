@@ -28,21 +28,25 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     // Track historical total supply
     Checkpoints.Trace208 private _totalSupplyCheckpoints;
 
+    // -- Internal Setup Function --
+
+    /// @notice Initializes the historical balances extension.
+    /// @dev This function should only be called once during the contract's initialization phase.
+    function __SMARTHistoricalBalances_init_unchained() internal {
+        _registerInterface(type(ISMARTHistoricalBalances).interfaceId);
+    }
+
     // -- Timekeeping --
 
-    /**
-     * @dev Returns the current timepoint used for timestamping checkpoints.
-     *      By default, this is the current block number.
-     * @return The current timepoint as a `uint48`.
-     */
+    /// @dev Returns the current timepoint used for timestamping checkpoints.
+    ///      By default, this is the current block number.
+    /// @return The current timepoint as a `uint48`.
     function clock() public view virtual returns (uint48) {
         return SafeCast.toUint48(block.timestamp);
     }
 
-    /**
-     * @dev Returns a machine-readable description of the clock source and mode.
-     * @return A string describing the clock mode (e.g., "mode=timestamp").
-     */
+    /// @dev Returns a machine-readable description of the clock source and mode.
+    /// @return A string describing the clock mode (e.g., "mode=timestamp").
     // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE() public view virtual returns (string memory) {
         return "mode=timestamp";
@@ -50,13 +54,8 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
 
     // -- View Functions --
 
-    /**
-     * @dev Returns the token balance of a specific `account` at a given `timepoint`.
-     * @param account The address of the account to query.
-     * @param timepoint The timepoint (e.g., block number) at which to retrieve the balance.
-     * @return The token balance of `account` at `timepoint`.
-     */
-    function balanceOfAt(address account, uint256 timepoint) public view virtual returns (uint256) {
+    /// @inheritdoc ISMARTHistoricalBalances
+    function balanceOfAt(address account, uint256 timepoint) public view virtual override returns (uint256) {
         uint48 currentTimepoint = clock();
         if (timepoint >= currentTimepoint) {
             revert FutureLookup(timepoint, currentTimepoint);
@@ -64,12 +63,8 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
         return _balanceCheckpoints[account].upperLookupRecent(SafeCast.toUint48(timepoint));
     }
 
-    /**
-     * @dev Returns the total token supply at a given `timepoint`.
-     * @param timepoint The timepoint (e.g., block number) at which to retrieve the total supply.
-     * @return The total token supply at `timepoint`.
-     */
-    function totalSupplyAt(uint256 timepoint) public view virtual returns (uint256) {
+    /// @inheritdoc ISMARTHistoricalBalances
+    function totalSupplyAt(uint256 timepoint) public view virtual override returns (uint256) {
         uint48 currentTimepoint = clock();
         if (timepoint >= currentTimepoint) {
             revert FutureLookup(timepoint, currentTimepoint);
@@ -79,15 +74,13 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
 
     // -- Internal Functions --
 
-    /**
-     * @dev Pushes a new checkpoint to a `Checkpoints.Trace208` storage.
-     *      It calculates the new value using the provided operation `op` and `delta`.
-     * @param store A storage pointer to the `Checkpoints.Trace208` struct.
-     * @param op A function pointer that takes the latest checkpoint value and `delta`, and returns the new value.
-     * @param delta The change in value to be applied by the `op` function.
-     * @return previousValue The value before this push.
-     * @return newValue The value after this push.
-     */
+    /// @dev Pushes a new checkpoint to a `Checkpoints.Trace208` storage.
+    ///      It calculates the new value using the provided operation `op` and `delta`.
+    /// @param store A storage pointer to the `Checkpoints.Trace208` struct.
+    /// @param op A function pointer that takes the latest checkpoint value and `delta`, and returns the new value.
+    /// @param delta The change in value to be applied by the `op` function.
+    /// @return previousValue The value before this push.
+    /// @return newValue The value after this push.
     function _push(
         Checkpoints.Trace208 storage store,
         function(uint208, uint208) view returns (uint208) op,
@@ -105,22 +98,18 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
         return (previousValue, newValue);
     }
 
-    /**
-     * @dev Internal pure function to add two `uint208` numbers. Used by `_push`.
-     * @param a The first number.
-     * @param b The second number.
-     * @return The sum of `a` and `b`.
-     */
+    /// @dev Internal pure function to add two `uint208` numbers. Used by `_push`.
+    /// @param a The first number.
+    /// @param b The second number.
+    /// @return The sum of `a` and `b`.
     function _add(uint208 a, uint208 b) private pure returns (uint208) {
         return a + b;
     }
 
-    /**
-     * @dev Internal pure function to subtract one `uint208` number from another. Used by `_push`.
-     * @param a The number to subtract from.
-     * @param b The number to subtract.
-     * @return The result of `a - b`.
-     */
+    /// @dev Internal pure function to subtract one `uint208` number from another. Used by `_push`.
+    /// @param a The number to subtract from.
+    /// @param b The number to subtract.
+    /// @return The result of `a - b`.
     function _subtract(uint208 a, uint208 b) private pure returns (uint208) {
         return a - b;
     }

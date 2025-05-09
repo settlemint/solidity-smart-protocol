@@ -5,7 +5,7 @@ pragma solidity ^0.8.28;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 // Interface imports
 import { ISMART } from "../../interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
@@ -27,7 +27,7 @@ import { LengthMismatch } from "../common/CommonErrors.sol";
 /// `SMARTAccessControlAuthorization`),
 ///      and standard OpenZeppelin `ERC20`.
 ///      Requires an accompanying authorization contract to be inherited for permissioned functions.
-abstract contract SMART is SMARTExtension, _SMARTLogic {
+abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
     // --- Custom Errors ---
     // Errors are inherited from _SMARTLogic
 
@@ -183,5 +183,20 @@ abstract contract SMART is SMARTExtension, _SMARTLogic {
     function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         _smart_afterBurnLogic(from, amount);
         super._afterBurn(from, amount); // Allow further extension hooks
+    }
+
+    /**
+     * @notice Standard ERC165 function to check if the contract supports an interface.
+     * @dev This implementation checks against the internally registered interfaces.
+     * Derived contracts may want to override this to include statically supported interfaces
+     * (e.g., `type(IERC165).interfaceId`) or combine with this base logic.
+     * It's recommended that derived contracts call `_registerInterface(type(IERC165).interfaceId)`
+     * in their constructor if they intend to support ERC165 introspection for themselves.
+     *
+     * @param interfaceId The interface identifier, as specified in ERC-165.
+     * @return `true` if the contract implements `interfaceId` and `interfaceId` is not 0xffffffff, `false` otherwise.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
+        return _smart_supportsInterface(interfaceId);
     }
 }

@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import { SMARTTest } from "./SMARTTest.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { ISMARTBurnable } from "../../contracts/extensions/burnable/ISMARTBurnable.sol";
 import { SMARTBurnableAccessControlAuthorization } from
     "../../contracts/extensions/burnable/SMARTBurnableAccessControlAuthorization.sol";
 
@@ -50,5 +52,13 @@ abstract contract SMARTBurnableTest is SMARTTest {
         );
         tokenUtils.burnTokenAsExecutor(address(token), clientBE, clientBE, 10 ether);
         vm.stopPrank();
+    }
+
+    function test_SupportsInterface_Burnable() public {
+        _setUpBurnableTest();
+        assertTrue(
+            IERC165(address(token)).supportsInterface(type(ISMARTBurnable).interfaceId),
+            "Token does not support ISMARTBurnable interface"
+        );
     }
 }

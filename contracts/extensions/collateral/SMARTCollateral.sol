@@ -21,7 +21,7 @@ abstract contract SMARTCollateral is SMARTExtension, _SMARTCollateralLogic {
     /// @notice Initializes the collateral extension with the required claim topic ID.
     /// @param collateralProofTopic_ The ERC-735 claim topic ID for collateral verification.
     constructor(uint256 collateralProofTopic_) {
-        _SMARTCollateral_init(collateralProofTopic_);
+        __SMARTCollateral_init_unchained(collateralProofTopic_);
     }
 
     // -- Hooks (Overrides) --

@@ -24,6 +24,7 @@ abstract contract SMARTBurnableUpgradeable is Initializable, SMARTExtensionUpgra
     ///      Uses the `onlyInitializing` modifier to prevent re-initialization.
     function __SMARTBurnable_init() internal onlyInitializing {
         // Intentionally empty: No specific state initialization needed for the burnable extension itself.
+        __SMARTBurnable_init_unchained();
     }
 
     // -- Internal Hook Implementation --

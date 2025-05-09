@@ -34,6 +34,7 @@ contract SMARTRedeemableToken is SMART, SMARTRedeemable {
             requiredClaimTopics_,
             initialModulePairs_
         )
+        SMARTRedeemable()
     { }
 
     // --- State-Changing Functions (Overrides) ---

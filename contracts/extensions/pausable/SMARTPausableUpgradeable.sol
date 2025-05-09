@@ -28,7 +28,9 @@ abstract contract SMARTPausableUpgradeable is Initializable, SMARTExtensionUpgra
     ///      (OZ PausableUpgradeable doesn't have an explicit initializer, state is handled by _pause/_unpause)
     ///      This initializer is currently empty but provided for consistency.
     ///      Should be called within the main contract's `initialize` function.
-    function __SMARTPausable_init() internal onlyInitializing { }
+    function __SMARTPausable_init() internal onlyInitializing {
+        __SMARTPausable_init_unchained();
+    }
 
     // -- Internal Hooks & Overrides --
 

@@ -360,4 +360,8 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
     function _smart_afterBurnLogic(address from, uint256 amount) internal virtual {
         __compliance.destroyed(address(this), from, amount);
     }
+
+    function _smart_supportsInterface(bytes4 interfaceId) internal view virtual returns (bool) {
+        return _isInterfaceRegistered[interfaceId] || interfaceId == type(ISMART).interfaceId;
+    }
 }

@@ -21,6 +21,10 @@ import { _SMARTRedeemableLogic } from "./internal/_SMARTRedeemableLogic.sol";
 abstract contract SMARTRedeemable is Context, SMARTExtension, _SMARTRedeemableLogic {
     // Note: Assumes the final contract inherits ERC20 (with _burn) and SMART
 
+    constructor() {
+        __SMARTRedeemable_init_unchained();
+    }
+
     // -- Internal Hook Implementations --
 
     /// @notice Implementation of the abstract balance getter using standard ERC20.balanceOf.

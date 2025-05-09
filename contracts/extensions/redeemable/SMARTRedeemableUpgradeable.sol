@@ -34,7 +34,7 @@ abstract contract SMARTRedeemableUpgradeable is
     /// @dev Should be called within the main contract's `initialize` function.
     ///      Uses the `onlyInitializing` modifier.
     function __SMARTRedeemable_init() internal onlyInitializing {
-        // Intentionally empty: No specific state initialization needed for the redeemable extension itself.
+        __SMARTRedeemable_init_unchained();
     }
 
     // -- Internal Hook Implementations --

@@ -33,6 +33,7 @@ contract SMARTBurnableToken is SMART, SMARTBurnable {
             requiredClaimTopics_,
             initialModulePairs_
         )
+        SMARTBurnable()
     { }
 
     // --- State-Changing Functions (Overrides) ---

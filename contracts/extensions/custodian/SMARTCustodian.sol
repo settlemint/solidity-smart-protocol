@@ -23,6 +23,10 @@ import { LengthMismatch } from "./../common/CommonErrors.sol";
 abstract contract SMARTCustodian is SMARTExtension, _SMARTCustodianLogic {
     // Note: Assumes the final contract inherits ERC20 and SMART
 
+    constructor() {
+        __SMARTCustodian_init_unchained();
+    }
+
     // -- Internal Hook Implementations (Dependencies) --
 
     /// @notice Implementation of the abstract balance getter using standard ERC20.balanceOf.
