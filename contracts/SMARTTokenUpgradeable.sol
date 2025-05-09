@@ -196,6 +196,17 @@ contract SMARTTokenUpgradeable is
         super._update(from, to, value);
     }
 
+    /// @dev Overrides ERC165 to ensure that the SMARTUpgradeable implementation is used.
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(SMARTUpgradeable, AccessControlUpgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
     // --- Overrides for Hook Functions ---
     // These overrides ensure that hooks from all relevant extensions are called in a defined order.
 

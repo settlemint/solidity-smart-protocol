@@ -30,7 +30,7 @@ abstract contract SMARTCollateralUpgradeable is Initializable, SMARTExtensionUpg
     /// @param collateralProofTopic_ The ERC-735 claim topic ID for collateral verification.
     function __SMARTCollateral_init(uint256 collateralProofTopic_) internal onlyInitializing {
         // Call the internal initializer from the logic contract
-        _SMARTCollateral_init(collateralProofTopic_);
+        __SMARTCollateral_init_unchained(collateralProofTopic_);
     }
 
     // -- Hooks (Overrides) --

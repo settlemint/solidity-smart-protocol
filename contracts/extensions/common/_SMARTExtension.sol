@@ -9,4 +9,20 @@ import { SMARTContext } from "../common/SMARTContext.sol";
 
 abstract contract _SMARTExtension is ISMART, SMARTContext, SMARTHooks {
     bool internal __isForcedUpdate = false;
+
+    // Mapping to check if an interface ID is registered for O(1) lookups.
+    mapping(bytes4 => bool) internal _isInterfaceRegistered;
+
+    /**
+     * @dev Registers an interface ID internally for ERC165 support.
+     * Reverts if the interface ID is already registered.
+     *
+     * This function is `internal` and intended to be called by derived contracts,
+     * typically during their initialization or setup phase, to declare supported interfaces.
+     *
+     * @param interfaceId The bytes4 interface ID to register (e.g., `type(IMyInterface).interfaceId`).
+     */
+    function _registerInterface(bytes4 interfaceId) internal {
+        _isInterfaceRegistered[interfaceId] = true;
+    }
 }

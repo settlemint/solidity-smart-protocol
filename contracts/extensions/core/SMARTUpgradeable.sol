@@ -7,7 +7,7 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
+import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 // Interface imports
 import { ISMART } from "../../interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
@@ -30,7 +30,13 @@ import { LengthMismatch } from "../common/CommonErrors.sol";
 /// ownership/access control
 ///      contract (e.g., `OwnableUpgradeable` or `AccessControlUpgradeable`) to be inherited by the final contract for
 /// initialization and upgrades.
-abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, UUPSUpgradeable, _SMARTLogic {
+abstract contract SMARTUpgradeable is
+    Initializable,
+    SMARTExtensionUpgradeable,
+    UUPSUpgradeable,
+    ERC165Upgradeable,
+    _SMARTLogic
+{
     // -- Initializer --
     /// @notice Internal initializer for the core SMART upgradeable state.
     /// @dev Calls the internal `__SMART_init_unchained` function from `_SMARTLogic` to set up core state.
@@ -184,5 +190,20 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         _smart_afterBurnLogic(from, amount);
         super._afterBurn(from, amount); // Allow further extension hooks
+    }
+
+    /**
+     * @notice Standard ERC165 function to check if the contract supports an interface.
+     * @dev This implementation checks against the internally registered interfaces.
+     * Derived contracts may want to override this to include statically supported interfaces
+     * (e.g., `type(IERC165).interfaceId`) or combine with this base logic.
+     * It's recommended that derived contracts call `_registerInterface(type(IERC165).interfaceId)`
+     * in their constructor if they intend to support ERC165 introspection for themselves.
+     *
+     * @param interfaceId The interface identifier, as specified in ERC-165.
+     * @return `true` if the contract implements `interfaceId` and `interfaceId` is not 0xffffffff, `false` otherwise.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
+        return _smart_supportsInterface(interfaceId);
     }
 }

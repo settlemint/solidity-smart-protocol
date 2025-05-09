@@ -20,6 +20,10 @@ import { _SMARTHistoricalBalancesLogic } from "./internal/_SMARTHistoricalBalanc
 ///      It is intended to be inherited by a standard (non-upgradeable) `SMART` token contract.
 ///      The final contract is expected to also inherit a standard `ERC20` implementation and the core `SMART` logic.
 abstract contract SMARTHistoricalBalances is SMARTExtension, _SMARTHistoricalBalancesLogic {
+    constructor() {
+        __SMARTHistoricalBalances_init_unchained();
+    }
+
     /// @dev Hook that is called after any token minting.
     ///      Updates historical total supply and the recipient's balance.
     /// @param to The address that received the minted tokens.

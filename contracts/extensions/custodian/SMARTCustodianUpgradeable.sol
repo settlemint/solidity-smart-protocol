@@ -28,7 +28,9 @@ abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgr
     /// @notice Initializes the custodian extension specific state (currently none).
     /// @dev Should be called within the main contract's `initialize` function.
     ///      Uses the `onlyInitializing` modifier.
-    function __SMARTCustodian_init() internal onlyInitializing { }
+    function __SMARTCustodian_init() internal onlyInitializing {
+        __SMARTCustodian_init_unchained();
+    }
 
     // -- Internal Hook Implementations (Dependencies) --
 

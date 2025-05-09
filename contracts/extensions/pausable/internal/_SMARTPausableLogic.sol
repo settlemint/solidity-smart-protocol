@@ -5,38 +5,42 @@ import { _SMARTPausableAuthorizationHooks } from "./_SMARTPausableAuthorizationH
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 import { TokenPaused, ExpectedPause } from "./../SMARTPausableErrors.sol";
 import { Paused, Unpaused } from "./../SMARTPausableEvents.sol";
-
+import { ISMARTPausable } from "./../ISMARTPausable.sol";
 /// @title Internal Logic for SMART Pausable Extension
 /// @notice Base contract containing the core state, logic, events, and authorization hooks for pausable features.
 /// @dev This abstract contract handles the `_paused` state, provides `pause`/`unpause` functions (with authorization
 /// checks),
 ///      and defines modifiers (`whenNotPaused`, `whenPaused`). It inherits authorization hooks.
-abstract contract _SMARTPausableLogic is _SMARTExtension, _SMARTPausableAuthorizationHooks {
+
+abstract contract _SMARTPausableLogic is _SMARTExtension, ISMARTPausable, _SMARTPausableAuthorizationHooks {
     // -- State Variables --
     /// @notice Internal flag indicating whether the contract is paused.
     bool private _paused;
 
+    // -- Internal Setup Function --
+    function __SMARTPausable_init_unchained() internal {
+        _registerInterface(type(ISMARTPausable).interfaceId);
+    }
+
     // -- View Functions --
 
-    /// @notice Returns true if the contract is paused, false otherwise.
-    function paused() public view returns (bool) {
+    /// @inheritdoc ISMARTPausable
+    function paused() public view virtual override returns (bool) {
         return _paused;
     }
 
     // -- State-Changing Functions (Admin/Authorized) --
 
-    /// @notice Pauses the contract, preventing certain actions (e.g., transfers).
-    /// @dev Requires authorization via `_authorizePause`. Reverts if already paused.
-    function pause() external {
+    /// @inheritdoc ISMARTPausable
+    function pause() external virtual override {
         _authorizePause();
         if (_paused) revert ExpectedPause(); // Should be ExpectedUnpause, or use a specific error
         _paused = true;
         emit Paused(_smartSender()); // Use _msgSender() from context if available, else pass msg.sender
     }
 
-    /// @notice Unpauses the contract, resuming normal operations.
-    /// @dev Requires authorization via `_authorizePause`. Reverts if not paused.
-    function unpause() external {
+    /// @inheritdoc ISMARTPausable
+    function unpause() external virtual override {
         _authorizePause();
         if (!_paused) revert TokenPaused(); // Should be ExpectedPause, or use a specific error
         _paused = false;

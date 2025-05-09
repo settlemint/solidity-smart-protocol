@@ -5,29 +5,28 @@ import { LengthMismatch } from "../../common/CommonErrors.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 import { _SMARTBurnableAuthorizationHooks } from "./_SMARTBurnableAuthorizationHooks.sol";
 import { BurnCompleted } from "./../SMARTBurnableEvents.sol";
+import { ISMARTBurnable } from "./../ISMARTBurnable.sol";
+
 /// @title Internal Logic for SMART Burnable Extension
 /// @notice Contains the core internal logic and event for burning tokens.
 /// @dev This contract provides the `burn` and `batchBurn` functions and defines
 ///      abstract hooks for authorization and execution.
 
-abstract contract _SMARTBurnableLogic is _SMARTExtension, _SMARTBurnableAuthorizationHooks {
+abstract contract _SMARTBurnableLogic is _SMARTExtension, ISMARTBurnable, _SMARTBurnableAuthorizationHooks {
+    // -- Internal Setup Function --
+    function __SMARTBurnable_init_unchained() internal {
+        _registerInterface(type(ISMARTBurnable).interfaceId);
+    }
+
     // -- External Functions --
 
-    /// @notice Burns a specific amount of tokens from a user's address.
-    /// @param userAddress The address to burn tokens from.
-    /// @param amount The amount of tokens to burn.
-    /// @dev Requires authorization via the `_authorizeBurn` hook.
-    ///      Matches the function signature intent of ERC3643 `operatorBurn`.
-    function burn(address userAddress, uint256 amount) external virtual {
+    /// @inheritdoc ISMARTBurnable
+    function burn(address userAddress, uint256 amount) external virtual override {
         __burnable_burn(userAddress, amount);
     }
 
-    /// @notice Burns tokens from multiple addresses in a single transaction.
-    /// @param userAddresses The addresses to burn tokens from.
-    /// @param amounts The amounts of tokens to burn from each address.
-    /// @dev Requires authorization via the `_authorizeBurn` hook for each burn.
-    ///      Reverts if the lengths of `userAddresses` and `amounts` do not match.
-    function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) public virtual {
+    /// @inheritdoc ISMARTBurnable
+    function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) external virtual override {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         for (uint256 i = 0; i < userAddresses.length; i++) {
             __burnable_burn(userAddresses[i], amounts[i]);

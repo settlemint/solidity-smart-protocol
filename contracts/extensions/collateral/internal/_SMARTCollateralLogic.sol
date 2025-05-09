@@ -7,12 +7,13 @@ import { IERC3643TrustedIssuersRegistry } from "./../../../interface/ERC-3643/IE
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 import { InsufficientCollateral, InvalidCollateralTopic } from "./../SMARTCollateralErrors.sol";
+import { ISMARTCollateral } from "./../ISMARTCollateral.sol";
 /// @title Internal Logic for SMART Collateral Extension
 /// @notice Contains the core internal logic for verifying collateral claims before minting tokens.
 /// @dev This abstract contract provides the `findValidCollateralClaim` helper and the `_collateral_beforeMintLogic`
 ///      hook implementation. It requires inheriting contracts to provide `totalSupply()` and `onchainID()`.
 
-abstract contract _SMARTCollateralLogic is _SMARTExtension {
+abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
     // -- State Variables --
 
     /// @notice The ERC-735 claim topic ID representing the required collateral proof.
@@ -24,11 +25,52 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension {
     /// @dev Stores the topic ID used to look up collateral claims. Reverts if the topic is 0.
     ///      This function should only be called once during the contract's initialization phase.
     /// @param collateralProofTopic_ The uint256 ID representing the collateral proof claim topic.
-    function _SMARTCollateral_init(uint256 collateralProofTopic_) internal {
+    function __SMARTCollateral_init_unchained(uint256 collateralProofTopic_) internal {
         if (collateralProofTopic_ == 0) {
             revert InvalidCollateralTopic(collateralProofTopic_);
         }
         collateralProofTopic = collateralProofTopic_;
+        _registerInterface(type(ISMARTCollateral).interfaceId);
+    }
+
+    // -- Public View Helper Function --
+
+    /// @inheritdoc ISMARTCollateral
+    function findValidCollateralClaim()
+        public
+        view
+        virtual
+        override
+        returns (uint256 amount, address issuer, uint256 expiryTimestamp)
+    {
+        if (collateralProofTopic == 0) {
+            revert InvalidCollateralTopic(0);
+        }
+
+        ISMARTIdentityRegistry identityRegistry_ = this.identityRegistry();
+        IERC3643TrustedIssuersRegistry issuersRegistry = identityRegistry_.issuersRegistry();
+        IIdentity tokenID = IIdentity(this.onchainID());
+
+        IClaimIssuer[] memory trustedIssuers = issuersRegistry.getTrustedIssuersForClaimTopic(collateralProofTopic);
+
+        if (trustedIssuers.length == 0) {
+            return (0, address(0), 0);
+        }
+
+        bytes32[] memory claimIds = tokenID.getClaimIdsByTopic(collateralProofTopic);
+
+        // Iterate through claims and find the first valid one
+        for (uint256 j = 0; j < claimIds.length; j++) {
+            (bool validClaim, uint256 claimAmount, address claimIssuer, uint256 claimExpiry) =
+                _checkSingleClaim(tokenID, claimIds[j], trustedIssuers);
+
+            if (validClaim) {
+                return (claimAmount, claimIssuer, claimExpiry);
+            }
+        }
+
+        // No valid claim found after checking all possibilities
+        return (0, address(0), 0);
     }
 
     // -- Private Helper Functions --
@@ -171,57 +213,6 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension {
         }
 
         return (false, 0, address(0), 0);
-    }
-
-    // -- Public View Helper Function --
-
-    /// @notice Finds the first valid collateral claim for a given identity address based on the configured topic.
-    /// @dev Iterates through trusted issuers for the `collateralProofTopic`. For each potential claim found
-    ///      on the user's identity contract (`onchainID`), it checks:
-    ///      1. The claim's topic matches `collateralProofTopic`.
-    ///      2. The claim's issuer is listed in the `identityRegistry`'s `issuersRegistry` as trusted for this topic.
-    ///      3. The trusted issuer contract confirms the claim is currently valid (`isClaimValid`).
-    ///      4. The claim data can be decoded into an amount and expiry timestamp.
-    ///      5. The claim has not expired (`decodedExpiry > block.timestamp`).
-    ///      Returns the details of the *first* claim that satisfies all conditions.
-    /// @return amount The collateral amount decoded from the valid claim data (0 if no valid claim found).
-    /// @return issuer The address of the trusted claim issuer contract that issued the valid claim (address(0) if
-    /// none).
-    /// @return expiryTimestamp The expiry timestamp decoded from the valid claim data (0 if no valid claim found).
-    function findValidCollateralClaim()
-        public
-        view
-        virtual
-        returns (uint256 amount, address issuer, uint256 expiryTimestamp)
-    {
-        if (collateralProofTopic == 0) {
-            revert InvalidCollateralTopic(0);
-        }
-
-        ISMARTIdentityRegistry identityRegistry_ = this.identityRegistry();
-        IERC3643TrustedIssuersRegistry issuersRegistry = identityRegistry_.issuersRegistry();
-        IIdentity tokenID = IIdentity(this.onchainID());
-
-        IClaimIssuer[] memory trustedIssuers = issuersRegistry.getTrustedIssuersForClaimTopic(collateralProofTopic);
-
-        if (trustedIssuers.length == 0) {
-            return (0, address(0), 0);
-        }
-
-        bytes32[] memory claimIds = tokenID.getClaimIdsByTopic(collateralProofTopic);
-
-        // Iterate through claims and find the first valid one
-        for (uint256 j = 0; j < claimIds.length; j++) {
-            (bool validClaim, uint256 claimAmount, address claimIssuer, uint256 claimExpiry) =
-                _checkSingleClaim(tokenID, claimIds[j], trustedIssuers);
-
-            if (validClaim) {
-                return (claimAmount, claimIssuer, claimExpiry);
-            }
-        }
-
-        // No valid claim found after checking all possibilities
-        return (0, address(0), 0);
     }
 
     // -- Internal Hook Helper Function --

@@ -23,6 +23,10 @@ import { _SMARTPausableLogic } from "./internal/_SMARTPausableLogic.sol";
 abstract contract SMARTPausable is SMARTExtension, _SMARTPausableLogic {
     // Note: Assumes the final contract inherits ERC20 and SMART
 
+    constructor() {
+        __SMARTPausable_init_unchained();
+    }
+
     // -- Internal Hooks & Overrides --
 
     /**
