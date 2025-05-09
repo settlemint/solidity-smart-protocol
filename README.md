@@ -29,7 +29,6 @@ Build your own blockchain usecase with ease.
 | **Compliance Model** | Single compliance contract, that can be modular | Modular compliance rules by default; monolithic also possible | Flexible setup depending on project needs |
 | **Compliance Configuration** | No token-specific configuration | Rule-specific parameters can be defined per token | Enables rule reuse with different behaviors |
 | **Identity Verification** | Relies on Claim Topics Registry | Token passes required claim topics to `isVerified(identity, topics)` | Token-agnostic, reusable identity logic |
-| **Identity Factory** | Custom factory logic | Proxy 1967 pattern | More standard and gas-efficient pattern |
 | **Burning Logic** | Owner-guarded `burn(user, amount)` only | `SMARTBurnable` (owner burn) + `SMARTRedeemable` (self-burn) | Enables user redemption scenarios, which can be used for Bonds |
 | **Upgradeability** | Centralized via Implementation Authority | UUPSUpgradeable per contract | More decentralized and manageable upgrade control |
 | **Authorization** | Agent-based role system | Hook-based and access-control agnostic | Compatible with OpenZeppelin AccessControl or custom systems |
