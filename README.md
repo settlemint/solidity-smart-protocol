@@ -8,16 +8,34 @@ Build your own blockchain usecase with ease.
 
 [Documentation](https://console.settlemint.com/documentation/) • [Discord](https://discord.com/invite/Mt5yqFrey9) • [NPM](https://www.npmjs.com/package/@settlemint/solidity-empty) • [Issues](https://github.com/settlemint/solidity-empty/issues)
 
-## Changes from ERC-3643
+## 🧩 Key Highlights of SMART
 
-- Token stores required claim topics and initial modules in the contract, allowing re-use of identity registry and compliance contract
-- Token is more modular following the OpenZeppelin modular pattern
-- Only modular compliance rules, but you can also choose to just create one compliance contract without the modules at all
-- Token doesn't need to be bound to compliance contract, added _token parameter to all functions
-- Removed the need to a separate claims topics registry, since we don't use it anymore
-- Token will be passed in isVerified function to check if the identity has all the necessary claim topics
-- Simplified the identity factory using proxy 1967 pattern.
-- SMARTRedeemable extension for self-burning tokens. ERC3643 isn't compliant with ERC20Burnable, it only has a burn(user, amount) function which is guarded by the owner. While ERC20Burnable has a burn(amount) and burnFrom(user, amount) function. We created a separate extension to also allow burning your own tokens in some situations.
+- **ERC20 Compliance**: Fully implements `ERC20` and `ERC20Upgradeable`, ensuring compatibility with Ethereum tooling and DeFi ecosystems.
+- **Externally Modular Architecture**: SMART uses composable extensions (e.g., `SMARTBurnable`, `SMARTCollateral`) in a plug-and-play model.
+- **Token-Configurable Compliance**: SMART tokens can be configured to use specific modular rules and parameters without needing custom compliance contracts.
+- **Token-Agnostic Identity Verification**: Identity registry remains reusable across tokens and use cases—tokens dynamically pass required claim topics into the verification logic.
+- **Authorization Agnostic**: SMART is compatible with any authorization logic via hooks (e.g., OpenZeppelin `AccessControl`).
+- **Modern Upgrade Strategy**: All components use `UUPSUpgradeable`, eliminating centralized version control requirements.
+
+## ⚖️ Overview Comparison
+
+| **Aspect** | **ERC-3643** | **SMART Protocol** | **Notes** |
+|------------|--------------|--------------------|-----------|
+| **ERC20 Compatibility** | Partial / constrained | Fully ERC20 and ERC20Upgradeable compliant | Ensures full compatibility with DeFi and wallets |
+| **Identity / Compliance Contract Reuse** | Typically one-off per token | Contracts are reusable across multiple tokens | Promotes efficient architecture, simplifies setup of a token |
+| **Modularity** | Partially modular | Modular by default (OpenZeppelin extension pattern) | SMARTBurnable, SMARTPausable, SMARTCustodian, etc. |
+| **Claim Topics Storage** | External Claim Topics Registry | Stored directly in the token | Simplifies deployment and encapsulates identity verification |
+| **Compliance Model** | Single compliance contract, that can be modular | Modular compliance rules by default; monolithic also possible | Flexible setup depending on project needs |
+| **Compliance Configuration** | No token-specific configuration | Rule-specific parameters can be defined per token | Enables rule reuse with different behaviors |
+| **Identity Verification** | Relies on Claim Topics Registry | Token passes required claim topics to `isVerified(identity, topics)` | Token-agnostic, reusable identity logic |
+| **Identity Factory** | Custom factory logic | Proxy 1967 pattern | More standard and gas-efficient pattern |
+| **Burning Logic** | Owner-guarded `burn(user, amount)` only | `SMARTBurnable` (owner burn) + `SMARTRedeemable` (self-burn) | Enables user redemption scenarios, which can be used for Bonds |
+| **Upgradeability** | Centralized via Implementation Authority | UUPSUpgradeable per contract | More decentralized and manageable upgrade control |
+| **Authorization** | Agent-based role system | Hook-based and access-control agnostic | Compatible with OpenZeppelin AccessControl or custom systems |
+
+## ✅ Conclusion
+
+SMART rethinks the ERC-3643 architecture by moving modularity, configuration, and verification closer to the token layer. This creates a more flexible, reusable, and standards-compliant framework for compliant token issuance in dynamic regulatory environments. By decoupling identity and compliance logic from any single token, SMART improves scalability and opens doors for broader cross-application identity use.
 
 ## Get started
 
