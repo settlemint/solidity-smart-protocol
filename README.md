@@ -4,9 +4,9 @@
 
 Build your own blockchain usecase with ease.
 
-[![CI status](https://github.com/settlemint/solidity-empty/actions/workflows/solidity.yml/badge.svg?event=push&branch=main)](https://github.com/settlemint/solidity-empty/actions?query=branch%3Amain) [![License](https://img.shields.io/npm/l/@settlemint/solidity-empty)](https://fsl.software) [![npm](https://img.shields.io/npm/dw/@settlemint/solidity-empty)](https://www.npmjs.com/package/@settlemint/solidity-empty) [![stars](https://img.shields.io/github/stars/settlemint/solidity-empty)](https://github.com/settlemint/solidity-empty)
+[![CI status](https://github.com/settlemint/solidity-smart-protocol/actions/workflows/solidity.yml/badge.svg?event=push&branch=main)](https://github.com/settlemint/solidity-smart-protocol/actions?query=branch%3Amain) [![License](https://img.shields.io/npm/l/@settlemint/solidity-smart-protocol)](https://fsl.software) [![npm](https://img.shields.io/npm/dw/@settlemint/solidity-smart-protocol)](https://www.npmjs.com/package/@settlemint/solidity-smart-protocol) [![stars](https://img.shields.io/github/stars/settlemint/solidity-smart-protocol)](https://github.com/settlemint/solidity-smart-protocol)
 
-[Documentation](https://console.settlemint.com/documentation/) • [Discord](https://discord.com/invite/Mt5yqFrey9) • [NPM](https://www.npmjs.com/package/@settlemint/solidity-empty) • [Issues](https://github.com/settlemint/solidity-empty/issues)
+[Documentation](https://console.settlemint.com/documentation/) • [Discord](https://discord.com/invite/Mt5yqFrey9) • [NPM](https://www.npmjs.com/package/@settlemint/solidity-smart-protocol) • [Issues](https://github.com/settlemint/solidity-smart-protocol/issues)
 
 ## 🧩 Key Highlights of SMART
 
@@ -20,19 +20,19 @@ Build your own blockchain usecase with ease.
 
 ## ⚖️ Overview Comparison
 
-| **Aspect** | **ERC-3643** | **SMART Protocol** | **Notes** |
-|------------|--------------|--------------------|-----------|
-| **ERC20 Compatibility** | Partial / constrained | Fully ERC20 and ERC20Upgradeable compliant | Ensures full compatibility with DeFi and wallets |
-| **Identity / Compliance Contract Reuse** | Typically one-off per token | Contracts are reusable across multiple tokens | Promotes efficient architecture, simplifies setup of a token |
-| **Modularity** | Partially modular | Modular by default (OpenZeppelin extension pattern) | SMARTBurnable, SMARTPausable, SMARTCustodian, etc. |
-| **Claim Topics Storage** | External Claim Topics Registry | Stored directly in the token | Simplifies deployment and encapsulates identity verification |
-| **Compliance Model** | Single compliance contract, that can be modular | Modular compliance rules by default; monolithic also possible | Flexible setup depending on project needs |
-| **Compliance Configuration** | No token-specific configuration | Rule-specific parameters can be defined per token | Enables rule reuse with different behaviors |
-| **Identity Verification** | Relies on Claim Topics Registry | Token passes required claim topics to `isVerified(identity, topics)` | Token-agnostic, reusable identity logic |
-| **Burning Logic** | Owner-guarded `burn(user, amount)` only | `SMARTBurnable` (owner burn) + `SMARTRedeemable` (self-burn) | Enables user redemption scenarios, which can be used for Bonds |
-| **Upgradeability** | Centralized via Implementation Authority | UUPSUpgradeable per contract | More decentralized and manageable upgrade control |
-| **Authorization** | Agent-based role system | Hook-based and access-control agnostic | Compatible with OpenZeppelin AccessControl or custom systems |
-| **Meta-Transaction Support** | Not specified in core standard | ERC-2771 compatible (trusted forwarders) | Enables gasless transactions via relayers |
+| **Aspect**                               | **ERC-3643**                                    | **SMART Protocol**                                                   | **Notes**                                                      |
+| ---------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------- |
+| **ERC20 Compatibility**                  | Partial / constrained                           | Fully ERC20 and ERC20Upgradeable compliant                           | Ensures full compatibility with DeFi and wallets               |
+| **Identity / Compliance Contract Reuse** | Typically one-off per token                     | Contracts are reusable across multiple tokens                        | Promotes efficient architecture, simplifies setup of a token   |
+| **Modularity**                           | Partially modular                               | Modular by default (OpenZeppelin extension pattern)                  | SMARTBurnable, SMARTPausable, SMARTCustodian, etc.             |
+| **Claim Topics Storage**                 | External Claim Topics Registry                  | Stored directly in the token                                         | Simplifies deployment and encapsulates identity verification   |
+| **Compliance Model**                     | Single compliance contract, that can be modular | Modular compliance rules by default; monolithic also possible        | Flexible setup depending on project needs                      |
+| **Compliance Configuration**             | No token-specific configuration                 | Rule-specific parameters can be defined per token                    | Enables rule reuse with different behaviors                    |
+| **Identity Verification**                | Relies on Claim Topics Registry                 | Token passes required claim topics to `isVerified(identity, topics)` | Token-agnostic, reusable identity logic                        |
+| **Burning Logic**                        | Owner-guarded `burn(user, amount)` only         | `SMARTBurnable` (owner burn) + `SMARTRedeemable` (self-burn)         | Enables user redemption scenarios, which can be used for Bonds |
+| **Upgradeability**                       | Centralized via Implementation Authority        | UUPSUpgradeable per contract                                         | More decentralized and manageable upgrade control              |
+| **Authorization**                        | Agent-based role system                         | Hook-based and access-control agnostic                               | Compatible with OpenZeppelin AccessControl or custom systems   |
+| **Meta-Transaction Support**             | Not specified in core standard                  | ERC-2771 compatible (trusted forwarders)                             | Enables gasless transactions via relayers                      |
 
 ## ✅ Conclusion
 
@@ -45,13 +45,19 @@ Launch this smart contract set in SettleMint under the `Smart Contract Sets` sec
 If you want to use it separately, bootstrap a new project using
 
 ```shell
-forge init my-project --template settlemint/solidity-empty
+forge init my-project --template settlemint/solidity-smart-protocol
 ```
 
 Or if you want to use this set as a dependency of your own,
 
 ```shell
-bun install @settlemint/solidity-empty
+bun install @settlemint/solidity-smart-protocol
+```
+
+or via soldeer
+
+```shell
+forge soldeer install smart-protocol~8.0.x
 ```
 
 ## DX: Foundry & Hardhat hybrid
@@ -79,5 +85,3 @@ Hardhat consists of:
 - [SettleMint Documentation](https://console.settlemint.com/documentation/docs/using-platform/dev-tools/code-studio/smart-contract-sets/deploying-a-contract/)
 - [Foundry Documentation](https://book.getfoundry.sh/)
 - [Hardhat Documentation](https://hardhat.org/hardhat-runner/docs/getting-started)
-
-
