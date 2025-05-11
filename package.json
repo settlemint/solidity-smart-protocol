@@ -1,6 +1,6 @@
 {
-  "name": "@settlemint/solidity-empty",
-  "description": "Empty smart contract set to use in SettleMint",
+  "name": "@settlemint/solidity-smart-protocol",
+  "description": "SMART Protocol",
   "version": "8.0.8",
   "private": false,
   "license": "FSL-1.1-MIT",
@@ -9,13 +9,13 @@
     "email": "support@settlemint.com",
     "url": "https://settlemint.com"
   },
-  "homepage": "https://github.com/settlemint/solidity-empty/blob/main/README.md",
+  "homepage": "https://github.com/settlemint/solidity-smart-protocol/blob/main/README.md",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/settlemint/solidity-empty.git"
+    "url": "git+https://github.com/settlemint/solidity-smart-protocol.git"
   },
   "bugs": {
-    "url": "https://github.com/settlemint/solidity-empty/issues",
+    "url": "https://github.com/settlemint/solidity-smart-protocol/issues",
     "email": "support@settlemint.com"
   },
   "keywords": [
