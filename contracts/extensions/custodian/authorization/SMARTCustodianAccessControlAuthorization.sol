@@ -5,10 +5,10 @@ pragma solidity ^0.8.28;
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 // SMART imports
-import { SMARTExtensionAccessControlAuthorization } from "../common/SMARTExtensionAccessControlAuthorization.sol";
+import { SMARTExtensionAccessControlAuthorization } from "../../common/SMARTExtensionAccessControlAuthorization.sol";
 
 // Internal implementation imports
-import { _SMARTCustodianAuthorizationHooks } from "./internal/_SMARTCustodianAuthorizationHooks.sol";
+import { _SMARTCustodianAuthorizationHooks } from "../internal/_SMARTCustodianAuthorizationHooks.sol";
 
 /// @title Access Control Authorization for SMART Custodian Extension
 /// @notice Implements authorization logic for the SMART Custodian features using OpenZeppelin's AccessControl.

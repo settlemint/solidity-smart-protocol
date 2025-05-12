@@ -5,10 +5,10 @@ pragma solidity ^0.8.28;
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 // SMART imports
-import { SMARTExtensionAccessControlAuthorization } from "../common/SMARTExtensionAccessControlAuthorization.sol";
+import { SMARTExtensionAccessControlAuthorization } from "../../common/SMARTExtensionAccessControlAuthorization.sol";
 
 // Internal implementation imports
-import { _SMARTPausableAuthorizationHooks } from "./internal/_SMARTPausableAuthorizationHooks.sol";
+import { _SMARTPausableAuthorizationHooks } from "../internal/_SMARTPausableAuthorizationHooks.sol";
 
 /// @title Access Control Authorization for SMART Pausable Extension
 /// @notice Implements authorization logic for the SMART Pausable features using OpenZeppelin's AccessControl.

@@ -5,10 +5,10 @@ pragma solidity ^0.8.28;
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 // SMART imports
-import { SMARTExtensionAccessControlAuthorization } from "../common/SMARTExtensionAccessControlAuthorization.sol";
+import { SMARTExtensionAccessControlAuthorization } from "../../common/SMARTExtensionAccessControlAuthorization.sol";
 
 // Internal implementation imports
-import { _SMARTBurnableAuthorizationHooks } from "./internal/_SMARTBurnableAuthorizationHooks.sol";
+import { _SMARTBurnableAuthorizationHooks } from "../internal/_SMARTBurnableAuthorizationHooks.sol";
 
 /// @title Access Control Authorization for SMART Burnable Extension
 /// @notice Implements authorization logic for the SMART Burnable extension using OpenZeppelin's AccessControl.

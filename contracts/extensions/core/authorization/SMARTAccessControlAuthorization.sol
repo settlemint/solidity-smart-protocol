@@ -5,10 +5,10 @@ pragma solidity ^0.8.28;
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 // SMART imports
-import { SMARTExtensionAccessControlAuthorization } from "../common/SMARTExtensionAccessControlAuthorization.sol";
+import { SMARTExtensionAccessControlAuthorization } from "../../common/SMARTExtensionAccessControlAuthorization.sol";
 
 // Internal implementation imports
-import { _SMARTAuthorizationHooks } from "./internal/_SMARTAuthorizationHooks.sol";
+import { _SMARTAuthorizationHooks } from "../internal/_SMARTAuthorizationHooks.sol";
 
 /// @title Access Control Authorization for Core SMART Functionality
 /// @notice Implements authorization logic for the core SMART operations using OpenZeppelin's AccessControl.
