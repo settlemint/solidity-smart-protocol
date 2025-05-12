@@ -117,7 +117,8 @@ contract SMARTTrustedIssuersRegistry is
         _issuerAddresses.push(issuerAddress);
 
         // Add issuer to the lookup mapping for each specified claim topic
-        for (uint256 i = 0; i < _claimTopics.length; i++) {
+        uint256 claimTopicsLength = _claimTopics.length;
+        for (uint256 i = 0; i < claimTopicsLength; ++i) {
             _addIssuerToClaimTopic(_claimTopics[i], issuerAddress);
         }
 
@@ -136,7 +137,8 @@ contract SMARTTrustedIssuersRegistry is
         _removeAddressFromList(_issuerAddresses, issuerAddress);
 
         // Remove issuer from the lookup mapping for each of its associated claim topics
-        for (uint256 i = 0; i < topicsToRemove.length; i++) {
+        uint256 topicsToRemoveLength = topicsToRemove.length;
+        for (uint256 i = 0; i < topicsToRemoveLength; ++i) {
             _removeIssuerFromClaimTopic(topicsToRemove[i], issuerAddress);
         }
 
@@ -164,14 +166,16 @@ contract SMARTTrustedIssuersRegistry is
 
         // --- Update Topic Lookups (Simple Iteration Approach) ---
         // 1. Remove issuer from all currently associated topic lookups
-        for (uint256 i = 0; i < currentClaimTopics.length; i++) {
+        uint256 currentClaimTopicsLength = currentClaimTopics.length;
+        for (uint256 i = 0; i < currentClaimTopicsLength; ++i) {
             // If state is consistent, this should always succeed as we are iterating over the issuer's current topics.
             // If it reverts due to inconsistency, that's an issue to investigate.
             _removeIssuerFromClaimTopic(currentClaimTopics[i], issuerAddress);
         }
 
         // 2. Add issuer to the lookup for all topics in the new list
-        for (uint256 i = 0; i < _newClaimTopics.length; i++) {
+        uint256 newClaimTopicsLength = _newClaimTopics.length;
+        for (uint256 i = 0; i < newClaimTopicsLength; ++i) {
             // Add the issuer to the topic list. The internal function handles appending.
             // Note: This doesn't prevent duplicates in the _issuersByClaimTopic list if the same topic
             // exists multiple times in _newClaimTopics, but retrieval functions will return duplicates harmlessly.
@@ -191,7 +195,8 @@ contract SMARTTrustedIssuersRegistry is
     /// @inheritdoc IERC3643TrustedIssuersRegistry
     function getTrustedIssuers() external view override returns (IClaimIssuer[] memory) {
         IClaimIssuer[] memory issuers = new IClaimIssuer[](_issuerAddresses.length);
-        for (uint256 i = 0; i < _issuerAddresses.length; i++) {
+        uint256 issuerAddressesLength = _issuerAddresses.length;
+        for (uint256 i = 0; i < issuerAddressesLength; ++i) {
             issuers[i] = IClaimIssuer(_issuerAddresses[i]);
         }
         return issuers;
@@ -218,7 +223,8 @@ contract SMARTTrustedIssuersRegistry is
     {
         address[] storage issuerAddrs = _issuersByClaimTopic[claimTopic];
         IClaimIssuer[] memory issuers = new IClaimIssuer[](issuerAddrs.length);
-        for (uint256 i = 0; i < issuerAddrs.length; i++) {
+        uint256 issuerAddrsLength = issuerAddrs.length;
+        for (uint256 i = 0; i < issuerAddrsLength; ++i) {
             issuers[i] = IClaimIssuer(issuerAddrs[i]);
         }
         return issuers;
@@ -272,10 +278,11 @@ contract SMARTTrustedIssuersRegistry is
     /// @dev Removes an address from a dynamic array using swap-and-pop (assumes address is present and unique).
     /// @dev This is used for the `_issuerAddresses` list which doesn't need an index mapping for removal.
     function _removeAddressFromList(address[] storage list, address addrToRemove) internal {
-        for (uint256 i = 0; i < list.length; i++) {
+        uint256 listLength = list.length;
+        for (uint256 i = 0; i < listLength; ++i) {
             if (list[i] == addrToRemove) {
                 // Replace the element to remove with the last element
-                list[i] = list[list.length - 1];
+                list[i] = list[listLength - 1];
                 // Remove the last element
                 list.pop();
                 return; // Exit after removing the first occurrence
