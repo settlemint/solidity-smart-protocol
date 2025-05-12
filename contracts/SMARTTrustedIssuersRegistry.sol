@@ -3,9 +3,9 @@ pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { AccessControlDefaultAdminRulesUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+// import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { AccessControlEnumerableUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
@@ -33,7 +33,7 @@ contract SMARTTrustedIssuersRegistry is
     Initializable,
     IERC3643TrustedIssuersRegistry,
     ERC2771ContextUpgradeable,
-    AccessControlDefaultAdminRulesUpgradeable,
+    AccessControlEnumerableUpgradeable,
     UUPSUpgradeable
 {
     // --- Roles ---
@@ -61,19 +61,19 @@ contract SMARTTrustedIssuersRegistry is
 
     // --- Events ---
     /// @notice Emitted when a new trusted issuer is added.
-    /// @param initiator The address of the account that performed the addition.
+    /// @param sender The address of the account that performed the addition.
     /// @param _issuer The address of the issuer being added.
     /// @param _claimTopics The claim topics the issuer is being added to.
-    event TrustedIssuerAdded(address indexed initiator, address indexed _issuer, uint256[] _claimTopics);
+    event TrustedIssuerAdded(address indexed sender, address indexed _issuer, uint256[] _claimTopics);
     /// @notice Emitted when a trusted issuer is removed.
-    /// @param initiator The address of the account that performed the removal.
+    /// @param sender The address of the account that performed the removal.
     /// @param _issuer The address of the issuer being removed.
-    event TrustedIssuerRemoved(address indexed initiator, address indexed _issuer);
+    event TrustedIssuerRemoved(address indexed sender, address indexed _issuer);
     /// @notice Emitted when the claim topics for an existing trusted issuer are updated.
-    /// @param initiator The address of the account that performed the update.
+    /// @param sender The address of the account that performed the update.
     /// @param _issuer The address of the issuer being updated.
     /// @param _claimTopics The new claim topics for the issuer.
-    event ClaimTopicsUpdated(address indexed initiator, address indexed _issuer, uint256[] _claimTopics);
+    event ClaimTopicsUpdated(address indexed sender, address indexed _issuer, uint256[] _claimTopics);
 
     // --- Constructor --- (Disable direct construction)
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -87,8 +87,8 @@ contract SMARTTrustedIssuersRegistry is
     ///      Grants the initial admin the `DEFAULT_ADMIN_ROLE` and `REGISTRAR_ROLE`.
     /// @param initialAdmin The address for initial admin and registrar roles.
     function initialize(address initialAdmin) public initializer {
-        __AccessControl_init();
-        __AccessControlDefaultAdminRules_init(3 days, initialAdmin);
+        __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
+        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
         __UUPSUpgradeable_init();
         // ERC2771Context initialized by constructor
 

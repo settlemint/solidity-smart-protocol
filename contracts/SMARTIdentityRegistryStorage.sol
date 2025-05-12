@@ -3,9 +3,9 @@ pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { AccessControlDefaultAdminRulesUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+// import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { AccessControlEnumerableUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
@@ -33,9 +33,9 @@ error UnauthorizedCaller();
 contract SMARTIdentityRegistryStorage is
     Initializable,
     IERC3643IdentityRegistryStorage,
-    ERC2771ContextUpgradeable, // For meta-transaction support
-    AccessControlDefaultAdminRulesUpgradeable, // Includes AccessControl + admin rules
-    UUPSUpgradeable // For upgradeability
+    ERC2771ContextUpgradeable,
+    AccessControlEnumerableUpgradeable,
+    UUPSUpgradeable
 {
     // --- Roles ---
     /// @notice Role granted to bound `SMARTIdentityRegistry` contracts allowing them to modify storage.
@@ -89,11 +89,10 @@ contract SMARTIdentityRegistryStorage is
     ///      Grants the initial admin the `DEFAULT_ADMIN_ROLE` and `STORAGE_MODIFIER_ROLE`.
     /// @param initialAdmin The address for the initial admin role.
     function initialize(address initialAdmin) public initializer {
-        __AccessControl_init();
-        __AccessControlDefaultAdminRules_init(3 days, initialAdmin);
+        __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
         __UUPSUpgradeable_init();
-        // ERC2771Context initialized by constructor
 
+        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
         _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin); // Allow initial admin to modify storage initially if needed
     }
 

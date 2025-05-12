@@ -148,11 +148,11 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     /// @param amount The amount of tokens transferred.
     function _historical_balances_afterTransferLogic(address from, address to, uint256 amount) internal virtual {
         uint208 castAmount = SafeCast.toUint208(amount);
-        address initiator = _smartSender();
+        address sender = _smartSender();
 
         (uint208 previousValue, uint208 newValue) = _push(_balanceCheckpoints[from], _subtract, castAmount);
-        emit CheckpointUpdated(initiator, from, previousValue, newValue);
+        emit CheckpointUpdated(sender, from, previousValue, newValue);
         (previousValue, newValue) = _push(_balanceCheckpoints[to], _add, castAmount);
-        emit CheckpointUpdated(initiator, to, previousValue, newValue);
+        emit CheckpointUpdated(sender, to, previousValue, newValue);
     }
 }
