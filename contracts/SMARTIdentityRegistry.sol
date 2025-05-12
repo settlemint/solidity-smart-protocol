@@ -3,9 +3,9 @@ pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { AccessControlDefaultAdminRulesUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+// import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { AccessControlEnumerableUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
@@ -40,7 +40,7 @@ contract SMARTIdentityRegistry is
     Initializable,
     ISMARTIdentityRegistry,
     ERC2771ContextUpgradeable,
-    AccessControlDefaultAdminRulesUpgradeable,
+    AccessControlEnumerableUpgradeable,
     UUPSUpgradeable
 {
     // --- Roles ---
@@ -74,8 +74,8 @@ contract SMARTIdentityRegistry is
         public
         initializer
     {
-        __AccessControl_init();
-        __AccessControlDefaultAdminRules_init(3 days, initialAdmin);
+        __AccessControlEnumerable_init();
+        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
         __UUPSUpgradeable_init();
 
         if (identityStorage_ == address(0)) revert InvalidStorageAddress();

@@ -235,7 +235,7 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
 
         __compliance.areValidComplianceModules(initialModulePairs_);
 
-        address initiator = _smartSender();
+        address sender = _smartSender();
 
         // Register initial modules and their parameters
         for (uint256 i = 0; i < initialModulePairs_.length; i++) {
@@ -247,13 +247,13 @@ abstract contract _SMARTLogic is _SMARTExtension, _SMARTAuthorizationHooks {
             __complianceModuleList.push(module);
             __moduleIndex[module] = __complianceModuleList.length; // Store index + 1
             __moduleParameters[module] = params;
-            emit ComplianceModuleAdded(initiator, module, params);
+            emit ComplianceModuleAdded(sender, module, params);
         }
 
-        emit IdentityRegistryAdded(initiator, identityRegistry_);
-        emit ComplianceAdded(initiator, compliance_);
-        emit UpdatedTokenInformation(initiator, name_, symbol_, decimals_, onchainID_);
-        emit RequiredClaimTopicsUpdated(initiator, requiredClaimTopics_);
+        emit IdentityRegistryAdded(sender, identityRegistry_);
+        emit ComplianceAdded(sender, compliance_);
+        emit UpdatedTokenInformation(sender, name_, symbol_, decimals_, onchainID_);
+        emit RequiredClaimTopicsUpdated(sender, requiredClaimTopics_);
     }
 
     // -- Internal Hook Helper Functions --
