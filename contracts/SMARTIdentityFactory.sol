@@ -6,7 +6,8 @@ pragma solidity ^0.8.28;
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { AccessControlEnumerableUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 
@@ -31,7 +32,10 @@ error DeploymentAddressMismatch();
 ///         for investor wallets and tokens.
 /// @dev Deploys `IdentityProxy` contracts using CREATE2, pointing them to an `ImplementationAuthority`
 ///      which determines the logic contract address. Uses Ownable for access control.
-contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, OwnableUpgradeable {
+contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, AccessControlEnumerableUpgradeable {
+    // --- Roles ---
+    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
+
     // --- Storage Variables ---
     /// @notice The address of the ImplementationAuthority contract that dictates the logic for created identities.
     address private _implementationAuthority;
@@ -45,19 +49,19 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
 
     // --- Events ---
     /// @notice Emitted when a new identity is created for an investor wallet.
-    /// @param initiator The address of the account that performed the creation.
+    /// @param sender The address of the account that performed the creation.
     /// @param identity The address of the deployed IdentityProxy.
     /// @param wallet The investor wallet address.
-    event IdentityCreated(address indexed initiator, address indexed identity, address indexed wallet);
+    event IdentityCreated(address indexed sender, address indexed identity, address indexed wallet);
     /// @notice Emitted when a new identity is created for a token contract.
-    /// @param initiator The address of the account that performed the creation.
+    /// @param sender The address of the account that performed the creation.
     /// @param identity The address of the deployed IdentityProxy.
     /// @param token The token contract address.
-    event TokenIdentityCreated(address indexed initiator, address indexed identity, address indexed token);
+    event TokenIdentityCreated(address indexed sender, address indexed identity, address indexed token);
     /// @notice Emitted when the ImplementationAuthority address is set or updated.
-    /// @param initiator The address of the account that performed the update.
+    /// @param sender The address of the account that performed the update.
     /// @param newAuthority The new address of the ImplementationAuthority.
-    event ImplementationAuthoritySet(address indexed initiator, address indexed newAuthority);
+    event ImplementationAuthoritySet(address indexed sender, address indexed newAuthority);
 
     // --- Constructor --- (Disable direct construction)
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -72,7 +76,9 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
     /// @param implementationAuthority_ The address of the `IImplementationAuthority` contract.
     function initialize(address initialOwner, address implementationAuthority_) public initializer {
         if (implementationAuthority_ == address(0)) revert InvalidAuthorityAddress();
-        __Ownable_init(initialOwner);
+        __AccessControlEnumerable_init();
+        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner);
+        _grantRole(REGISTRAR_ROLE, initialOwner);
         // ERC2771Context is initialized by the constructor
         _implementationAuthority = implementationAuthority_;
         emit ImplementationAuthoritySet(_msgSender(), implementationAuthority_);
@@ -89,7 +95,14 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
      * @param _managementKeys Optional array of additional management keys (keccak256 hashes) to add.
      * @return The address of the newly created IdentityProxy.
      */
-    function createIdentity(address _wallet, bytes32[] memory _managementKeys) external onlyOwner returns (address) {
+    function createIdentity(
+        address _wallet,
+        bytes32[] memory _managementKeys
+    )
+        external
+        onlyRole(REGISTRAR_ROLE)
+        returns (address)
+    {
         if (_wallet == address(0)) revert ZeroAddressNotAllowed();
         if (_identities[_wallet] != address(0)) revert WalletAlreadyLinked(_wallet);
 
@@ -119,7 +132,14 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Ownab
      * @param _tokenOwner The address designated as the owner/manager of the token's identity.
      * @return The address of the newly created IdentityProxy.
      */
-    function createTokenIdentity(address _token, address _tokenOwner) external onlyOwner returns (address) {
+    function createTokenIdentity(
+        address _token,
+        address _tokenOwner
+    )
+        external
+        onlyRole(REGISTRAR_ROLE)
+        returns (address)
+    {
         if (_token == address(0)) revert ZeroAddressNotAllowed();
         if (_tokenOwner == address(0)) revert ZeroAddressNotAllowed();
         if (_tokenIdentities[_token] != address(0)) revert TokenAlreadyLinked(_token);

@@ -3,9 +3,8 @@ pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { AccessControlDefaultAdminRulesUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+import { AccessControlEnumerableUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
@@ -27,7 +26,7 @@ contract SMARTCompliance is
     Initializable,
     ISMARTCompliance,
     ERC2771ContextUpgradeable,
-    AccessControlDefaultAdminRulesUpgradeable,
+    AccessControlEnumerableUpgradeable,
     UUPSUpgradeable
 {
     // --- Errors ---
@@ -45,8 +44,10 @@ contract SMARTCompliance is
     /// @param initialAdmin The address that will receive the `DEFAULT_ADMIN_ROLE`.
     function initialize(address initialAdmin) public initializer {
         // Order: AccessControl -> DefaultAdminRules -> UUPS
-        __AccessControl_init();
-        __AccessControlDefaultAdminRules_init(3 days, initialAdmin); // Sets admin with delay
+        // __AccessControl_init();
+        // __AccessControlDefaultAdminRules_init(3 days, initialAdmin); // Sets admin with delay
+        __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
+        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
         __UUPSUpgradeable_init();
         // ERC2771Context is initialized by the constructor
     }
