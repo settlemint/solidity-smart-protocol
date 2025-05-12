@@ -197,6 +197,6 @@ abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
      * @return `true` if the contract implements `interfaceId` and `interfaceId` is not 0xffffffff, `false` otherwise.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
-        return _smart_supportsInterface(interfaceId);
+        return _smart_supportsInterface(interfaceId) || super.supportsInterface(interfaceId);
     }
 }
