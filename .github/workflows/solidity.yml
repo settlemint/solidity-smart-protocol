@@ -40,7 +40,7 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: crytic/slither-action@v0.4.0
+      - uses: crytic/slither-action@v0.4.1
         id: slither
         with:
           sarif: slither.sarif
