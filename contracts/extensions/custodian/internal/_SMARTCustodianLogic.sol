@@ -194,7 +194,10 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
         internal
         virtual
     {
-        if (!((fromList.length == toList.length) && (toList.length == amounts.length))) {
+        if (fromList.length != toList.length) {
+            revert LengthMismatch();
+        }
+        if (toList.length != amounts.length) {
             revert LengthMismatch();
         }
         uint256 length = fromList.length;
