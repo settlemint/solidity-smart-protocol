@@ -224,19 +224,22 @@ contract SMARTIdentityRegistry is
                 try identityToVerify.getClaim(claimId) returns (
                     uint256 topic, uint256, address issuer, bytes memory signature, bytes memory data, string memory
                 ) {
-                    if (issuer == address(relevantIssuer) && topic == currentTopic) {
-                        try relevantIssuer.isClaimValid(identityToVerify, topic, signature, data) returns (bool isValid)
-                        {
-                            if (isValid) {
-                                topicVerified = true;
-                                break;
+                    if (issuer == address(relevantIssuer)) {
+                        if (topic == currentTopic) {
+                            try relevantIssuer.isClaimValid(identityToVerify, topic, signature, data) returns (
+                                bool isValid
+                            ) {
+                                if (isValid) {
+                                    topicVerified = true;
+                                    break;
+                                }
+                            } catch {
+                                // Explicitly continue to the next issuer if isClaimValid fails
+                                unchecked {
+                                    ++j;
+                                }
+                                continue;
                             }
-                        } catch {
-                            // Explicitly continue to the next issuer if isClaimValid fails
-                            unchecked {
-                                ++j;
-                            }
-                            continue;
                         }
                     }
                 } catch {
