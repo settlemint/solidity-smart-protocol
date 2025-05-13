@@ -74,6 +74,24 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
 
     // -- Hooks Logic (Internal Implementation for SMARTHooks) --
 
+    /// @dev Internal logic executed after an update operation to update historical balances.
+    ///      This function is intended to be called by the `_afterUpdate` hook in the inheriting contract.
+    /// @param from The address that sent the tokens.
+    /// @param to The address that received the tokens.
+    /// @param amount The amount of tokens transferred.
+    function __historical_balances_afterUpdateLogic(address from, address to, uint256 amount) internal virtual {
+        if (from == address(0)) {
+            // Mint
+            __historical_balances_afterMintLogic(to, amount);
+        } else if (to == address(0)) {
+            // Burn
+            __historical_balances_afterBurnLogic(from, amount);
+        } else {
+            // Transfer
+            __historical_balances_afterTransferLogic(from, to, amount);
+        }
+    }
+
     /// @dev Internal logic executed after a mint operation to update historical total supply and recipient's balance.
     ///      This function is intended to be called by the `_afterMint` hook in the inheriting contract.
     /// @param to The address that received the minted tokens.

@@ -40,8 +40,10 @@ abstract contract SMARTCollateralUpgradeable is Initializable, SMARTExtensionUpg
     ///      Injects the collateral verification logic using `_collateral_beforeMintLogic`.
     ///      Calls `super._beforeMint` to ensure other potential hook implementations are executed.
     /// @inheritdoc SMARTHooks
-    function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        __collateral_beforeMintLogic(amount); // Check collateral claim against required total supply
-        super._beforeMint(to, amount); // Call the next hook in the inheritance chain
+    function _beforeUpdate(address sender, address from, address to, uint256 amount) internal virtual override {
+        if (from == address(0)) {
+            __collateral_beforeMintLogic(amount); // Check collateral claim against required total supply
+        }
+        super._beforeUpdate(sender, from, to, amount); // Call the next hook in the inheritance chain
     }
 }

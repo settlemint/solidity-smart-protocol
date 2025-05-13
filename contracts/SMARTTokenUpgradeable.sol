@@ -388,98 +388,31 @@ contract SMARTTokenUpgradeable is
     // These overrides ensure that hooks from all relevant extensions are called in a defined order.
 
     /// @inheritdoc SMARTHooks
-    function _beforeMint(
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTUpgradeable, SMARTCollateralUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
-    {
-        super._beforeMint(to, amount);
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _beforeTransfer(
+    function _beforeUpdate(
+        address sender,
         address from,
         address to,
         uint256 amount
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
+        override(SMARTCustodianUpgradeable, SMARTCollateralUpgradeable, SMARTHooks)
     {
-        super._beforeTransfer(from, to, amount);
+        super._beforeUpdate(sender, from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    function _beforeBurn(
-        address from,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTCustodianUpgradeable, SMARTHooks) // SMARTUpgradeable
-            // does not implement _beforeBurn
-    {
-        super._beforeBurn(from, amount);
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _beforeRedeem(
-        address owner,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTCustodianUpgradeable, SMARTHooks)
-    {
-        super._beforeRedeem(owner, amount);
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _afterMint(
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTUpgradeable, SMARTHistoricalBalancesUpgradeable, SMARTHooks)
-    {
-        // SMARTCustodianUpgradeable, SMARTPausableUpgradeable, SMARTBurnableUpgradeable do not implement _afterMint
-        super._afterMint(to, amount);
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _afterTransfer(
+    function _afterUpdate(
+        address sender,
         address from,
         address to,
         uint256 amount
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTHistoricalBalancesUpgradeable, SMARTHooks)
-    // SMARTCustodianUpgradeable, SMARTPausableUpgradeable, SMARTBurnableUpgradeable do not implement _afterTransfer
+        override(SMARTHistoricalBalancesUpgradeable, SMARTHooks)
     {
-        super._afterTransfer(from, to, amount);
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _afterBurn(
-        address from,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTUpgradeable, SMARTHistoricalBalancesUpgradeable, SMARTHooks)
-    {
-        // SMARTCustodianUpgradeable, SMARTPausableUpgradeable do not implement _afterBurn
-        super._afterBurn(from, amount);
-    }
-
-    /// @inheritdoc SMARTHooks
-    function _afterRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
-        super._afterRedeem(owner, amount);
+        super._afterUpdate(sender, from, to, amount);
     }
 
     /// @dev Overrides required due to conflict with ContextUpgradeable inherited via multiple paths.

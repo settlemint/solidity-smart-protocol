@@ -287,6 +287,24 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
 
     // -- Internal Hook Helper Functions --
 
+    function __custodian_beforeUpdateLogic(address sender, address from, address to, uint256 amount) internal virtual {
+        if (!__isForcedUpdate) {
+            if (from == address(0)) {
+                __custodian_beforeMintLogic(to, amount);
+            } else if (to == address(0)) {
+                if (sender != from) {
+                    // TODO what if an admin uses burn on it's own?
+                    // How can we identify Burn from Redeem?
+                    __custodian_beforeBurnLogic(from, amount);
+                } else {
+                    __custodian_beforeRedeemLogic(from, amount);
+                }
+            } else {
+                __custodian_beforeTransferLogic(from, to, amount);
+            }
+        }
+    }
+
     /// @notice Internal logic executed before a mint operation to check recipient freeze status.
     /// @dev Called by the implementing contract's `_beforeMint` hook.
     /// @param to The recipient address.

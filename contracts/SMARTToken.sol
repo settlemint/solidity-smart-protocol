@@ -308,69 +308,32 @@ contract SMARTToken is
 
     // --- Hooks ---
 
-    function _beforeMint(
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMART, SMARTCollateral, SMARTCustodian, SMARTHooks)
-    {
-        super._beforeMint(to, amount);
-    }
-
-    function _beforeTransfer(
+    /// @inheritdoc SMARTHooks
+    function _beforeUpdate(
+        address sender,
         address from,
         address to,
         uint256 amount
     )
         internal
         virtual
-        override(SMART, SMARTCustodian, SMARTHooks)
+        override(SMARTCustodian, SMARTCollateral, SMARTHooks)
     {
-        super._beforeTransfer(from, to, amount);
+        super._beforeUpdate(sender, from, to, amount);
     }
 
-    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTCustodian, SMARTHooks) {
-        super._beforeBurn(from, amount);
-    }
-
-    function _beforeRedeem(address owner, uint256 amount) internal virtual override(SMARTCustodian, SMARTHooks) {
-        super._beforeRedeem(owner, amount);
-    }
-
-    function _afterMint(
-        address to,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMART, SMARTHistoricalBalances, SMARTHooks)
-    {
-        super._afterMint(to, amount);
-    }
-
-    function _afterTransfer(
+    /// @inheritdoc SMARTHooks
+    function _afterUpdate(
+        address sender,
         address from,
         address to,
         uint256 amount
     )
         internal
         virtual
-        override(SMART, SMARTHistoricalBalances, SMARTHooks)
+        override(SMARTHistoricalBalances, SMARTHooks)
     {
-        super._afterTransfer(from, to, amount);
-    }
-
-    function _afterBurn(
-        address from,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMART, SMARTHistoricalBalances, SMARTHooks)
-    {
-        super._afterBurn(from, amount);
+        super._afterUpdate(sender, from, to, amount);
     }
 
     // --- Internal Functions (Overrides) ---

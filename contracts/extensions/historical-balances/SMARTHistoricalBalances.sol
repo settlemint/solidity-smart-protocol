@@ -28,27 +28,18 @@ abstract contract SMARTHistoricalBalances is SMARTExtension, _SMARTHistoricalBal
     ///      Updates historical total supply and the recipient's balance.
     /// @param to The address that received the minted tokens.
     /// @param amount The amount of tokens minted.
-    function _afterMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        super._afterMint(to, amount); // Call next hook in the chain (e.g., SMARTHooks implementation in SMART.sol)
-        __historical_balances_afterMintLogic(to, amount); // Call historical balances specific logic
-    }
-
-    /// @dev Hook that is called after any token burning.
-    ///      Updates historical total supply and the burner's balance.
-    /// @param from The address whose tokens were burned.
-    /// @param amount The amount of tokens burned.
-    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        super._afterBurn(from, amount); // Call next hook in the chain
-        __historical_balances_afterBurnLogic(from, amount); // Call historical balances specific logic
-    }
-
-    /// @dev Hook that is called after any token transfer.
-    ///      Updates historical balances for both the sender and the recipient.
-    /// @param from The address that sent the tokens.
-    /// @param to The address that received the tokens.
-    /// @param amount The amount of tokens transferred.
-    function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        super._afterTransfer(from, to, amount); // Call next hook in the chain
-        __historical_balances_afterTransferLogic(from, to, amount); // Call historical balances specific logic
+    function _afterUpdate(
+        address sender,
+        address from,
+        address to,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMARTHooks)
+    {
+        super._afterUpdate(sender, from, to, amount); // Call next hook in the chain (e.g., SMARTHooks implementation in
+            // SMART.sol)
+        __historical_balances_afterUpdateLogic(from, to, amount); // Call historical balances specific logic
     }
 }

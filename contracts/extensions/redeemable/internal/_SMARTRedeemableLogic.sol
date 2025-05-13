@@ -52,9 +52,7 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension, ISMARTRedeemable {
     // -- Internal Functions --
     function __smart_redeemLogic(uint256 amount) internal virtual {
         address owner = _smartSender();
-        _beforeRedeem(owner, amount); // Standard SMARTHook
         __redeemable_redeem(owner, amount); // Abstract burn execution
-        _afterRedeem(owner, amount); // Standard SMARTHook
 
         emit Redeemed(owner, amount);
     }

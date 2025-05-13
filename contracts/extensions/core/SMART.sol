@@ -115,43 +115,6 @@ abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
         __smart_afterUpdateLogic(from, to, value);
     }
 
-    // --- Hooks ---
-
-    /// @inheritdoc SMARTHooks
-    /// @dev Calls the core SMART minting logic check before proceeding.
-    function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        __smart_beforeMintLogic(to, amount);
-        super._beforeMint(to, amount); // Allow further extension hooks
-    }
-
-    /// @inheritdoc SMARTHooks
-    /// @dev Calls the core SMART minting logic notification after completion.
-    function _afterMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        __smart_afterMintLogic(to, amount);
-        super._afterMint(to, amount); // Allow further extension hooks
-    }
-
-    /// @inheritdoc SMARTHooks
-    /// @dev Calls the core SMART transfer logic check before proceeding.
-    function _beforeTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        __smart_beforeTransferLogic(from, to, amount);
-        super._beforeTransfer(from, to, amount); // Allow further extension hooks
-    }
-
-    /// @inheritdoc SMARTHooks
-    /// @dev Calls the core SMART transfer logic notification after completion.
-    function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        __smart_afterTransferLogic(from, to, amount);
-        super._afterTransfer(from, to, amount); // Allow further extension hooks
-    }
-
-    /// @inheritdoc SMARTHooks
-    /// @dev Calls the core SMART burn logic notification after completion.
-    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        __smart_afterBurnLogic(from, amount);
-        super._afterBurn(from, amount); // Allow further extension hooks
-    }
-
     /**
      * @notice Standard ERC165 function to check if the contract supports an interface.
      * @dev This implementation checks against the internally registered interfaces.
