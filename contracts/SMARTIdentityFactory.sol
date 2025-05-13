@@ -112,7 +112,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Acces
 
         // Add specified management keys
         if (_managementKeys.length > 0) {
-            for (uint256 i = 0; i < _managementKeys.length; i++) {
+            for (uint256 i = 0; i < _managementKeys.length; ++i) {
                 if (_managementKeys[i] == keccak256(abi.encodePacked(_wallet))) revert WalletInManagementKeys();
                 identityContract.addKey(_managementKeys[i], 1, 1); // Add key with purpose 1 (MANAGEMENT)
             }
