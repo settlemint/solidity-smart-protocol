@@ -107,20 +107,6 @@ contract SMARTBond is
     /// @param amount The amount of underlying assets withdrawn
     event UnderlyingAssetWithdrawn(address indexed sender, address indexed to, uint256 amount);
 
-    /// @notice Modifier to prevent operations after bond maturity
-    /// @dev Reverts with BondAlreadyMatured if the bond has matured
-    modifier notMatured() {
-        if (isMatured) revert BondAlreadyMatured();
-        _;
-    }
-
-    /// @notice Modifier to ensure operations only occur after bond maturity
-    /// @dev Reverts with BondNotYetMatured if the bond has not matured
-    modifier onlyMatured() {
-        if (!isMatured) revert BondNotYetMatured();
-        _;
-    }
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     /// @param forwarder_ The address of the forwarder contract.
     constructor(address forwarder_) payable ERC2771ContextUpgradeable(forwarder_) {
