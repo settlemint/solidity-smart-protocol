@@ -34,7 +34,7 @@ contract SMARTTokenRegistryImplementation is AccessControl, ERC2771Context {
     }
 
     function createToken() public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _bonds.push(address(new SMARTBond(address(this))));
+        _bonds.push(address(new SMARTBond(address(this), "SMART Bond", "SMARTBOND", _msgSender())));
     }
 
     function registerBond(address bondImplementation_) public onlyRole(DEFAULT_ADMIN_ROLE) {
