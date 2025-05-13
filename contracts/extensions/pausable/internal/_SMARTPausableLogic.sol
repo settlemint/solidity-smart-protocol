@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
-import { _SMARTPausableAuthorizationHooks } from "./_SMARTPausableAuthorizationHooks.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 import { TokenPaused, ExpectedPause } from "./../SMARTPausableErrors.sol";
 import { Paused, Unpaused } from "./../SMARTPausableEvents.sol";
@@ -12,7 +11,7 @@ import { ISMARTPausable } from "./../ISMARTPausable.sol";
 /// checks),
 ///      and defines modifiers (`whenNotPaused`, `whenPaused`). It inherits authorization hooks.
 
-abstract contract _SMARTPausableLogic is _SMARTExtension, ISMARTPausable, _SMARTPausableAuthorizationHooks {
+abstract contract _SMARTPausableLogic is _SMARTExtension, ISMARTPausable {
     // -- State Variables --
     /// @notice Internal flag indicating whether the contract is paused.
     bool private _paused;
@@ -31,17 +30,15 @@ abstract contract _SMARTPausableLogic is _SMARTExtension, ISMARTPausable, _SMART
 
     // -- State-Changing Functions (Admin/Authorized) --
 
-    /// @inheritdoc ISMARTPausable
-    function pause() external virtual override {
-        _authorizePause();
+    /// @dev Internal function to pause the contract.
+    function _smart_pause() internal virtual {
         if (_paused) revert ExpectedPause(); // Should be ExpectedUnpause, or use a specific error
         _paused = true;
         emit Paused(_smartSender()); // Use _msgSender() from context if available, else pass msg.sender
     }
 
-    /// @inheritdoc ISMARTPausable
-    function unpause() external virtual override {
-        _authorizePause();
+    /// @dev Internal function to unpause the contract.
+    function _smart_unpause() internal virtual {
         if (!_paused) revert TokenPaused(); // Should be ExpectedPause, or use a specific error
         _paused = false;
         emit Unpaused(_smartSender()); // Use _msgSender() from context if available, else pass msg.sender

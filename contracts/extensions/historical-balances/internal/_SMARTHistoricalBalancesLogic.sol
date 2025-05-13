@@ -72,6 +72,48 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
         return _totalSupplyCheckpoints.upperLookupRecent(SafeCast.toUint48(timepoint));
     }
 
+    // -- Hooks Logic (Internal Implementation for SMARTHooks) --
+
+    /// @dev Internal logic executed after a mint operation to update historical total supply and recipient's balance.
+    ///      This function is intended to be called by the `_afterMint` hook in the inheriting contract.
+    /// @param to The address that received the minted tokens.
+    /// @param amount The amount of tokens minted.
+    function __historical_balances_afterMintLogic(address to, uint256 amount) internal virtual {
+        uint208 castAmount = SafeCast.toUint208(amount);
+
+        __push(_totalSupplyCheckpoints, __add, castAmount);
+        (uint208 previousValue, uint208 newValue) = __push(_balanceCheckpoints[to], __add, castAmount);
+        emit CheckpointUpdated(_smartSender(), to, previousValue, newValue);
+    }
+
+    /// @dev Internal logic executed after a burn operation to update historical total supply and burner's balance.
+    ///      This function is intended to be called by the `_afterBurn` hook in the inheriting contract.
+    /// @param from The address whose tokens were burned.
+    /// @param amount The amount of tokens burned.
+    function __historical_balances_afterBurnLogic(address from, uint256 amount) internal virtual {
+        uint208 castAmount = SafeCast.toUint208(amount);
+
+        __push(_totalSupplyCheckpoints, __subtract, castAmount);
+        (uint208 previousValue, uint208 newValue) = __push(_balanceCheckpoints[from], __subtract, castAmount);
+        emit CheckpointUpdated(_smartSender(), from, previousValue, newValue);
+    }
+
+    /// @dev Internal logic executed after a transfer operation to update historical balances of the sender and
+    /// recipient.
+    ///      This function is intended to be called by the `_afterTransfer` hook in the inheriting contract.
+    /// @param from The address that sent the tokens.
+    /// @param to The address that received the tokens.
+    /// @param amount The amount of tokens transferred.
+    function __historical_balances_afterTransferLogic(address from, address to, uint256 amount) internal virtual {
+        uint208 castAmount = SafeCast.toUint208(amount);
+        address sender = _smartSender();
+
+        (uint208 previousValue, uint208 newValue) = __push(_balanceCheckpoints[from], __subtract, castAmount);
+        emit CheckpointUpdated(sender, from, previousValue, newValue);
+        (previousValue, newValue) = __push(_balanceCheckpoints[to], __add, castAmount);
+        emit CheckpointUpdated(sender, to, previousValue, newValue);
+    }
+
     // -- Internal Functions --
 
     /// @dev Pushes a new checkpoint to a `Checkpoints.Trace208` storage.
@@ -81,7 +123,7 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     /// @param delta The change in value to be applied by the `op` function.
     /// @return previousValue The value before this push.
     /// @return newValue The value after this push.
-    function _push(
+    function __push(
         Checkpoints.Trace208 storage store,
         function(uint208, uint208) view returns (uint208) op,
         uint208 delta
@@ -102,7 +144,7 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     /// @param a The first number.
     /// @param b The second number.
     /// @return The sum of `a` and `b`.
-    function _add(uint208 a, uint208 b) private pure returns (uint208) {
+    function __add(uint208 a, uint208 b) private pure returns (uint208) {
         return a + b;
     }
 
@@ -110,49 +152,7 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     /// @param a The number to subtract from.
     /// @param b The number to subtract.
     /// @return The result of `a - b`.
-    function _subtract(uint208 a, uint208 b) private pure returns (uint208) {
+    function __subtract(uint208 a, uint208 b) private pure returns (uint208) {
         return a - b;
-    }
-
-    // -- Hooks Logic (Internal Implementation for SMARTHooks) --
-
-    /// @dev Internal logic executed after a mint operation to update historical total supply and recipient's balance.
-    ///      This function is intended to be called by the `_afterMint` hook in the inheriting contract.
-    /// @param to The address that received the minted tokens.
-    /// @param amount The amount of tokens minted.
-    function _historical_balances_afterMintLogic(address to, uint256 amount) internal virtual {
-        uint208 castAmount = SafeCast.toUint208(amount);
-
-        _push(_totalSupplyCheckpoints, _add, castAmount);
-        (uint208 previousValue, uint208 newValue) = _push(_balanceCheckpoints[to], _add, castAmount);
-        emit CheckpointUpdated(_smartSender(), to, previousValue, newValue);
-    }
-
-    /// @dev Internal logic executed after a burn operation to update historical total supply and burner's balance.
-    ///      This function is intended to be called by the `_afterBurn` hook in the inheriting contract.
-    /// @param from The address whose tokens were burned.
-    /// @param amount The amount of tokens burned.
-    function _historical_balances_afterBurnLogic(address from, uint256 amount) internal virtual {
-        uint208 castAmount = SafeCast.toUint208(amount);
-
-        _push(_totalSupplyCheckpoints, _subtract, castAmount);
-        (uint208 previousValue, uint208 newValue) = _push(_balanceCheckpoints[from], _subtract, castAmount);
-        emit CheckpointUpdated(_smartSender(), from, previousValue, newValue);
-    }
-
-    /// @dev Internal logic executed after a transfer operation to update historical balances of the sender and
-    /// recipient.
-    ///      This function is intended to be called by the `_afterTransfer` hook in the inheriting contract.
-    /// @param from The address that sent the tokens.
-    /// @param to The address that received the tokens.
-    /// @param amount The amount of tokens transferred.
-    function _historical_balances_afterTransferLogic(address from, address to, uint256 amount) internal virtual {
-        uint208 castAmount = SafeCast.toUint208(amount);
-        address sender = _smartSender();
-
-        (uint208 previousValue, uint208 newValue) = _push(_balanceCheckpoints[from], _subtract, castAmount);
-        emit CheckpointUpdated(sender, from, previousValue, newValue);
-        (previousValue, newValue) = _push(_balanceCheckpoints[to], _add, castAmount);
-        emit CheckpointUpdated(sender, to, previousValue, newValue);
     }
 }

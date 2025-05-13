@@ -41,7 +41,7 @@ abstract contract SMARTRedeemableUpgradeable is
 
     /// @notice Implementation of the abstract balance getter using standard ERC20.balanceOf.
     /// @inheritdoc _SMARTRedeemableLogic
-    function _getRedeemableBalance(address account) internal view virtual override returns (uint256) {
+    function __redeemable_getBalance(address account) internal view virtual override returns (uint256) {
         return balanceOf(account); // Assumes ERC20.balanceOf is available
     }
 
@@ -49,28 +49,8 @@ abstract contract SMARTRedeemableUpgradeable is
     /// @dev Assumes the inheriting contract includes an ERC20Upgradeable implementation with an internal `_burn`
     /// function.
     /// @inheritdoc _SMARTRedeemableLogic
-    function _redeem(address from, uint256 amount) internal virtual override {
+    function __redeemable_redeem(address from, uint256 amount) internal virtual override {
         // Allowance check is typically NOT needed for self-burn/redeem.
         _burn(from, amount);
-    }
-
-    // -- Hooks (Overrides) --
-
-    /// @notice Hook called before token redemption.
-    /// @dev This is a virtual override of the hook defined in `SMARTHooks`.
-    ///      Inheriting contracts can override this to add custom pre-redemption logic.
-    /// @param owner The address redeeming the tokens.
-    /// @param amount The amount of tokens being redeemed.
-    function _beforeRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
-        super._beforeRedeem(owner, amount);
-    }
-
-    /// @notice Hook called after token redemption.
-    /// @dev This is a virtual override of the hook defined in `SMARTHooks`.
-    ///      Inheriting contracts can override this to add custom post-redemption logic.
-    /// @param owner The address that redeemed the tokens.
-    /// @param amount The amount of tokens that were redeemed.
-    function _afterRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
-        super._afterRedeem(owner, amount);
     }
 }

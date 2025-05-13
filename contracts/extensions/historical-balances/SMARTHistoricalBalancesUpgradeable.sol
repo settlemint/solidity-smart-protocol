@@ -39,7 +39,7 @@ abstract contract SMARTHistoricalBalancesUpgradeable is
     /// @param amount The amount of tokens minted.
     function _afterMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
         super._afterMint(to, amount); // Call next hook in the chain
-        _historical_balances_afterMintLogic(to, amount); // Call historical balances specific logic
+        __historical_balances_afterMintLogic(to, amount); // Call historical balances specific logic
     }
 
     /// @dev Hook that is called after any token burning.
@@ -48,7 +48,7 @@ abstract contract SMARTHistoricalBalancesUpgradeable is
     /// @param amount The amount of tokens burned.
     function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         super._afterBurn(from, amount); // Call next hook in the chain
-        _historical_balances_afterBurnLogic(from, amount); // Call historical balances specific logic
+        __historical_balances_afterBurnLogic(from, amount); // Call historical balances specific logic
     }
 
     /// @dev Hook that is called after any token transfer.
@@ -58,6 +58,6 @@ abstract contract SMARTHistoricalBalancesUpgradeable is
     /// @param amount The amount of tokens transferred.
     function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         super._afterTransfer(from, to, amount); // Call next hook in the chain
-        _historical_balances_afterTransferLogic(from, to, amount); // Call historical balances specific logic
+        __historical_balances_afterTransferLogic(from, to, amount); // Call historical balances specific logic
     }
 }

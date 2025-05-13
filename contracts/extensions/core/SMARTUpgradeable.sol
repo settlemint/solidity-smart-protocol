@@ -72,47 +72,16 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         // must be called BEFORE this function in the final contract's initialize method.
     }
 
-    // -- State-Changing Functions (Admin/Authorized) --
+    // -- Internal Hook Implementations (Dependencies) --
 
-    /// @inheritdoc ISMART
-    /// @dev Mints new tokens to a specified address.
-    ///      Requires authorization via `_authorizeMintToken` (typically MINTER_ROLE).
-    ///      Includes compliance and verification checks via `_beforeMint` hook.
-    function mint(address to, uint256 amount) external virtual override {
-        _mint(to, amount); // Calls _update -> _beforeMint -> _smart_beforeMintLogic (auth check)
+    /// @inheritdoc _SMARTLogic
+    function __smart_executeMint(address from, uint256 amount) internal virtual override {
+        _mint(from, amount);
     }
 
-    /// @inheritdoc ISMART
-    /// @dev Mints tokens to multiple addresses in a single transaction.
-    ///      Requires authorization via `_authorizeMintToken` for each mint.
-    ///      Includes compliance and verification checks via `_beforeMint` hook for each mint.
-    function batchMint(address[] calldata toList, uint256[] calldata amounts) external virtual override {
-        if (toList.length != amounts.length) revert LengthMismatch();
-        for (uint256 i = 0; i < toList.length; i++) {
-            _mint(toList[i], amounts[i]);
-        }
-    }
-
-    // -- State-Changing Functions (Public/ERC20 Overrides) --
-
-    /// @inheritdoc ERC20Upgradeable
-    /// @dev Overrides ERC20Upgradeable.transfer to integrate SMART verification and compliance checks via hooks.
-    function transfer(address to, uint256 amount) public virtual override(ERC20Upgradeable, IERC20) returns (bool) {
-        address sender = _msgSender();
-        // Note: We call super._transfer directly here as it calls the overridden _update internally.
-        super._transfer(sender, to, amount);
-        return true;
-    }
-
-    /// @inheritdoc ISMART
-    /// @dev Performs multiple transfers from the caller in a single transaction.
-    ///      Integrates SMART verification and compliance checks for each transfer via hooks.
-    function batchTransfer(address[] calldata toList, uint256[] calldata amounts) external virtual override {
-        if (toList.length != amounts.length) revert LengthMismatch();
-        address sender = _msgSender();
-        for (uint256 i = 0; i < toList.length; i++) {
-            super._transfer(sender, toList[i], amounts[i]);
-        }
+    /// @inheritdoc _SMARTLogic
+    function __smart_executeTransfer(address from, address to, uint256 amount) internal virtual override {
+        _transfer(from, to, amount);
     }
 
     // -- View Functions (ERC20 Overrides) --
@@ -145,43 +114,43 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
      * @param value The amount being transferred/minted/burned.
      */
     function _update(address from, address to, uint256 value) internal virtual override(ERC20Upgradeable) {
-        _smart_beforeUpdateLogic(from, to, value);
+        __smart_beforeUpdateLogic(from, to, value);
         super._update(from, to, value); // Perform ERC20 update
-        _smart_afterUpdateLogic(from, to, value);
+        __smart_afterUpdateLogic(from, to, value);
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Calls the core SMART minting logic check before proceeding.
     function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_beforeMintLogic(to, amount);
+        __smart_beforeMintLogic(to, amount);
         super._beforeMint(to, amount); // Allow further extension hooks
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Calls the core SMART minting logic notification after completion.
     function _afterMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_afterMintLogic(to, amount);
+        __smart_afterMintLogic(to, amount);
         super._afterMint(to, amount); // Allow further extension hooks
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Calls the core SMART transfer logic check before proceeding.
     function _beforeTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_beforeTransferLogic(from, to, amount);
+        __smart_beforeTransferLogic(from, to, amount);
         super._beforeTransfer(from, to, amount); // Allow further extension hooks
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Calls the core SMART transfer logic notification after completion.
     function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_afterTransferLogic(from, to, amount);
+        __smart_afterTransferLogic(from, to, amount);
         super._afterTransfer(from, to, amount); // Allow further extension hooks
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Calls the core SMART burn logic notification after completion.
     function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_afterBurnLogic(from, amount);
+        __smart_afterBurnLogic(from, amount);
         super._afterBurn(from, amount); // Allow further extension hooks
     }
 
@@ -197,6 +166,6 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
      * @return `true` if the contract implements `interfaceId` and `interfaceId` is not 0xffffffff, `false` otherwise.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
-        return _smart_supportsInterface(interfaceId) || super.supportsInterface(interfaceId);
+        return __smart_supportsInterface(interfaceId) || super.supportsInterface(interfaceId);
     }
 }

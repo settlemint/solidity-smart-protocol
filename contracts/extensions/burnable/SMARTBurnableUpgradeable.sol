@@ -27,13 +27,13 @@ abstract contract SMARTBurnableUpgradeable is Initializable, SMARTExtensionUpgra
         __SMARTBurnable_init_unchained();
     }
 
-    // -- Internal Hook Implementation --
+    // -- Internal Hook Implementations (Dependencies) --
 
     /// @dev Implements the core burn logic by calling the underlying ERC20Upgradeable `_burn` function.
     /// @param from The address from which tokens are burned.
     /// @param amount The amount of tokens to burn.
     /// @inheritdoc _SMARTBurnableLogic
-    function _burnable_executeBurn(address from, uint256 amount) internal virtual override {
+    function __burnable_executeBurn(address from, uint256 amount) internal virtual override {
         // Note: Assumes the final contract inherits from ERC20Upgradeable
         // which provides the internal `_burn` function.
         _burn(from, amount);

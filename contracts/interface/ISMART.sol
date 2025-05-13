@@ -99,6 +99,14 @@ interface ISMART is IERC20, IERC20Metadata {
     /// @param _amounts An array of corresponding token amounts.
     function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external;
 
+    /// @notice Recovers mistakenly sent ERC20 tokens from this contract's address.
+    /// @dev Requires authorization via `_authorizeRecoverERC20`. Cannot recover this contract's own token.
+    ///      Uses SafeERC20's safeTransfer.
+    /// @param token The address of the ERC20 token to recover.
+    /// @param to The recipient address for the recovered tokens.
+    /// @param amount The amount of tokens to recover.
+    function recoverERC20(address token, address to, uint256 amount) external;
+
     // --- Compliance Module Management & Validation (Admin/Authorized) ---
 
     /// @notice Adds a new compliance module with its initial parameters.
