@@ -159,7 +159,7 @@ contract SMARTCompliance is
     ///      Reverts with appropriate error if validation fails.
     /// @param _module The address of the compliance module to validate.
     /// @param _params The parameters to validate against the module.
-    function _validateModuleAndParams(address _module, bytes memory _params) private view {
+    function _validateModuleAndParams(address _module, bytes calldata _params) private view {
         if (_module == address(0)) revert ZeroAddressNotAllowed();
 
         // Check if the module supports the ISMARTComplianceModule interface

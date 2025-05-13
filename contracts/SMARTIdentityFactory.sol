@@ -97,7 +97,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Acces
      */
     function createIdentity(
         address _wallet,
-        bytes32[] memory _managementKeys
+        bytes32[] calldata _managementKeys
     )
         external
         onlyRole(REGISTRAR_ROLE)
@@ -185,7 +185,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Acces
      * @return The pre-computed deployment address.
      */
     function getAddressForSaltString(
-        string memory _saltString,
+        string calldata _saltString,
         address _initialManager
     )
         public

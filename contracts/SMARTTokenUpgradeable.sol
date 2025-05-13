@@ -89,8 +89,8 @@ contract SMARTTokenUpgradeable is
         address onchainID_,
         address identityRegistry_,
         address compliance_,
-        uint256[] memory requiredClaimTopics_,
-        SMARTComplianceModuleParamPair[] memory initialModulePairs_,
+        uint256[] calldata requiredClaimTopics_,
+        SMARTComplianceModuleParamPair[] calldata initialModulePairs_,
         uint256 collateralProofTopic_,
         address initialOwner_
     )
