@@ -287,12 +287,6 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
 
     // -- Internal Hook Helper Functions --
 
-    /// @dev Internal logic executed before an update operation to check recipient verification and compliance.
-    ///      This function is intended to be called by the `_beforeUpdate` hook in the inheriting contract.
-    /// @param sender The address that sent the tokens.
-    /// @param from The address that sent the tokens.
-    /// @param to The address that received the tokens.
-    /// @param amount The amount of tokens transferred.
     function __custodian_beforeUpdateLogic(address sender, address from, address to, uint256 amount) internal virtual {
         if (!__isForcedUpdate) {
             if (from == address(0)) {
@@ -311,13 +305,11 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
         }
     }
 
-    // -- Private Functions --
-
     /// @notice Internal logic executed before a mint operation to check recipient freeze status.
     /// @dev Called by the implementing contract's `_beforeMint` hook.
     /// @param to The recipient address.
     //  Note: amount parameter is unused in this specific hook implementation.
-    function __custodian_beforeMintLogic(address to, uint256 /* amount */ ) private view {
+    function __custodian_beforeMintLogic(address to, uint256 /* amount */ ) internal view virtual {
         if (__frozen[to]) revert RecipientAddressFrozen();
     }
 
@@ -326,7 +318,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     /// @param from The sender address.
     /// @param to The recipient address.
     /// @param amount The amount being transferred.
-    function __custodian_beforeTransferLogic(address from, address to, uint256 amount) private view {
+    function __custodian_beforeTransferLogic(address from, address to, uint256 amount) internal view virtual {
         if (__frozen[from]) revert SenderAddressFrozen();
         if (__frozen[to]) revert RecipientAddressFrozen();
 
@@ -344,7 +336,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     ///      Called by the implementing contract's `_beforeBurn` hook.
     /// @param from The address whose tokens are being burned.
     /// @param amount The amount being burned.
-    function __custodian_beforeBurnLogic(address from, uint256 amount) private {
+    function __custodian_beforeBurnLogic(address from, uint256 amount) internal virtual {
         // Note: Burn operation itself needs authorization (e.g., BURNER_ROLE) handled elsewhere.
         uint256 totalBalance = __custodian_getBalance(from);
         if (totalBalance < amount) {
@@ -369,7 +361,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     ///      Called by the implementing contract's `_beforeRedeem` hook.
     /// @param from The address redeeming tokens.
     /// @param amount The amount being redeemed.
-    function __custodian_beforeRedeemLogic(address from, uint256 amount) private view {
+    function __custodian_beforeRedeemLogic(address from, uint256 amount) internal view virtual {
         if (__frozen[from]) revert SenderAddressFrozen();
 
         uint256 frozenTokens = __frozenTokens[from];
