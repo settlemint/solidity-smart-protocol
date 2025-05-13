@@ -230,57 +230,6 @@ contract SMARTBond is
 
     // --- State-Changing Functions ---
 
-    /// @notice Allows topping up the contract with underlying assets
-    /// @dev Anyone can top up the contract with underlying assets
-    /// @param amount The amount of underlying assets to top up
-    function topUpUnderlyingAsset(uint256 amount) external nonReentrant {
-        if (amount == 0) revert InvalidAmount();
-
-        bool success = _underlyingAsset.transferFrom(_msgSender(), address(this), amount);
-        if (!success) revert InsufficientUnderlyingBalance();
-
-        emit UnderlyingAssetTopUp(_msgSender(), amount);
-    }
-
-    /// @notice Allows withdrawing excess underlying assets
-    /// @dev Only callable by addresses with SUPPLY_MANAGEMENT_ROLE
-    /// @param to The address to send the underlying assets to
-    /// @param amount The amount of underlying assets to withdraw
-    /// @dev TODO: check role
-    function withdrawUnderlyingAsset(
-        address to,
-        uint256 amount
-    )
-        external
-        nonReentrant
-        onlyRole(SMARTRoles.TOKEN_ADMIN_ROLE)
-    {
-        _withdrawUnderlyingAsset(to, amount);
-    }
-
-    /// @notice Allows withdrawing all excess underlying assets
-    /// @dev Only callable by addresses with SUPPLY_MANAGEMENT_ROLE
-    /// @param to The address to send the underlying assets to
-    /// @dev TODO: check role
-    function withdrawExcessUnderlyingAssets(address to) external nonReentrant onlyRole(SMARTRoles.TOKEN_ADMIN_ROLE) {
-        uint256 withdrawable = withdrawableUnderlyingAmount();
-        if (withdrawable == 0) revert InsufficientUnderlyingBalance();
-
-        _withdrawUnderlyingAsset(to, withdrawable);
-    }
-
-    /// @notice Tops up the contract with exactly the amount needed for all redemptions
-    /// @dev Will revert if no assets are missing or if the transfer fails
-    function topUpMissingAmount() external nonReentrant {
-        uint256 missing = missingUnderlyingAmount();
-        if (missing == 0) revert InvalidAmount();
-
-        bool success = _underlyingAsset.transferFrom(_msgSender(), address(this), missing);
-        if (!success) revert InsufficientUnderlyingBalance();
-
-        emit UnderlyingAssetTopUp(_msgSender(), missing);
-    }
-
     /// @notice Closes off the bond at maturity
     /// @dev Only callable by addresses with SUPPLY_MANAGEMENT_ROLE after maturity date
     /// @dev Requires sufficient underlying assets for all potential redemptions
@@ -565,24 +514,6 @@ contract SMARTBond is
     }
 
     // --- Internal Functions ---
-    /// @notice Internal function to handle withdrawing underlying assets
-    /// @dev Ensures sufficient balance is maintained for redemptions if matured
-    /// @param to The address to send the underlying assets to
-    /// @param amount The amount of underlying assets to withdraw
-    function _withdrawUnderlyingAsset(address to, uint256 amount) private {
-        if (amount == 0) revert InvalidAmount();
-
-        if (isMatured) {
-            uint256 needed = totalUnderlyingNeeded();
-            uint256 currentBalance = underlyingAssetBalance();
-            if (currentBalance - amount < needed) revert InsufficientUnderlyingBalance();
-        }
-
-        bool success = _underlyingAsset.transfer(to, amount);
-        if (!success) revert InsufficientUnderlyingBalance();
-
-        emit UnderlyingAssetWithdrawn(_msgSender(), to, amount);
-    }
 
     /// @notice Calculates the underlying asset amount for a given bond amount
     /// @dev Divides by decimals first to prevent overflow when multiplying large numbers
