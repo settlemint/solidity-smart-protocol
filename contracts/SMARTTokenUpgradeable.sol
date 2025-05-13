@@ -114,7 +114,7 @@ contract SMARTTokenUpgradeable is
         __SMARTPausable_init();
         __AccessControl_init();
         __SMARTCollateral_init(collateralProofTopic_);
-
+        __SMARTHistoricalBalances_init();
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
     }
 

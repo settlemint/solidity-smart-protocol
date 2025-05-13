@@ -92,6 +92,7 @@ contract SMARTToken is
         SMARTPausable()
         SMARTBurnable()
         SMARTRedeemable()
+        SMARTHistoricalBalances()
     {
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
     }
