@@ -42,8 +42,11 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, ISMARTBurnable {
     function _smart_batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) internal virtual {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         uint256 length = userAddresses.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length;) {
             _smart_burn(userAddresses[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 }

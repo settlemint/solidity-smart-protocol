@@ -75,8 +75,11 @@ abstract contract _SMARTLogic is _SMARTExtension {
     function _smart_batchMint(address[] calldata toList, uint256[] calldata amounts) internal virtual {
         if (toList.length != amounts.length) revert LengthMismatch();
         uint256 length = toList.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length;) {
             _smart_mint(toList[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -97,8 +100,11 @@ abstract contract _SMARTLogic is _SMARTExtension {
         if (toList.length != amounts.length) revert LengthMismatch();
 
         uint256 length = toList.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length;) {
             _smart_transfer(toList[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -221,9 +227,12 @@ abstract contract _SMARTLogic is _SMARTExtension {
         uint256 length = __complianceModuleList.length;
         SMARTComplianceModuleParamPair[] memory pairs = new SMARTComplianceModuleParamPair[](length);
 
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length;) {
             address module = __complianceModuleList[i];
             pairs[i] = SMARTComplianceModuleParamPair({ module: module, params: __moduleParameters[module] });
+            unchecked {
+                ++i;
+            }
         }
 
         return pairs;
@@ -268,7 +277,8 @@ abstract contract _SMARTLogic is _SMARTExtension {
         address sender = _smartSender();
 
         // Register initial modules and their parameters
-        for (uint256 i = 0; i < initialModulePairs_.length; ++i) {
+        uint256 initialModulePairsLength = initialModulePairs_.length;
+        for (uint256 i = 0; i < initialModulePairsLength;) {
             address module = initialModulePairs_[i].module;
             bytes memory params = initialModulePairs_[i].params;
 
@@ -278,6 +288,9 @@ abstract contract _SMARTLogic is _SMARTExtension {
             __moduleIndex[module] = __complianceModuleList.length; // Store index + 1
             __moduleParameters[module] = params;
             emit ComplianceModuleAdded(sender, module, params);
+            unchecked {
+                ++i;
+            }
         }
 
         emit IdentityRegistryAdded(sender, identityRegistry_);

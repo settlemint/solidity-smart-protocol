@@ -59,13 +59,16 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
         bytes32[] memory claimIds = tokenID.getClaimIdsByTopic(collateralProofTopic);
 
         // Iterate through claims and find the first valid one
-        uint256 length = claimIds.length;
-        for (uint256 j = 0; j < length; ++j) {
+        uint256 claimIdsLength = claimIds.length;
+        for (uint256 j = 0; j < claimIdsLength;) {
             (bool validClaim, uint256 claimAmount, address claimIssuer, uint256 claimExpiry) =
                 __checkSingleClaim(tokenID, claimIds[j], trustedIssuers);
 
             if (validClaim) {
                 return (claimAmount, claimIssuer, claimExpiry);
+            }
+            unchecked {
+                ++j;
             }
         }
 
@@ -187,13 +190,16 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
             }
 
             // Look for a matching trusted issuer
-            uint256 length = trustedIssuers.length;
-            for (uint256 i = 0; i < length; ++i) {
+            uint256 trustedIssuersLength = trustedIssuers.length;
+            for (uint256 i = 0; i < trustedIssuersLength;) {
                 IClaimIssuer trustedIssuer = trustedIssuers[i];
                 address trustedIssuerAddr = address(trustedIssuer);
 
                 // Skip if this isn't the issuer of the claim
                 if (claimIssuer != trustedIssuerAddr) {
+                    unchecked {
+                        ++i;
+                    }
                     continue;
                 }
 
