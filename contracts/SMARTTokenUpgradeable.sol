@@ -18,39 +18,55 @@ import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplia
 import { SMARTUpgradeable } from "./extensions/core/SMARTUpgradeable.sol";
 import { SMARTExtensionUpgradeable } from "./extensions/common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
-import { SMARTAccessControlAuthorization } from "./extensions/core/SMARTAccessControlAuthorization.sol";
-import { SMARTExtensionAccessControlAuthorization } from
-    "./extensions/common/SMARTExtensionAccessControlAuthorization.sol";
 
 // Feature extensions
 import { SMARTPausableUpgradeable } from "./extensions/pausable/SMARTPausableUpgradeable.sol";
-import { SMARTPausableAccessControlAuthorization } from
-    "./extensions/pausable/SMARTPausableAccessControlAuthorization.sol";
+
 import { SMARTBurnableUpgradeable } from "./extensions/burnable/SMARTBurnableUpgradeable.sol";
-import { SMARTBurnableAccessControlAuthorization } from
-    "./extensions/burnable/SMARTBurnableAccessControlAuthorization.sol";
+
 import { SMARTCustodianUpgradeable } from "./extensions/custodian/SMARTCustodianUpgradeable.sol";
-import { SMARTCustodianAccessControlAuthorization } from
-    "./extensions/custodian/SMARTCustodianAccessControlAuthorization.sol";
+
 import { SMARTRedeemableUpgradeable } from "./extensions/redeemable/SMARTRedeemableUpgradeable.sol";
 import { SMARTCollateralUpgradeable } from "./extensions/collateral/SMARTCollateralUpgradeable.sol";
-
+import { SMARTHistoricalBalancesUpgradeable } from
+    "./extensions/historical-balances/SMARTHistoricalBalancesUpgradeable.sol";
 /// @title SMARTTokenUpgradeable
 /// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
+
 contract SMARTTokenUpgradeable is
     Initializable,
     SMARTUpgradeable,
-    SMARTAccessControlAuthorization,
-    SMARTBurnableAccessControlAuthorization,
-    SMARTPausableAccessControlAuthorization,
-    SMARTCustodianAccessControlAuthorization,
     SMARTCustodianUpgradeable,
     SMARTCollateralUpgradeable,
     SMARTPausableUpgradeable,
     SMARTBurnableUpgradeable,
     SMARTRedeemableUpgradeable,
+    SMARTHistoricalBalancesUpgradeable,
     AccessControlUpgradeable
 {
+    // Role constants
+    /// @notice Role required to update general token settings (name, symbol, onchainID).
+    bytes32 public constant TOKEN_ADMIN_ROLE = keccak256("TOKEN_ADMIN_ROLE");
+    /// @notice Role required to update compliance settings (compliance contract, modules, parameters).
+    bytes32 public constant COMPLIANCE_ADMIN_ROLE = keccak256("COMPLIANCE_ADMIN_ROLE");
+    /// @notice Role required to update verification settings (identity registry, required claim topics).
+    bytes32 public constant VERIFICATION_ADMIN_ROLE = keccak256("VERIFICATION_ADMIN_ROLE");
+    /// @notice Role required to mint new tokens.
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
+    /// @notice Role required to execute burn operations.
+    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+
+    /// @notice Role required to freeze/unfreeze addresses and partial token amounts.
+    bytes32 public constant FREEZER_ROLE = keccak256("FREEZER_ROLE");
+    /// @notice Role required to execute forced transfers.
+    bytes32 public constant FORCED_TRANSFER_ROLE = keccak256("FORCED_TRANSFER_ROLE");
+    /// @notice Role required to perform address recovery.
+    bytes32 public constant RECOVERY_ROLE = keccak256("RECOVERY_ROLE");
+
+    /// @notice Role required to pause or unpause the contract.
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -100,19 +116,214 @@ contract SMARTTokenUpgradeable is
         __SMARTCollateral_init(collateralProofTopic_);
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
-        _grantRole(BURNER_ROLE, initialOwner_);
-        _grantRole(MINTER_ROLE, initialOwner_);
-        _grantRole(COMPLIANCE_ADMIN_ROLE, initialOwner_);
-        _grantRole(VERIFICATION_ADMIN_ROLE, initialOwner_);
-        _grantRole(TOKEN_ADMIN_ROLE, initialOwner_);
-        _grantRole(FREEZER_ROLE, initialOwner_);
-        _grantRole(FORCED_TRANSFER_ROLE, initialOwner_);
-        _grantRole(RECOVERY_ROLE, initialOwner_);
-        _grantRole(PAUSER_ROLE, initialOwner_);
     }
 
-    // --- Overrides for Conflicting Functions ---
+    // --- ISMART Implementation ---
 
+    function setName(string calldata _name) external override onlyRole(TOKEN_ADMIN_ROLE) {
+        _smart_setName(_name);
+    }
+
+    function setSymbol(string calldata _symbol) external override onlyRole(TOKEN_ADMIN_ROLE) {
+        _smart_setSymbol(_symbol);
+    }
+
+    function setOnchainID(address _onchainID) external override onlyRole(TOKEN_ADMIN_ROLE) {
+        _smart_setOnchainID(_onchainID);
+    }
+
+    function setIdentityRegistry(address _identityRegistry) external override onlyRole(TOKEN_ADMIN_ROLE) {
+        _smart_setIdentityRegistry(_identityRegistry);
+    }
+
+    function setCompliance(address _compliance) external override onlyRole(COMPLIANCE_ADMIN_ROLE) {
+        _smart_setCompliance(_compliance);
+    }
+
+    function setParametersForComplianceModule(
+        address _module,
+        bytes calldata _params
+    )
+        external
+        override
+        onlyRole(COMPLIANCE_ADMIN_ROLE)
+    {
+        _smart_setParametersForComplianceModule(_module, _params);
+    }
+
+    function setRequiredClaimTopics(uint256[] calldata _requiredClaimTopics)
+        external
+        override
+        onlyRole(VERIFICATION_ADMIN_ROLE)
+    {
+        _smart_setRequiredClaimTopics(_requiredClaimTopics);
+    }
+
+    function mint(address _to, uint256 _amount) external override onlyRole(MINTER_ROLE) {
+        _smart_mint(_to, _amount);
+    }
+
+    function batchMint(
+        address[] calldata _toList,
+        uint256[] calldata _amounts
+    )
+        external
+        override
+        onlyRole(MINTER_ROLE)
+    {
+        _smart_batchMint(_toList, _amounts);
+    }
+
+    function transfer(address _to, uint256 _amount) public override(ERC20Upgradeable, IERC20) returns (bool) {
+        return _smart_transfer(_to, _amount);
+    }
+
+    function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external override {
+        _smart_batchTransfer(_toList, _amounts);
+    }
+
+    function recoverERC20(address token, address to, uint256 amount) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+        _smart_recoverERC20(token, to, amount);
+    }
+
+    function addComplianceModule(
+        address _module,
+        bytes calldata _params
+    )
+        external
+        override
+        onlyRole(COMPLIANCE_ADMIN_ROLE)
+    {
+        _smart_addComplianceModule(_module, _params);
+    }
+
+    function removeComplianceModule(address _module) external override onlyRole(COMPLIANCE_ADMIN_ROLE) {
+        _smart_removeComplianceModule(_module);
+    }
+
+    // --- ISMARTBurnable Implementation ---
+
+    function burn(address userAddress, uint256 amount) external override onlyRole(BURNER_ROLE) {
+        _smart_burn(userAddress, amount);
+    }
+
+    function batchBurn(
+        address[] calldata userAddresses,
+        uint256[] calldata amounts
+    )
+        external
+        override
+        onlyRole(BURNER_ROLE)
+    {
+        _smart_batchBurn(userAddresses, amounts);
+    }
+
+    // --- ISMARTCustodian Implementation ---
+
+    function setAddressFrozen(address userAddress, bool freeze) external override onlyRole(FREEZER_ROLE) {
+        _smart_setAddressFrozen(userAddress, freeze);
+    }
+
+    function freezePartialTokens(address userAddress, uint256 amount) external override onlyRole(FREEZER_ROLE) {
+        _smart_freezePartialTokens(userAddress, amount);
+    }
+
+    function unfreezePartialTokens(address userAddress, uint256 amount) external override onlyRole(FREEZER_ROLE) {
+        _smart_unfreezePartialTokens(userAddress, amount);
+    }
+
+    function batchSetAddressFrozen(
+        address[] calldata userAddresses,
+        bool[] calldata freeze
+    )
+        external
+        override
+        onlyRole(FREEZER_ROLE)
+    {
+        _smart_batchSetAddressFrozen(userAddresses, freeze);
+    }
+
+    function batchFreezePartialTokens(
+        address[] calldata userAddresses,
+        uint256[] calldata amounts
+    )
+        external
+        override
+        onlyRole(FREEZER_ROLE)
+    {
+        _smart_batchFreezePartialTokens(userAddresses, amounts);
+    }
+
+    function batchUnfreezePartialTokens(
+        address[] calldata userAddresses,
+        uint256[] calldata amounts
+    )
+        external
+        override
+        onlyRole(FREEZER_ROLE)
+    {
+        _smart_batchUnfreezePartialTokens(userAddresses, amounts);
+    }
+
+    function forcedTransfer(
+        address from,
+        address to,
+        uint256 amount
+    )
+        external
+        override
+        onlyRole(FORCED_TRANSFER_ROLE)
+        returns (bool)
+    {
+        return _smart_forcedTransfer(from, to, amount);
+    }
+
+    function batchForcedTransfer(
+        address[] calldata fromList,
+        address[] calldata toList,
+        uint256[] calldata amounts
+    )
+        external
+        override
+        onlyRole(FORCED_TRANSFER_ROLE)
+    {
+        _smart_batchForcedTransfer(fromList, toList, amounts);
+    }
+
+    function recoveryAddress(
+        address lostWallet,
+        address newWallet,
+        address investorOnchainID
+    )
+        external
+        override
+        onlyRole(RECOVERY_ROLE)
+        returns (bool)
+    {
+        return _smart_recoveryAddress(lostWallet, newWallet, investorOnchainID);
+    }
+
+    // --- ISMARTPausable Implementation ---
+
+    function pause() external override onlyRole(PAUSER_ROLE) {
+        _smart_pause();
+    }
+
+    function unpause() external override onlyRole(PAUSER_ROLE) {
+        _smart_unpause();
+    }
+
+    // --- ISMARTRedeemable Implementation ---
+
+    function redeem(uint256 amount) external override returns (bool) {
+        return _smart_redeem(amount);
+    }
+
+    function redeemAll() external override returns (bool) {
+        return _smart_redeemAll();
+    }
+
+    // --- View Functions (Overrides) ---
     /// @inheritdoc ERC20Upgradeable
     function name()
         public
@@ -151,32 +362,7 @@ contract SMARTTokenUpgradeable is
         return super.decimals();
     }
 
-    /// @inheritdoc ERC20Upgradeable
-    function transfer(
-        address to,
-        uint256 amount
-    )
-        public
-        virtual
-        override(SMARTUpgradeable, ERC20Upgradeable, IERC20)
-        returns (bool)
-    {
-        return super.transfer(to, amount);
-    }
-
-    function hasRole(
-        bytes32 role,
-        address account
-    )
-        public
-        view
-        override(SMARTExtensionAccessControlAuthorization, AccessControlUpgradeable)
-        returns (bool)
-    {
-        return super.hasRole(role, account);
-    }
-
-    /// @dev Overrides ERC165 to ensure that the SMARTUpgradeable implementation is used.
+    /// @dev Overrides ERC165 to ensure that the SMART implementation is used.
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -253,13 +439,20 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTRedeemableUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
+        override(SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._beforeRedeem(owner, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    function _afterMint(address to, uint256 amount) internal virtual override(SMARTUpgradeable, SMARTHooks) {
+    function _afterMint(
+        address to,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMARTUpgradeable, SMARTHistoricalBalancesUpgradeable, SMARTHooks)
+    {
         // SMARTCustodianUpgradeable, SMARTPausableUpgradeable, SMARTBurnableUpgradeable do not implement _afterMint
         super._afterMint(to, amount);
     }
@@ -272,41 +465,32 @@ contract SMARTTokenUpgradeable is
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTHistoricalBalancesUpgradeable, SMARTHooks)
     // SMARTCustodianUpgradeable, SMARTPausableUpgradeable, SMARTBurnableUpgradeable do not implement _afterTransfer
     {
         super._afterTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTUpgradeable, SMARTHooks) {
+    function _afterBurn(
+        address from,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMARTUpgradeable, SMARTHistoricalBalancesUpgradeable, SMARTHooks)
+    {
         // SMARTCustodianUpgradeable, SMARTPausableUpgradeable do not implement _afterBurn
         super._afterBurn(from, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    function _afterRedeem(
-        address owner,
-        uint256 amount
-    )
-        internal
-        virtual
-        override(SMARTRedeemableUpgradeable, SMARTHooks)
-    {
+    function _afterRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
         super._afterRedeem(owner, amount);
     }
 
     /// @dev Overrides required due to conflict with ContextUpgradeable inherited via multiple paths.
-    function _msgSender()
-        internal
-        view
-        virtual
-        override(ContextUpgradeable, SMARTExtensionAccessControlAuthorization)
-        returns (address)
-    {
+    function _msgSender() internal view virtual override(ContextUpgradeable) returns (address) {
         return super._msgSender();
     }
-
-    // Gap for future storage variables to allow safer upgrades.
-    uint256[50] private __gap;
 }

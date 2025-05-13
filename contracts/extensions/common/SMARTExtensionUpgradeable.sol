@@ -10,6 +10,7 @@ import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 // Base contract imports
 import { _SMARTExtension } from "./_SMARTExtension.sol";
 import { SMARTContext } from "./SMARTContext.sol";
+import { ISMART } from "../../interface/ISMART.sol";
 /// @title SMARTExtensionUpgradeable
 /// @notice Abstract upgradeable contract that defines the internal hooks for SMART tokens.
 /// @dev Base for upgradeable SMART extensions, inheriting essential upgradeable contracts.

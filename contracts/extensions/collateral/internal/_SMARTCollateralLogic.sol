@@ -33,14 +33,10 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
         _registerInterface(type(ISMARTCollateral).interfaceId);
     }
 
-    // -- Internal Implementation for ISMARTCollateral Interface Functions --
+    // -- View functions --
 
-    /// @dev Internal function to find the first valid collateral claim.
-    /// @return amount The collateral amount decoded from the valid claim data (0 if no valid claim found).
-    /// @return issuer The address of the trusted claim issuer contract that issued the valid claim (address(0) if
-    /// none).
-    /// @return expiryTimestamp The expiry timestamp decoded from the valid claim data (0 if no valid claim found).
-    function _smart_findValidCollateralClaim()
+    /// @inheritdoc ISMARTCollateral
+    function findValidCollateralClaim()
         public
         view
         virtual
@@ -231,7 +227,7 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
     function __collateral_beforeMintLogic(uint256 amount) internal view virtual {
         // Find the valid collateral amount for the recipient using the public helper.
         // We only need the amount here, issuer and expiry are validated within the helper.
-        (uint256 collateralAmountFromClaim,,) = _smart_findValidCollateralClaim();
+        (uint256 collateralAmountFromClaim,,) = findValidCollateralClaim();
 
         // TODO is it correct to use this.totalSupply()? or should we make this Abstract?
         // We need to use this. because totalSupply() is an external function and not virtual or public

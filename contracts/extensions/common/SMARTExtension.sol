@@ -8,6 +8,7 @@ import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 // Base contract imports
 import { _SMARTExtension } from "./_SMARTExtension.sol";
 import { SMARTContext } from "./SMARTContext.sol";
+import { ISMART } from "../../interface/ISMART.sol";
 /// @title SMARTExtension
 /// @notice Abstract contract that defines the internal hooks for standard SMART tokens.
 /// @dev Base for standard SMART extensions, inheriting ERC20.

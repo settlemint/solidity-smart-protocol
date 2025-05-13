@@ -93,6 +93,13 @@ interface ISMART is IERC20, IERC20Metadata {
     /// @param _amounts An array of corresponding token amounts.
     function batchMint(address[] calldata _toList, uint256[] calldata _amounts) external;
 
+    /// @notice Transfers tokens from the caller to a specified address.
+    /// @dev Implementations perform verification/compliance checks.
+    /// @param _to The address to transfer tokens to.
+    /// @param _amount The amount of tokens to transfer.
+    //TODO
+    // function transfer(address _to, uint256 _amount) external returns (bool);
+
     /// @notice Transfers tokens from the caller to multiple addresses in a batch.
     /// @dev Implementations perform verification/compliance checks for each recipient.
     /// @param _toList An array of recipient addresses.

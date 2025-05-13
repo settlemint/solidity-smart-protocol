@@ -73,7 +73,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
     ///      Includes compliance and verification checks via `_beforeMint` hook for each mint.
     /// @param toList The addresses to mint tokens to.
     /// @param amounts The amounts of tokens to mint.
-    function _smart_batchMint(address[] calldata toList, uint256[] calldata amounts) external virtual {
+    function _smart_batchMint(address[] calldata toList, uint256[] calldata amounts) internal virtual {
         if (toList.length != amounts.length) revert LengthMismatch();
         uint256 length = toList.length;
         for (uint256 i = 0; i < length; ++i) {
@@ -83,7 +83,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
 
     /// @dev Transfers tokens from the caller to a specified address.
     ///      Integrates SMART verification and compliance checks via hooks.
-    function _smart_transfer(address to, uint256 amount) public virtual returns (bool) {
+    function _smart_transfer(address to, uint256 amount) internal virtual returns (bool) {
         address sender = _smartSender();
         __smart_transferLogic(sender, to, amount); // Calls _update -> _beforeTransfer/_afterTransfer
         return true;
@@ -93,7 +93,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
     ///      Integrates SMART verification and compliance checks via hooks.
     /// @param toList The addresses to transfer tokens to.
     /// @param amounts The amounts of tokens to transfer.
-    function _smart_batchTransfer(address[] calldata toList, uint256[] calldata amounts) external virtual {
+    function _smart_batchTransfer(address[] calldata toList, uint256[] calldata amounts) internal virtual {
         if (toList.length != amounts.length) revert LengthMismatch();
         address sender = _smartSender(); // Cache sender
 
