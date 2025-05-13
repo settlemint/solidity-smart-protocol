@@ -167,9 +167,13 @@ contract SMARTIdentityRegistry is
         override
         onlyRole(REGISTRAR_ROLE)
     {
-        if (!(_userAddresses.length == _identities.length && _identities.length == _countries.length)) {
+        if (_userAddresses.length != _identities.length) {
             revert ArrayLengthMismatch();
         }
+        if (_identities.length != _countries.length) {
+            revert ArrayLengthMismatch();
+        }
+
         uint256 userAddressesLength = _userAddresses.length;
         for (uint256 i = 0; i < userAddressesLength;) {
             _registerIdentity(_userAddresses[i], _identities[i], _countries[i]);
