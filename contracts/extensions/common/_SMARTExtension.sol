@@ -8,7 +8,7 @@ import { SMARTContext } from "../common/SMARTContext.sol";
 /// @notice Base contract for SMART extension contracts.
 
 abstract contract _SMARTExtension is ISMART, SMARTContext, SMARTHooks {
-    bool internal __isForcedUpdate = false;
+    bool internal __isForcedUpdate;
 
     // Mapping to check if an interface ID is registered for O(1) lookups.
     mapping(bytes4 => bool) internal _isInterfaceRegistered;

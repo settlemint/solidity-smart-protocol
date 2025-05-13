@@ -167,9 +167,13 @@ contract SMARTIdentityRegistry is
         override
         onlyRole(REGISTRAR_ROLE)
     {
-        if (!(_userAddresses.length == _identities.length && _identities.length == _countries.length)) {
+        if (_userAddresses.length != _identities.length) {
             revert ArrayLengthMismatch();
         }
+        if (_identities.length != _countries.length) {
+            revert ArrayLengthMismatch();
+        }
+
         uint256 userAddressesLength = _userAddresses.length;
         for (uint256 i = 0; i < userAddressesLength;) {
             _registerIdentity(_userAddresses[i], _identities[i], _countries[i]);
@@ -224,19 +228,22 @@ contract SMARTIdentityRegistry is
                 try identityToVerify.getClaim(claimId) returns (
                     uint256 topic, uint256, address issuer, bytes memory signature, bytes memory data, string memory
                 ) {
-                    if (issuer == address(relevantIssuer) && topic == currentTopic) {
-                        try relevantIssuer.isClaimValid(identityToVerify, topic, signature, data) returns (bool isValid)
-                        {
-                            if (isValid) {
-                                topicVerified = true;
-                                break;
+                    if (issuer == address(relevantIssuer)) {
+                        if (topic == currentTopic) {
+                            try relevantIssuer.isClaimValid(identityToVerify, topic, signature, data) returns (
+                                bool isValid
+                            ) {
+                                if (isValid) {
+                                    topicVerified = true;
+                                    break;
+                                }
+                            } catch {
+                                // Explicitly continue to the next issuer if isClaimValid fails
+                                unchecked {
+                                    ++j;
+                                }
+                                continue;
                             }
-                        } catch {
-                            // Explicitly continue to the next issuer if isClaimValid fails
-                            unchecked {
-                                ++j;
-                            }
-                            continue;
                         }
                     }
                 } catch {
