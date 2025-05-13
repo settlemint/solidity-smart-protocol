@@ -198,26 +198,26 @@ contract SMARTBond is
 
     /// @notice Returns the timestamp when the bond matures
     /// @return The maturity date timestamp
-    function maturityDate() public view returns (uint256) {
+    function maturityDate() external view returns (uint256) {
         return _maturityDate;
     }
 
     /// @notice Returns the face value of the bond
     /// @return The bond's face value in underlying asset base units
-    function faceValue() public view returns (uint256) {
+    function faceValue() external view returns (uint256) {
         return _faceValue;
     }
 
     /// @notice Returns the underlying asset contract
     /// @return The ERC20 contract of the underlying asset
-    function underlyingAsset() public view returns (IERC20) {
+    function underlyingAsset() external view returns (IERC20) {
         return _underlyingAsset;
     }
 
     /// @notice Returns the amount of underlying assets held by the contract
     /// @return The balance of underlying assets
     function underlyingAssetBalance() public view returns (uint256) {
-        return underlyingAsset().balanceOf(address(this));
+        return _underlyingAsset.balanceOf(address(this));
     }
 
     /// @notice Returns the total amount of underlying assets needed for all potential redemptions
@@ -250,7 +250,7 @@ contract SMARTBond is
     function topUpUnderlyingAsset(uint256 amount) external nonReentrant {
         if (amount == 0) revert InvalidAmount();
 
-        bool success = underlyingAsset().transferFrom(_msgSender(), address(this), amount);
+        bool success = _underlyingAsset.transferFrom(_msgSender(), address(this), amount);
         if (!success) revert InsufficientUnderlyingBalance();
 
         emit UnderlyingAssetTopUp(_msgSender(), amount);
@@ -289,7 +289,7 @@ contract SMARTBond is
         uint256 missing = missingUnderlyingAmount();
         if (missing == 0) revert InvalidAmount();
 
-        bool success = underlyingAsset().transferFrom(_msgSender(), address(this), missing);
+        bool success = _underlyingAsset.transferFrom(_msgSender(), address(this), missing);
         if (!success) revert InsufficientUnderlyingBalance();
 
         emit UnderlyingAssetTopUp(_msgSender(), missing);
@@ -300,7 +300,7 @@ contract SMARTBond is
     /// @dev Requires sufficient underlying assets for all potential redemptions
     /// @dev TODO: check role
     function mature() external onlyRole(SMARTRoles.TOKEN_ADMIN_ROLE) {
-        if (block.timestamp < maturityDate()) revert BondNotYetMatured();
+        if (block.timestamp < _maturityDate) revert BondNotYetMatured();
         if (isMatured) revert BondAlreadyMatured();
 
         uint256 needed = totalUnderlyingNeeded();
@@ -529,11 +529,11 @@ contract SMARTBond is
     }
 
     function yieldBasisPerUnit(address) external view override returns (uint256) {
-        return faceValue();
+        return _faceValue;
     }
 
     function yieldToken() external view override returns (IERC20) {
-        return underlyingAsset();
+        return _underlyingAsset;
     }
 
     function canManageYield(address manager) external view override returns (bool) {
@@ -592,7 +592,7 @@ contract SMARTBond is
             if (currentBalance - amount < needed) revert InsufficientUnderlyingBalance();
         }
 
-        bool success = underlyingAsset().transfer(to, amount);
+        bool success = _underlyingAsset.transfer(to, amount);
         if (!success) revert InsufficientUnderlyingBalance();
 
         emit UnderlyingAssetWithdrawn(_msgSender(), to, amount);
@@ -603,7 +603,7 @@ contract SMARTBond is
     /// @param bondAmount The amount of bonds to calculate for
     /// @return The amount of underlying assets
     function _calculateUnderlyingAmount(uint256 bondAmount) private view returns (uint256) {
-        return (bondAmount / (10 ** decimals())) * faceValue();
+        return (bondAmount / (10 ** decimals())) * _faceValue;
     }
 
     // --- Hooks (Overrides for Chaining) ---
@@ -725,7 +725,7 @@ contract SMARTBond is
 
         _burn(from, amount);
 
-        bool success = underlyingAsset().transfer(from, underlyingAmount);
+        bool success = _underlyingAsset.transfer(from, underlyingAmount);
         if (!success) revert InsufficientUnderlyingBalance();
 
         emit BondRedeemed(_msgSender(), from, amount, underlyingAmount);
