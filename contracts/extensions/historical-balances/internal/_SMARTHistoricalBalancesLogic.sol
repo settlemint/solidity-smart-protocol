@@ -92,11 +92,13 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
         }
     }
 
+    // -- Private Functions --
+
     /// @dev Internal logic executed after a mint operation to update historical total supply and recipient's balance.
     ///      This function is intended to be called by the `_afterMint` hook in the inheriting contract.
     /// @param to The address that received the minted tokens.
     /// @param amount The amount of tokens minted.
-    function __historical_balances_afterMintLogic(address to, uint256 amount) internal virtual {
+    function __historical_balances_afterMintLogic(address to, uint256 amount) private {
         uint208 castAmount = SafeCast.toUint208(amount);
 
         __push(_totalSupplyCheckpoints, __add, castAmount);
@@ -108,7 +110,7 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     ///      This function is intended to be called by the `_afterBurn` hook in the inheriting contract.
     /// @param from The address whose tokens were burned.
     /// @param amount The amount of tokens burned.
-    function __historical_balances_afterBurnLogic(address from, uint256 amount) internal virtual {
+    function __historical_balances_afterBurnLogic(address from, uint256 amount) private {
         uint208 castAmount = SafeCast.toUint208(amount);
 
         __push(_totalSupplyCheckpoints, __subtract, castAmount);
@@ -122,7 +124,7 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     /// @param from The address that sent the tokens.
     /// @param to The address that received the tokens.
     /// @param amount The amount of tokens transferred.
-    function __historical_balances_afterTransferLogic(address from, address to, uint256 amount) internal virtual {
+    function __historical_balances_afterTransferLogic(address from, address to, uint256 amount) private {
         uint208 castAmount = SafeCast.toUint208(amount);
         address sender = _smartSender();
 
@@ -131,8 +133,6 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
         (previousValue, newValue) = __push(_balanceCheckpoints[to], __add, castAmount);
         emit CheckpointUpdated(sender, to, previousValue, newValue);
     }
-
-    // -- Internal Functions --
 
     /// @dev Pushes a new checkpoint to a `Checkpoints.Trace208` storage.
     ///      It calculates the new value using the provided operation `op` and `delta`.
