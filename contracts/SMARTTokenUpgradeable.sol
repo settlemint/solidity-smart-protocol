@@ -3,7 +3,6 @@ pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
@@ -40,7 +39,6 @@ import { SMARTCollateralUpgradeable } from "./extensions/collateral/SMARTCollate
 /// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
 contract SMARTTokenUpgradeable is
     Initializable,
-    UUPSUpgradeable,
     SMARTUpgradeable,
     SMARTAccessControlAuthorization,
     SMARTBurnableAccessControlAuthorization,
@@ -98,7 +96,6 @@ contract SMARTTokenUpgradeable is
         __SMARTBurnable_init();
         __SMARTRedeemable_init();
         __SMARTPausable_init();
-        __UUPSUpgradeable_init();
         __AccessControl_init();
         __SMARTCollateral_init(collateralProofTopic_);
 
@@ -309,17 +306,6 @@ contract SMARTTokenUpgradeable is
     {
         return super._msgSender();
     }
-
-    // --- UUPS Upgradeability ---
-
-    /// @dev Authorizes an upgrade for the contract. Restricted to the owner.
-    /// @param newImplementation The address of the new implementation contract.
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        virtual
-        override(UUPSUpgradeable)
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    { }
 
     // Gap for future storage variables to allow safer upgrades.
     uint256[50] private __gap;

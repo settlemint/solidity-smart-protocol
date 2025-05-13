@@ -4,7 +4,6 @@ pragma solidity ^0.8.28;
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -30,13 +29,7 @@ import { LengthMismatch } from "../common/CommonErrors.sol";
 /// ownership/access control
 ///      contract (e.g., `OwnableUpgradeable` or `AccessControlUpgradeable`) to be inherited by the final contract for
 /// initialization and upgrades.
-abstract contract SMARTUpgradeable is
-    Initializable,
-    SMARTExtensionUpgradeable,
-    UUPSUpgradeable,
-    ERC165Upgradeable,
-    _SMARTLogic
-{
+abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, ERC165Upgradeable, _SMARTLogic {
     // -- Initializer --
     /// @notice Internal initializer for the core SMART upgradeable state.
     /// @dev Calls the internal `__SMART_init_unchained` function from `_SMARTLogic` to set up core state.
