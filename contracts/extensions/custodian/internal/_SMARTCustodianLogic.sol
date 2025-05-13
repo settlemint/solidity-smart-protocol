@@ -306,8 +306,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     /// @notice Internal logic executed before a mint operation to check recipient freeze status.
     /// @dev Called by the implementing contract's `_beforeMint` hook.
     /// @param to The recipient address.
-    //  Note: amount parameter is unused in this specific hook implementation.
-    function __custodian_beforeMintLogic(address to, uint256 /* amount */ ) internal view virtual {
+    function __custodian_beforeMintLogic(address to) internal view virtual {
         if (__frozen[to]) revert RecipientAddressFrozen();
     }
 
