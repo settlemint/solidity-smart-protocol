@@ -61,10 +61,14 @@ contract SMARTCompliance is
         // Note: Access control check (is _msgSender() the token?) might be needed depending on architecture.
         // Currently assumes only the bound token calls this.
         SMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
-        for (uint256 i = 0; i < modulePairs.length; ++i) {
+        uint256 modulePairsLength = modulePairs.length;
+        for (uint256 i = 0; i < modulePairsLength;) {
             ISMARTComplianceModule(modulePairs[i].module).transferred(
                 _token, _from, _to, _amount, modulePairs[i].params
             );
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -73,8 +77,12 @@ contract SMARTCompliance is
     ///      This function is expected to be called ONLY by the associated ISMART token contract.
     function created(address _token, address _to, uint256 _amount) external override {
         SMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
-        for (uint256 i = 0; i < modulePairs.length; ++i) {
+        uint256 modulePairsLength = modulePairs.length;
+        for (uint256 i = 0; i < modulePairsLength;) {
             ISMARTComplianceModule(modulePairs[i].module).created(_token, _to, _amount, modulePairs[i].params);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -83,8 +91,12 @@ contract SMARTCompliance is
     ///      This function is expected to be called ONLY by the associated ISMART token contract.
     function destroyed(address _token, address _from, uint256 _amount) external override {
         SMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
-        for (uint256 i = 0; i < modulePairs.length; ++i) {
+        uint256 modulePairsLength = modulePairs.length;
+        for (uint256 i = 0; i < modulePairsLength;) {
             ISMARTComplianceModule(modulePairs[i].module).destroyed(_token, _from, _amount, modulePairs[i].params);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -101,8 +113,12 @@ contract SMARTCompliance is
         virtual
         override
     {
-        for (uint256 i = 0; i < _pairs.length; ++i) {
+        uint256 pairsLength = _pairs.length;
+        for (uint256 i = 0; i < pairsLength;) {
             _validateModuleAndParams(_pairs[i].module, _pairs[i].params);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -123,11 +139,15 @@ contract SMARTCompliance is
         returns (bool)
     {
         SMARTComplianceModuleParamPair[] memory modulePairs = ISMART(_token).complianceModules();
-        for (uint256 i = 0; i < modulePairs.length; ++i) {
+        uint256 modulePairsLength = modulePairs.length;
+        for (uint256 i = 0; i < modulePairsLength;) {
             // Each module's canTransfer will revert if the check fails.
             ISMARTComplianceModule(modulePairs[i].module).canTransfer(
                 _token, _from, _to, _amount, modulePairs[i].params
             );
+            unchecked {
+                ++i;
+            }
         }
         // If no module reverted, the transfer is considered compliant by this contract.
         return true;

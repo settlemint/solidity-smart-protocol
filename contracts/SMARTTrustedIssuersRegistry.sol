@@ -118,8 +118,11 @@ contract SMARTTrustedIssuersRegistry is
 
         // Add issuer to the lookup mapping for each specified claim topic
         uint256 claimTopicsLength = _claimTopics.length;
-        for (uint256 i = 0; i < claimTopicsLength; ++i) {
+        for (uint256 i = 0; i < claimTopicsLength;) {
             _addIssuerToClaimTopic(_claimTopics[i], issuerAddress);
+            unchecked {
+                ++i;
+            }
         }
 
         emit TrustedIssuerAdded(_msgSender(), issuerAddress, _claimTopics);
@@ -138,8 +141,11 @@ contract SMARTTrustedIssuersRegistry is
 
         // Remove issuer from the lookup mapping for each of its associated claim topics
         uint256 topicsToRemoveLength = topicsToRemove.length;
-        for (uint256 i = 0; i < topicsToRemoveLength; ++i) {
+        for (uint256 i = 0; i < topicsToRemoveLength;) {
             _removeIssuerFromClaimTopic(topicsToRemove[i], issuerAddress);
+            unchecked {
+                ++i;
+            }
         }
 
         // Delete the issuer's main record
@@ -167,20 +173,26 @@ contract SMARTTrustedIssuersRegistry is
         // --- Update Topic Lookups (Simple Iteration Approach) ---
         // 1. Remove issuer from all currently associated topic lookups
         uint256 currentClaimTopicsLength = currentClaimTopics.length;
-        for (uint256 i = 0; i < currentClaimTopicsLength; ++i) {
+        for (uint256 i = 0; i < currentClaimTopicsLength;) {
             // If state is consistent, this should always succeed as we are iterating over the issuer's current topics.
             // If it reverts due to inconsistency, that's an issue to investigate.
             _removeIssuerFromClaimTopic(currentClaimTopics[i], issuerAddress);
+            unchecked {
+                ++i;
+            }
         }
 
         // 2. Add issuer to the lookup for all topics in the new list
         uint256 newClaimTopicsLength = _newClaimTopics.length;
-        for (uint256 i = 0; i < newClaimTopicsLength; ++i) {
+        for (uint256 i = 0; i < newClaimTopicsLength;) {
             // Add the issuer to the topic list. The internal function handles appending.
             // Note: This doesn't prevent duplicates in the _issuersByClaimTopic list if the same topic
             // exists multiple times in _newClaimTopics, but retrieval functions will return duplicates harmlessly.
             // The primary _trustedIssuers mapping prevents duplicate *issuer* registration.
             _addIssuerToClaimTopic(_newClaimTopics[i], issuerAddress);
+            unchecked {
+                ++i;
+            }
         }
         // --- End Update Topic Lookups ---
 
@@ -196,8 +208,11 @@ contract SMARTTrustedIssuersRegistry is
     function getTrustedIssuers() external view override returns (IClaimIssuer[] memory) {
         IClaimIssuer[] memory issuers = new IClaimIssuer[](_issuerAddresses.length);
         uint256 issuerAddressesLength = _issuerAddresses.length;
-        for (uint256 i = 0; i < issuerAddressesLength; ++i) {
+        for (uint256 i = 0; i < issuerAddressesLength;) {
             issuers[i] = IClaimIssuer(_issuerAddresses[i]);
+            unchecked {
+                ++i;
+            }
         }
         return issuers;
     }
@@ -224,8 +239,11 @@ contract SMARTTrustedIssuersRegistry is
         address[] storage issuerAddrs = _issuersByClaimTopic[claimTopic];
         IClaimIssuer[] memory issuers = new IClaimIssuer[](issuerAddrs.length);
         uint256 issuerAddrsLength = issuerAddrs.length;
-        for (uint256 i = 0; i < issuerAddrsLength; ++i) {
+        for (uint256 i = 0; i < issuerAddrsLength;) {
             issuers[i] = IClaimIssuer(issuerAddrs[i]);
+            unchecked {
+                ++i;
+            }
         }
         return issuers;
     }
@@ -279,13 +297,16 @@ contract SMARTTrustedIssuersRegistry is
     /// @dev This is used for the `_issuerAddresses` list which doesn't need an index mapping for removal.
     function _removeAddressFromList(address[] storage list, address addrToRemove) internal {
         uint256 listLength = list.length;
-        for (uint256 i = 0; i < listLength; ++i) {
+        for (uint256 i = 0; i < listLength;) {
             if (list[i] == addrToRemove) {
                 // Replace the element to remove with the last element
                 list[i] = list[listLength - 1];
                 // Remove the last element
                 list.pop();
                 return; // Exit after removing the first occurrence
+            }
+            unchecked {
+                ++i;
             }
         }
         // Should not happen if the issuer exists check passed before calling
