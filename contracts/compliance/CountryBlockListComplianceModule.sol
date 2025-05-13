@@ -40,7 +40,7 @@ contract CountryBlockListComplianceModule is AbstractCountryComplianceModule {
         external
         onlyRole(GLOBAL_LIST_MANAGER_ROLE)
     {
-        for (uint256 i = 0; i < _countries.length; i++) {
+        for (uint256 i = 0; i < _countries.length; ++i) {
             _globalBlockedCountries[_countries[i]] = _block;
         }
         emit GlobalBlockedCountriesUpdated(_countries, _block);
@@ -96,7 +96,7 @@ contract CountryBlockListComplianceModule is AbstractCountryComplianceModule {
 
         // Condition 3: Check token-specific additional blocked countries
         uint16[] memory additionalBlockedCountries = _decodeParams(_params); // Decodes uint16[]
-        for (uint256 i = 0; i < additionalBlockedCountries.length; i++) {
+        for (uint256 i = 0; i < additionalBlockedCountries.length; ++i) {
             if (additionalBlockedCountries[i] == receiverCountry) {
                 revert ComplianceCheckFailed("Receiver country blocked for token");
             }

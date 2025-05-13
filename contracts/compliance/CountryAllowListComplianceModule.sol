@@ -40,7 +40,7 @@ contract CountryAllowListComplianceModule is AbstractCountryComplianceModule {
         external
         onlyRole(GLOBAL_LIST_MANAGER_ROLE)
     {
-        for (uint256 i = 0; i < _countries.length; i++) {
+        for (uint256 i = 0; i < _countries.length; ++i) {
             _globalAllowedCountries[_countries[i]] = _allow;
         }
         emit GlobalAllowedCountriesUpdated(_countries, _allow);
@@ -96,7 +96,7 @@ contract CountryAllowListComplianceModule is AbstractCountryComplianceModule {
 
         // Condition 3: Check token-specific additional allowed countries
         uint16[] memory additionalAllowedCountries = _decodeParams(_params); // Decodes uint16[]
-        for (uint256 i = 0; i < additionalAllowedCountries.length; i++) {
+        for (uint256 i = 0; i < additionalAllowedCountries.length; ++i) {
             if (additionalAllowedCountries[i] == receiverCountry) {
                 return; // Allowed specifically for this token
             }

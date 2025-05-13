@@ -288,7 +288,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
         address sender = _smartSender();
 
         // Register initial modules and their parameters
-        for (uint256 i = 0; i < initialModulePairs_.length; i++) {
+        for (uint256 i = 0; i < initialModulePairs_.length; ++i) {
             address module = initialModulePairs_[i].module;
             bytes memory params = initialModulePairs_[i].params;
 

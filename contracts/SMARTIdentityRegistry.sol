@@ -171,7 +171,7 @@ contract SMARTIdentityRegistry is
             revert ArrayLengthMismatch();
         }
 
-        for (uint256 i = 0; i < _userAddresses.length; i++) {
+        for (uint256 i = 0; i < _userAddresses.length; ++i) {
             _registerIdentity(_userAddresses[i], _identities[i], _countries[i]);
         }
     }
@@ -201,7 +201,7 @@ contract SMARTIdentityRegistry is
 
         IIdentity identityToVerify = IIdentity(_identityStorage.storedIdentity(_userAddress));
 
-        for (uint256 i = 0; i < requiredClaimTopics.length; i++) {
+        for (uint256 i = 0; i < requiredClaimTopics.length; ++i) {
             uint256 currentTopic = requiredClaimTopics[i];
             if (currentTopic == 0) continue;
 
@@ -209,7 +209,7 @@ contract SMARTIdentityRegistry is
 
             IClaimIssuer[] memory relevantIssuers = _trustedIssuersRegistry.getTrustedIssuersForClaimTopic(currentTopic);
 
-            for (uint256 j = 0; j < relevantIssuers.length; j++) {
+            for (uint256 j = 0; j < relevantIssuers.length; ++j) {
                 IClaimIssuer relevantIssuer = relevantIssuers[j];
                 bytes32 claimId = keccak256(abi.encode(address(relevantIssuer), currentTopic));
 
