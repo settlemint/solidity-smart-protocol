@@ -65,7 +65,8 @@ abstract contract _SMARTLogic is _SMARTExtension {
     /// @param userAddress The address to mint tokens to.
     /// @param amount The amount of tokens to mint.
     function _smart_mint(address userAddress, uint256 amount) internal virtual {
-        __smart_mintLogic(userAddress, amount);
+        __smart_executeMint(userAddress, amount);
+        emit MintCompleted(_smartSender(), userAddress, amount);
     }
 
     /// @dev Mints tokens to multiple addresses in a single transaction.
@@ -77,7 +78,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
         if (toList.length != amounts.length) revert LengthMismatch();
         uint256 length = toList.length;
         for (uint256 i = 0; i < length; ++i) {
-            __smart_mintLogic(toList[i], amounts[i]);
+            _smart_mint(toList[i], amounts[i]);
         }
     }
 
@@ -85,7 +86,8 @@ abstract contract _SMARTLogic is _SMARTExtension {
     ///      Integrates SMART verification and compliance checks via hooks.
     function _smart_transfer(address to, uint256 amount) internal virtual returns (bool) {
         address sender = _smartSender();
-        __smart_transferLogic(sender, to, amount); // Calls _update -> _beforeTransfer/_afterTransfer
+        __smart_executeTransfer(sender, to, amount); // Execute the transfer// Calls _update ->
+            // _beforeTransfer/_afterTransfer
         return true;
     }
 
@@ -95,11 +97,10 @@ abstract contract _SMARTLogic is _SMARTExtension {
     /// @param amounts The amounts of tokens to transfer.
     function _smart_batchTransfer(address[] calldata toList, uint256[] calldata amounts) internal virtual {
         if (toList.length != amounts.length) revert LengthMismatch();
-        address sender = _smartSender(); // Cache sender
 
         uint256 length = toList.length;
         for (uint256 i = 0; i < length; ++i) {
-            __smart_transferLogic(sender, toList[i], amounts[i]);
+            _smart_transfer(toList[i], amounts[i]);
         }
     }
 
@@ -242,18 +243,6 @@ abstract contract _SMARTLogic is _SMARTExtension {
         }
 
         return pairs;
-    }
-
-    // -- Internal Functions --
-
-    /// @dev Internal function to perform the burn operation after authorization.
-    function __smart_mintLogic(address from, uint256 amount) private {
-        __smart_executeMint(from, amount); // Execute the burn
-        emit MintCompleted(_smartSender(), from, amount);
-    }
-
-    function __smart_transferLogic(address from, address to, uint256 amount) private {
-        __smart_executeTransfer(from, to, amount); // Execute the transfer
     }
 
     // -- Internal Setup Function --

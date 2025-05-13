@@ -29,10 +29,11 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, ISMARTBurnable {
     // -- Internal Implementation for ISMARTBurnable Interface Functions --
 
     /// @dev Internal function to perform the burn operation after authorization.
-    /// @param userAddress The address from which tokens are burned.
+    /// @param from The address from which tokens are burned.
     /// @param amount The amount of tokens to burn.
-    function _smart_burn(address userAddress, uint256 amount) internal virtual {
-        __burnable_burnLogic(userAddress, amount);
+    function _smart_burn(address from, uint256 amount) internal virtual {
+        __burnable_executeBurn(from, amount); // Execute the burn
+        emit BurnCompleted(_smartSender(), from, amount); // Emit event
     }
 
     /// @dev Internal function to perform a batch burn operation after authorization.
@@ -42,15 +43,7 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, ISMARTBurnable {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         uint256 length = userAddresses.length;
         for (uint256 i = 0; i < length; ++i) {
-            __burnable_burnLogic(userAddresses[i], amounts[i]);
+            _smart_burn(userAddresses[i], amounts[i]);
         }
-    }
-
-    // -- Internal Functions --
-
-    /// @dev Internal function to perform the burn operation after authorization.
-    function __burnable_burnLogic(address from, uint256 amount) private {
-        __burnable_executeBurn(from, amount); // Execute the burn
-        emit BurnCompleted(_smartSender(), from, amount); // Emit event
     }
 }
