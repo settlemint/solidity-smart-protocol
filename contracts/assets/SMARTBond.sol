@@ -529,15 +529,15 @@ contract SMARTBond is
         _smart_setYieldSchedule(schedule);
     }
 
-    function yieldBasisPerUnit(address) public view override returns (uint256) {
+    function yieldBasisPerUnit(address) external view override returns (uint256) {
         return faceValue();
     }
 
-    function yieldToken() public view override returns (IERC20) {
+    function yieldToken() external view override returns (IERC20) {
         return underlyingAsset();
     }
 
-    function canManageYield(address manager) public view override returns (bool) {
+    function canManageYield(address manager) external view override returns (bool) {
         return hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, manager);
     }
 
@@ -584,7 +584,7 @@ contract SMARTBond is
     /// @dev Ensures sufficient balance is maintained for redemptions if matured
     /// @param to The address to send the underlying assets to
     /// @param amount The amount of underlying assets to withdraw
-    function _withdrawUnderlyingAsset(address to, uint256 amount) internal {
+    function _withdrawUnderlyingAsset(address to, uint256 amount) private {
         if (amount == 0) revert InvalidAmount();
 
         if (isMatured) {
@@ -603,7 +603,7 @@ contract SMARTBond is
     /// @dev Divides by decimals first to prevent overflow when multiplying large numbers
     /// @param bondAmount The amount of bonds to calculate for
     /// @return The amount of underlying assets
-    function _calculateUnderlyingAmount(uint256 bondAmount) internal view returns (uint256) {
+    function _calculateUnderlyingAmount(uint256 bondAmount) private view returns (uint256) {
         return (bondAmount / (10 ** decimals())) * faceValue();
     }
 
