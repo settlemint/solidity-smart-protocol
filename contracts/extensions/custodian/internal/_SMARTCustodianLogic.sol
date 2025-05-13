@@ -79,8 +79,11 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     function _smart_batchSetAddressFrozen(address[] calldata userAddresses, bool[] calldata freeze) internal virtual {
         if (userAddresses.length != freeze.length) revert LengthMismatch();
         uint256 length = userAddresses.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length;) {
             _smart_setAddressFrozen(userAddresses[i], freeze[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -109,8 +112,11 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         uint256 length = userAddresses.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length;) {
             _smart_freezePartialTokens(userAddresses[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -138,8 +144,11 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     {
         if (userAddresses.length != amounts.length) revert LengthMismatch();
         uint256 length = userAddresses.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length;) {
             _smart_unfreezePartialTokens(userAddresses[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -189,9 +198,12 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
             revert LengthMismatch();
         }
         uint256 length = fromList.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length;) {
             // Call internal logic directly for efficiency within the loop
             _smart_forcedTransfer(fromList[i], toList[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 

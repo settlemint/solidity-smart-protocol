@@ -170,9 +170,12 @@ contract SMARTIdentityRegistry is
         if (!(_userAddresses.length == _identities.length && _identities.length == _countries.length)) {
             revert ArrayLengthMismatch();
         }
-
-        for (uint256 i = 0; i < _userAddresses.length; ++i) {
+        uint256 userAddressesLength = _userAddresses.length;
+        for (uint256 i = 0; i < userAddressesLength;) {
             _registerIdentity(_userAddresses[i], _identities[i], _countries[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -200,16 +203,21 @@ contract SMARTIdentityRegistry is
         if (requiredClaimTopics.length == 0) return true;
 
         IIdentity identityToVerify = IIdentity(_identityStorage.storedIdentity(_userAddress));
-
-        for (uint256 i = 0; i < requiredClaimTopics.length; ++i) {
+        uint256 requiredClaimTopicsLength = requiredClaimTopics.length;
+        for (uint256 i = 0; i < requiredClaimTopicsLength;) {
             uint256 currentTopic = requiredClaimTopics[i];
-            if (currentTopic == 0) continue;
+            if (currentTopic == 0) {
+                unchecked {
+                    ++i;
+                }
+                continue;
+            }
 
             bool topicVerified = false;
 
             IClaimIssuer[] memory relevantIssuers = _trustedIssuersRegistry.getTrustedIssuersForClaimTopic(currentTopic);
-
-            for (uint256 j = 0; j < relevantIssuers.length; ++j) {
+            uint256 relevantIssuersLength = relevantIssuers.length;
+            for (uint256 j = 0; j < relevantIssuersLength;) {
                 IClaimIssuer relevantIssuer = relevantIssuers[j];
                 bytes32 claimId = keccak256(abi.encode(address(relevantIssuer), currentTopic));
 
@@ -224,16 +232,31 @@ contract SMARTIdentityRegistry is
                                 break;
                             }
                         } catch {
+                            // Explicitly continue to the next issuer if isClaimValid fails
+                            unchecked {
+                                ++j;
+                            }
                             continue;
                         }
                     }
                 } catch {
+                    // Explicitly continue to the next issuer if getClaim fails
+                    unchecked {
+                        ++j;
+                    }
                     continue;
+                }
+                // Increment j only if no break or continue occurred in the try-catch blocks
+                unchecked {
+                    ++j;
                 }
             }
 
             if (!topicVerified) {
                 return false;
+            }
+            unchecked {
+                ++i;
             }
         }
 
