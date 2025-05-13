@@ -20,7 +20,7 @@ import { _SMARTHistoricalBalancesLogic } from "./internal/_SMARTHistoricalBalanc
 ///      It is intended to be inherited by a standard (non-upgradeable) `SMART` token contract.
 ///      The final contract is expected to also inherit a standard `ERC20` implementation and the core `SMART` logic.
 abstract contract SMARTHistoricalBalances is SMARTExtension, _SMARTHistoricalBalancesLogic {
-    constructor() {
+    constructor() payable {
         __SMARTHistoricalBalances_init_unchained();
     }
 

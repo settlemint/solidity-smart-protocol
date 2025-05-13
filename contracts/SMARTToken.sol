@@ -77,6 +77,7 @@ contract SMARTToken is
         uint256 collateralProofTopic_,
         address initialOwner_
     )
+        payable
         SMART(
             name_,
             symbol_,

@@ -45,7 +45,8 @@ abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
-        ERC20(name_, symbol_) // Initialize ERC20 base
+        payable
+        ERC20(name_, symbol_)
     {
         // Initialize the core SMART logic state using the internal function
         __SMART_init_unchained(

@@ -68,7 +68,7 @@ contract SMARTTokenUpgradeable is
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor() payable {
         _disableInitializers();
     }
 

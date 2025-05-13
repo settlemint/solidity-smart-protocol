@@ -14,7 +14,7 @@ import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";
 ///      from the base ERC20 contract, which must be inherited by the final contract.
 
 abstract contract SMARTBurnable is SMARTExtension, _SMARTBurnableLogic {
-    constructor() {
+    constructor() payable {
         __SMARTBurnable_init_unchained();
     }
     // -- Internal Hook Implementations (Dependencies) --

@@ -77,7 +77,7 @@ contract SMARTTrustedIssuersRegistry is
 
     // --- Constructor --- (Disable direct construction)
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address trustedForwarder) ERC2771ContextUpgradeable(trustedForwarder) {
+    constructor(address trustedForwarder) payable ERC2771ContextUpgradeable(trustedForwarder) {
         _disableInitializers();
     }
 
