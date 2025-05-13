@@ -72,6 +72,14 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         // must be called BEFORE this function in the final contract's initialize method.
     }
 
+    function transfer(address to, uint256 amount) public virtual override(ERC20Upgradeable, IERC20) returns (bool) {
+        return _smart_transfer(to, amount);
+    }
+
+    function batchTransfer(address[] calldata toList, uint256[] calldata amounts) external virtual override {
+        _smart_batchTransfer(toList, amounts);
+    }
+
     // -- Internal Hook Implementations (Dependencies) --
 
     /// @inheritdoc _SMARTLogic

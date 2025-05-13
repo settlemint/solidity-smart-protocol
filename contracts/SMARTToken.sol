@@ -153,12 +153,8 @@ contract SMARTToken is
         _smart_batchMint(_toList, _amounts);
     }
 
-    function transfer(address _to, uint256 _amount) public override(ERC20, IERC20) returns (bool) {
+    function transfer(address _to, uint256 _amount) public override(SMART, ERC20, IERC20) returns (bool) {
         return _smart_transfer(_to, _amount);
-    }
-
-    function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external override {
-        _smart_batchTransfer(_toList, _amounts);
     }
 
     function recoverERC20(address token, address to, uint256 amount) external override onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -290,16 +286,6 @@ contract SMARTToken is
 
     function unpause() external override onlyRole(PAUSER_ROLE) {
         _smart_unpause();
-    }
-
-    // --- ISMARTRedeemable Implementation ---
-
-    function redeem(uint256 amount) external override returns (bool) {
-        return _smart_redeem(amount);
-    }
-
-    function redeemAll() external override returns (bool) {
-        return _smart_redeemAll();
     }
 
     // --- View Functions (Overrides) ---

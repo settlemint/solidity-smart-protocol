@@ -35,17 +35,14 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension, ISMARTRedeemable {
 
     // -- Internal Implementation for SMARTRedeemable interface functions --
 
-    /// @dev Internal function to redeem a specific amount of tokens.
-    /// @param amount The amount of tokens to redeem.
-    /// @return true if the redemption was successful, false otherwise.
-    function _smart_redeem(uint256 amount) internal virtual returns (bool) {
+    /// @inheritdoc ISMARTRedeemable
+    function redeem(uint256 amount) external virtual returns (bool) {
         __smart_redeemLogic(amount);
         return true;
     }
 
-    /// @dev Internal function to redeem all available tokens.
-    /// @return true if the redemption was successful, false otherwise.
-    function _smart_redeemAll() internal virtual returns (bool) {
+    /// @inheritdoc ISMARTRedeemable
+    function redeemAll() external virtual returns (bool) {
         address owner = _smartSender();
         uint256 balance = __redeemable_getBalance(owner);
         __smart_redeemLogic(balance);

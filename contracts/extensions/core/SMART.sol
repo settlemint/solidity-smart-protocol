@@ -62,6 +62,14 @@ abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
         // and role granting should happen in the final concrete contract's constructor.
     }
 
+    function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
+        return _smart_transfer(to, amount);
+    }
+
+    function batchTransfer(address[] calldata toList, uint256[] calldata amounts) external virtual override {
+        _smart_batchTransfer(toList, amounts);
+    }
+
     // -- Internal Hook Implementations (Dependencies) --
 
     /// @inheritdoc _SMARTLogic
