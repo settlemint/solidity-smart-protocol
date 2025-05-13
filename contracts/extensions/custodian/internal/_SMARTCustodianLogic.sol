@@ -169,7 +169,8 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
             uint256 freeBalance = currentBalance - currentFrozen;
             if (amount > freeBalance) {
                 uint256 neededFromFrozen = amount - freeBalance;
-                __frozenTokens[from] = currentFrozen - neededFromFrozen;
+                uint256 newAmountFrozen = currentFrozen - neededFromFrozen;
+                __frozenTokens[from] = newAmountFrozen;
                 emit TokensUnfrozen(_smartSender(), from, neededFromFrozen);
             }
         }
