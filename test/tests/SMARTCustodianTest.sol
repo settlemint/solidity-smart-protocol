@@ -8,8 +8,6 @@ import { TestConstants } from "../Constants.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ISMARTCustodian } from "../../contracts/extensions/custodian/ISMARTCustodian.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { SMARTCustodianAccessControlAuthorization } from
-    "../../contracts/extensions/custodian/SMARTCustodianAccessControlAuthorization.sol";
 import {
     SenderAddressFrozen,
     RecipientAddressFrozen,
@@ -18,6 +16,7 @@ import {
     NoTokensToRecover,
     RecoveryTargetAddressFrozen
 } from "../../contracts/extensions/custodian/SMARTCustodianErrors.sol";
+import { SMARTToken } from "../../contracts/SMARTToken.sol";
 
 abstract contract SMARTCustodianTest is SMARTTest {
     // Renamed from setUp, removed override
@@ -112,7 +111,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 clientBE,
-                SMARTCustodianAccessControlAuthorization(address(token)).FREEZER_ROLE()
+                SMARTToken(address(token)).FREEZER_ROLE()
             )
         );
         tokenUtils.setAddressFrozenAsExecutor(address(token), clientBE, clientBE, true);
@@ -120,7 +119,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 clientBE,
-                SMARTCustodianAccessControlAuthorization(address(token)).FREEZER_ROLE()
+                SMARTToken(address(token)).FREEZER_ROLE()
             )
         );
         tokenUtils.setAddressFrozenAsExecutor(address(token), clientBE, clientBE, false);
@@ -354,7 +353,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 clientBE,
-                SMARTCustodianAccessControlAuthorization(address(token)).FREEZER_ROLE()
+                SMARTToken(address(token)).FREEZER_ROLE()
             )
         );
         tokenUtils.freezePartialTokensAsExecutor(address(token), clientBE, clientBE, 1 ether);
@@ -362,7 +361,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 clientBE,
-                SMARTCustodianAccessControlAuthorization(address(token)).FREEZER_ROLE()
+                SMARTToken(address(token)).FREEZER_ROLE()
             )
         );
         tokenUtils.unfreezePartialTokensAsExecutor(address(token), clientBE, clientBE, 1 ether);
@@ -537,7 +536,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 clientBE,
-                SMARTCustodianAccessControlAuthorization(address(token)).FORCED_TRANSFER_ROLE()
+                SMARTToken(address(token)).FORCED_TRANSFER_ROLE()
             )
         );
         tokenUtils.forcedTransferAsExecutor(address(token), clientBE, clientBE, clientJP, 1 ether);
@@ -648,7 +647,7 @@ abstract contract SMARTCustodianTest is SMARTTest {
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 clientJP,
-                SMARTCustodianAccessControlAuthorization(address(token)).RECOVERY_ROLE()
+                SMARTToken(address(token)).RECOVERY_ROLE()
             )
         );
         tokenUtils.recoveryAddressAsExecutor(address(token), clientJP, clientJP, newWallet, investorOnchainID);

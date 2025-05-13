@@ -149,7 +149,7 @@ contract SMARTToken is
         return _smart_transfer(_to, _amount);
     }
 
-    function recoverERC20(address token, address to, uint256 amount) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+    function recoverERC20(address token, address to, uint256 amount) external override onlyRole(TOKEN_ADMIN_ROLE) {
         _smart_recoverERC20(token, to, amount);
     }
 

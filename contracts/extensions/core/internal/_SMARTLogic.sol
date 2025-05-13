@@ -297,19 +297,13 @@ abstract contract _SMARTLogic is _SMARTExtension {
     function __smart_beforeUpdateLogic(address from, address to, uint256 amount) internal virtual {
         if (from == address(0)) {
             // Mint
-            if (!__isForcedUpdate) {
-                _beforeMint(to, amount);
-            }
+            _beforeMint(to, amount);
         } else if (to == address(0)) {
             // Burn
-            if (!__isForcedUpdate) {
-                _beforeBurn(from, amount);
-            }
+            _beforeBurn(from, amount);
         } else {
             // Transfer
-            if (!__isForcedUpdate) {
-                _beforeTransfer(from, to, amount);
-            }
+            _beforeTransfer(from, to, amount);
         }
     }
 
@@ -322,19 +316,13 @@ abstract contract _SMARTLogic is _SMARTExtension {
     function __smart_afterUpdateLogic(address from, address to, uint256 amount) internal virtual {
         if (from == address(0)) {
             // Mint
-            if (!__isForcedUpdate) {
-                _afterMint(to, amount);
-            }
+            _afterMint(to, amount);
         } else if (to == address(0)) {
             // Burn
-            if (!__isForcedUpdate) {
-                _afterBurn(from, amount);
-            }
+            _afterBurn(from, amount);
         } else {
             // Transfer
-            if (!__isForcedUpdate) {
-                _afterTransfer(from, to, amount);
-            }
+            _afterTransfer(from, to, amount);
         }
     }
 
@@ -344,8 +332,10 @@ abstract contract _SMARTLogic is _SMARTExtension {
     /// @param to The recipient address.
     /// @param amount The amount being minted.
     function __smart_beforeMintLogic(address to, uint256 amount) internal virtual {
-        if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
-        if (!__compliance.canTransfer(address(this), address(0), to, amount)) revert MintNotCompliant();
+        if (!__isForcedUpdate) {
+            if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
+            if (!__compliance.canTransfer(address(this), address(0), to, amount)) revert MintNotCompliant();
+        }
     }
 
     /// @notice Internal logic executed after a mint operation.
@@ -364,9 +354,10 @@ abstract contract _SMARTLogic is _SMARTExtension {
     /// @param to The recipient address.
     /// @param amount The amount being transferred.
     function __smart_beforeTransferLogic(address from, address to, uint256 amount) internal virtual {
-        // Note: Sender verification is implicitly handled by ERC20 balance/allowance checks.
-        if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
-        if (!__compliance.canTransfer(address(this), from, to, amount)) revert TransferNotCompliant();
+        if (!__isForcedUpdate) {
+            if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
+            if (!__compliance.canTransfer(address(this), from, to, amount)) revert TransferNotCompliant();
+        }
     }
 
     /// @notice Internal logic executed after a transfer operation.

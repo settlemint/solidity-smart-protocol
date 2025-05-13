@@ -6,8 +6,7 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ISMARTBurnable } from "../../contracts/extensions/burnable/ISMARTBurnable.sol";
-import { SMARTBurnableAccessControlAuthorization } from
-    "../../contracts/extensions/burnable/SMARTBurnableAccessControlAuthorization.sol";
+import { SMARTToken } from "../../contracts/SMARTToken.sol";
 
 abstract contract SMARTBurnableTest is SMARTTest {
     function _setUpBurnableTest() internal /* override */ {
@@ -47,7 +46,7 @@ abstract contract SMARTBurnableTest is SMARTTest {
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 clientBE,
-                SMARTBurnableAccessControlAuthorization(address(token)).BURNER_ROLE()
+                SMARTToken(address(token)).BURNER_ROLE()
             )
         );
         tokenUtils.burnTokenAsExecutor(address(token), clientBE, clientBE, 10 ether);

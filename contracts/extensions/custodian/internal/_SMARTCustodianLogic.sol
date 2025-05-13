@@ -301,15 +301,17 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     /// @param to The recipient address.
     /// @param amount The amount being transferred.
     function __custodian_beforeTransferLogic(address from, address to, uint256 amount) internal view virtual {
-        if (__frozen[from]) revert SenderAddressFrozen();
-        if (__frozen[to]) revert RecipientAddressFrozen();
+        if (!__isForcedUpdate) {
+            if (__frozen[from]) revert SenderAddressFrozen();
+            if (__frozen[to]) revert RecipientAddressFrozen();
 
-        uint256 frozenTokens = __frozenTokens[from];
-        // Check against available *unfrozen* balance
-        uint256 availableUnfrozen = __custodian_getBalance(from) - frozenTokens;
-        if (availableUnfrozen < amount) {
-            // Revert using standard ERC20 error for insufficient balance (considering frozen amount)
-            revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
+            uint256 frozenTokens = __frozenTokens[from];
+            // Check against available *unfrozen* balance
+            uint256 availableUnfrozen = __custodian_getBalance(from) - frozenTokens;
+            if (availableUnfrozen < amount) {
+                // Revert using standard ERC20 error for insufficient balance (considering frozen amount)
+                revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
+            }
         }
     }
 
@@ -321,8 +323,10 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     function __custodian_beforeBurnLogic(address from, uint256 amount) internal virtual {
         // Note: Burn operation itself needs authorization (e.g., BURNER_ROLE) handled elsewhere.
         uint256 totalBalance = __custodian_getBalance(from);
-        if (totalBalance < amount) {
-            revert IERC20Errors.ERC20InsufficientBalance(from, totalBalance, amount);
+        if (!__isForcedUpdate) {
+            if (totalBalance < amount) {
+                revert IERC20Errors.ERC20InsufficientBalance(from, totalBalance, amount);
+            }
         }
 
         uint256 currentFrozen = __frozenTokens[from];
