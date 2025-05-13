@@ -9,11 +9,11 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplianceModule.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { SMARTAccessControlAuthorization } from "../../contracts/extensions/core/SMARTAccessControlAuthorization.sol";
 import { ZeroAddressNotAllowed } from "../../contracts/extensions/common/CommonErrors.sol";
 import { CannotRecoverSelf, InsufficientTokenBalance } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { TokenRecovered } from "../../contracts/extensions/core/SMARTEvents.sol";
 import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
+import { SMARTToken } from "../../contracts/SMARTToken.sol";
 
 abstract contract SMARTCoreTest is SMARTTest {
     using SafeERC20 for IERC20;
@@ -55,7 +55,7 @@ abstract contract SMARTCoreTest is SMARTTest {
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 clientBE,
-                SMARTAccessControlAuthorization(address(token)).MINTER_ROLE()
+                SMARTToken(address(token)).MINTER_ROLE()
             )
         );
         token.mint(clientBE, 100 ether);
@@ -153,7 +153,7 @@ abstract contract SMARTCoreTest is SMARTTest {
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 clientJP,
-                SMARTAccessControlAuthorization(address(token)).TOKEN_ADMIN_ROLE()
+                SMARTToken(address(token)).TOKEN_ADMIN_ROLE()
             )
         );
         tokenUtils.recoverERC20Token(address(token), clientJP, address(mockForeignToken), clientBE, amountToRecover);

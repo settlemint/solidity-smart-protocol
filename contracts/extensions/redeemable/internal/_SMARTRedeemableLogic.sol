@@ -17,26 +17,6 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension, ISMARTRedeemable {
         _registerInterface(type(ISMARTRedeemable).interfaceId);
     }
 
-    // -- State-Changing Functions --
-
-    /// @inheritdoc ISMARTRedeemable
-    function redeem(uint256 amount) public virtual override returns (bool) {
-        address owner = _smartSender();
-        _beforeRedeem(owner, amount); // Standard SMARTHook
-        _redeem(owner, amount); // Abstract burn execution
-        _afterRedeem(owner, amount); // Standard SMARTHook
-
-        emit Redeemed(owner, amount);
-        return true;
-    }
-
-    /// @inheritdoc ISMARTRedeemable
-    function redeemAll() external virtual override returns (bool) {
-        address owner = _smartSender();
-        uint256 balance = _getRedeemableBalance(owner);
-        return redeem(balance);
-    }
-
     // -- Abstract Functions (Dependencies) --
 
     /// @notice Abstract function to retrieve the token balance of an account.
@@ -44,12 +24,38 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension, ISMARTRedeemable {
     /// ERC20/ERC20Upgradeable.balanceOf).
     /// @param account The address whose balance is queried.
     /// @return The token balance of the account.
-    function _getRedeemableBalance(address account) internal view virtual returns (uint256);
+    function __redeemable_getBalance(address account) internal view virtual returns (uint256);
 
     /// @notice Abstract function representing the actual token burning mechanism.
     /// @dev Must be implemented by inheriting contracts to interact with the base token contract's burn function (e.g.,
     /// ERC20Burnable._burn).
     /// @param from The address whose tokens are being burned (the redeemer).
     /// @param amount The amount of tokens to burn.
-    function _redeem(address from, uint256 amount) internal virtual;
+    function __redeemable_redeem(address from, uint256 amount) internal virtual;
+
+    // -- Internal Implementation for SMARTRedeemable interface functions --
+
+    /// @inheritdoc ISMARTRedeemable
+    function redeem(uint256 amount) external virtual returns (bool) {
+        __smart_redeemLogic(amount);
+        return true;
+    }
+
+    /// @inheritdoc ISMARTRedeemable
+    function redeemAll() external virtual returns (bool) {
+        address owner = _smartSender();
+        uint256 balance = __redeemable_getBalance(owner);
+        __smart_redeemLogic(balance);
+        return true;
+    }
+
+    // -- Internal Functions --
+    function __smart_redeemLogic(uint256 amount) internal virtual {
+        address owner = _smartSender();
+        _beforeRedeem(owner, amount); // Standard SMARTHook
+        __redeemable_redeem(owner, amount); // Abstract burn execution
+        _afterRedeem(owner, amount); // Standard SMARTHook
+
+        emit Redeemed(owner, amount);
+    }
 }

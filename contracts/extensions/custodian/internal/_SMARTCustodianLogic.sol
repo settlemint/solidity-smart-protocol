@@ -12,7 +12,6 @@ import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistr
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 
 // Internal implementation imports
-import { _SMARTCustodianAuthorizationHooks } from "./_SMARTCustodianAuthorizationHooks.sol";
 import { LengthMismatch } from "./../../common/CommonErrors.sol";
 import {
     FreezeAmountExceedsAvailableBalance,
@@ -31,7 +30,7 @@ import { ISMARTCustodian } from "../ISMARTCustodian.sol";
 /// @dev This abstract contract is intended to be inherited by both standard (SMARTCustodian) and upgradeable
 ///      (SMARTCustodianUpgradeable) implementations. It defines shared state, logic, and hooks.
 
-abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMARTCustodianAuthorizationHooks {
+abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     // -- Storage Variables --
     /// @notice Mapping from address to its frozen status (true if frozen, false otherwise).
     mapping(address => bool) internal __frozen;
@@ -54,7 +53,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
     /// ERC20/ERC20Upgradeable.balanceOf).
     /// @param account The address whose balance is queried.
     /// @return The token balance of the account.
-    function _getBalance(address account) internal view virtual returns (uint256);
+    function __custodian_getBalance(address account) internal view virtual returns (uint256);
 
     /// @notice Abstract function to execute the underlying token transfer logic.
     /// @dev Must be implemented by inheriting contracts to call the appropriate update/transfer function (e.g.,
@@ -62,139 +61,38 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
     /// @param from The sender address.
     /// @param to The recipient address.
     /// @param amount The amount to transfer.
-    function _executeTransferUpdate(address from, address to, uint256 amount) internal virtual;
+    function __custodian_executeTransferUpdate(address from, address to, uint256 amount) internal virtual;
 
-    // -- State-Changing Functions (Admin/Authorized) --
+    // -- Internal Implementation for SMARTCustodian interface functions --
 
-    /// @inheritdoc ISMARTCustodian
-    function setAddressFrozen(address userAddress, bool freeze) external virtual override {
-        _setAddressFrozen(userAddress, freeze);
-    }
-
-    /// @inheritdoc ISMARTCustodian
-    function freezePartialTokens(address userAddress, uint256 amount) external virtual override {
-        _freezePartialTokens(userAddress, amount);
-    }
-
-    /// @inheritdoc ISMARTCustodian
-    function unfreezePartialTokens(address userAddress, uint256 amount) external virtual override {
-        // Consider if unfreezing should use the same role as freezing or a different one.
-        // Using _authorizeFreezePartialTokens for now, adjust if separate permission is needed.
-        _authorizeFreezePartialTokens();
-        _unfreezePartialTokensLogic(userAddress, amount);
-    }
-
-    /// @inheritdoc ISMARTCustodian
-    function batchSetAddressFrozen(
-        address[] calldata userAddresses,
-        bool[] calldata freeze
-    )
-        external
-        virtual
-        override
-    {
-        if (userAddresses.length != freeze.length) revert LengthMismatch();
-        for (uint256 i = 0; i < userAddresses.length; i++) {
-            _setAddressFrozen(userAddresses[i], freeze[i]);
-        }
-    }
-
-    /// @inheritdoc ISMARTCustodian
-    function batchFreezePartialTokens(
-        address[] calldata userAddresses,
-        uint256[] calldata amounts
-    )
-        external
-        virtual
-        override
-    {
-        if (userAddresses.length != amounts.length) revert LengthMismatch();
-        for (uint256 i = 0; i < userAddresses.length; i++) {
-            _freezePartialTokens(userAddresses[i], amounts[i]);
-        }
-    }
-
-    /// @inheritdoc ISMARTCustodian
-    function batchUnfreezePartialTokens(
-        address[] calldata userAddresses,
-        uint256[] calldata amounts
-    )
-        external
-        virtual
-    {
-        if (userAddresses.length != amounts.length) revert LengthMismatch();
-        // Consider if unfreezing should use the same role as freezing or a different one.
-        _authorizeFreezePartialTokens(); // Check auth once for the batch
-        for (uint256 i = 0; i < userAddresses.length; i++) {
-            _unfreezePartialTokensLogic(userAddresses[i], amounts[i]);
-        }
-    }
-
-    /// @inheritdoc ISMARTCustodian
-    function forcedTransfer(address from, address to, uint256 amount) external virtual override returns (bool) {
-        _forcedTransfer(from, to, amount);
-        return true;
-    }
-
-    /// @inheritdoc ISMARTCustodian
-    function batchForcedTransfer(
-        address[] calldata fromList,
-        address[] calldata toList,
-        uint256[] calldata amounts
-    )
-        external
-        virtual
-    {
-        if (!((fromList.length == toList.length) && (toList.length == amounts.length))) {
-            revert LengthMismatch();
-        }
-        _authorizeForcedTransfer(); // Check auth once for the batch
-        for (uint256 i = 0; i < fromList.length; i++) {
-            // Call internal logic directly for efficiency within the loop
-            _forcedTransferLogic(fromList[i], toList[i], amounts[i]);
-        }
-    }
-
-    /// @inheritdoc ISMARTCustodian
-    function recoveryAddress(
-        address lostWallet,
-        address newWallet,
-        address investorOnchainID
-    )
-        external
-        virtual
-        returns (bool)
-    {
-        _recoveryAddress(lostWallet, newWallet, investorOnchainID);
-        return true;
-    }
-
-    // -- View Functions --
-
-    /// @inheritdoc ISMARTCustodian
-    function isFrozen(address userAddress) external view virtual override returns (bool) {
-        return __frozen[userAddress];
-    }
-
-    /// @inheritdoc ISMARTCustodian
-    function getFrozenTokens(address userAddress) external view virtual override returns (uint256) {
-        return __frozenTokens[userAddress];
-    }
-
-    // -- Internal Functions --
-
-    /// @dev Internal logic to set the frozen status of an address.
-    function _setAddressFrozen(address userAddress, bool freeze) internal virtual {
-        _authorizeFreezeAddress();
+    /// @dev Internal function to set the frozen status of an address.
+    /// @param userAddress The address to set the frozen status for.
+    /// @param freeze The new frozen status.
+    function _smart_setAddressFrozen(address userAddress, bool freeze) internal virtual {
         __frozen[userAddress] = freeze;
         emit AddressFrozen(_smartSender(), userAddress, freeze);
     }
 
-    /// @dev Internal logic to freeze a partial amount of tokens.
-    function _freezePartialTokens(address userAddress, uint256 amount) internal virtual {
-        _authorizeFreezePartialTokens();
+    /// @dev Internal function to set the frozen status of multiple addresses.
+    /// @param userAddresses The addresses to set the frozen status for.
+    /// @param freeze The new frozen status.
+    function _smart_batchSetAddressFrozen(address[] calldata userAddresses, bool[] calldata freeze) internal virtual {
+        if (userAddresses.length != freeze.length) revert LengthMismatch();
+        uint256 length = userAddresses.length;
+        for (uint256 i = 0; i < length;) {
+            _smart_setAddressFrozen(userAddresses[i], freeze[i]);
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /// @dev Internal function to freeze a partial amount of tokens for an address.
+    /// @param userAddress The address to freeze the tokens for.
+    /// @param amount The amount of tokens to freeze.
+    function _smart_freezePartialTokens(address userAddress, uint256 amount) internal virtual {
         uint256 currentFrozen = __frozenTokens[userAddress];
-        uint256 availableBalance = _getBalance(userAddress) - currentFrozen;
+        uint256 availableBalance = __custodian_getBalance(userAddress) - currentFrozen;
         if (availableBalance < amount) {
             revert FreezeAmountExceedsAvailableBalance(availableBalance, amount);
         }
@@ -202,8 +100,30 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
         emit TokensFrozen(_smartSender(), userAddress, amount);
     }
 
-    /// @dev Internal core logic to unfreeze a partial amount of tokens (without auth check).
-    function _unfreezePartialTokensLogic(address userAddress, uint256 amount) internal virtual {
+    /// @dev Internal function to freeze a partial amount of tokens for multiple addresses.
+    /// @param userAddresses The addresses to freeze the tokens for.
+    /// @param amounts The amounts of tokens to freeze.
+    function _smart_batchFreezePartialTokens(
+        address[] calldata userAddresses,
+        uint256[] calldata amounts
+    )
+        internal
+        virtual
+    {
+        if (userAddresses.length != amounts.length) revert LengthMismatch();
+        uint256 length = userAddresses.length;
+        for (uint256 i = 0; i < length;) {
+            _smart_freezePartialTokens(userAddresses[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /// @dev Internal function to unfreeze a partial amount of tokens for an address.
+    /// @param userAddress The address to unfreeze the tokens for.
+    /// @param amount The amount of tokens to unfreeze.
+    function _smart_unfreezePartialTokens(address userAddress, uint256 amount) internal virtual {
         uint256 currentFrozen = __frozenTokens[userAddress];
         if (currentFrozen < amount) {
             revert InsufficientFrozenTokens(currentFrozen, amount);
@@ -212,18 +132,35 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
         emit TokensUnfrozen(_smartSender(), userAddress, amount);
     }
 
-    /// @dev Internal logic wrapper for a single forced transfer.
-    function _forcedTransfer(address from, address to, uint256 amount) internal virtual {
-        _authorizeForcedTransfer();
-        _forcedTransferLogic(from, to, amount);
+    /// @dev Internal function to unfreeze a partial amount of tokens for multiple addresses.
+    /// @param userAddresses The addresses to unfreeze the tokens for.
+    /// @param amounts The amounts of tokens to unfreeze.
+    function _smart_batchUnfreezePartialTokens(
+        address[] calldata userAddresses,
+        uint256[] calldata amounts
+    )
+        internal
+        virtual
+    {
+        if (userAddresses.length != amounts.length) revert LengthMismatch();
+        uint256 length = userAddresses.length;
+        for (uint256 i = 0; i < length;) {
+            _smart_unfreezePartialTokens(userAddresses[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
+        }
     }
 
-    /// @dev Internal core logic for a single forced transfer (without auth check).
-    function _forcedTransferLogic(address from, address to, uint256 amount) internal virtual {
+    /// @dev Internal function to force a transfer.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount to transfer.
+    function _smart_forcedTransfer(address from, address to, uint256 amount) internal virtual returns (bool) {
         // Note: Core validation (frozen checks) should ideally happen *before* calling this,
         // potentially in overridden _beforeTransfer hooks, but forcedTransfer bypasses those.
         // Direct balance check is necessary here.
-        uint256 currentBalance = _getBalance(from);
+        uint256 currentBalance = __custodian_getBalance(from);
         if (currentBalance < amount) revert IERC20Errors.ERC20InsufficientBalance(from, currentBalance, amount);
 
         // Unfreeze tokens if needed
@@ -239,19 +176,51 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
 
         // Execute transfer bypassing hooks
         __isForcedUpdate = true;
-        _executeTransferUpdate(from, to, amount);
+        __custodian_executeTransferUpdate(from, to, amount);
         __isForcedUpdate = false;
+
+        return true;
     }
 
-    /// @dev Internal logic wrapper for address recovery.
-    function _recoveryAddress(address lostWallet, address newWallet, address investorOnchainID) internal virtual {
-        _authorizeRecoveryAddress();
-        _recoveryAddressLogic(lostWallet, newWallet, investorOnchainID);
+    /// @dev Internal function to force a transfer for multiple addresses.
+    /// @param fromList The sender addresses.
+    /// @param toList The recipient addresses.
+    /// @param amounts The amounts to transfer.
+    function _smart_batchForcedTransfer(
+        address[] calldata fromList,
+        address[] calldata toList,
+        uint256[] calldata amounts
+    )
+        internal
+        virtual
+    {
+        if (!((fromList.length == toList.length) && (toList.length == amounts.length))) {
+            revert LengthMismatch();
+        }
+        uint256 length = fromList.length;
+        for (uint256 i = 0; i < length;) {
+            // Call internal logic directly for efficiency within the loop
+            _smart_forcedTransfer(fromList[i], toList[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
+        }
     }
 
-    /// @dev Internal core logic for address recovery (without auth check).
-    function _recoveryAddressLogic(address lostWallet, address newWallet, address investorOnchainID) internal virtual {
-        uint256 balance = _getBalance(lostWallet);
+    /// @dev Internal function to recover an address.
+    /// @param lostWallet The lost wallet address.
+    /// @param newWallet The new wallet address.
+    /// @param investorOnchainID The investor onchain ID.
+    function _smart_recoveryAddress(
+        address lostWallet,
+        address newWallet,
+        address investorOnchainID
+    )
+        internal
+        virtual
+        returns (bool)
+    {
+        uint256 balance = __custodian_getBalance(lostWallet);
         if (balance == 0) revert NoTokensToRecover();
 
         ISMARTIdentityRegistry registry = this.identityRegistry();
@@ -272,7 +241,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
 
         // Execute transfer bypassing hooks
         __isForcedUpdate = true;
-        _executeTransferUpdate(lostWallet, newWallet, balance);
+        __custodian_executeTransferUpdate(lostWallet, newWallet, balance);
         __isForcedUpdate = false;
 
         // Transfer frozen tokens state
@@ -312,6 +281,20 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
             // If lost wallet wasn't verified, but new one is, we don't need to do anything
             // If neither were verified initially, this state is unreachable due to the check above.
         }
+
+        return true;
+    }
+
+    // -- View Functions --
+
+    /// @inheritdoc ISMARTCustodian
+    function isFrozen(address userAddress) external view virtual override returns (bool) {
+        return __frozen[userAddress];
+    }
+
+    /// @inheritdoc ISMARTCustodian
+    function getFrozenTokens(address userAddress) external view virtual override returns (uint256) {
+        return __frozenTokens[userAddress];
     }
 
     // -- Internal Hook Helper Functions --
@@ -320,7 +303,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
     /// @dev Called by the implementing contract's `_beforeMint` hook.
     /// @param to The recipient address.
     //  Note: amount parameter is unused in this specific hook implementation.
-    function _custodian_beforeMintLogic(address to, uint256 /* amount */ ) internal view virtual {
+    function __custodian_beforeMintLogic(address to, uint256 /* amount */ ) internal view virtual {
         if (__frozen[to]) revert RecipientAddressFrozen();
     }
 
@@ -329,16 +312,18 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
     /// @param from The sender address.
     /// @param to The recipient address.
     /// @param amount The amount being transferred.
-    function _custodian_beforeTransferLogic(address from, address to, uint256 amount) internal view virtual {
-        if (__frozen[from]) revert SenderAddressFrozen();
-        if (__frozen[to]) revert RecipientAddressFrozen();
+    function __custodian_beforeTransferLogic(address from, address to, uint256 amount) internal view virtual {
+        if (!__isForcedUpdate) {
+            if (__frozen[from]) revert SenderAddressFrozen();
+            if (__frozen[to]) revert RecipientAddressFrozen();
 
-        uint256 frozenTokens = __frozenTokens[from];
-        // Check against available *unfrozen* balance
-        uint256 availableUnfrozen = _getBalance(from) - frozenTokens;
-        if (availableUnfrozen < amount) {
-            // Revert using standard ERC20 error for insufficient balance (considering frozen amount)
-            revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
+            uint256 frozenTokens = __frozenTokens[from];
+            // Check against available *unfrozen* balance
+            uint256 availableUnfrozen = __custodian_getBalance(from) - frozenTokens;
+            if (availableUnfrozen < amount) {
+                // Revert using standard ERC20 error for insufficient balance (considering frozen amount)
+                revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
+            }
         }
     }
 
@@ -347,11 +332,13 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
     ///      Called by the implementing contract's `_beforeBurn` hook.
     /// @param from The address whose tokens are being burned.
     /// @param amount The amount being burned.
-    function _custodian_beforeBurnLogic(address from, uint256 amount) internal virtual {
+    function __custodian_beforeBurnLogic(address from, uint256 amount) internal virtual {
         // Note: Burn operation itself needs authorization (e.g., BURNER_ROLE) handled elsewhere.
-        uint256 totalBalance = _getBalance(from);
-        if (totalBalance < amount) {
-            revert IERC20Errors.ERC20InsufficientBalance(from, totalBalance, amount);
+        uint256 totalBalance = __custodian_getBalance(from);
+        if (!__isForcedUpdate) {
+            if (totalBalance < amount) {
+                revert IERC20Errors.ERC20InsufficientBalance(from, totalBalance, amount);
+            }
         }
 
         uint256 currentFrozen = __frozenTokens[from];
@@ -361,7 +348,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
                 // Amount requires dipping into frozen tokens, so unfreeze the difference.
                 uint256 tokensToUnfreeze = amount - freeBalance;
                 // The total balance check above ensures currentFrozen >= tokensToUnfreeze
-                _unfreezePartialTokensLogic(from, tokensToUnfreeze); // Use internal logic directly
+                _smart_unfreezePartialTokens(from, tokensToUnfreeze); // Use internal logic directly
             }
         }
         // The actual _burn should occur after this hook in the inheriting contract.
@@ -372,11 +359,11 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian, _SMA
     ///      Called by the implementing contract's `_beforeRedeem` hook.
     /// @param from The address redeeming tokens.
     /// @param amount The amount being redeemed.
-    function _custodian_beforeRedeemLogic(address from, uint256 amount) internal view virtual {
+    function __custodian_beforeRedeemLogic(address from, uint256 amount) internal view virtual {
         if (__frozen[from]) revert SenderAddressFrozen();
 
         uint256 frozenTokens = __frozenTokens[from];
-        uint256 availableUnfrozen = _getBalance(from) - frozenTokens;
+        uint256 availableUnfrozen = __custodian_getBalance(from) - frozenTokens;
         if (availableUnfrozen < amount) {
             revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
         }

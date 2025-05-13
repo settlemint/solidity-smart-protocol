@@ -27,13 +27,7 @@ interface ISMART is IERC20, IERC20Metadata {
     /// @notice Emitted when the main compliance contract address is updated.
     event ComplianceAdded(address indexed sender, address indexed _compliance);
     /// @notice Emitted when core token information (name, symbol, decimals, onchainID) is updated.
-    event UpdatedTokenInformation(
-        address indexed sender,
-        string indexed _newName,
-        string _newSymbol,
-        uint8 _newDecimals,
-        address indexed _newOnchainID
-    );
+    event UpdatedTokenInformation(address indexed sender, uint8 _newDecimals, address indexed _newOnchainID);
     /// @notice Emitted when a new compliance module is added to the token.
     event ComplianceModuleAdded(address indexed sender, address indexed _module, bytes _params);
     /// @notice Emitted when a compliance module is removed from the token.
@@ -48,14 +42,6 @@ interface ISMART is IERC20, IERC20Metadata {
     event MintCompleted(address indexed sender, address indexed to, uint256 amount);
 
     // --- Configuration Setters (Admin/Authorized) ---
-
-    /// @notice Updates the token name.
-    /// @param _name The new token name.
-    function setName(string calldata _name) external;
-
-    /// @notice Updates the token symbol.
-    /// @param _symbol The new token symbol.
-    function setSymbol(string calldata _symbol) external;
 
     /// @notice Sets or updates the optional on-chain identifier address associated with the token.
     /// @param _onchainID The address of the on-chain ID contract.
@@ -93,11 +79,26 @@ interface ISMART is IERC20, IERC20Metadata {
     /// @param _amounts An array of corresponding token amounts.
     function batchMint(address[] calldata _toList, uint256[] calldata _amounts) external;
 
+    /// @notice Transfers tokens from the caller to a specified address.
+    /// @dev Implementations perform verification/compliance checks.
+    /// @param _to The address to transfer tokens to.
+    /// @param _amount The amount of tokens to transfer.
+    //TODO
+    // function transfer(address _to, uint256 _amount) external returns (bool);
+
     /// @notice Transfers tokens from the caller to multiple addresses in a batch.
     /// @dev Implementations perform verification/compliance checks for each recipient.
     /// @param _toList An array of recipient addresses.
     /// @param _amounts An array of corresponding token amounts.
     function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external;
+
+    /// @notice Recovers mistakenly sent ERC20 tokens from this contract's address.
+    /// @dev Requires authorization via `_authorizeRecoverERC20`. Cannot recover this contract's own token.
+    ///      Uses SafeERC20's safeTransfer.
+    /// @param token The address of the ERC20 token to recover.
+    /// @param to The recipient address for the recovered tokens.
+    /// @param amount The amount of tokens to recover.
+    function recoverERC20(address token, address to, uint256 amount) external;
 
     // --- Compliance Module Management & Validation (Admin/Authorized) ---
 

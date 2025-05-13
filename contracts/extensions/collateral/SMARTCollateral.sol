@@ -32,7 +32,7 @@ abstract contract SMARTCollateral is SMARTExtension, _SMARTCollateralLogic {
     ///      Calls `super._beforeMint` to ensure other potential hook implementations are executed.
     /// @inheritdoc SMARTHooks
     function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _collateral_beforeMintLogic(amount); // Check collateral claim against required total supply
+        __collateral_beforeMintLogic(amount); // Check collateral claim against required total supply
         super._beforeMint(to, amount); // Call the next hook in the inheritance chain
     }
 }

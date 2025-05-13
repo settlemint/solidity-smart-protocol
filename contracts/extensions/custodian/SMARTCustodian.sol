@@ -23,7 +23,7 @@ import { LengthMismatch } from "./../common/CommonErrors.sol";
 abstract contract SMARTCustodian is SMARTExtension, _SMARTCustodianLogic {
     // Note: Assumes the final contract inherits ERC20 and SMART
 
-    constructor() {
+    constructor() payable {
         __SMARTCustodian_init_unchained();
     }
 
@@ -31,13 +31,13 @@ abstract contract SMARTCustodian is SMARTExtension, _SMARTCustodianLogic {
 
     /// @notice Implementation of the abstract balance getter using standard ERC20.balanceOf.
     /// @inheritdoc _SMARTCustodianLogic
-    function _getBalance(address account) internal view virtual override returns (uint256) {
+    function __custodian_getBalance(address account) internal view virtual override returns (uint256) {
         return balanceOf(account); // Assumes ERC20.balanceOf is available
     }
 
     /// @notice Implementation of the abstract transfer executor using standard ERC20._update.
     /// @inheritdoc _SMARTCustodianLogic
-    function _executeTransferUpdate(address from, address to, uint256 amount) internal virtual override {
+    function __custodian_executeTransferUpdate(address from, address to, uint256 amount) internal virtual override {
         _update(from, to, amount); // Assumes ERC20._update is available and overridden by SMART to handle hooks
     }
 
@@ -46,28 +46,28 @@ abstract contract SMARTCustodian is SMARTExtension, _SMARTCustodianLogic {
     /// @inheritdoc SMARTHooks
     /// @dev Adds check to prevent minting to a frozen address.
     function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_beforeMintLogic(to, amount);
+        __custodian_beforeMintLogic(to, amount);
         super._beforeMint(to, amount); // Call next hook in the chain
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Adds checks for frozen sender/recipient and sufficient unfrozen balance.
     function _beforeTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_beforeTransferLogic(from, to, amount);
+        __custodian_beforeTransferLogic(from, to, amount);
         super._beforeTransfer(from, to, amount); // Call next hook in the chain
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Adds logic to automatically unfreeze tokens if a burn requires them (for admin burns).
     function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_beforeBurnLogic(from, amount);
+        __custodian_beforeBurnLogic(from, amount);
         super._beforeBurn(from, amount); // Call next hook in the chain
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Adds checks for frozen sender and sufficient unfrozen balance (for user-initiated redeems).
     function _beforeRedeem(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _custodian_beforeRedeemLogic(from, amount);
+        __custodian_beforeRedeemLogic(from, amount);
         super._beforeRedeem(from, amount); // Call next hook in the chain
     }
 }

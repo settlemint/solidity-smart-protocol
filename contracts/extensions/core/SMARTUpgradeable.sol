@@ -4,7 +4,6 @@ pragma solidity ^0.8.28;
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -30,13 +29,7 @@ import { LengthMismatch } from "../common/CommonErrors.sol";
 /// ownership/access control
 ///      contract (e.g., `OwnableUpgradeable` or `AccessControlUpgradeable`) to be inherited by the final contract for
 /// initialization and upgrades.
-abstract contract SMARTUpgradeable is
-    Initializable,
-    SMARTExtensionUpgradeable,
-    UUPSUpgradeable,
-    ERC165Upgradeable,
-    _SMARTLogic
-{
+abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, ERC165Upgradeable, _SMARTLogic {
     // -- Initializer --
     /// @notice Internal initializer for the core SMART upgradeable state.
     /// @dev Calls the internal `__SMART_init_unchained` function from `_SMARTLogic` to set up core state.
@@ -64,75 +57,36 @@ abstract contract SMARTUpgradeable is
         internal
         onlyInitializing // Ensures this logic runs only during the initialization phase
     {
+        __ERC20_init(name_, symbol_);
         // Initialize the core SMART logic state via the base logic contract
         __SMART_init_unchained(
-            name_,
-            symbol_,
-            decimals_,
-            onchainID_,
-            identityRegistry_,
-            compliance_,
-            requiredClaimTopics_,
-            initialModulePairs_
+            decimals_, onchainID_, identityRegistry_, compliance_, requiredClaimTopics_, initialModulePairs_
         );
         // Note: ERC20Upgradeable, UUPSUpgradeable, and AccessControl/Ownable initializers
         // must be called BEFORE this function in the final contract's initialize method.
     }
 
-    // -- State-Changing Functions (Admin/Authorized) --
-
-    /// @inheritdoc ISMART
-    /// @dev Mints new tokens to a specified address.
-    ///      Requires authorization via `_authorizeMintToken` (typically MINTER_ROLE).
-    ///      Includes compliance and verification checks via `_beforeMint` hook.
-    function mint(address to, uint256 amount) external virtual override {
-        _mint(to, amount); // Calls _update -> _beforeMint -> _smart_beforeMintLogic (auth check)
-    }
-
-    /// @inheritdoc ISMART
-    /// @dev Mints tokens to multiple addresses in a single transaction.
-    ///      Requires authorization via `_authorizeMintToken` for each mint.
-    ///      Includes compliance and verification checks via `_beforeMint` hook for each mint.
-    function batchMint(address[] calldata toList, uint256[] calldata amounts) external virtual override {
-        if (toList.length != amounts.length) revert LengthMismatch();
-        for (uint256 i = 0; i < toList.length; i++) {
-            _mint(toList[i], amounts[i]);
-        }
-    }
-
-    // -- State-Changing Functions (Public/ERC20 Overrides) --
-
-    /// @inheritdoc ERC20Upgradeable
-    /// @dev Overrides ERC20Upgradeable.transfer to integrate SMART verification and compliance checks via hooks.
     function transfer(address to, uint256 amount) public virtual override(ERC20Upgradeable, IERC20) returns (bool) {
-        address sender = _msgSender();
-        // Note: We call super._transfer directly here as it calls the overridden _update internally.
-        super._transfer(sender, to, amount);
-        return true;
+        return _smart_transfer(to, amount);
     }
 
-    /// @inheritdoc ISMART
-    /// @dev Performs multiple transfers from the caller in a single transaction.
-    ///      Integrates SMART verification and compliance checks for each transfer via hooks.
     function batchTransfer(address[] calldata toList, uint256[] calldata amounts) external virtual override {
-        if (toList.length != amounts.length) revert LengthMismatch();
-        address sender = _msgSender();
-        for (uint256 i = 0; i < toList.length; i++) {
-            super._transfer(sender, toList[i], amounts[i]);
-        }
+        _smart_batchTransfer(toList, amounts);
+    }
+
+    // -- Internal Hook Implementations (Dependencies) --
+
+    /// @inheritdoc _SMARTLogic
+    function __smart_executeMint(address from, uint256 amount) internal virtual override {
+        _mint(from, amount);
+    }
+
+    /// @inheritdoc _SMARTLogic
+    function __smart_executeTransfer(address from, address to, uint256 amount) internal virtual override {
+        _transfer(from, to, amount);
     }
 
     // -- View Functions (ERC20 Overrides) --
-
-    /// @inheritdoc ERC20Upgradeable
-    function name() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
-        return __name; // Return mutable name from _SMARTLogic state
-    }
-
-    /// @inheritdoc ERC20Upgradeable
-    function symbol() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
-        return __symbol; // Return mutable symbol from _SMARTLogic state
-    }
 
     /// @inheritdoc ERC20Upgradeable
     function decimals() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (uint8) {
@@ -152,43 +106,43 @@ abstract contract SMARTUpgradeable is
      * @param value The amount being transferred/minted/burned.
      */
     function _update(address from, address to, uint256 value) internal virtual override(ERC20Upgradeable) {
-        _smart_beforeUpdateLogic(from, to, value);
+        __smart_beforeUpdateLogic(from, to, value);
         super._update(from, to, value); // Perform ERC20 update
-        _smart_afterUpdateLogic(from, to, value);
+        __smart_afterUpdateLogic(from, to, value);
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Calls the core SMART minting logic check before proceeding.
     function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_beforeMintLogic(to, amount);
+        __smart_beforeMintLogic(to, amount);
         super._beforeMint(to, amount); // Allow further extension hooks
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Calls the core SMART minting logic notification after completion.
     function _afterMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_afterMintLogic(to, amount);
+        __smart_afterMintLogic(to, amount);
         super._afterMint(to, amount); // Allow further extension hooks
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Calls the core SMART transfer logic check before proceeding.
     function _beforeTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_beforeTransferLogic(from, to, amount);
+        __smart_beforeTransferLogic(from, to, amount);
         super._beforeTransfer(from, to, amount); // Allow further extension hooks
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Calls the core SMART transfer logic notification after completion.
     function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_afterTransferLogic(from, to, amount);
+        __smart_afterTransferLogic(from, to, amount);
         super._afterTransfer(from, to, amount); // Allow further extension hooks
     }
 
     /// @inheritdoc SMARTHooks
     /// @dev Calls the core SMART burn logic notification after completion.
     function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        _smart_afterBurnLogic(from, amount);
+        __smart_afterBurnLogic(from, amount);
         super._afterBurn(from, amount); // Allow further extension hooks
     }
 
@@ -204,6 +158,6 @@ abstract contract SMARTUpgradeable is
      * @return `true` if the contract implements `interfaceId` and `interfaceId` is not 0xffffffff, `false` otherwise.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
-        return _smart_supportsInterface(interfaceId) || super.supportsInterface(interfaceId);
+        return __smart_supportsInterface(interfaceId) || super.supportsInterface(interfaceId);
     }
 }

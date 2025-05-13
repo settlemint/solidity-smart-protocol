@@ -65,7 +65,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Acces
 
     // --- Constructor --- (Disable direct construction)
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address trustedForwarder) ERC2771ContextUpgradeable(trustedForwarder) {
+    constructor(address trustedForwarder) payable ERC2771ContextUpgradeable(trustedForwarder) {
         _disableInitializers();
     }
 
@@ -112,9 +112,13 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Acces
 
         // Add specified management keys
         if (_managementKeys.length > 0) {
-            for (uint256 i = 0; i < _managementKeys.length; i++) {
+            uint256 managementKeysLength = _managementKeys.length;
+            for (uint256 i = 0; i < managementKeysLength;) {
                 if (_managementKeys[i] == keccak256(abi.encodePacked(_wallet))) revert WalletInManagementKeys();
                 identityContract.addKey(_managementKeys[i], 1, 1); // Add key with purpose 1 (MANAGEMENT)
+                unchecked {
+                    ++i;
+                }
             }
         }
 

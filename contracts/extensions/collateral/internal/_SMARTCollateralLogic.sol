@@ -33,14 +33,13 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
         _registerInterface(type(ISMARTCollateral).interfaceId);
     }
 
-    // -- Public View Helper Function --
+    // -- View functions --
 
     /// @inheritdoc ISMARTCollateral
     function findValidCollateralClaim()
         public
         view
         virtual
-        override
         returns (uint256 amount, address issuer, uint256 expiryTimestamp)
     {
         if (collateralProofTopic == 0) {
@@ -60,12 +59,16 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
         bytes32[] memory claimIds = tokenID.getClaimIdsByTopic(collateralProofTopic);
 
         // Iterate through claims and find the first valid one
-        for (uint256 j = 0; j < claimIds.length; j++) {
+        uint256 claimIdsLength = claimIds.length;
+        for (uint256 j = 0; j < claimIdsLength;) {
             (bool validClaim, uint256 claimAmount, address claimIssuer, uint256 claimExpiry) =
-                _checkSingleClaim(tokenID, claimIds[j], trustedIssuers);
+                __checkSingleClaim(tokenID, claimIds[j], trustedIssuers);
 
             if (validClaim) {
                 return (claimAmount, claimIssuer, claimExpiry);
+            }
+            unchecked {
+                ++j;
             }
         }
 
@@ -82,7 +85,7 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
     /// @param signature The signature of the claim.
     /// @param data The data of the claim.
     /// @return isValid True if claim is valid by the issuer.
-    function _checkClaimValidity(
+    function __checkClaimValidity(
         IClaimIssuer issuer,
         IIdentity tokenIdentity,
         uint256 claimTopic,
@@ -105,7 +108,7 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
     /// @return decoded True if decoding was successful.
     /// @return amount The decoded amount (0 if decode failed).
     /// @return expiry The decoded expiry timestamp (0 if decode failed).
-    function _decodeClaimData(bytes memory data) private view returns (bool decoded, uint256 amount, uint256 expiry) {
+    function __decodeClaimData(bytes memory data) private view returns (bool decoded, uint256 amount, uint256 expiry) {
         if (data.length != 64) {
             return (false, 0, 0);
         }
@@ -129,7 +132,7 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
     /// @return success Whether validation succeeded.
     /// @return amount The collateral amount if successful.
     /// @return expiry The expiry timestamp if successful.
-    function _tryClaimWithIssuer(
+    function __tryClaimWithIssuer(
         IClaimIssuer issuer,
         IIdentity tokenIdentity,
         uint256 topic,
@@ -140,13 +143,13 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
         view
         returns (bool success, uint256 amount, uint256 expiry)
     {
-        bool isValid = _checkClaimValidity(issuer, tokenIdentity, topic, signature, data);
+        bool isValid = __checkClaimValidity(issuer, tokenIdentity, topic, signature, data);
 
         if (!isValid) {
             return (false, 0, 0);
         }
 
-        (bool decoded, uint256 decodedAmount, uint256 decodedExpiry) = _decodeClaimData(data);
+        (bool decoded, uint256 decodedAmount, uint256 decodedExpiry) = __decodeClaimData(data);
 
         if (!decoded) {
             return (false, 0, 0);
@@ -163,7 +166,7 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
     /// @return amount The claim amount if valid.
     /// @return issuer The issuer address if valid.
     /// @return expiry The expiry timestamp if valid.
-    function _checkSingleClaim(
+    function __checkSingleClaim(
         IIdentity tokenID,
         bytes32 claimId,
         IClaimIssuer[] memory trustedIssuers
@@ -187,18 +190,22 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
             }
 
             // Look for a matching trusted issuer
-            for (uint256 i = 0; i < trustedIssuers.length; i++) {
+            uint256 trustedIssuersLength = trustedIssuers.length;
+            for (uint256 i = 0; i < trustedIssuersLength;) {
                 IClaimIssuer trustedIssuer = trustedIssuers[i];
                 address trustedIssuerAddr = address(trustedIssuer);
 
                 // Skip if this isn't the issuer of the claim
                 if (claimIssuer != trustedIssuerAddr) {
+                    unchecked {
+                        ++i;
+                    }
                     continue;
                 }
 
                 // We found the matching issuer, try to validate the claim
                 (bool success, uint256 claimAmount, uint256 claimExpiry) =
-                    _tryClaimWithIssuer(trustedIssuer, tokenID, topic, signature, data);
+                    __tryClaimWithIssuer(trustedIssuer, tokenID, topic, signature, data);
 
                 if (success) {
                     return (true, claimAmount, claimIssuer, claimExpiry);
@@ -223,7 +230,7 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
     ///      It then compares this amount against the projected total supply (`totalSupply() + amount`).
     ///      Reverts with `InsufficientCollateral` if the available collateral is less than the required total supply.
     /// @param amount The amount of tokens being minted.
-    function _collateral_beforeMintLogic(uint256 amount) internal view virtual {
+    function __collateral_beforeMintLogic(uint256 amount) internal view virtual {
         // Find the valid collateral amount for the recipient using the public helper.
         // We only need the amount here, issuer and expiry are validated within the helper.
         (uint256 collateralAmountFromClaim,,) = findValidCollateralClaim();

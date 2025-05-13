@@ -8,8 +8,7 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { ISMARTPausable } from "../../contracts/extensions/pausable/ISMARTPausable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { TokenPaused, ExpectedPause } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
-import { SMARTPausableAccessControlAuthorization } from
-    "../../contracts/extensions/pausable/SMARTPausableAccessControlAuthorization.sol";
+import { SMARTToken } from "../../contracts/SMARTToken.sol";
 
 abstract contract SMARTPausableTest is SMARTTest {
     // Renamed from setUp, removed override
@@ -93,7 +92,7 @@ abstract contract SMARTPausableTest is SMARTTest {
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 clientBE,
-                SMARTPausableAccessControlAuthorization(address(token)).PAUSER_ROLE()
+                SMARTToken(address(token)).PAUSER_ROLE()
             )
         );
         tokenUtils.pauseToken(address(token), clientBE);
