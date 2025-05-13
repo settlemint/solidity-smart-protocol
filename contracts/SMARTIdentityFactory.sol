@@ -41,7 +41,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Acces
     address private _implementationAuthority;
 
     /// @notice Mapping to track used salts (derived from entity address) to prevent duplicates.
-    mapping(string => bool) private _saltTaken;
+    mapping(bytes32 => bool) private _saltTakenByteSalt;
     /// @notice Mapping from investor wallet address to its deployed IdentityProxy address.
     mapping(address => address) private _identities;
     /// @notice Mapping from token contract address to its deployed IdentityProxy address.
@@ -97,7 +97,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Acces
      */
     function createIdentity(
         address _wallet,
-        bytes32[] memory _managementKeys
+        bytes32[] calldata _managementKeys
     )
         external
         onlyRole(REGISTRAR_ROLE)
@@ -185,7 +185,7 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Acces
      * @return The pre-computed deployment address.
      */
     function getAddressForSaltString(
-        string memory _saltString,
+        string calldata _saltString,
         address _initialManager
     )
         public
@@ -238,12 +238,13 @@ contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, Acces
         returns (address)
     {
         string memory saltString = string.concat(_saltPrefix, Strings.toHexString(_entityAddress));
-        if (_saltTaken[saltString]) revert SaltAlreadyTaken(saltString);
-
         bytes32 saltBytes = keccak256(abi.encodePacked(saltString));
+
+        if (_saltTakenByteSalt[saltBytes]) revert SaltAlreadyTaken(saltString);
+
         address identity = _deployIdentity(saltBytes, _initialManagerAddress);
 
-        _saltTaken[saltString] = true;
+        _saltTakenByteSalt[saltBytes] = true;
         return identity;
     }
 
