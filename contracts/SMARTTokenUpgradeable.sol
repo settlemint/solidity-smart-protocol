@@ -120,14 +120,6 @@ contract SMARTTokenUpgradeable is
 
     // --- ISMART Implementation ---
 
-    function setName(string calldata _name) external override onlyRole(TOKEN_ADMIN_ROLE) {
-        _smart_setName(_name);
-    }
-
-    function setSymbol(string calldata _symbol) external override onlyRole(TOKEN_ADMIN_ROLE) {
-        _smart_setSymbol(_symbol);
-    }
-
     function setOnchainID(address _onchainID) external override onlyRole(TOKEN_ADMIN_ROLE) {
         _smart_setOnchainID(_onchainID);
     }
@@ -318,25 +310,13 @@ contract SMARTTokenUpgradeable is
 
     // --- View Functions (Overrides) ---
     /// @inheritdoc ERC20Upgradeable
-    function name()
-        public
-        view
-        virtual
-        override(SMARTUpgradeable, ERC20Upgradeable, IERC20Metadata)
-        returns (string memory)
-    {
+    function name() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
         // Delegation to SMARTUpgradeable -> _SMARTLogic ensures correct value is returned
         return super.name();
     }
 
     /// @inheritdoc ERC20Upgradeable
-    function symbol()
-        public
-        view
-        virtual
-        override(SMARTUpgradeable, ERC20Upgradeable, IERC20Metadata)
-        returns (string memory)
-    {
+    function symbol() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
         // Delegation to SMARTUpgradeable -> _SMARTLogic ensures correct value is returned
         return super.symbol();
     }

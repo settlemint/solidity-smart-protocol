@@ -99,14 +99,6 @@ contract SMARTToken is
 
     // --- ISMART Implementation ---
 
-    function setName(string calldata _name) external override onlyRole(TOKEN_ADMIN_ROLE) {
-        _smart_setName(_name);
-    }
-
-    function setSymbol(string calldata _symbol) external override onlyRole(TOKEN_ADMIN_ROLE) {
-        _smart_setSymbol(_symbol);
-    }
-
     function setOnchainID(address _onchainID) external override onlyRole(TOKEN_ADMIN_ROLE) {
         _smart_setOnchainID(_onchainID);
     }
@@ -289,11 +281,11 @@ contract SMARTToken is
     }
 
     // --- View Functions (Overrides) ---
-    function name() public view virtual override(SMART, ERC20, IERC20Metadata) returns (string memory) {
+    function name() public view virtual override(ERC20, IERC20Metadata) returns (string memory) {
         return super.name();
     }
 
-    function symbol() public view virtual override(SMART, ERC20, IERC20Metadata) returns (string memory) {
+    function symbol() public view virtual override(ERC20, IERC20Metadata) returns (string memory) {
         return super.symbol();
     }
 

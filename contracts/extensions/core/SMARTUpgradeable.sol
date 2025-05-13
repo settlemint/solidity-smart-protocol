@@ -57,16 +57,10 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         internal
         onlyInitializing // Ensures this logic runs only during the initialization phase
     {
+        __ERC20_init(name_, symbol_);
         // Initialize the core SMART logic state via the base logic contract
         __SMART_init_unchained(
-            name_,
-            symbol_,
-            decimals_,
-            onchainID_,
-            identityRegistry_,
-            compliance_,
-            requiredClaimTopics_,
-            initialModulePairs_
+            decimals_, onchainID_, identityRegistry_, compliance_, requiredClaimTopics_, initialModulePairs_
         );
         // Note: ERC20Upgradeable, UUPSUpgradeable, and AccessControl/Ownable initializers
         // must be called BEFORE this function in the final contract's initialize method.
@@ -93,16 +87,6 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     }
 
     // -- View Functions (ERC20 Overrides) --
-
-    /// @inheritdoc ERC20Upgradeable
-    function name() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
-        return __name; // Return mutable name from _SMARTLogic state
-    }
-
-    /// @inheritdoc ERC20Upgradeable
-    function symbol() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
-        return __symbol; // Return mutable symbol from _SMARTLogic state
-    }
 
     /// @inheritdoc ERC20Upgradeable
     function decimals() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (uint8) {

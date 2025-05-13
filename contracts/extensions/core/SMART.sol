@@ -49,17 +49,8 @@ abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
     {
         // Initialize the core SMART logic state using the internal function
         __SMART_init_unchained(
-            name_,
-            symbol_,
-            decimals_,
-            onchainID_,
-            identityRegistry_,
-            compliance_,
-            requiredClaimTopics_,
-            initialModulePairs_
+            decimals_, onchainID_, identityRegistry_, compliance_, requiredClaimTopics_, initialModulePairs_
         );
-        // Note: Authorization contract (e.g., AccessControl) initialization
-        // and role granting should happen in the final concrete contract's constructor.
     }
 
     function transfer(address to, uint256 amount) public virtual override(ERC20, IERC20) returns (bool) {
@@ -83,16 +74,6 @@ abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
     }
 
     // --- View Functions ---
-
-    /// @inheritdoc ERC20
-    function name() public view virtual override(ERC20, IERC20Metadata) returns (string memory) {
-        return __name; // Return mutable name from _SMARTLogic state
-    }
-
-    /// @inheritdoc ERC20
-    function symbol() public view virtual override(ERC20, IERC20Metadata) returns (string memory) {
-        return __symbol; // Return mutable symbol from _SMARTLogic state
-    }
 
     /// @inheritdoc ERC20
     function decimals() public view virtual override(ERC20, IERC20Metadata) returns (uint8) {

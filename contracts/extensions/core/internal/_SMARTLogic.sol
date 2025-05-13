@@ -30,8 +30,6 @@ import { LengthMismatch, ZeroAddressNotAllowed } from "../../common/CommonErrors
 
 abstract contract _SMARTLogic is _SMARTExtension {
     // -- Storage Variables --
-    string internal __name; // Token name (mutable)
-    string internal __symbol; // Token symbol (mutable)
     uint8 internal __decimals; // Token decimals
     address internal __onchainID; // Optional on-chain identifier address
     ISMARTIdentityRegistry internal __identityRegistry; // The identity registry contract
@@ -104,20 +102,6 @@ abstract contract _SMARTLogic is _SMARTExtension {
         }
     }
 
-    /// @dev Internal function to set the token name.
-    /// @param name_ The new token name.
-    function _smart_setName(string memory name_) internal virtual {
-        __name = name_;
-        emit UpdatedTokenInformation(_smartSender(), __name, __symbol, __decimals, __onchainID);
-    }
-
-    /// @dev Internal function to set the token symbol.
-    /// @param symbol_ The new token symbol.
-    function _smart_setSymbol(string memory symbol_) internal virtual {
-        __symbol = symbol_;
-        emit UpdatedTokenInformation(_smartSender(), __name, __symbol, __decimals, __onchainID);
-    }
-
     /// @dev Internal function to set the compliance contract.
     /// @param compliance_ The new compliance contract address.
     function _smart_setCompliance(address compliance_) internal virtual {
@@ -138,7 +122,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
     /// @param onchainID_ The new on-chain ID address.
     function _smart_setOnchainID(address onchainID_) internal virtual {
         __onchainID = onchainID_;
-        emit UpdatedTokenInformation(_smartSender(), __name, __symbol, __decimals, __onchainID);
+        emit UpdatedTokenInformation(_smartSender(), __decimals, __onchainID);
     }
 
     /// @dev Internal function to set the parameters for a compliance module.
@@ -250,8 +234,6 @@ abstract contract _SMARTLogic is _SMARTExtension {
     /// @notice Internal function to initialize the core SMART state variables.
     /// @dev Called ONLY by the constructor (in standard SMART) or initializer (in SMARTUpgradeable).
     ///      Handles setting initial values and validating/registering initial compliance modules.
-    /// @param name_ Token name.
-    /// @param symbol_ Token symbol.
     /// @param decimals_ Token decimals.
     /// @param onchainID_ Optional on-chain identifier address.
     /// @param identityRegistry_ Address of the identity registry contract.
@@ -259,8 +241,8 @@ abstract contract _SMARTLogic is _SMARTExtension {
     /// @param requiredClaimTopics_ Initial list of required claim topics for verification.
     /// @param initialModulePairs_ List of initial compliance modules and their parameters.
     function __SMART_init_unchained(
-        string memory name_,
-        string memory symbol_,
+        // string memory name_,
+        // string memory symbol_,
         uint8 decimals_,
         address onchainID_,
         address identityRegistry_,
@@ -275,8 +257,6 @@ abstract contract _SMARTLogic is _SMARTExtension {
         if (identityRegistry_ == address(0)) revert ZeroAddressNotAllowed();
         if (decimals_ > 18) revert InvalidDecimals(decimals_);
 
-        __name = name_;
-        __symbol = symbol_;
         __decimals = decimals_;
         __onchainID = onchainID_;
         __identityRegistry = ISMARTIdentityRegistry(identityRegistry_);
@@ -302,7 +282,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
 
         emit IdentityRegistryAdded(sender, identityRegistry_);
         emit ComplianceAdded(sender, compliance_);
-        emit UpdatedTokenInformation(sender, name_, symbol_, decimals_, onchainID_);
+        emit UpdatedTokenInformation(sender, decimals_, onchainID_);
         emit RequiredClaimTopicsUpdated(sender, requiredClaimTopics_);
     }
 

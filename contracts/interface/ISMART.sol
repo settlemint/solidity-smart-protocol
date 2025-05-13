@@ -27,13 +27,7 @@ interface ISMART is IERC20, IERC20Metadata {
     /// @notice Emitted when the main compliance contract address is updated.
     event ComplianceAdded(address indexed sender, address indexed _compliance);
     /// @notice Emitted when core token information (name, symbol, decimals, onchainID) is updated.
-    event UpdatedTokenInformation(
-        address indexed sender,
-        string indexed _newName,
-        string _newSymbol,
-        uint8 _newDecimals,
-        address indexed _newOnchainID
-    );
+    event UpdatedTokenInformation(address indexed sender, uint8 _newDecimals, address indexed _newOnchainID);
     /// @notice Emitted when a new compliance module is added to the token.
     event ComplianceModuleAdded(address indexed sender, address indexed _module, bytes _params);
     /// @notice Emitted when a compliance module is removed from the token.
@@ -48,14 +42,6 @@ interface ISMART is IERC20, IERC20Metadata {
     event MintCompleted(address indexed sender, address indexed to, uint256 amount);
 
     // --- Configuration Setters (Admin/Authorized) ---
-
-    /// @notice Updates the token name.
-    /// @param _name The new token name.
-    function setName(string calldata _name) external;
-
-    /// @notice Updates the token symbol.
-    /// @param _symbol The new token symbol.
-    function setSymbol(string calldata _symbol) external;
 
     /// @notice Sets or updates the optional on-chain identifier address associated with the token.
     /// @param _onchainID The address of the on-chain ID contract.
