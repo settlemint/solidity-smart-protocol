@@ -2,8 +2,8 @@
 pragma solidity ^0.8.28;
 
 import { ISMART } from "../../interface/ISMART.sol";
-import { SMARTContext } from "../common/SMARTContext.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
+import { SMARTContext } from "../common/SMARTContext.sol";
 /// @title _SMARTExtension
 /// @notice Base contract for SMART extension contracts.
 

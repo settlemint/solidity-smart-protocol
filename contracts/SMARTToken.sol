@@ -308,32 +308,69 @@ contract SMARTToken is
 
     // --- Hooks ---
 
-    /// @inheritdoc SMARTHooks
-    function _beforeUpdate(
-        address sender,
-        address from,
+    function _beforeMint(
         address to,
         uint256 amount
     )
         internal
         virtual
-        override(SMARTCustodian, SMARTCollateral, SMARTHooks)
+        override(SMART, SMARTCollateral, SMARTCustodian, SMARTHooks)
     {
-        super._beforeUpdate(sender, from, to, amount);
+        super._beforeMint(to, amount);
     }
 
-    /// @inheritdoc SMARTHooks
-    function _afterUpdate(
-        address sender,
+    function _beforeTransfer(
         address from,
         address to,
         uint256 amount
     )
         internal
         virtual
-        override(SMARTHistoricalBalances, SMARTHooks)
+        override(SMART, SMARTCustodian, SMARTHooks)
     {
-        super._afterUpdate(sender, from, to, amount);
+        super._beforeTransfer(from, to, amount);
+    }
+
+    function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTCustodian, SMARTHooks) {
+        super._beforeBurn(from, amount);
+    }
+
+    function _beforeRedeem(address owner, uint256 amount) internal virtual override(SMARTCustodian, SMARTHooks) {
+        super._beforeRedeem(owner, amount);
+    }
+
+    function _afterMint(
+        address to,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMART, SMARTHistoricalBalances, SMARTHooks)
+    {
+        super._afterMint(to, amount);
+    }
+
+    function _afterTransfer(
+        address from,
+        address to,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMART, SMARTHistoricalBalances, SMARTHooks)
+    {
+        super._afterTransfer(from, to, amount);
+    }
+
+    function _afterBurn(
+        address from,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMART, SMARTHistoricalBalances, SMARTHooks)
+    {
+        super._afterBurn(from, amount);
     }
 
     // --- Internal Functions (Overrides) ---

@@ -308,38 +308,105 @@ abstract contract _SMARTLogic is _SMARTExtension {
 
     // -- Internal Hook Helper Functions --
 
-    /// @dev Internal logic executed before an update operation to check recipient verification and compliance.
-    ///      This function is intended to be called by the `_beforeUpdate` hook in the inheriting contract.
-    /// @param from The address that sent the tokens.
-    /// @param to The address that received the tokens.
-    /// @param amount The amount of tokens transferred.
+    /// @notice Internal logic executed before an update operation.
+    /// @dev Handles mint, burn, and transfer operations.
+    ///      Called by the implementing contract's `_beforeUpdate` hook.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount being updated.
     function __smart_beforeUpdateLogic(address from, address to, uint256 amount) internal virtual {
-        if (!__isForcedUpdate) {
-            if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
-            if (!__compliance.canTransfer(address(this), address(0), to, amount)) revert MintNotCompliant();
+        if (from == address(0)) {
+            // Mint
+            if (!__isForcedUpdate) {
+                _beforeMint(to, amount);
+            }
+        } else if (to == address(0)) {
+            // Burn
+            if (!__isForcedUpdate) {
+                _beforeBurn(from, amount);
+            }
+        } else {
+            // Transfer
+            if (!__isForcedUpdate) {
+                _beforeTransfer(from, to, amount);
+            }
         }
-
-        address sender = _smartSender();
-        _beforeUpdate(sender, from, to, amount);
     }
 
-    /// @dev Internal logic executed after an update operation to update historical balances.
-    ///      This function is intended to be called by the `_afterUpdate` hook in the inheriting contract.
-    /// @param from The address that sent the tokens.
-    /// @param to The address that received the tokens.
-    /// @param amount The amount of tokens transferred.
+    /// @notice Internal logic executed after an update operation.
+    /// @dev Handles mint, burn, and transfer operations.
+    ///      Called by the implementing contract's `_afterUpdate` hook.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount being updated.
     function __smart_afterUpdateLogic(address from, address to, uint256 amount) internal virtual {
-        address sender = _smartSender();
-        _afterUpdate(sender, from, to, amount);
-
         if (from == address(0)) {
-            __compliance.created(address(this), to, amount);
+            // Mint
+            if (!__isForcedUpdate) {
+                _afterMint(to, amount);
+            }
         } else if (to == address(0)) {
-            __compliance.destroyed(address(this), from, amount);
+            // Burn
+            if (!__isForcedUpdate) {
+                _afterBurn(from, amount);
+            }
         } else {
-            emit TransferCompleted(_smartSender(), from, to, amount);
-            __compliance.transferred(address(this), from, to, amount);
+            // Transfer
+            if (!__isForcedUpdate) {
+                _afterTransfer(from, to, amount);
+            }
         }
+    }
+
+    /// @notice Internal logic executed before a mint operation.
+    /// @dev Performs mint authorization check, recipient verification, and compliance checks.
+    ///      Called by the implementing contract's `_beforeMint` hook.
+    /// @param to The recipient address.
+    /// @param amount The amount being minted.
+    function __smart_beforeMintLogic(address to, uint256 amount) internal virtual {
+        if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
+        if (!__compliance.canTransfer(address(this), address(0), to, amount)) revert MintNotCompliant();
+    }
+
+    /// @notice Internal logic executed after a mint operation.
+    /// @dev Notifies the compliance contract and emits the MintCompleted event.
+    ///      Called by the implementing contract's `_afterMint` hook.
+    /// @param to The recipient address.
+    /// @param amount The amount that was minted.
+    function __smart_afterMintLogic(address to, uint256 amount) internal virtual {
+        __compliance.created(address(this), to, amount);
+    }
+
+    /// @notice Internal logic executed before a transfer operation (transfer, transferFrom).
+    /// @dev Performs recipient verification and compliance checks.
+    ///      Called by the implementing contract's `_beforeTransfer` hook.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount being transferred.
+    function __smart_beforeTransferLogic(address from, address to, uint256 amount) internal virtual {
+        // Note: Sender verification is implicitly handled by ERC20 balance/allowance checks.
+        if (!__identityRegistry.isVerified(to, __requiredClaimTopics)) revert RecipientNotVerified();
+        if (!__compliance.canTransfer(address(this), from, to, amount)) revert TransferNotCompliant();
+    }
+
+    /// @notice Internal logic executed after a transfer operation.
+    /// @dev Notifies the compliance contract and emits the TransferCompleted event.
+    ///      Called by the implementing contract's `_afterTransfer` hook.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount that was transferred.
+    function __smart_afterTransferLogic(address from, address to, uint256 amount) internal virtual {
+        emit TransferCompleted(_smartSender(), from, to, amount);
+        __compliance.transferred(address(this), from, to, amount);
+    }
+
+    /// @notice Internal logic executed after a burn operation.
+    /// @dev Notifies the compliance contract about the destroyed tokens.
+    ///      Called by the implementing contract's `_afterBurn` hook.
+    /// @param from The address from which tokens were burned.
+    /// @param amount The amount that was burned.
+    function __smart_afterBurnLogic(address from, uint256 amount) internal virtual {
+        __compliance.destroyed(address(this), from, amount);
     }
 
     /// @dev Internal function to check if an interface is supported.

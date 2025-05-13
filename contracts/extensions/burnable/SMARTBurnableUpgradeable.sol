@@ -6,6 +6,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
+import { SMARTHooks } from "./../common/SMARTHooks.sol";
 
 // Internal implementation imports
 import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";

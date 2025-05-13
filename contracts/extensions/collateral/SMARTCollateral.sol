@@ -3,8 +3,8 @@ pragma solidity ^0.8.28;
 
 // Base contract imports
 import { SMARTExtension } from "./../common/SMARTExtension.sol";
-import { ISMART } from "./../../interface/ISMART.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
+import { ISMART } from "./../../interface/ISMART.sol";
 import { SMARTContext } from "./../common/SMARTContext.sol";
 // Internal implementation imports
 import { _SMARTCollateralLogic } from "./internal/_SMARTCollateralLogic.sol";
@@ -31,10 +31,8 @@ abstract contract SMARTCollateral is SMARTExtension, _SMARTCollateralLogic {
     ///      Injects the collateral verification logic using `_collateral_beforeMintLogic`.
     ///      Calls `super._beforeMint` to ensure other potential hook implementations are executed.
     /// @inheritdoc SMARTHooks
-    function _beforeUpdate(address sender, address from, address to, uint256 amount) internal virtual override {
-        if (from == address(0)) {
-            __collateral_beforeMintLogic(amount); // Check collateral claim against required total supply
-        }
-        super._beforeUpdate(sender, from, to, amount); // Call the next hook in the inheritance chain
+    function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
+        __collateral_beforeMintLogic(amount); // Check collateral claim against required total supply
+        super._beforeMint(to, amount); // Call the next hook in the inheritance chain
     }
 }
