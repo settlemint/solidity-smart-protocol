@@ -7,8 +7,6 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { ERC20PermitUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 // Constants
@@ -42,7 +40,6 @@ contract SMARTStableCoin is
     SMARTCustodianUpgradeable,
     SMARTPausableUpgradeable,
     SMARTBurnableUpgradeable,
-    ERC20PermitUpgradeable,
     ERC2771ContextUpgradeable
 {
     /// @custom:oz-upgrades-unsafe-allow constructor

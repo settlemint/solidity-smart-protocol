@@ -217,6 +217,7 @@ contract SMARTFixedYieldSchedule is
         }
 
         uint256 elapsedTime = block.timestamp - _startDate;
+        // slither-disable-next-line weak-prng
         uint256 currentPeriodElapsed = elapsedTime % _interval;
         return _interval - currentPeriodElapsed;
     }

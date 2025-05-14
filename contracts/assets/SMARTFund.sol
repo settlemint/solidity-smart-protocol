@@ -8,12 +8,9 @@ import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/m
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { ERC20PermitUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import { ERC20VotesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -48,7 +45,6 @@ contract SMARTFund is
     SMARTBurnableUpgradeable,
     SMARTPausableUpgradeable,
     SMARTCustodianUpgradeable,
-    ERC20PermitUpgradeable,
     ERC20VotesUpgradeable, // TODO: ??
     ERC2771ContextUpgradeable
 {
@@ -165,14 +161,6 @@ contract SMARTFund is
     /// @return Current block timestamp cast to uint48
     function clock() public view override returns (uint48) {
         return uint48(block.timestamp);
-    }
-
-    /// @notice Get the current nonce for an address
-    /// @dev Required override to resolve ambiguity between ERC20Permit and Nonces
-    /// @param owner The address to get the nonce for
-    /// @return The current nonce used for permits and other signed approvals
-    function nonces(address owner) public view override(ERC20PermitUpgradeable, NoncesUpgradeable) returns (uint256) {
-        return super.nonces(owner);
     }
 
     // --- State-Changing Functions ---

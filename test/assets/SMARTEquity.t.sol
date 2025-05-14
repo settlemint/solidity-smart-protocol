@@ -370,51 +370,6 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         assertEq(smartEquity.getVotes(user1), 500 * 10 ** DECIMALS);
     }
 
-    // Permit Tests
-    function test_Permit() public {
-        uint256 privateKey = 0xA11CE;
-        address signer = vm.addr(privateKey);
-        vm.label(signer, "Signer Wallet");
-
-        // Set up identity for the signer and spender
-        _setUpIdentity(signer);
-
-        vm.startPrank(owner);
-        smartEquity.mint(signer, 1000 * 10 ** DECIMALS);
-        vm.stopPrank();
-
-        uint256 deadline = block.timestamp + 1 hours;
-        uint256 nonce = smartEquity.nonces(signer);
-
-        bytes32 DOMAIN_SEPARATOR = smartEquity.DOMAIN_SEPARATOR();
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    DOMAIN_SEPARATOR,
-                    keccak256(
-                        abi.encode(
-                            keccak256(
-                                "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
-                            ),
-                            signer,
-                            spender,
-                            1000 * 10 ** DECIMALS,
-                            nonce,
-                            deadline
-                        )
-                    )
-                )
-            )
-        );
-
-        smartEquity.permit(signer, spender, 1000 * 10 ** DECIMALS, deadline, v, r, s);
-
-        assertEq(smartEquity.allowance(signer, spender), 1000 * 10 ** DECIMALS);
-    }
-
     // Events Tests
     function test_TransferEvent() public {
         uint256 amount = 1000 * 10 ** DECIMALS;

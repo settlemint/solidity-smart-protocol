@@ -265,47 +265,6 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         assertEq(deposit.getFrozenTokens(user1), 0);
     }
 
-    // ERC20Permit tests
-    function test_Permit() public {
-        uint256 privateKey = 0xA11CE;
-        address signer = vm.addr(privateKey);
-        vm.label(signer, "Signer Wallet");
-
-        _setUpIdentity(signer);
-
-        _mintInitialSupply(signer);
-
-        uint256 deadline = block.timestamp + 1 hours;
-        uint256 nonce = deposit.nonces(signer);
-
-        bytes32 DOMAIN_SEPARATOR = deposit.DOMAIN_SEPARATOR();
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    DOMAIN_SEPARATOR,
-                    keccak256(
-                        abi.encode(
-                            keccak256(
-                                "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
-                            ),
-                            signer,
-                            spender,
-                            100,
-                            nonce,
-                            deadline
-                        )
-                    )
-                )
-            )
-        );
-
-        deposit.permit(signer, spender, 100, deadline, v, r, s);
-        assertEq(deposit.allowance(signer, spender), 100);
-    }
-
     //Transfer and approval tests
     function test_TransferAndApproval() public {
         _mintInitialSupply(user1);

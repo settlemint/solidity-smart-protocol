@@ -7,8 +7,6 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { ERC20PermitUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -49,7 +47,6 @@ contract SMARTBond is
     SMARTHistoricalBalancesUpgradeable,
     SMARTYieldUpgradeable,
     SMARTCappedUpgradeable,
-    ERC20PermitUpgradeable,
     ERC2771ContextUpgradeable,
     ReentrancyGuard
 {
@@ -159,7 +156,6 @@ contract SMARTBond is
         __SMARTRedeemable_init();
         __SMARTHistoricalBalances_init();
         __SMARTCapped_init(cap_);
-        __ERC20Permit_init(name_);
 
         _maturityDate = maturityDate_;
         _faceValue = faceValue_;
