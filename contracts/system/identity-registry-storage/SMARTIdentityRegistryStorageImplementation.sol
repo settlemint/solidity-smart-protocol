@@ -6,14 +6,13 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 // import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { AccessControlEnumerableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 
 // OnchainID imports
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 // Interface imports
-import { IERC3643IdentityRegistryStorage } from "./interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { IERC3643IdentityRegistryStorage } from "./../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
 
 // --- Errors ---
 error InvalidIdentityWalletAddress();
@@ -30,12 +29,11 @@ error UnauthorizedCaller();
 /// @dev Stores mappings between investor wallets, their `IIdentity` contracts, and country codes.
 ///      Manages which `SMARTIdentityRegistry` contracts are authorized to modify this storage.
 ///      Uses AccessControl for administration (binding registries) and UUPS for upgradeability.
-contract SMARTIdentityRegistryStorage is
+contract SMARTIdentityRegistryStorageImplementation is
     Initializable,
     IERC3643IdentityRegistryStorage,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable,
-    UUPSUpgradeable
+    AccessControlEnumerableUpgradeable
 {
     // --- Roles ---
     /// @notice Role granted to bound `SMARTIdentityRegistry` contracts allowing them to modify storage.
@@ -90,7 +88,6 @@ contract SMARTIdentityRegistryStorage is
     /// @param initialAdmin The address for the initial admin role.
     function initialize(address initialAdmin) public initializer {
         __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
-        __UUPSUpgradeable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
         _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin); // Allow initial admin to modify storage initially if needed
@@ -283,14 +280,4 @@ contract SMARTIdentityRegistryStorage is
     {
         return ERC2771ContextUpgradeable._contextSuffixLength();
     }
-
-    // --- Upgradeability (UUPS) ---
-
-    /// @dev Authorizes an upgrade to a new implementation.
-    ///      Requires the caller to have the `DEFAULT_ADMIN_ROLE`.
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override(UUPSUpgradeable)
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    { }
 }

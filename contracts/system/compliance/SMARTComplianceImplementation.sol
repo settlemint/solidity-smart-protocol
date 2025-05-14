@@ -3,32 +3,23 @@ pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // Interface imports
-import { ISMARTCompliance } from "./interface/ISMARTCompliance.sol";
-import { ISMARTComplianceModule } from "./interface/ISMARTComplianceModule.sol";
-import { ISMART } from "./interface/ISMART.sol";
-import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplianceModuleParamPair.sol";
-import { ZeroAddressNotAllowed } from "./extensions/common/CommonErrors.sol";
+import { ISMARTCompliance } from "./../../interface/ISMARTCompliance.sol";
+import { ISMARTComplianceModule } from "./../../interface/ISMARTComplianceModule.sol";
+import { ISMART } from "./../../interface/ISMART.sol";
+import { SMARTComplianceModuleParamPair } from "./../../interface/structs/SMARTComplianceModuleParamPair.sol";
+import { ZeroAddressNotAllowed } from "./../../extensions/common/CommonErrors.sol";
 
 /// @title SMART Compliance Contract
 /// @notice Upgradeable implementation of the main compliance contract for SMART tokens.
 /// @dev This contract orchestrates compliance checks and notifications by delegating to registered
 ///      compliance modules associated with a specific ISMART token.
-///      It uses AccessControl for administration and UUPS for upgradeability.
-contract SMARTCompliance is
-    Initializable,
-    ISMARTCompliance,
-    ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable,
-    UUPSUpgradeable
-{
+///      It uses AccessControl for administration
+contract SMARTComplianceImplementation is Initializable, ISMARTCompliance, ERC2771ContextUpgradeable {
     // --- Errors ---
     error InvalidModuleImplementation();
 
@@ -40,17 +31,8 @@ contract SMARTCompliance is
 
     // --- Initializer ---
     /// @notice Initializes the compliance contract.
-    /// @dev Sets up AccessControl with default admin rules and UUPS upgradeability.
-    /// @param initialAdmin The address that will receive the `DEFAULT_ADMIN_ROLE`.
-    function initialize(address initialAdmin) public initializer {
-        // Order: AccessControl -> DefaultAdminRules -> UUPS
-        // __AccessControl_init();
-        // __AccessControlDefaultAdminRules_init(3 days, initialAdmin); // Sets admin with delay
-        __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
-        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
-        __UUPSUpgradeable_init();
-        // ERC2771Context is initialized by the constructor
-    }
+    /// @dev Sets up AccessControl with default admin rules.
+    function initialize() public initializer { }
 
     // --- ISMARTCompliance Implementation (State-Changing) ---
 
@@ -175,46 +157,4 @@ contract SMARTCompliance is
         // This external call can revert, which will propagate up.
         ISMARTComplianceModule(_module).validateParameters(_params);
     }
-
-    // --- Context Overrides (ERC2771) ---
-
-    /// @dev Returns the message sender, potentially extracting it from the end of `msg.data` if using a trusted
-    /// forwarder.
-    function _msgSender()
-        internal
-        view
-        virtual
-        override(ContextUpgradeable, ERC2771ContextUpgradeable)
-        returns (address sender)
-    {
-        return ERC2771ContextUpgradeable._msgSender();
-    }
-
-    /// @dev Returns the full `msg.data`, potentially excluding the address suffix if using a trusted forwarder.
-    function _msgData()
-        internal
-        view
-        virtual
-        override(ContextUpgradeable, ERC2771ContextUpgradeable)
-        returns (bytes calldata)
-    {
-        return ERC2771ContextUpgradeable._msgData();
-    }
-
-    /// @dev Hook defining the length of the trusted forwarder address suffix in `msg.data`.
-    function _contextSuffixLength()
-        internal
-        view
-        virtual
-        override(ContextUpgradeable, ERC2771ContextUpgradeable)
-        returns (uint256)
-    {
-        return ERC2771ContextUpgradeable._contextSuffixLength();
-    }
-
-    // --- Upgradeability (UUPS) ---
-
-    /// @dev Authorizes an upgrade to a new implementation.
-    ///      Requires the caller to have the `DEFAULT_ADMIN_ROLE`.
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) { }
 }

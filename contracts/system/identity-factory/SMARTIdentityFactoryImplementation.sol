@@ -32,7 +32,11 @@ error DeploymentAddressMismatch();
 ///         for investor wallets and tokens.
 /// @dev Deploys `IdentityProxy` contracts using CREATE2, pointing them to an `ImplementationAuthority`
 ///      which determines the logic contract address. Uses Ownable for access control.
-contract SMARTIdentityFactory is Initializable, ERC2771ContextUpgradeable, AccessControlEnumerableUpgradeable {
+contract SMARTIdentityFactoryImplementation is
+    Initializable,
+    ERC2771ContextUpgradeable,
+    AccessControlEnumerableUpgradeable
+{
     // --- Roles ---
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 

@@ -8,7 +8,7 @@ import { Context } from "@openzeppelin/contracts/utils/Context.sol"; // Context 
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 // Interface imports
-import { ISMARTComplianceModule } from "../interface/ISMARTComplianceModule.sol";
+import { ISMARTComplianceModule } from "../../../interface/ISMARTComplianceModule.sol";
 // Unused imports: ISMART, ISMARTIdentityRegistry
 
 /**
