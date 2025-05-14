@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { SMARTTest } from "./SMARTTest.sol"; // Inherit from the logic base
+import { AbstractSMARTTest } from "./AbstractSMARTTest.sol"; // Inherit from the logic base
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
@@ -10,7 +10,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { TokenPaused, ExpectedPause } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
 import { SMARTToken } from "../../contracts/SMARTToken.sol";
 
-abstract contract SMARTPausableTest is SMARTTest {
+abstract contract SMARTPausableTest is AbstractSMARTTest {
     // Renamed from setUp, removed override
     function _setUpPausableTest() internal /* override */ {
         super.setUp();

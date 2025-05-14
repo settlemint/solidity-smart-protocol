@@ -81,8 +81,8 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     function __historical_balances_afterMintLogic(address to, uint256 amount) internal virtual {
         uint208 castAmount = SafeCast.toUint208(amount);
 
-        __push(_totalSupplyCheckpoints, __add, castAmount);
-        (uint208 previousValue, uint208 newValue) = __push(_balanceCheckpoints[to], __add, castAmount);
+        _writeCheckpointAdd(_totalSupplyCheckpoints, castAmount);
+        (uint208 previousValue, uint208 newValue) = _writeCheckpointAdd(_balanceCheckpoints[to], castAmount);
         emit CheckpointUpdated(_smartSender(), to, previousValue, newValue);
     }
 
@@ -93,8 +93,8 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     function __historical_balances_afterBurnLogic(address from, uint256 amount) internal virtual {
         uint208 castAmount = SafeCast.toUint208(amount);
 
-        __push(_totalSupplyCheckpoints, __subtract, castAmount);
-        (uint208 previousValue, uint208 newValue) = __push(_balanceCheckpoints[from], __subtract, castAmount);
+        _writeCheckpointSubtract(_totalSupplyCheckpoints, castAmount);
+        (uint208 previousValue, uint208 newValue) = _writeCheckpointSubtract(_balanceCheckpoints[from], castAmount);
         emit CheckpointUpdated(_smartSender(), from, previousValue, newValue);
     }
 
@@ -108,51 +108,49 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
         uint208 castAmount = SafeCast.toUint208(amount);
         address sender = _smartSender();
 
-        (uint208 previousValue, uint208 newValue) = __push(_balanceCheckpoints[from], __subtract, castAmount);
+        (uint208 previousValue, uint208 newValue) = _writeCheckpointSubtract(_balanceCheckpoints[from], castAmount);
         emit CheckpointUpdated(sender, from, previousValue, newValue);
-        (previousValue, newValue) = __push(_balanceCheckpoints[to], __add, castAmount);
+        (previousValue, newValue) = _writeCheckpointAdd(_balanceCheckpoints[to], castAmount);
         emit CheckpointUpdated(sender, to, previousValue, newValue);
     }
 
     // -- Internal Functions --
 
-    /// @dev Pushes a new checkpoint to a `Checkpoints.Trace208` storage.
-    ///      It calculates the new value using the provided operation `op` and `delta`.
+    /// @dev Writes a new checkpoint to a `Checkpoints.Trace208` storage by adding a delta.
     /// @param store A storage pointer to the `Checkpoints.Trace208` struct.
-    /// @param op A function pointer that takes the latest checkpoint value and `delta`, and returns the new value.
-    /// @param delta The change in value to be applied by the `op` function.
-    /// @return previousValue The value before this push.
-    /// @return newValue The value after this push.
-    function __push(
+    /// @param delta The change in value to be added.
+    /// @return previousValue The value before this update.
+    /// @return newValue The value after this update.
+    function _writeCheckpointAdd(
         Checkpoints.Trace208 storage store,
-        function(uint208, uint208) view returns (uint208) op,
         uint208 delta
     )
         private
         returns (uint208 previousValue, uint208 newValue)
     {
-        // Capture previous value before push
         previousValue = store.latest();
-        // Push the new value
-        newValue = op(previousValue, delta);
+        // Solidity 0.8+ handles overflow checks automatically
+        newValue = previousValue + delta;
         store.push(clock(), newValue);
-
         return (previousValue, newValue);
     }
 
-    /// @dev Internal pure function to add two `uint208` numbers. Used by `_push`.
-    /// @param a The first number.
-    /// @param b The second number.
-    /// @return The sum of `a` and `b`.
-    function __add(uint208 a, uint208 b) private pure returns (uint208) {
-        return a + b;
-    }
-
-    /// @dev Internal pure function to subtract one `uint208` number from another. Used by `_push`.
-    /// @param a The number to subtract from.
-    /// @param b The number to subtract.
-    /// @return The result of `a - b`.
-    function __subtract(uint208 a, uint208 b) private pure returns (uint208) {
-        return a - b;
+    /// @dev Writes a new checkpoint to a `Checkpoints.Trace208` storage by subtracting a delta.
+    /// @param store A storage pointer to the `Checkpoints.Trace208` struct.
+    /// @param delta The change in value to be subtracted.
+    /// @return previousValue The value before this update.
+    /// @return newValue The value after this update.
+    function _writeCheckpointSubtract(
+        Checkpoints.Trace208 storage store,
+        uint208 delta
+    )
+        private
+        returns (uint208 previousValue, uint208 newValue)
+    {
+        previousValue = store.latest();
+        // Solidity 0.8+ handles underflow checks automatically
+        newValue = previousValue - delta;
+        store.push(clock(), newValue);
+        return (previousValue, newValue);
     }
 }

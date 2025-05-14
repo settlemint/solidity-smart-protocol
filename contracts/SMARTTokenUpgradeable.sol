@@ -98,7 +98,7 @@ contract SMARTTokenUpgradeable is
         initializer
     {
         __ERC20_init(name_, symbol_);
-        __SMARTUpgradeable_init(
+        __SMART_init(
             name_,
             symbol_,
             decimals_,

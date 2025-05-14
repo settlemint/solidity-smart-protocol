@@ -14,9 +14,9 @@ import { InfrastructureUtils } from "../utils/InfrastructureUtils.sol";
 import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { CountryBlockListComplianceModule } from "../../contracts/compliance/CountryBlockListComplianceModule.sol";
-import { SMARTTest } from "./SMARTTest.sol";
+import { AbstractSMARTTest } from "./AbstractSMARTTest.sol";
 
-abstract contract SMARTCountryBlockListTest is SMARTTest {
+abstract contract SMARTCountryBlockListTest is AbstractSMARTTest {
     // Module-specific variables
     CountryBlockListComplianceModule public blockModule;
     uint16[] public blockedCountries;

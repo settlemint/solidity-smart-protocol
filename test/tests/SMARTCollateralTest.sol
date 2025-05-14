@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { TestConstants } from "../Constants.sol";
-import { SMARTTest } from "./SMARTTest.sol";
+import { AbstractSMARTTest } from "./AbstractSMARTTest.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { ClaimUtils } from "../utils/ClaimUtils.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
@@ -10,7 +10,7 @@ import { ISMARTCollateral } from "../../contracts/extensions/collateral/ISMARTCo
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { InsufficientCollateral } from "../../contracts/extensions/collateral/SMARTCollateralErrors.sol";
 
-abstract contract SMARTCollateralTest is SMARTTest {
+abstract contract SMARTCollateralTest is AbstractSMARTTest {
     uint256 internal constant COLLATERAL_AMOUNT = 1_000_000 ether; // Example collateral amount
     uint256 internal constant MINT_AMOUNT = 100 ether;
 

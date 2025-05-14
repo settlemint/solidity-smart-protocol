@@ -15,8 +15,10 @@ import { TokenUtils } from "../utils/TokenUtils.sol";
 import { InfrastructureUtils } from "../utils/InfrastructureUtils.sol";
 import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import { SMARTToken } from "../../contracts/SMARTToken.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
-abstract contract SMARTTest is Test {
+abstract contract AbstractSMARTTest is Test {
     // --- State Variables ---
     ISMART internal token; // Token instance to be tested (set in inheriting contracts)
     MockedComplianceModule internal mockComplianceModule;
@@ -188,6 +190,21 @@ abstract contract SMARTTest is Test {
         claimUtils.issueAllClaims(clientUS);
         // Only issue KYC claim to the unverified client
         claimUtils.issueKYCClaim(clientUnverified);
+    }
+
+    function _grantAllRoles(address tokenAddress, address tokenIssuer_) internal {
+        vm.startPrank(tokenIssuer_);
+        // Grant all roles to the token issuer
+        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).TOKEN_ADMIN_ROLE(), tokenIssuer_);
+        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).COMPLIANCE_ADMIN_ROLE(), tokenIssuer_);
+        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).VERIFICATION_ADMIN_ROLE(), tokenIssuer_);
+        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).MINTER_ROLE(), tokenIssuer_);
+        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).BURNER_ROLE(), tokenIssuer_);
+        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).FREEZER_ROLE(), tokenIssuer_);
+        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).FORCED_TRANSFER_ROLE(), tokenIssuer_);
+        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).RECOVERY_ROLE(), tokenIssuer_);
+        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).PAUSER_ROLE(), tokenIssuer_);
+        vm.stopPrank();
     }
 
     // =====================================================================

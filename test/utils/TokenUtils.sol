@@ -412,17 +412,6 @@ contract TokenUtils is Test {
         // 3. Set the on-chain ID on the token contract (via the proxy)
         vm.startPrank(tokenIssuer_); // Specific token issuer sets the on-chain ID
 
-        // Grant all roles to the token issuer
-        AccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).TOKEN_ADMIN_ROLE(), tokenIssuer_);
-        AccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).COMPLIANCE_ADMIN_ROLE(), tokenIssuer_);
-        AccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).VERIFICATION_ADMIN_ROLE(), tokenIssuer_);
-        AccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).MINTER_ROLE(), tokenIssuer_);
-        AccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).BURNER_ROLE(), tokenIssuer_);
-        AccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).FREEZER_ROLE(), tokenIssuer_);
-        AccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).FORCED_TRANSFER_ROLE(), tokenIssuer_);
-        AccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).RECOVERY_ROLE(), tokenIssuer_);
-        AccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).PAUSER_ROLE(), tokenIssuer_);
-
         ISMART(tokenAddress).setOnchainID(tokenIdentityAddress); // Calling through the proxy
         vm.stopPrank();
 

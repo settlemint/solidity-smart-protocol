@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { SMARTTest } from "./SMARTTest.sol";
+import { AbstractSMARTTest } from "./AbstractSMARTTest.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -15,7 +15,7 @@ import { TokenRecovered } from "../../contracts/extensions/core/SMARTEvents.sol"
 import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
 import { SMARTToken } from "../../contracts/SMARTToken.sol";
 
-abstract contract SMARTCoreTest is SMARTTest {
+abstract contract SMARTCoreTest is AbstractSMARTTest {
     using SafeERC20 for IERC20;
 
     MockedERC20Token internal mockForeignToken;
@@ -27,7 +27,7 @@ abstract contract SMARTCoreTest is SMARTTest {
         _setupDefaultCollateralClaim();
 
         // Deploy and setup mock foreign ERC20 token
-        mockForeignToken = new MockedERC20Token("Mock Foreign", "MFT");
+        mockForeignToken = new MockedERC20Token("Mock Foreign", "MFT", 6);
         vm.prank(tokenIssuer);
         mockForeignToken.mint(tokenIssuer, 1_000_000 ether);
 

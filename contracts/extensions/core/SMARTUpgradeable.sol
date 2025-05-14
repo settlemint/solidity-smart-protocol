@@ -44,7 +44,7 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     /// @param compliance_ Address of the compliance contract.
     /// @param requiredClaimTopics_ Initial list of required claim topics for verification.
     /// @param initialModulePairs_ List of initial compliance modules and their parameters.
-    function __SMARTUpgradeable_init(
+    function __SMART_init(
         string memory name_,
         string memory symbol_,
         uint8 decimals_,

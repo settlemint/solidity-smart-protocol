@@ -46,7 +46,7 @@ abstract contract SMARTCustodian is SMARTExtension, _SMARTCustodianLogic {
     /// @inheritdoc SMARTHooks
     /// @dev Adds check to prevent minting to a frozen address.
     function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        __custodian_beforeMintLogic(to, amount);
+        __custodian_beforeMintLogic(to);
         super._beforeMint(to, amount); // Call next hook in the chain
     }
 

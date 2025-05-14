@@ -33,7 +33,7 @@ To use this extension:
     *   Inherit necessary base contracts (e.g., `ERC20`/`ERC20Upgradeable`, `AccessControlUpgradeable`/`OwnableUpgradeable` if applicable).
 2.  **Implement Constructor/Initializer**:
     *   **Standard (`SMARTPausable`)**: In the final contract's `constructor`, call constructors of parent contracts. Grant the initial `PAUSER_ROLE`.
-    *   **Upgradeable (`SMARTPausableUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__AccessControl_init`, `__SMARTUpgradeable_init`) and then call `__SMARTPausable_init()`. Grant the initial `PAUSER_ROLE`.
+    *   **Upgradeable (`SMARTPausableUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__AccessControl_init`, `__SMART_init`) and then call `__SMARTPausable_init()`. Grant the initial `PAUSER_ROLE`.
 3.  **Implement Abstract Functions**: Ensure `_msgSender()` and `hasRole()` from the authorization base are implemented (usually handled by inheriting standard OZ AccessControl).
 
 ## Authorization
