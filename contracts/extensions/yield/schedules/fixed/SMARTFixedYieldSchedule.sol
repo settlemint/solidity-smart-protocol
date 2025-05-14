@@ -7,7 +7,7 @@ import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { ISMARTFixedYieldManager } from "./ISMARTFixedYieldManager.sol";
+import { ISMARTFixedYieldSchedule } from "./ISMARTFixedYieldSchedule.sol";
 import { ISMARTYield } from "./../../ISMARTYield.sol";
 
 /// @title FixedYield - A contract for managing token yield distributions
@@ -18,8 +18,14 @@ import { ISMARTYield } from "./../../ISMARTYield.sol";
 /// support. Works with ERC20Yield-compatible tokens to manage yield distributions. Uses timestamps for
 /// period calculations and maintains a history of distributions.
 /// @custom:security-contact support@settlemint.com
-contract SMARTFixedYieldManager is AccessControl, Pausable, ERC2771Context, ISMARTFixedYieldManager, ReentrancyGuard {
-    /// @notice Custom errors for the FixedYield contract
+contract SMARTFixedYieldSchedule is
+    AccessControl,
+    Pausable,
+    ERC2771Context,
+    ISMARTFixedYieldSchedule,
+    ReentrancyGuard
+{
+    /// @notice Custom errors for the FixedYieldSchedule contract
     /// @dev These errors provide more gas-efficient and descriptive error handling
     error InvalidToken();
     error InvalidStartDate();

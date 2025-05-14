@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { SMARTTest } from "./SMARTTest.sol";
+import { AbstractSMARTTest } from "./AbstractSMARTTest.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ISMARTBurnable } from "../../contracts/extensions/burnable/ISMARTBurnable.sol";
 import { SMARTToken } from "../../contracts/SMARTToken.sol";
 
-abstract contract SMARTBurnableTest is SMARTTest {
+abstract contract SMARTBurnableTest is AbstractSMARTTest {
     function _setUpBurnableTest() internal /* override */ {
         super.setUp();
         // Ensure token has default collateral set up for burn tests

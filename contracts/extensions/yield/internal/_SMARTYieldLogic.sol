@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
 import { SMARTHooks } from "./../../common/SMARTHooks.sol";
 import { ISMARTYield } from "./../ISMARTYield.sol";
-import { ISMARTYieldManager } from "./../managers/ISMARTYieldManager.sol";
+import { ISMARTYieldSchedule } from "./../schedules/ISMARTYieldSchedule.sol";
 import { InvalidYieldSchedule, YieldScheduleAlreadySet, YieldScheduleActive } from "./../SMARTYieldErrors.sol";
 import { YieldScheduleSet } from "./../SMARTYieldEvents.sol";
 
@@ -42,7 +42,7 @@ abstract contract _SMARTYieldLogic is _SMARTExtension, ISMARTYield {
         if (yieldSchedule != address(0)) {
             // Use the interface to call the external contract
             // Revert if the yield schedule has already started
-            if (ISMARTYieldManager(yieldSchedule).startDate() <= block.timestamp) {
+            if (ISMARTYieldSchedule(yieldSchedule).startDate() <= block.timestamp) {
                 revert YieldScheduleActive();
             }
         }

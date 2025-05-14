@@ -121,10 +121,11 @@ contract SMARTBond is
     /// @param maturityDate_ Bond maturity date
     /// @param faceValue_ Bond face value
     /// @param underlyingAsset_ Underlying asset contract address
-    /// @param identityRegistry_ The address of the Identity Registry contract.
-    /// @param compliance_ The address of the main compliance contract.
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
+    /// @param identityRegistry_ The address of the Identity Registry contract.
+    /// @param compliance_ The address of the main compliance contract.
+
     function initialize(
         string memory name_,
         string memory symbol_,
@@ -133,10 +134,10 @@ contract SMARTBond is
         uint256 maturityDate_,
         uint256 faceValue_,
         address underlyingAsset_,
-        address identityRegistry_,
-        address compliance_,
         uint256[] memory requiredClaimTopics_,
-        SMARTComplianceModuleParamPair[] memory initialModulePairs_
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_,
+        address identityRegistry_,
+        address compliance_
     )
         public
         initializer

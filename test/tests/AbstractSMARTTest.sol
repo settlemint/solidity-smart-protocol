@@ -16,7 +16,7 @@ import { InfrastructureUtils } from "../utils/InfrastructureUtils.sol";
 import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
-abstract contract SMARTTest is Test {
+abstract contract AbstractSMARTTest is Test {
     // --- State Variables ---
     ISMART internal token; // Token instance to be tested (set in inheriting contracts)
     MockedComplianceModule internal mockComplianceModule;

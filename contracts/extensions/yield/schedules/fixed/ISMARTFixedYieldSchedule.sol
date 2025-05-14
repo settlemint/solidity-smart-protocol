@@ -3,12 +3,12 @@ pragma solidity 0.8.28;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ISMARTYield } from "./../../ISMARTYield.sol";
-import { ISMARTYieldManager } from "./../ISMARTYieldManager.sol";
+import { ISMARTYieldSchedule } from "./../ISMARTYieldSchedule.sol";
 
 /// @title Interface for SMARTFixedYield contract
 /// @notice Defines the functions needed for external interaction with FixedYield schedules
 
-interface ISMARTFixedYieldManager is ISMARTYieldManager {
+interface ISMARTFixedYieldSchedule is ISMARTYieldSchedule {
     /// @notice Returns all period end timestamps for this yield schedule
     function allPeriods() external view returns (uint256[] memory);
 
