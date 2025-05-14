@@ -42,10 +42,6 @@ abstract contract _SMARTCollateralLogic is _SMARTExtension, ISMARTCollateral {
         virtual
         returns (uint256 amount, address issuer, uint256 expiryTimestamp)
     {
-        if (collateralProofTopic == 0) {
-            revert InvalidCollateralTopic(0);
-        }
-
         ISMARTIdentityRegistry identityRegistry_ = this.identityRegistry();
         IERC3643TrustedIssuersRegistry issuersRegistry = identityRegistry_.issuersRegistry();
         IIdentity tokenID = IIdentity(this.onchainID());
