@@ -108,7 +108,11 @@ contract SMARTStableCoin is
         _smart_setIdentityRegistry(_identityRegistry);
     }
 
-    function setCompliance(address _compliance) external override onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE) {
+    function setCompliance(address _compliance)
+        external
+        override
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
+    {
         _smart_setCompliance(_compliance);
     }
 
@@ -118,7 +122,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
     {
         _smart_setParametersForComplianceModule(_module, _params);
     }
@@ -126,7 +130,7 @@ contract SMARTStableCoin is
     function setRequiredClaimTopics(uint256[] calldata _requiredClaimTopics)
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
     {
         _smart_setRequiredClaimTopics(_requiredClaimTopics);
     }
@@ -182,7 +186,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
     {
         _smart_addComplianceModule(_module, _params);
     }
@@ -190,7 +194,7 @@ contract SMARTStableCoin is
     function removeComplianceModule(address _module)
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
     {
         _smart_removeComplianceModule(_module);
     }

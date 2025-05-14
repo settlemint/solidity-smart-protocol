@@ -131,7 +131,6 @@ abstract contract AbstractSMARTAssetTest is Test {
     function _grantAllRoles(address wallet, address defaultAdmin) internal {
         vm.startPrank(defaultAdmin);
         accessManager.grantRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, wallet);
-        accessManager.grantRole(SMARTRoles.COMPLIANCE_ROLE, wallet);
         accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, wallet);
         accessManager.grantRole(SMARTRoles.CUSTODIAN_ROLE, wallet);
         accessManager.grantRole(SMARTRoles.EMERGENCY_ROLE, wallet);

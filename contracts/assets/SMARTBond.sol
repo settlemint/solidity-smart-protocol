@@ -250,7 +250,11 @@ contract SMARTBond is
         _smart_setIdentityRegistry(_identityRegistry);
     }
 
-    function setCompliance(address _compliance) external override onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE) {
+    function setCompliance(address _compliance)
+        external
+        override
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
+    {
         _smart_setCompliance(_compliance);
     }
 
@@ -260,7 +264,7 @@ contract SMARTBond is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
     {
         _smart_setParametersForComplianceModule(_module, _params);
     }
@@ -268,7 +272,7 @@ contract SMARTBond is
     function setRequiredClaimTopics(uint256[] calldata _requiredClaimTopics)
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
     {
         _smart_setRequiredClaimTopics(_requiredClaimTopics);
     }
@@ -324,7 +328,7 @@ contract SMARTBond is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
     {
         _smart_addComplianceModule(_module, _params);
     }
@@ -332,7 +336,7 @@ contract SMARTBond is
     function removeComplianceModule(address _module)
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
     {
         _smart_removeComplianceModule(_module);
     }

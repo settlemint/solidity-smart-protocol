@@ -3,9 +3,8 @@ pragma solidity 0.8.28;
 
 library SMARTRoles {
     // Role constants
-    bytes32 public constant TOKEN_GOVERNANCE_ROLE = keccak256("TOKEN_GOVERNANCE_ROLE"); // TOKEN_ADMIN
-
-    bytes32 public constant COMPLIANCE_ROLE = keccak256("COMPLIANCE_ROLE"); // VERIFICATION, COMPLIANCE
+    bytes32 public constant TOKEN_GOVERNANCE_ROLE = keccak256("TOKEN_GOVERNANCE_ROLE"); // TOKEN_ADMIN, VERIFICATION,
+        // COMPLIANCE
 
     bytes32 public constant SUPPLY_MANAGEMENT_ROLE = keccak256("SUPPLY_MANAGEMENT_ROLE"); // MINT, BURN
 
