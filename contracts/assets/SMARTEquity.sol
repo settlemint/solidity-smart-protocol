@@ -60,20 +60,20 @@ contract SMARTEquity is
     /// @param decimals_ The number of decimals the token uses.
     /// @param equityClass_ The class of the equity.
     /// @param equityCategory_ The category of the equity.
-    /// @param identityRegistry_ The address of the Identity Registry contract.
-    /// @param compliance_ The address of the main compliance contract.
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
+    /// @param identityRegistry_ The address of the Identity Registry contract.
+    /// @param compliance_ The address of the main compliance contract.
     function initialize(
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
         string memory equityClass_,
         string memory equityCategory_,
-        address identityRegistry_,
-        address compliance_,
         uint256[] memory requiredClaimTopics_,
-        SMARTComplianceModuleParamPair[] memory initialModulePairs_
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_,
+        address identityRegistry_,
+        address compliance_
     )
         public
         initializer

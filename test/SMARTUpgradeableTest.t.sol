@@ -48,6 +48,8 @@ contract SMARTUpgradeableTest is
         address tokenProxyAddress = address(proxy);
         vm.stopPrank();
 
+        _grantAllRoles(tokenProxyAddress, tokenIssuer);
+
         // 4. Create the token's on-chain identity (using platform admin)
         tokenUtils.createAndSetTokenOnchainID(tokenProxyAddress, tokenIssuer);
 

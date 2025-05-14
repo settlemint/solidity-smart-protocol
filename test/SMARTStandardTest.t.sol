@@ -43,6 +43,8 @@ contract SMARTStandardTest is
         address tokenAddress = address(bond);
         vm.stopPrank();
 
+        _grantAllRoles(tokenAddress, tokenIssuer);
+
         // 2. Create the token's on-chain identity
         tokenUtils.createAndSetTokenOnchainID(tokenAddress, tokenIssuer);
 

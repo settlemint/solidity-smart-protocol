@@ -73,7 +73,8 @@ contract SMARTFixedYieldScheduleFactory is ERC2771Context {
         );
 
         // Set the yield schedule on the token
-        token.setYieldSchedule(schedule);
+        // we cannot do this here anymore, since AccessControl won't work then
+        // token.setYieldSchedule(schedule);
 
         emit SMARTFixedYieldScheduleCreated(schedule, _msgSender());
         allSchedules.push(SMARTFixedYieldSchedule(schedule));

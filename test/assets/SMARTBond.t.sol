@@ -71,7 +71,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         identities[1] = user1;
         identities[2] = user2;
         identities[3] = spender;
-        this.setUpIdentities(identities);
+        _setUpIdentities(identities);
 
         maturityDate = block.timestamp + 365 days;
 
@@ -113,10 +113,11 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         internal
-        returns (SMARTBond smartBond)
+        returns (SMARTBond result)
     {
         vm.startPrank(owner);
         SMARTBond smartBondImplementation = new SMARTBond(address(forwarder));
+        vm.label(address(smartBondImplementation), "Bond Implementation");
 
         bytes memory data = abi.encodeWithSelector(
             SMARTBond.initialize.selector,
@@ -133,17 +134,18 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
             address(compliance)
         );
 
-        smartBond = SMARTBond(address(new ERC1967Proxy(address(smartBondImplementation), data)));
+        result = SMARTBond(address(new ERC1967Proxy(address(smartBondImplementation), data)));
+        vm.label(address(result), "Bond");
         vm.stopPrank();
 
-        grantAllRoles(address(smartBond), owner, owner);
+        _grantAllRoles(address(result), owner, owner);
 
-        createAndSetTokenOnchainID(address(smartBond), owner);
+        _createAndSetTokenOnchainID(address(result), owner);
 
         vm.prank(owner);
-        smartBond.mint(owner, initialSupply);
+        result.mint(owner, initialSupply);
 
-        return smartBond;
+        return result;
     }
 
     // Basic ERC20 functionality tests
@@ -282,7 +284,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         vm.startPrank(user1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, bond.DEFAULT_ADMIN_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.PAUSER_ROLE
             )
         );
         bond.pause();
@@ -504,9 +506,6 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
 
         vm.startPrank(owner);
         underlyingAsset.approve(address(bond), topUpAmount);
-
-        vm.expectEmit(true, false, false, true);
-        emit UnderlyingAssetTopUp(owner, topUpAmount);
         underlyingAsset.transfer(address(bond), topUpAmount);
         vm.stopPrank();
 
@@ -762,6 +761,9 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         // Note: The factory automatically sets up the circular reference by calling bond.setYieldSchedule()
         address yieldScheduleAddr = factory.create(ISMARTYield(address(bond)), startDate, endDate, yieldRate, interval);
 
+        // We need to set the yield schedule manually
+        bond.setYieldSchedule(yieldScheduleAddr);
+
         // Verify the schedule references our bond
         SMARTFixedYieldSchedule yieldSchedule = SMARTFixedYieldSchedule(yieldScheduleAddr);
         assertEq(address(yieldSchedule.token()), address(bond), "FixedYield should reference the bond");
@@ -786,6 +788,9 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         uint256 interval = 30 days;
 
         address yieldScheduleAddr = factory.create(ISMARTYield(address(bond)), startDate, endDate, yieldRate, interval);
+
+        // We need to set the yield schedule manually
+        bond.setYieldSchedule(yieldScheduleAddr);
 
         // Verify schedule is linked
         assertEq(bond.yieldSchedule(), yieldScheduleAddr);

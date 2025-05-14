@@ -78,35 +78,35 @@ abstract contract AbstractSMARTAssetTest is Test {
         forwarder = new MockedForwarder();
     }
 
-    function setUpIdentity(address _wallet) public {
+    function _setUpIdentity(address _wallet) internal {
         identityUtils.createClientIdentity(_wallet, TestConstants.COUNTRY_CODE_BE);
         claimUtils.issueInvestorClaim(_wallet, TestConstants.CLAIM_TOPIC_KYC, "Verified KYC by Issuer");
     }
 
-    function setUpIdentities(address[] memory _wallets) public {
+    function _setUpIdentities(address[] memory _wallets) internal {
         uint256 walletsLength = _wallets.length;
         for (uint256 i = 0; i < walletsLength; ++i) {
-            setUpIdentity(_wallets[i]);
+            _setUpIdentity(_wallets[i]);
         }
     }
 
-    function createAndSetTokenOnchainID(address _token, address _issuer) public {
+    function _createAndSetTokenOnchainID(address _token, address _issuer) internal {
         tokenUtils.createAndSetTokenOnchainID(_token, _issuer);
     }
 
-    function issueCollateralClaim(address _token, address _issuer, uint256 _amount, uint256 _expiry) public {
+    function _issueCollateralClaim(address _token, address _issuer, uint256 _amount, uint256 _expiry) internal {
         claimUtils.issueCollateralClaim(_token, _issuer, _amount, _expiry);
     }
 
-    function createIdentity(address _wallet) public returns (address) {
+    function _createIdentity(address _wallet) internal returns (address) {
         return identityUtils.createIdentity(_wallet);
     }
 
-    function createClaimUtilsForIssuer(
+    function _createClaimUtilsForIssuer(
         address claimIssuer_,
         uint256 claimIssuerPrivateKey_
     )
-        public
+        internal
         returns (ClaimUtils)
     {
         return new ClaimUtils(
@@ -121,7 +121,7 @@ abstract contract AbstractSMARTAssetTest is Test {
         );
     }
 
-    function grantAllRoles(address contract_, address wallet, address defaultAdmin) public {
+    function _grantAllRoles(address contract_, address wallet, address defaultAdmin) internal {
         vm.startPrank(defaultAdmin);
         IAccessControl(contract_).grantRole(SMARTRoles.TOKEN_ADMIN_ROLE, wallet);
         IAccessControl(contract_).grantRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE, wallet);

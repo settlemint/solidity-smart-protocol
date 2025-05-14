@@ -44,7 +44,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         identities[1] = user1;
         identities[2] = user2;
         identities[3] = spender;
-        setUpIdentities(identities);
+        _setUpIdentities(identities);
 
         deposit =
             _createDeposit("Deposit", "DEP", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0), owner);
@@ -64,7 +64,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
     {
         vm.startPrank(owner);
         SMARTDeposit smartDepositImplementation = new SMARTDeposit(address(forwarder));
-
+        vm.label(address(smartDepositImplementation), "Deposit Implementation");
         bytes memory data = abi.encodeWithSelector(
             SMARTDeposit.initialize.selector,
             name,
@@ -77,11 +77,12 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         );
 
         result = SMARTDeposit(address(new ERC1967Proxy(address(smartDepositImplementation), data)));
+        vm.label(address(result), "Deposit");
         vm.stopPrank();
 
-        grantAllRoles(address(result), owner, owner);
+        _grantAllRoles(address(result), owner, owner);
 
-        createAndSetTokenOnchainID(address(result), owner_);
+        _createAndSetTokenOnchainID(address(result), owner_);
 
         return result;
     }
@@ -91,7 +92,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         uint256 farFutureExpiry = block.timestamp + 3650 days; // ~10 years
 
         vm.startPrank(tokenIssuer);
-        issueCollateralClaim(address(token), tokenIssuer, collateralAmount, farFutureExpiry);
+        _issueCollateralClaim(address(token), tokenIssuer, collateralAmount, farFutureExpiry);
         vm.stopPrank();
     }
 
@@ -185,7 +186,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
     function test_onlyAdminCanPause() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, deposit.DEFAULT_ADMIN_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.PAUSER_ROLE
             )
         );
         vm.prank(user1);
@@ -203,8 +204,8 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         uint256 untrustedIssuerPK = 0xBAD155;
         address untrustedIssuerWallet = vm.addr(untrustedIssuerPK);
         vm.label(untrustedIssuerWallet, "Untrusted Issuer Wallet");
-        ClaimUtils untrustedClaimUtils = createClaimUtilsForIssuer(untrustedIssuerWallet, untrustedIssuerPK);
-        createIdentity(untrustedIssuerWallet);
+        ClaimUtils untrustedClaimUtils = _createClaimUtilsForIssuer(untrustedIssuerWallet, untrustedIssuerPK);
+        _createIdentity(untrustedIssuerWallet);
 
         uint256 farFutureExpiry = block.timestamp + 3650 days; // ~10 years
 
@@ -220,7 +221,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         deposit.mint(user1, 100);
         vm.stopPrank();
 
-        issueCollateralClaim(address(deposit), owner, collateralAmount, farFutureExpiry);
+        _issueCollateralClaim(address(deposit), owner, collateralAmount, farFutureExpiry);
 
         (amount, claimIssuer, timestamp) = deposit.findValidCollateralClaim();
         assertEq(amount, collateralAmount); // Check updated state (trusted issuer)
@@ -266,7 +267,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         address signer = vm.addr(privateKey);
         vm.label(signer, "Signer Wallet");
 
-        setUpIdentity(signer);
+        _setUpIdentity(signer);
 
         _mintInitialSupply(signer);
 
@@ -344,7 +345,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
             _createDeposit("Mock", "MCK", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0), owner);
 
         // Set up identity for the deposit contract (required to receive tokens)
-        setUpIdentity(address(deposit));
+        _setUpIdentity(address(deposit));
 
         // Update collateral and mint some tokens to the deposit contract
         _updateCollateral(address(mockToken), owner, 1000);
@@ -369,7 +370,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         vm.startPrank(user2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, deposit.DEFAULT_ADMIN_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.TOKEN_ADMIN_ROLE
             )
         );
         deposit.recoverERC20(address(mockToken), user1, 500);
@@ -398,7 +399,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
             _createDeposit("Mock", "MCK", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0), owner);
 
         // Set up identity for the deposit contract (required to receive tokens)
-        setUpIdentity(address(deposit));
+        _setUpIdentity(address(deposit));
 
         // Update collateral and mint some tokens to the deposit contract
         _updateCollateral(address(mockToken), owner, 100);

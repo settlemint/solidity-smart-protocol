@@ -50,7 +50,7 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         identities[0] = owner;
         identities[1] = investor1;
         identities[2] = investor2;
-        setUpIdentities(identities);
+        _setUpIdentities(identities);
 
         fund = _createFundAndMint(
             NAME,
@@ -80,7 +80,7 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
     {
         vm.startPrank(owner);
         SMARTFund smartFundImplementation = new SMARTFund(address(forwarder));
-
+        vm.label(address(smartFundImplementation), "Fund Implementation");
         bytes memory data = abi.encodeWithSelector(
             SMARTFund.initialize.selector,
             name_,
@@ -96,11 +96,12 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         );
 
         result = SMARTFund(address(new ERC1967Proxy(address(smartFundImplementation), data)));
+        vm.label(address(result), "Fund");
         vm.stopPrank();
 
-        grantAllRoles(address(result), owner, owner);
+        _grantAllRoles(address(result), owner, owner);
 
-        createAndSetTokenOnchainID(address(result), owner);
+        _createAndSetTokenOnchainID(address(result), owner);
 
         vm.prank(owner);
         result.mint(owner, INITIAL_SUPPLY);

@@ -44,7 +44,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         identities[1] = user1;
         identities[2] = user2;
         identities[3] = spender;
-        setUpIdentities(identities);
+        _setUpIdentities(identities);
 
         stableCoin =
             _createStableCoin("StableCoin", "STBL", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0));
@@ -63,7 +63,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
     {
         vm.startPrank(owner);
         SMARTStableCoin smartStableCoinImplementation = new SMARTStableCoin(address(forwarder));
-
+        vm.label(address(smartStableCoinImplementation), "StableCoin Implementation");
         bytes memory data = abi.encodeWithSelector(
             SMARTStableCoin.initialize.selector,
             name,
@@ -76,11 +76,12 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         );
 
         result = SMARTStableCoin(address(new ERC1967Proxy(address(smartStableCoinImplementation), data)));
+        vm.label(address(result), "StableCoin");
         vm.stopPrank();
 
-        grantAllRoles(address(result), owner, owner);
+        _grantAllRoles(address(result), owner, owner);
 
-        createAndSetTokenOnchainID(address(result), owner);
+        _createAndSetTokenOnchainID(address(result), owner);
 
         return result;
     }
@@ -90,7 +91,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         uint256 farFutureExpiry = block.timestamp + 3650 days; // ~10 years
 
         vm.startPrank(tokenIssuer);
-        issueCollateralClaim(address(token), tokenIssuer, collateralAmount, farFutureExpiry);
+        _issueCollateralClaim(address(token), tokenIssuer, collateralAmount, farFutureExpiry);
         vm.stopPrank();
     }
 
@@ -191,7 +192,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         vm.startPrank(user1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, stableCoin.DEFAULT_ADMIN_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.PAUSER_ROLE
             )
         );
         stableCoin.pause();
@@ -211,8 +212,8 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         uint256 untrustedIssuerPK = 0xBAD155;
         address untrustedIssuerWallet = vm.addr(untrustedIssuerPK);
         vm.label(untrustedIssuerWallet, "Untrusted Issuer Wallet");
-        ClaimUtils untrustedClaimUtils = createClaimUtilsForIssuer(untrustedIssuerWallet, untrustedIssuerPK);
-        createIdentity(untrustedIssuerWallet);
+        ClaimUtils untrustedClaimUtils = _createClaimUtilsForIssuer(untrustedIssuerWallet, untrustedIssuerPK);
+        _createIdentity(untrustedIssuerWallet);
 
         uint256 farFutureExpiry = block.timestamp + 3650 days; // ~10 years
 
@@ -231,7 +232,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         vm.stopPrank();
 
         // Issue claim from the trusted issuer (owner)
-        issueCollateralClaim(address(stableCoin), owner, collateralAmount, farFutureExpiry);
+        _issueCollateralClaim(address(stableCoin), owner, collateralAmount, farFutureExpiry);
 
         // Assign new values to existing variables (no type declaration)
         (amount, claimIssuer, timestamp) = stableCoin.findValidCollateralClaim();
@@ -283,7 +284,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         address signer = vm.addr(privateKey);
         vm.label(signer, "Signer Wallet");
 
-        setUpIdentity(signer);
+        _setUpIdentity(signer);
 
         _mintInitialSupply(signer);
 

@@ -94,10 +94,11 @@ contract SMARTFund is
     /// @param managementFeeBps_ The management fee in basis points (1 basis point = 0.01%)
     /// @param fundClass_ The class of the fund (e.g., "Hedge SMARTFund", "Mutual SMARTFund")
     /// @param fundCategory_ The category of the fund (e.g., "Long/Short Equity", "Global Macro")
-    /// @param identityRegistry_ The address of the Identity Registry contract.
-    /// @param compliance_ The address of the main compliance contract.
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
+    /// @param identityRegistry_ The address of the Identity Registry contract.
+    /// @param compliance_ The address of the main compliance contract.
+
     function initialize(
         string memory name_,
         string memory symbol_,
@@ -105,10 +106,10 @@ contract SMARTFund is
         uint16 managementFeeBps_,
         string memory fundClass_,
         string memory fundCategory_,
-        address identityRegistry_,
-        address compliance_,
         uint256[] memory requiredClaimTopics_,
-        SMARTComplianceModuleParamPair[] memory initialModulePairs_
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_,
+        address identityRegistry_,
+        address compliance_
     )
         public
         initializer

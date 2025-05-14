@@ -49,7 +49,7 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         identities[1] = user1;
         identities[2] = user2;
         identities[3] = spender;
-        setUpIdentities(identities);
+        _setUpIdentities(identities);
 
         smartEquity =
             _createEquityAndMint(NAME, SYMBOL, DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0));
@@ -73,12 +73,15 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
     {
         vm.startPrank(owner);
         SMARTEquity smartEquityImplementation = new SMARTEquity(address(forwarder));
+        vm.label(address(smartEquityImplementation), "Equity Implementation");
 
         bytes memory data = abi.encodeWithSelector(
             SMARTEquity.initialize.selector,
             name_,
             symbol_,
             decimals_,
+            EQUITY_CLASS,
+            EQUITY_CATEGORY,
             requiredClaimTopics_,
             initialModulePairs_,
             identityRegistry,
@@ -86,11 +89,12 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         );
 
         result = SMARTEquity(address(new ERC1967Proxy(address(smartEquityImplementation), data)));
+        vm.label(address(result), "Equity");
         vm.stopPrank();
 
-        grantAllRoles(address(result), owner, owner);
+        _grantAllRoles(address(result), owner, owner);
 
-        createAndSetTokenOnchainID(address(result), owner);
+        _createAndSetTokenOnchainID(address(result), owner);
 
         vm.prank(owner);
         result.mint(owner, INITIAL_SUPPLY);
@@ -126,6 +130,8 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
                 "Test SMART Equity",
                 "TEST",
                 decimalValues[i],
+                EQUITY_CLASS,
+                EQUITY_CATEGORY,
                 new uint256[](0),
                 new SMARTComplianceModuleParamPair[](0),
                 identityRegistry,
@@ -228,7 +234,7 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
 
     // Pausable Tests
     function test_OnlyAdminCanPause() public {
-        bytes32 role = smartEquity.DEFAULT_ADMIN_ROLE();
+        bytes32 role = SMARTRoles.PAUSER_ROLE;
 
         vm.startPrank(user1);
         vm.expectRevert(abi.encodeWithSignature("AccessControlUnauthorizedAccount(address,bytes32)", user1, role));
@@ -367,7 +373,7 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         vm.label(signer, "Signer Wallet");
 
         // Set up identity for the signer and spender
-        setUpIdentity(signer);
+        _setUpIdentity(signer);
 
         vm.startPrank(owner);
         smartEquity.mint(signer, 1000 * 10 ** DECIMALS);
