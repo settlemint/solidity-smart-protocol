@@ -3,21 +3,13 @@ pragma solidity 0.8.28;
 
 library SMARTRoles {
     // Role constants
-    bytes32 public constant TOKEN_ADMIN_ROLE = keccak256("TOKEN_ADMIN_ROLE");
+    bytes32 public constant TOKEN_GOVERNANCE_ROLE = keccak256("TOKEN_GOVERNANCE_ROLE"); // TOKEN_ADMIN
 
-    bytes32 public constant COMPLIANCE_ADMIN_ROLE = keccak256("COMPLIANCE_ADMIN_ROLE");
+    bytes32 public constant COMPLIANCE_ROLE = keccak256("COMPLIANCE_ROLE"); // VERIFICATION, COMPLIANCE
 
-    bytes32 public constant VERIFICATION_ADMIN_ROLE = keccak256("VERIFICATION_ADMIN_ROLE");
+    bytes32 public constant SUPPLY_MANAGEMENT_ROLE = keccak256("SUPPLY_MANAGEMENT_ROLE"); // MINT, BURN
 
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant CUSTODIAN_ROLE = keccak256("CUSTODIAN_ROLE"); // FREEZE, FORCED_TRANSFER, RECOVERY
 
-    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
-
-    bytes32 public constant FREEZER_ROLE = keccak256("FREEZER_ROLE");
-
-    bytes32 public constant FORCED_TRANSFER_ROLE = keccak256("FORCED_TRANSFER_ROLE");
-
-    bytes32 public constant RECOVERY_ROLE = keccak256("RECOVERY_ROLE");
-
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant EMERGENCY_ROLE = keccak256("EMERGENCY_ROLE"); // PAUSE, ERC20_RECOVERY
 }
