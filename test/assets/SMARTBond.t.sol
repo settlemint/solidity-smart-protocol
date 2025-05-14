@@ -12,7 +12,7 @@ import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import { ERC20Capped } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
+import { SMARTExceededCap } from "../../contracts/extensions/capped/SMARTCappedErrors.sol";
 import { SMARTFixedYieldScheduleFactory } from
     "../../contracts/extensions/yield/schedules/fixed/SMARTFixedYieldScheduleFactory.sol";
 import { SMARTFixedYieldSchedule } from "../../contracts/extensions/yield/schedules/fixed/SMARTFixedYieldSchedule.sol";
@@ -692,9 +692,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         uint256 remainingToCap = CAP - bond.totalSupply();
         uint256 exceedingAmount = remainingToCap + 1;
 
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC20Capped.ERC20ExceededCap.selector, exceedingAmount + bond.totalSupply(), CAP)
-        );
+        vm.expectRevert(abi.encodeWithSelector(SMARTExceededCap.selector, exceedingAmount + bond.totalSupply(), CAP));
         bond.mint(owner, exceedingAmount);
 
         // Should be able to mint up to the cap
@@ -702,7 +700,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         assertEq(bond.totalSupply(), CAP, "Total supply should equal cap");
 
         // Verify can't mint even 1 more token
-        vm.expectRevert(abi.encodeWithSelector(ERC20Capped.ERC20ExceededCap.selector, CAP + 1, CAP));
+        vm.expectRevert(abi.encodeWithSelector(SMARTExceededCap.selector, CAP + 1, CAP));
         bond.mint(owner, 1);
 
         vm.stopPrank();
@@ -723,7 +721,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         assertEq(bond.totalSupply(), CAP, "Supply should equal cap");
 
         // Try to mint one more token
-        vm.expectRevert(abi.encodeWithSelector(ERC20Capped.ERC20ExceededCap.selector, CAP + 1, CAP));
+        vm.expectRevert(abi.encodeWithSelector(SMARTExceededCap.selector, CAP + 1, CAP));
         bond.mint(owner, 1);
 
         vm.stopPrank();

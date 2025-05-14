@@ -11,8 +11,6 @@ import { ERC20PermitUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { ERC20CappedUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20CappedUpgradeable.sol";
 
 // Constants
 import { SMARTRoles } from "./SMARTRoles.sol";
@@ -33,12 +31,13 @@ import { SMARTHistoricalBalancesUpgradeable } from
     "../extensions/historical-balances/SMARTHistoricalBalancesUpgradeable.sol";
 import { SMARTYieldUpgradeable } from "../extensions/yield/SMARTYieldUpgradeable.sol";
 import { SMARTTokenAccessManagedUpgradeable } from "../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
-
+import { SMARTCappedUpgradeable } from "../extensions/capped/SMARTCappedUpgradeable.sol";
 /// @title SMARTBond
 /// @notice An implementation of a bond using the SMART extension framework,
 ///         backed by collateral and using custom roles.
 /// @dev Combines core SMART features (compliance, verification) with extensions for pausing,
 ///      burning, custodian actions, and collateral tracking. Access control uses custom roles.
+
 contract SMARTBond is
     Initializable,
     SMARTUpgradeable,
@@ -49,7 +48,7 @@ contract SMARTBond is
     SMARTRedeemableUpgradeable,
     SMARTHistoricalBalancesUpgradeable,
     SMARTYieldUpgradeable,
-    ERC20CappedUpgradeable,
+    SMARTCappedUpgradeable,
     ERC20PermitUpgradeable,
     ERC2771ContextUpgradeable,
     ReentrancyGuard
@@ -159,7 +158,7 @@ contract SMARTBond is
         __SMARTYield_init();
         __SMARTRedeemable_init();
         __SMARTHistoricalBalances_init();
-        __ERC20Capped_init(cap_);
+        __SMARTCapped_init(cap_);
         __ERC20Permit_init(name_);
 
         _maturityDate = maturityDate_;
@@ -550,7 +549,7 @@ contract SMARTBond is
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTYieldUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTCappedUpgradeable, SMARTCustodianUpgradeable, SMARTYieldUpgradeable, SMARTHooks)
     {
         super._beforeMint(to, amount);
     }
@@ -675,7 +674,7 @@ contract SMARTBond is
     )
         internal
         virtual
-        override(SMARTPausableUpgradeable, ERC20CappedUpgradeable, SMARTUpgradeable, ERC20Upgradeable)
+        override(SMARTPausableUpgradeable, SMARTUpgradeable, ERC20Upgradeable)
     {
         // Calls chain: SMARTPausable -> ERC20Capped -> SMART -> ERC20
         super._update(from, to, value);
