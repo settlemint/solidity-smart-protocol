@@ -30,7 +30,7 @@ abstract contract AbstractSMARTAssetTest is Test {
 
     MockedForwarder public forwarder;
 
-    function setUp() public {
+    function setUp() public virtual {
         // --- Setup platform admin ---
         platformAdmin = makeAddr("Platform Admin");
 
