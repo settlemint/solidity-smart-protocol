@@ -278,16 +278,18 @@ abstract contract _SMARTLogic is _SMARTExtension {
 
         // Register initial modules and their parameters
         uint256 initialModulePairsLength = initialModulePairs_.length;
+        address currentModule;
+        bytes memory currentParams;
         for (uint256 i = 0; i < initialModulePairsLength;) {
-            address module = initialModulePairs_[i].module;
-            bytes memory params = initialModulePairs_[i].params;
+            currentModule = initialModulePairs_[i].module;
+            currentParams = initialModulePairs_[i].params;
 
-            if (__moduleIndex[module] != 0) revert DuplicateModule(module);
+            if (__moduleIndex[currentModule] != 0) revert DuplicateModule(currentModule);
 
-            __complianceModuleList.push(module);
-            __moduleIndex[module] = __complianceModuleList.length; // Store index + 1
-            __moduleParameters[module] = params;
-            emit ComplianceModuleAdded(sender, module, params);
+            __complianceModuleList.push(currentModule);
+            __moduleIndex[currentModule] = __complianceModuleList.length; // Store index + 1
+            __moduleParameters[currentModule] = currentParams;
+            emit ComplianceModuleAdded(sender, currentModule, currentParams);
             unchecked {
                 ++i;
             }

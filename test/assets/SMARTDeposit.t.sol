@@ -336,7 +336,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         vm.prank(user2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.SUPPLY_MANAGEMENT_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.CUSTODIAN_ROLE
             )
         );
         deposit.forcedTransfer(user1, user2, INITIAL_SUPPLY);
