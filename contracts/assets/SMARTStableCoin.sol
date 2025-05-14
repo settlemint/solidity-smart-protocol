@@ -5,7 +5,6 @@ pragma solidity 0.8.28;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC20PermitUpgradeable } from
@@ -28,6 +27,7 @@ import { SMARTPausableUpgradeable } from "../extensions/pausable/SMARTPausableUp
 import { SMARTBurnableUpgradeable } from "../extensions/burnable/SMARTBurnableUpgradeable.sol";
 import { SMARTCustodianUpgradeable } from "../extensions/custodian/SMARTCustodianUpgradeable.sol";
 import { SMARTCollateralUpgradeable } from "../extensions/collateral/SMARTCollateralUpgradeable.sol";
+import { SMARTTokenAccessManagedUpgradeable } from "../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
 
 /// @title SMARTStableCoin
 /// @notice An implementation of a stablecoin using the SMART extension framework,
@@ -37,7 +37,7 @@ import { SMARTCollateralUpgradeable } from "../extensions/collateral/SMARTCollat
 contract SMARTStableCoin is
     Initializable,
     SMARTUpgradeable,
-    AccessControlUpgradeable,
+    SMARTTokenAccessManagedUpgradeable,
     SMARTCollateralUpgradeable,
     SMARTCustodianUpgradeable,
     SMARTPausableUpgradeable,
@@ -59,6 +59,7 @@ contract SMARTStableCoin is
     /// @param initialModulePairs_ Initial compliance module configurations.
     /// @param identityRegistry_ The address of the Identity Registry contract.
     /// @param compliance_ The address of the main compliance contract.
+    /// @param accessManager_ The address of the access manager contract.
     function initialize(
         string memory name_,
         string memory symbol_,
@@ -66,12 +67,13 @@ contract SMARTStableCoin is
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
-        address compliance_
+        address compliance_,
+        address accessManager_
     )
         public
         initializer
     {
-        __SMARTUpgradeable_init(
+        __SMART_init(
             name_,
             symbol_,
             decimals_,
@@ -84,24 +86,29 @@ contract SMARTStableCoin is
         __SMARTCustodian_init();
         __SMARTBurnable_init();
         __SMARTPausable_init();
-        __AccessControl_init();
+        __SMARTTokenAccessManaged_init(accessManager_);
         __SMARTCollateral_init(SMARTConstants.CLAIM_TOPIC_COLLATERAL);
-
-        // Init roles
-        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     // --- ISMART Implementation ---
 
-    function setOnchainID(address _onchainID) external override onlyRole(SMARTRoles.TOKEN_ADMIN_ROLE) {
+    function setOnchainID(address _onchainID) external override onlyAccessManagerRole(SMARTRoles.TOKEN_ADMIN_ROLE) {
         _smart_setOnchainID(_onchainID);
     }
 
-    function setIdentityRegistry(address _identityRegistry) external override onlyRole(SMARTRoles.TOKEN_ADMIN_ROLE) {
+    function setIdentityRegistry(address _identityRegistry)
+        external
+        override
+        onlyAccessManagerRole(SMARTRoles.TOKEN_ADMIN_ROLE)
+    {
         _smart_setIdentityRegistry(_identityRegistry);
     }
 
-    function setCompliance(address _compliance) external override onlyRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE) {
+    function setCompliance(address _compliance)
+        external
+        override
+        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE)
+    {
         _smart_setCompliance(_compliance);
     }
 
@@ -111,7 +118,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE)
+        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE)
     {
         _smart_setParametersForComplianceModule(_module, _params);
     }
@@ -119,12 +126,12 @@ contract SMARTStableCoin is
     function setRequiredClaimTopics(uint256[] calldata _requiredClaimTopics)
         external
         override
-        onlyRole(SMARTRoles.VERIFICATION_ADMIN_ROLE)
+        onlyAccessManagerRole(SMARTRoles.VERIFICATION_ADMIN_ROLE)
     {
         _smart_setRequiredClaimTopics(_requiredClaimTopics);
     }
 
-    function mint(address _to, uint256 _amount) external override onlyRole(SMARTRoles.MINTER_ROLE) {
+    function mint(address _to, uint256 _amount) external override onlyAccessManagerRole(SMARTRoles.MINTER_ROLE) {
         _smart_mint(_to, _amount);
     }
 
@@ -134,7 +141,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.MINTER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.MINTER_ROLE)
     {
         _smart_batchMint(_toList, _amounts);
     }
@@ -157,7 +164,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.TOKEN_ADMIN_ROLE)
+        onlyAccessManagerRole(SMARTRoles.TOKEN_ADMIN_ROLE)
     {
         _smart_recoverERC20(token, to, amount);
     }
@@ -168,18 +175,29 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE)
+        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE)
     {
         _smart_addComplianceModule(_module, _params);
     }
 
-    function removeComplianceModule(address _module) external override onlyRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE) {
+    function removeComplianceModule(address _module)
+        external
+        override
+        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE)
+    {
         _smart_removeComplianceModule(_module);
     }
 
     // --- ISMARTBurnable Implementation ---
 
-    function burn(address userAddress, uint256 amount) external override onlyRole(SMARTRoles.BURNER_ROLE) {
+    function burn(
+        address userAddress,
+        uint256 amount
+    )
+        external
+        override
+        onlyAccessManagerRole(SMARTRoles.BURNER_ROLE)
+    {
         _smart_burn(userAddress, amount);
     }
 
@@ -189,14 +207,21 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.BURNER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.BURNER_ROLE)
     {
         _smart_batchBurn(userAddresses, amounts);
     }
 
     // --- ISMARTCustodian Implementation ---
 
-    function setAddressFrozen(address userAddress, bool freeze) external override onlyRole(SMARTRoles.FREEZER_ROLE) {
+    function setAddressFrozen(
+        address userAddress,
+        bool freeze
+    )
+        external
+        override
+        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
+    {
         _smart_setAddressFrozen(userAddress, freeze);
     }
 
@@ -206,7 +231,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
     {
         _smart_freezePartialTokens(userAddress, amount);
     }
@@ -217,7 +242,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
     {
         _smart_unfreezePartialTokens(userAddress, amount);
     }
@@ -228,7 +253,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
     {
         _smart_batchSetAddressFrozen(userAddresses, freeze);
     }
@@ -239,7 +264,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
     {
         _smart_batchFreezePartialTokens(userAddresses, amounts);
     }
@@ -250,7 +275,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
     {
         _smart_batchUnfreezePartialTokens(userAddresses, amounts);
     }
@@ -262,7 +287,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.FORCED_TRANSFER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.FORCED_TRANSFER_ROLE)
         returns (bool)
     {
         return _smart_forcedTransfer(from, to, amount);
@@ -275,7 +300,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.FORCED_TRANSFER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.FORCED_TRANSFER_ROLE)
     {
         _smart_batchForcedTransfer(fromList, toList, amounts);
     }
@@ -287,7 +312,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyRole(SMARTRoles.RECOVERY_ROLE)
+        onlyAccessManagerRole(SMARTRoles.RECOVERY_ROLE)
         returns (bool)
     {
         return _smart_recoveryAddress(lostWallet, newWallet, investorOnchainID);
@@ -295,11 +320,11 @@ contract SMARTStableCoin is
 
     // --- ISMARTPausable Implementation ---
 
-    function pause() external override onlyRole(SMARTRoles.PAUSER_ROLE) {
+    function pause() external override onlyAccessManagerRole(SMARTRoles.PAUSER_ROLE) {
         _smart_pause();
     }
 
-    function unpause() external override onlyRole(SMARTRoles.PAUSER_ROLE) {
+    function unpause() external override onlyAccessManagerRole(SMARTRoles.PAUSER_ROLE) {
         _smart_unpause();
     }
 
@@ -328,17 +353,6 @@ contract SMARTStableCoin is
     {
         // Delegation to SMARTUpgradeable -> _SMARTLogic ensures correct value is returned
         return super.decimals();
-    }
-
-    /// @dev Overrides ERC165 to ensure that the SMART implementation is used.
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(SMARTUpgradeable, AccessControlUpgradeable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
     }
 
     // --- Hooks (Overrides for Chaining) ---

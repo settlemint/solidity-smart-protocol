@@ -33,7 +33,7 @@ To use this extension:
     - Inherit necessary base contracts (e.g., `ERC20`/`ERC20Upgradeable`, `AccessControlUpgradeable`/`OwnableUpgradeable` if applicable).
 2. **Implement Constructor/Initializer**:
     - **Standard (`SMARTCustodian`)**: In the final contract's `constructor`, call the constructors of parent contracts (like `SMART`). Grant initial custodian roles (`FREEZER_ROLE`, etc.).
-    - **Upgradeable (`SMARTCustodianUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__AccessControl_init`, `__SMARTUpgradeable_init`) and then call `__SMARTCustodian_init()`. Grant initial custodian roles.
+    - **Upgradeable (`SMARTCustodianUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__AccessControl_init`, `__SMART_init`) and then call `__SMARTCustodian_init()`. Grant initial custodian roles.
 3. **Implement Abstract Functions**: Ensure `identityRegistry()` and `requiredClaimTopics()` from `_SMARTCustodianLogic` are implemented (usually by inheriting the core `SMART` or `SMARTUpgradeable` which provides these).
 4. **Grant Roles**: Grant the necessary roles (`FREEZER_ROLE`, `FORCED_TRANSFER_ROLE`, `RECOVERY_ROLE`) to the appropriate admin/custodian addresses.
 5. **Identity Registry Permission**: Ensure the token contract address has the `REGISTRAR_ROLE` on the configured `IdentityRegistry` contract to allow the `recoveryAddress` function to update registrations.

@@ -32,7 +32,7 @@ To use this extension:
 
 2. **Implement Constructor/Initializer**:
     - **Standard (`SMARTHistoricalBalances`)**: Ensure parent constructors (like `SMART`) are called in the final contract's `constructor`.
-    - **Upgradeable (`SMARTHistoricalBalancesUpgradeable`)**: In the final contract's `initialize` function, ensure parent initializers (e.g., `__ERC20_init`, `__SMARTUpgradeable_init`, `__SMARTUpgradeable_init_extensions`) are called. Then, call `__SMARTHistoricalBalances_init()` as part of the extension initialization process (typically handled by `__SMARTUpgradeable_init_extensions` if this extension is registered).
+    - **Upgradeable (`SMARTHistoricalBalancesUpgradeable`)**: In the final contract's `initialize` function, ensure parent initializers (e.g., `__ERC20_init`, `__SMART_init`, `__SMART_init_extensions`) are called. Then, call `__SMARTHistoricalBalances_init()` as part of the extension initialization process (typically handled by `__SMART_init_extensions` if this extension is registered).
 
 3. **Hook Integration**: The extension automatically hooks into `_afterMint`, `_afterBurn`, and `_afterTransfer`. No further manual hook setup is generally required for its core functionality.
 

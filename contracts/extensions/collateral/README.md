@@ -29,7 +29,7 @@ To use this extension:
 2. **Inherit Core SMART & ERC20**: Ensure your main contract also inherits the corresponding core SMART implementation (`SMART` or `SMARTUpgradeable`) and ERC20 implementation (`ERC20` or `ERC20Upgradeable`). These provide necessary functions like `totalSupply`, `onchainID`, `identityRegistry`, and the `_beforeMint` hook framework.
 3. **Implement Constructor/Initializer**:
     - **Standard (`SMARTCollateral`)**: In the final contract's `constructor`, call parent constructors, including passing the `collateralProofTopic_` to the `SMARTCollateral` constructor (which calls `_SMARTCollateral_init`).
-    - **Upgradeable (`SMARTCollateralUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__SMARTUpgradeable_init`) and then call `__SMARTCollateralUpgradeable_init(collateralProofTopic_)`.
+    - **Upgradeable (`SMARTCollateralUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__SMART_init`) and then call `__SMARTCollateralUpgradeable_init(collateralProofTopic_)`.
 
 ## Collateral Claim Requirements
 

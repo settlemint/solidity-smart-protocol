@@ -30,7 +30,7 @@ To use this extension:
     - Inherit necessary base contracts (e.g., `ERC20`/`ERC20Upgradeable`).
 2. **Implement Constructor/Initializer**:
     - **Standard (`SMARTRedeemable`)**: Call parent constructors in the final contract's `constructor`.
-    - **Upgradeable (`SMARTRedeemableUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__SMARTUpgradeable_init`) and then call `__SMARTRedeemable_init()`.
+    - **Upgradeable (`SMARTRedeemableUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__SMART_init`) and then call `__SMARTRedeemable_init()`.
 3. **(Optional) Override Hooks**: If custom logic is needed before or after redemption, override the virtual `_beforeRedeem` and/or `_afterRedeem` functions in your final contract.
 
 ## Authorization

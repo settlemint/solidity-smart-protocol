@@ -12,7 +12,7 @@ Key components include:
 - **`_SMARTAuthorizationHooks.sol`**: Defines abstract internal functions (`_authorizeUpdateTokenSettings`, `_authorizeMintToken`, etc.) that `_SMARTLogic` calls before executing permissioned actions. These hooks must be implemented by an authorization contract.
 - **`SMARTAccessControlAuthorization.sol`**: An example authorization implementation using OpenZeppelin's AccessControl. It defines roles (`TOKEN_ADMIN_ROLE`, `COMPLIANCE_ADMIN_ROLE`, `VERIFICATION_ADMIN_ROLE`, `MINTER_ROLE`) and implements the hooks from `_SMARTAuthorizationHooks` to enforce role checks.
 - **`SMART.sol`**: The standard (non-upgradeable) implementation contract. It inherits `ERC20`, `_SMARTLogic`, and `SMARTExtension`. It provides a constructor to initialize the state via `__SMART_init_unchained` and overrides ERC20 functions (`transfer`, `transferFrom`, `_update`) to integrate the SMART hooks.
-- **`SMARTUpgradeable.sol`**: The upgradeable (UUPS) implementation contract. It inherits `ERC20Upgradeable`, `UUPSUpgradeable`, `_SMARTLogic`, and `SMARTExtensionUpgradeable`. It provides an internal initializer (`__SMARTUpgradeable_init`) that calls `__SMART_init_unchained` and overrides upgradeable ERC20 functions to integrate SMART hooks. It requires an additional access control mechanism (like `OwnableUpgradeable` or `AccessControlUpgradeable`) for managing upgrades via `_authorizeUpgrade`.
+- **`SMARTUpgradeable.sol`**: The upgradeable (UUPS) implementation contract. It inherits `ERC20Upgradeable`, `UUPSUpgradeable`, `_SMARTLogic`, and `SMARTExtensionUpgradeable`. It provides an internal initializer (`__SMART_init`) that calls `__SMART_init_unchained` and overrides upgradeable ERC20 functions to integrate SMART hooks. It requires an additional access control mechanism (like `OwnableUpgradeable` or `AccessControlUpgradeable`) for managing upgrades via `_authorizeUpgrade`.
 
 ## Features
 
@@ -38,7 +38,7 @@ To build a token using this extension:
     - **Upgradeable Only**: Inherit an access control contract for UUPS upgrades (e.g., `OwnableUpgradeable` or `AccessControlUpgradeable`).
 3. **Implement Constructor/Initializer**:
     - **Standard (`SMART`)**: Create a `constructor` that calls the `SMART` constructor, passing all required parameters. Grant initial roles (e.g., `TOKEN_ADMIN_ROLE`, `MINTER_ROLE`) to the deployer or designated addresses.
-    - **Upgradeable (`SMARTUpgradeable`)**: Create an `initialize` function. Inside, call the initializers for `ERC20Upgradeable`, `UUPSUpgradeable`, your chosen UUPS access control contract, your chosen authorization contract (if it has an initializer), AND finally `__SMARTUpgradeable_init`, passing all required parameters. Grant initial roles within the initializer.
+    - **Upgradeable (`SMARTUpgradeable`)**: Create an `initialize` function. Inside, call the initializers for `ERC20Upgradeable`, `UUPSUpgradeable`, your chosen UUPS access control contract, your chosen authorization contract (if it has an initializer), AND finally `__SMART_init`, passing all required parameters. Grant initial roles within the initializer.
 4. **Implement Abstract Functions**: Ensure any abstract functions from inherited contracts (especially `_authorizeUpgrade` for `SMARTUpgradeable` and potentially `_msgSender`/`hasRole` if not using standard OZ AccessControl) are implemented in your final concrete contract.
 5. **Deploy**: Deploy your final contract. For upgradeable contracts, deploy using a proxy pattern (e.g., via Hardhat Upgrades plugin).
 
