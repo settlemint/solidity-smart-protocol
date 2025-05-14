@@ -56,14 +56,15 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
     event BondRedeemed(address indexed holder, uint256 bondAmount, uint256 underlyingAmount);
     event UnderlyingAssetWithdrawn(address indexed to, uint256 amount);
 
-    function setUp() public override {
-        super.setUp();
-
+    function setUp() public {
         // Create identities
         owner = makeAddr("owner");
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
         spender = makeAddr("spender");
+
+        // Initialize SMART
+        setUpSMART(owner);
 
         // Initialize identities
         address[] memory identities = new address[](4);
@@ -130,15 +131,16 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
             underlyingAsset_,
             requiredClaimTopics_,
             initialModulePairs_,
-            address(identityRegistry),
-            address(compliance)
+            identityRegistry,
+            compliance,
+            address(accessManager)
         );
 
         result = SMARTBond(address(new ERC1967Proxy(address(smartBondImplementation), data)));
         vm.label(address(result), "Bond");
         vm.stopPrank();
 
-        _grantAllRoles(address(result), owner, owner);
+        _grantAllRoles(owner, owner);
 
         _createAndSetTokenOnchainID(address(result), owner);
 
@@ -159,7 +161,6 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         assertEq(bond.faceValue(), faceValue);
         assertEq(address(bond.underlyingAsset()), address(underlyingAsset));
         assertFalse(bond.isMatured());
-        assertTrue(bond.hasRole(bond.DEFAULT_ADMIN_ROLE(), owner));
         assertTrue(bond.hasRole(SMARTRoles.MINTER_ROLE, owner));
         assertTrue(bond.hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, owner));
     }
@@ -201,8 +202,9 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
             address(underlyingAsset),
             new uint256[](0),
             new SMARTComplianceModuleParamPair[](0),
-            address(identityRegistry),
-            address(compliance)
+            identityRegistry,
+            compliance,
+            address(accessManager)
         );
 
         vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
@@ -255,10 +257,10 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        bond.grantRole(SMARTRoles.MINTER_ROLE, user1);
+        accessManager.grantRole(SMARTRoles.MINTER_ROLE, user1);
         assertTrue(bond.hasRole(SMARTRoles.MINTER_ROLE, user1));
 
-        bond.revokeRole(SMARTRoles.MINTER_ROLE, user1);
+        accessManager.revokeRole(SMARTRoles.MINTER_ROLE, user1);
         assertFalse(bond.hasRole(SMARTRoles.MINTER_ROLE, user1));
         vm.stopPrank();
     }

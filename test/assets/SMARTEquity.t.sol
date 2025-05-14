@@ -35,14 +35,15 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
     event Unpaused(address account);
     event CustodianOperation(address indexed custodian, address indexed from, address indexed to, uint256 amount);
 
-    function setUp() public override {
-        super.setUp();
-
+    function setUp() public {
         // Create identities
         owner = makeAddr("owner");
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
         spender = makeAddr("spender");
+
+        // Initialize SMART
+        setUpSMART(owner);
 
         address[] memory identities = new address[](4);
         identities[0] = owner;
@@ -85,14 +86,15 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
             requiredClaimTopics_,
             initialModulePairs_,
             identityRegistry,
-            compliance
+            compliance,
+            address(accessManager)
         );
 
         result = SMARTEquity(address(new ERC1967Proxy(address(smartEquityImplementation), data)));
         vm.label(address(result), "Equity");
         vm.stopPrank();
 
-        _grantAllRoles(address(result), owner, owner);
+        _grantAllRoles(owner, owner);
 
         _createAndSetTokenOnchainID(address(result), owner);
 
@@ -107,7 +109,6 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         assertEq(smartEquity.name(), NAME);
         assertEq(smartEquity.symbol(), SYMBOL);
         assertEq(smartEquity.decimals(), DECIMALS);
-        assertTrue(smartEquity.hasRole(smartEquity.DEFAULT_ADMIN_ROLE(), owner));
         assertTrue(smartEquity.hasRole(SMARTRoles.MINTER_ROLE, owner));
         assertTrue(smartEquity.hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, owner));
         assertEq(smartEquity.totalSupply(), INITIAL_SUPPLY);
@@ -135,7 +136,8 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
                 new uint256[](0),
                 new SMARTComplianceModuleParamPair[](0),
                 identityRegistry,
-                compliance
+                compliance,
+                address(accessManager)
             );
 
             SMARTEquity newEquity = SMARTEquity(address(new ERC1967Proxy(address(smartEquityImplementation), data)));
@@ -169,10 +171,10 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        smartEquity.grantRole(SMARTRoles.MINTER_ROLE, user1);
+        accessManager.grantRole(SMARTRoles.MINTER_ROLE, user1);
         assertTrue(smartEquity.hasRole(SMARTRoles.MINTER_ROLE, user1));
 
-        smartEquity.revokeRole(SMARTRoles.MINTER_ROLE, user1);
+        accessManager.revokeRole(SMARTRoles.MINTER_ROLE, user1);
         assertFalse(smartEquity.hasRole(SMARTRoles.MINTER_ROLE, user1));
         vm.stopPrank();
     }

@@ -37,13 +37,14 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
     event PerformanceFeeCollected(uint256 amount, uint256 timestamp);
     event TokenWithdrawn(address indexed token, address indexed to, uint256 amount, address indexed sender);
 
-    function setUp() public override {
-        super.setUp();
-
+    function setUp() public {
         // Create identities
         owner = makeAddr("owner");
         investor1 = makeAddr("investor1");
         investor2 = makeAddr("investor2");
+
+        // Initialize SMART
+        setUpSMART(owner);
 
         // Initialize identities
         address[] memory identities = new address[](3);
@@ -92,14 +93,15 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
             requiredClaimTopics_,
             initialModulePairs_,
             identityRegistry,
-            compliance
+            compliance,
+            address(accessManager)
         );
 
         result = SMARTFund(address(new ERC1967Proxy(address(smartFundImplementation), data)));
         vm.label(address(result), "Fund");
         vm.stopPrank();
 
-        _grantAllRoles(address(result), owner, owner);
+        _grantAllRoles(owner, owner);
 
         _createAndSetTokenOnchainID(address(result), owner);
 
@@ -115,7 +117,6 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         assertEq(fund.decimals(), DECIMALS);
         assertEq(fund.fundClass(), FUND_CLASS);
         assertEq(fund.fundCategory(), FUND_CATEGORY);
-        assertTrue(fund.hasRole(fund.DEFAULT_ADMIN_ROLE(), owner));
         assertTrue(fund.hasRole(SMARTRoles.MINTER_ROLE, owner));
         assertTrue(fund.hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, owner));
     }

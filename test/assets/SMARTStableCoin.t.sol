@@ -29,14 +29,15 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-    function setUp() public override {
-        super.setUp();
-
+    function setUp() public {
         // Create identities
         owner = makeAddr("owner");
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
         spender = makeAddr("spender");
+
+        // Initialize SMART
+        setUpSMART(owner);
 
         // Initialize identities
         address[] memory identities = new address[](4);
@@ -72,14 +73,15 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
             requiredClaimTopics,
             initialModulePairs,
             identityRegistry,
-            compliance
+            compliance,
+            address(accessManager)
         );
 
         result = SMARTStableCoin(address(new ERC1967Proxy(address(smartStableCoinImplementation), data)));
         vm.label(address(result), "StableCoin");
         vm.stopPrank();
 
-        _grantAllRoles(address(result), owner, owner);
+        _grantAllRoles(owner, owner);
 
         _createAndSetTokenOnchainID(address(result), owner);
 
@@ -108,7 +110,6 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         assertEq(stableCoin.symbol(), "STBL");
         assertEq(stableCoin.decimals(), DECIMALS);
         assertEq(stableCoin.totalSupply(), 0);
-        assertTrue(stableCoin.hasRole(stableCoin.DEFAULT_ADMIN_ROLE(), owner));
         assertTrue(stableCoin.hasRole(SMARTRoles.MINTER_ROLE, owner));
         assertTrue(stableCoin.hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, owner));
     }
@@ -140,7 +141,8 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
             new uint256[](0),
             new SMARTComplianceModuleParamPair[](0),
             identityRegistry,
-            compliance
+            compliance,
+            address(accessManager)
         );
 
         vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
@@ -168,10 +170,10 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        stableCoin.grantRole(SMARTRoles.MINTER_ROLE, user1);
+        accessManager.grantRole(SMARTRoles.MINTER_ROLE, user1);
         assertTrue(stableCoin.hasRole(SMARTRoles.MINTER_ROLE, user1));
 
-        stableCoin.revokeRole(SMARTRoles.MINTER_ROLE, user1);
+        accessManager.revokeRole(SMARTRoles.MINTER_ROLE, user1);
         assertFalse(stableCoin.hasRole(SMARTRoles.MINTER_ROLE, user1));
         vm.stopPrank();
     }

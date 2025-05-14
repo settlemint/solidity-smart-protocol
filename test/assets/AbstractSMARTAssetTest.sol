@@ -13,6 +13,7 @@ import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { MockedForwarder } from "../utils/mocks/MockedForwarder.sol";
+import { SMARTTokenAccessManager } from "../../contracts/extensions/access-managed/manager/SMARTTokenAccessManager.sol";
 
 abstract contract AbstractSMARTAssetTest is Test {
     address public platformAdmin;
@@ -28,9 +29,11 @@ abstract contract AbstractSMARTAssetTest is Test {
     address public identityRegistry;
     address public compliance;
 
+    SMARTTokenAccessManager public accessManager;
+
     MockedForwarder public forwarder;
 
-    function setUp() public virtual {
+    function setUpSMART(address _owner) public virtual {
         // --- Setup platform admin ---
         platformAdmin = makeAddr("Platform Admin");
 
@@ -76,6 +79,10 @@ abstract contract AbstractSMARTAssetTest is Test {
 
         // Initialize the forwarder
         forwarder = new MockedForwarder();
+
+        // Initialize the access manager
+        vm.prank(_owner);
+        accessManager = new SMARTTokenAccessManager(address(forwarder));
     }
 
     function _setUpIdentity(address _wallet) internal {
@@ -121,17 +128,17 @@ abstract contract AbstractSMARTAssetTest is Test {
         );
     }
 
-    function _grantAllRoles(address contract_, address wallet, address defaultAdmin) internal {
+    function _grantAllRoles(address wallet, address defaultAdmin) internal {
         vm.startPrank(defaultAdmin);
-        IAccessControl(contract_).grantRole(SMARTRoles.TOKEN_ADMIN_ROLE, wallet);
-        IAccessControl(contract_).grantRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE, wallet);
-        IAccessControl(contract_).grantRole(SMARTRoles.VERIFICATION_ADMIN_ROLE, wallet);
-        IAccessControl(contract_).grantRole(SMARTRoles.MINTER_ROLE, wallet);
-        IAccessControl(contract_).grantRole(SMARTRoles.BURNER_ROLE, wallet);
-        IAccessControl(contract_).grantRole(SMARTRoles.FREEZER_ROLE, wallet);
-        IAccessControl(contract_).grantRole(SMARTRoles.FORCED_TRANSFER_ROLE, wallet);
-        IAccessControl(contract_).grantRole(SMARTRoles.RECOVERY_ROLE, wallet);
-        IAccessControl(contract_).grantRole(SMARTRoles.PAUSER_ROLE, wallet);
+        accessManager.grantRole(SMARTRoles.TOKEN_ADMIN_ROLE, wallet);
+        accessManager.grantRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE, wallet);
+        accessManager.grantRole(SMARTRoles.VERIFICATION_ADMIN_ROLE, wallet);
+        accessManager.grantRole(SMARTRoles.MINTER_ROLE, wallet);
+        accessManager.grantRole(SMARTRoles.BURNER_ROLE, wallet);
+        accessManager.grantRole(SMARTRoles.FREEZER_ROLE, wallet);
+        accessManager.grantRole(SMARTRoles.FORCED_TRANSFER_ROLE, wallet);
+        accessManager.grantRole(SMARTRoles.RECOVERY_ROLE, wallet);
+        accessManager.grantRole(SMARTRoles.PAUSER_ROLE, wallet);
         vm.stopPrank();
     }
 }

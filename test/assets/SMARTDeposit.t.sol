@@ -29,14 +29,15 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
     uint256 public constant INITIAL_SUPPLY = 1_000_000 * 10 ** DECIMALS;
     uint48 public constant COLLATERAL_LIVENESS = 7 days;
 
-    function setUp() public override {
-        super.setUp();
-
+    function setUp() public {
         // Create identities
         owner = makeAddr("owner");
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
         spender = makeAddr("spender");
+
+        // Initialize SMART
+        setUpSMART(owner);
 
         // Initialize identities
         address[] memory identities = new address[](4);
@@ -72,15 +73,16 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
             decimals,
             requiredClaimTopics,
             initialModulePairs,
-            address(identityRegistry),
-            address(compliance)
+            identityRegistry,
+            compliance,
+            address(accessManager)
         );
 
         result = SMARTDeposit(address(new ERC1967Proxy(address(smartDepositImplementation), data)));
         vm.label(address(result), "Deposit");
         vm.stopPrank();
 
-        _grantAllRoles(address(result), owner, owner);
+        _grantAllRoles(owner, owner);
 
         _createAndSetTokenOnchainID(address(result), owner_);
 
@@ -107,7 +109,6 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         assertEq(deposit.symbol(), "DEP");
         assertEq(deposit.decimals(), DECIMALS);
         assertEq(deposit.totalSupply(), 0);
-        assertTrue(deposit.hasRole(deposit.DEFAULT_ADMIN_ROLE(), owner));
         assertTrue(deposit.hasRole(SMARTRoles.MINTER_ROLE, owner));
         assertTrue(deposit.hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, owner));
     }
@@ -138,7 +139,8 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
             new uint256[](0),
             new SMARTComplianceModuleParamPair[](0),
             identityRegistry,
-            compliance
+            compliance,
+            address(accessManager)
         );
 
         vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
@@ -166,10 +168,10 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        deposit.grantRole(SMARTRoles.MINTER_ROLE, user1);
+        accessManager.grantRole(SMARTRoles.MINTER_ROLE, user1);
         assertTrue(deposit.hasRole(SMARTRoles.MINTER_ROLE, user1));
 
-        deposit.revokeRole(SMARTRoles.MINTER_ROLE, user1);
+        accessManager.revokeRole(SMARTRoles.MINTER_ROLE, user1);
         assertFalse(deposit.hasRole(SMARTRoles.MINTER_ROLE, user1));
         vm.stopPrank();
     }
