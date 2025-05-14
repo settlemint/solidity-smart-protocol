@@ -5,4 +5,4 @@ pragma solidity ^0.8.28;
 
 /// @notice Emitted when the yield schedule is set for a token
 /// @param schedule The address of the yield schedule contract
-event YieldScheduleSet(address indexed schedule);
+event YieldScheduleSet(address indexed sender, address indexed schedule);

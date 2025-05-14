@@ -5,7 +5,8 @@ import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
 import { SMARTHooks } from "./../../common/SMARTHooks.sol";
 import { ISMARTYield } from "./../ISMARTYield.sol";
 import { ISMARTYieldSchedule } from "./../schedules/ISMARTYieldSchedule.sol";
-import { InvalidYieldSchedule, YieldScheduleAlreadySet, YieldScheduleActive } from "./../SMARTYieldErrors.sol";
+import { ZeroAddressNotAllowed } from "./../../common/CommonErrors.sol";
+import { YieldScheduleAlreadySet, YieldScheduleActive } from "./../SMARTYieldErrors.sol";
 import { YieldScheduleSet } from "./../SMARTYieldEvents.sol";
 
 /// @title Internal Logic for SMART Yield Extension
@@ -27,11 +28,11 @@ abstract contract _SMARTYieldLogic is _SMARTExtension, ISMARTYield {
     /// @dev Reverts if the schedule is invalid or already set
     /// @param schedule The address of the yield schedule contract
     function _smart_setYieldSchedule(address schedule) internal {
-        if (schedule == address(0)) revert InvalidYieldSchedule();
+        if (schedule == address(0)) revert ZeroAddressNotAllowed();
         if (yieldSchedule != address(0)) revert YieldScheduleAlreadySet();
 
         yieldSchedule = schedule;
-        emit YieldScheduleSet(schedule);
+        emit YieldScheduleSet(_smartSender(), schedule);
     }
 
     // -- Internal Hook Helper Functions --

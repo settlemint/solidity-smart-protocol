@@ -2,4 +2,4 @@
 pragma solidity ^0.8.28;
 
 //// @notice Emitted when the access manager address is changed.
-event AccessManagerSet(address indexed manager);
+event AccessManagerSet(address indexed sender, address indexed manager);

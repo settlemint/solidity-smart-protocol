@@ -3,7 +3,5 @@ pragma solidity ^0.8.28;
 
 // -- Errors --
 
-error InvalidYieldSchedule();
 error YieldScheduleAlreadySet();
-error NotAuthorized();
 error YieldScheduleActive();

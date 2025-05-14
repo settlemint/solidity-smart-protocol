@@ -25,7 +25,7 @@ abstract contract _SMARTTokenAccessManagedLogic is _SMARTExtension, ISMARTTokenA
         _accessManager = accessManager_;
 
         _registerInterface(type(ISMARTTokenAccessManaged).interfaceId);
-        emit AccessManagerSet(accessManager_);
+        emit AccessManagerSet(_smartSender(), accessManager_);
     }
 
     /**
@@ -37,7 +37,7 @@ abstract contract _SMARTTokenAccessManagedLogic is _SMARTExtension, ISMARTTokenA
         _;
     }
 
-    function hasRole(bytes32 role, address account) public view virtual returns (bool) {
+    function hasRole(bytes32 role, address account) external view virtual returns (bool) {
         return _hasRole(role, account);
     }
 
