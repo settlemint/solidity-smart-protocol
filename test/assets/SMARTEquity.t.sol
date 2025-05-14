@@ -109,8 +109,10 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         assertEq(smartEquity.name(), NAME);
         assertEq(smartEquity.symbol(), SYMBOL);
         assertEq(smartEquity.decimals(), DECIMALS);
-        assertTrue(smartEquity.hasRole(SMARTRoles.MINTER_ROLE, owner));
-        assertTrue(smartEquity.hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, owner));
+        assertTrue(smartEquity.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, owner));
+        assertTrue(smartEquity.hasRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, owner));
+        assertTrue(smartEquity.hasRole(SMARTRoles.CUSTODIAN_ROLE, owner));
+        assertTrue(smartEquity.hasRole(SMARTRoles.EMERGENCY_ROLE, owner));
         assertEq(smartEquity.totalSupply(), INITIAL_SUPPLY);
         assertEq(smartEquity.balanceOf(owner), INITIAL_SUPPLY);
     }
@@ -162,7 +164,7 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         vm.startPrank(user1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.MINTER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.SUPPLY_MANAGEMENT_ROLE
             )
         );
         smartEquity.mint(user1, amount);
@@ -171,11 +173,11 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        accessManager.grantRole(SMARTRoles.MINTER_ROLE, user1);
-        assertTrue(smartEquity.hasRole(SMARTRoles.MINTER_ROLE, user1));
+        accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        assertTrue(smartEquity.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
 
-        accessManager.revokeRole(SMARTRoles.MINTER_ROLE, user1);
-        assertFalse(smartEquity.hasRole(SMARTRoles.MINTER_ROLE, user1));
+        accessManager.revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        assertFalse(smartEquity.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
         vm.stopPrank();
     }
 
@@ -236,7 +238,7 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
 
     // Pausable Tests
     function test_OnlyAdminCanPause() public {
-        bytes32 role = SMARTRoles.PAUSER_ROLE;
+        bytes32 role = SMARTRoles.EMERGENCY_ROLE;
 
         vm.startPrank(user1);
         vm.expectRevert(abi.encodeWithSignature("AccessControlUnauthorizedAccount(address,bytes32)", user1, role));
@@ -298,7 +300,7 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         vm.startPrank(user2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.FREEZER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.CUSTODIAN_ROLE
             )
         );
         smartEquity.freezePartialTokens(user1, 50 * 10 ** DECIMALS);
@@ -458,8 +460,8 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
 
         vm.startPrank(user2);
         vm.expectRevert(
-            abi.encodeWithSignature(
-                "AccessControlUnauthorizedAccount(address,bytes32)", user2, SMARTRoles.FORCED_TRANSFER_ROLE
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.CUSTODIAN_ROLE
             )
         );
         smartEquity.forcedTransfer(user1, user2, 1000 * 10 ** DECIMALS);

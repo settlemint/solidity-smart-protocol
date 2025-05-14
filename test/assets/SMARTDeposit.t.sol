@@ -109,8 +109,10 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         assertEq(deposit.symbol(), "DEP");
         assertEq(deposit.decimals(), DECIMALS);
         assertEq(deposit.totalSupply(), 0);
-        assertTrue(deposit.hasRole(SMARTRoles.MINTER_ROLE, owner));
-        assertTrue(deposit.hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, owner));
+        assertTrue(deposit.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, owner));
+        assertTrue(deposit.hasRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, owner));
+        assertTrue(deposit.hasRole(SMARTRoles.CUSTODIAN_ROLE, owner));
+        assertTrue(deposit.hasRole(SMARTRoles.EMERGENCY_ROLE, owner));
     }
 
     function test_DifferentDecimals() public {
@@ -159,7 +161,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         vm.startPrank(user1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.MINTER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.SUPPLY_MANAGEMENT_ROLE
             )
         );
         deposit.mint(user1, 100);
@@ -168,11 +170,11 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        accessManager.grantRole(SMARTRoles.MINTER_ROLE, user1);
-        assertTrue(deposit.hasRole(SMARTRoles.MINTER_ROLE, user1));
+        accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        assertTrue(deposit.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
 
-        accessManager.revokeRole(SMARTRoles.MINTER_ROLE, user1);
-        assertFalse(deposit.hasRole(SMARTRoles.MINTER_ROLE, user1));
+        accessManager.revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        assertFalse(deposit.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
         vm.stopPrank();
     }
 
@@ -188,7 +190,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
     function test_onlyAdminCanPause() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.PAUSER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.EMERGENCY_ROLE
             )
         );
         vm.prank(user1);
@@ -243,7 +245,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         vm.prank(user2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.FREEZER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.CUSTODIAN_ROLE
             )
         );
         deposit.freezePartialTokens(user1, 100);
@@ -334,7 +336,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         vm.prank(user2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.FORCED_TRANSFER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.SUPPLY_MANAGEMENT_ROLE
             )
         );
         deposit.forcedTransfer(user1, user2, INITIAL_SUPPLY);
@@ -372,7 +374,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         vm.startPrank(user2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.TOKEN_ADMIN_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.EMERGENCY_ROLE
             )
         );
         deposit.recoverERC20(address(mockToken), user1, 500);

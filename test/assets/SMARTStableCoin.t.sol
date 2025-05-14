@@ -110,8 +110,8 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         assertEq(stableCoin.symbol(), "STBL");
         assertEq(stableCoin.decimals(), DECIMALS);
         assertEq(stableCoin.totalSupply(), 0);
-        assertTrue(stableCoin.hasRole(SMARTRoles.MINTER_ROLE, owner));
-        assertTrue(stableCoin.hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, owner));
+        assertTrue(stableCoin.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, owner));
+        assertTrue(stableCoin.hasRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, owner));
     }
 
     function test_DifferentDecimals() public {
@@ -161,7 +161,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         vm.startPrank(user1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.MINTER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.SUPPLY_MANAGEMENT_ROLE
             )
         );
         stableCoin.mint(user1, 100);
@@ -170,11 +170,11 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        accessManager.grantRole(SMARTRoles.MINTER_ROLE, user1);
-        assertTrue(stableCoin.hasRole(SMARTRoles.MINTER_ROLE, user1));
+        accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        assertTrue(stableCoin.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
 
-        accessManager.revokeRole(SMARTRoles.MINTER_ROLE, user1);
-        assertFalse(stableCoin.hasRole(SMARTRoles.MINTER_ROLE, user1));
+        accessManager.revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        assertFalse(stableCoin.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
         vm.stopPrank();
     }
 
@@ -194,7 +194,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         vm.startPrank(user1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.PAUSER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.EMERGENCY_ROLE
             )
         );
         stableCoin.pause();
@@ -256,7 +256,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         vm.startPrank(user2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.FREEZER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.CUSTODIAN_ROLE
             )
         );
         stableCoin.freezePartialTokens(user1, 100);
@@ -352,7 +352,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         vm.startPrank(user2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.FORCED_TRANSFER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user2, SMARTRoles.CUSTODIAN_ROLE
             )
         );
         stableCoin.forcedTransfer(user1, user2, INITIAL_SUPPLY);

@@ -161,8 +161,10 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         assertEq(bond.faceValue(), faceValue);
         assertEq(address(bond.underlyingAsset()), address(underlyingAsset));
         assertFalse(bond.isMatured());
-        assertTrue(bond.hasRole(SMARTRoles.MINTER_ROLE, owner));
-        assertTrue(bond.hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, owner));
+        assertTrue(bond.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, owner));
+        assertTrue(bond.hasRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, owner));
+        assertTrue(bond.hasRole(SMARTRoles.CUSTODIAN_ROLE, owner));
+        assertTrue(bond.hasRole(SMARTRoles.EMERGENCY_ROLE, owner));
     }
 
     function test_DifferentDecimals() public {
@@ -248,7 +250,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         vm.startPrank(user1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.MINTER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.SUPPLY_MANAGEMENT_ROLE
             )
         );
         bond.mint(user1, toDecimals(100));
@@ -257,11 +259,11 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        accessManager.grantRole(SMARTRoles.MINTER_ROLE, user1);
-        assertTrue(bond.hasRole(SMARTRoles.MINTER_ROLE, user1));
+        accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        assertTrue(bond.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
 
-        accessManager.revokeRole(SMARTRoles.MINTER_ROLE, user1);
-        assertFalse(bond.hasRole(SMARTRoles.MINTER_ROLE, user1));
+        accessManager.revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        assertFalse(bond.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
         vm.stopPrank();
     }
 
@@ -286,7 +288,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         vm.startPrank(user1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.PAUSER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.EMERGENCY_ROLE
             )
         );
         bond.pause();
@@ -351,7 +353,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         vm.startPrank(user1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.TOKEN_ADMIN_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, user1, SMARTRoles.TOKEN_GOVERNANCE_ROLE
             )
         );
         bond.mature();

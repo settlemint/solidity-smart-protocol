@@ -92,23 +92,23 @@ contract SMARTStableCoin is
 
     // --- ISMART Implementation ---
 
-    function setOnchainID(address _onchainID) external override onlyAccessManagerRole(SMARTRoles.TOKEN_ADMIN_ROLE) {
+    function setOnchainID(address _onchainID)
+        external
+        override
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
+    {
         _smart_setOnchainID(_onchainID);
     }
 
     function setIdentityRegistry(address _identityRegistry)
         external
         override
-        onlyAccessManagerRole(SMARTRoles.TOKEN_ADMIN_ROLE)
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
     {
         _smart_setIdentityRegistry(_identityRegistry);
     }
 
-    function setCompliance(address _compliance)
-        external
-        override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE)
-    {
+    function setCompliance(address _compliance) external override onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE) {
         _smart_setCompliance(_compliance);
     }
 
@@ -118,7 +118,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE)
+        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
     {
         _smart_setParametersForComplianceModule(_module, _params);
     }
@@ -126,12 +126,19 @@ contract SMARTStableCoin is
     function setRequiredClaimTopics(uint256[] calldata _requiredClaimTopics)
         external
         override
-        onlyAccessManagerRole(SMARTRoles.VERIFICATION_ADMIN_ROLE)
+        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
     {
         _smart_setRequiredClaimTopics(_requiredClaimTopics);
     }
 
-    function mint(address _to, uint256 _amount) external override onlyAccessManagerRole(SMARTRoles.MINTER_ROLE) {
+    function mint(
+        address _to,
+        uint256 _amount
+    )
+        external
+        override
+        onlyAccessManagerRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE)
+    {
         _smart_mint(_to, _amount);
     }
 
@@ -141,7 +148,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.MINTER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE)
     {
         _smart_batchMint(_toList, _amounts);
     }
@@ -164,7 +171,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.TOKEN_ADMIN_ROLE)
+        onlyAccessManagerRole(SMARTRoles.EMERGENCY_ROLE)
     {
         _smart_recoverERC20(token, to, amount);
     }
@@ -175,7 +182,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE)
+        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
     {
         _smart_addComplianceModule(_module, _params);
     }
@@ -183,7 +190,7 @@ contract SMARTStableCoin is
     function removeComplianceModule(address _module)
         external
         override
-        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ADMIN_ROLE)
+        onlyAccessManagerRole(SMARTRoles.COMPLIANCE_ROLE)
     {
         _smart_removeComplianceModule(_module);
     }
@@ -196,7 +203,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.BURNER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE)
     {
         _smart_burn(userAddress, amount);
     }
@@ -207,7 +214,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.BURNER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE)
     {
         _smart_batchBurn(userAddresses, amounts);
     }
@@ -220,7 +227,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
     {
         _smart_setAddressFrozen(userAddress, freeze);
     }
@@ -231,7 +238,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
     {
         _smart_freezePartialTokens(userAddress, amount);
     }
@@ -242,7 +249,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
     {
         _smart_unfreezePartialTokens(userAddress, amount);
     }
@@ -253,7 +260,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
     {
         _smart_batchSetAddressFrozen(userAddresses, freeze);
     }
@@ -264,7 +271,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
     {
         _smart_batchFreezePartialTokens(userAddresses, amounts);
     }
@@ -275,7 +282,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.FREEZER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
     {
         _smart_batchUnfreezePartialTokens(userAddresses, amounts);
     }
@@ -287,7 +294,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.FORCED_TRANSFER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
         returns (bool)
     {
         return _smart_forcedTransfer(from, to, amount);
@@ -300,7 +307,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.FORCED_TRANSFER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
     {
         _smart_batchForcedTransfer(fromList, toList, amounts);
     }
@@ -312,7 +319,7 @@ contract SMARTStableCoin is
     )
         external
         override
-        onlyAccessManagerRole(SMARTRoles.RECOVERY_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
         returns (bool)
     {
         return _smart_recoveryAddress(lostWallet, newWallet, investorOnchainID);
@@ -320,11 +327,11 @@ contract SMARTStableCoin is
 
     // --- ISMARTPausable Implementation ---
 
-    function pause() external override onlyAccessManagerRole(SMARTRoles.PAUSER_ROLE) {
+    function pause() external override onlyAccessManagerRole(SMARTRoles.EMERGENCY_ROLE) {
         _smart_pause();
     }
 
-    function unpause() external override onlyAccessManagerRole(SMARTRoles.PAUSER_ROLE) {
+    function unpause() external override onlyAccessManagerRole(SMARTRoles.EMERGENCY_ROLE) {
         _smart_unpause();
     }
 

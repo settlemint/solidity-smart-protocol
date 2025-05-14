@@ -117,8 +117,8 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         assertEq(fund.decimals(), DECIMALS);
         assertEq(fund.fundClass(), FUND_CLASS);
         assertEq(fund.fundCategory(), FUND_CATEGORY);
-        assertTrue(fund.hasRole(SMARTRoles.MINTER_ROLE, owner));
-        assertTrue(fund.hasRole(SMARTRoles.TOKEN_ADMIN_ROLE, owner));
+        assertTrue(fund.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, owner));
+        assertTrue(fund.hasRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, owner));
     }
 
     function test_Mint() public {
@@ -210,7 +210,7 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         vm.startPrank(investor2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, investor2, SMARTRoles.FORCED_TRANSFER_ROLE
+                IAccessControl.AccessControlUnauthorizedAccount.selector, investor2, SMARTRoles.CUSTODIAN_ROLE
             )
         );
         fund.forcedTransfer(investor1, investor2, INVESTMENT_AMOUNT);
