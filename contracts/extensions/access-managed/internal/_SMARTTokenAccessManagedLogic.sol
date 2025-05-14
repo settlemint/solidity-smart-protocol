@@ -15,7 +15,7 @@ import { AccessControlUnauthorizedAccount } from "../SMARTTokenAccessManagedErro
 
 abstract contract _SMARTTokenAccessManagedLogic is _SMARTExtension, ISMARTTokenAccessManaged {
     /// @notice The address of the central access control manager contract.
-    address public _accessManager;
+    address internal _accessManager;
 
     // -- Internal Setup Function --
     function __SMARTTokenAccessManaged_init_unchained(address accessManager_) internal {
@@ -35,6 +35,10 @@ abstract contract _SMARTTokenAccessManagedLogic is _SMARTExtension, ISMARTTokenA
     modifier onlyAccessManagerRole(bytes32 role) {
         _checkRole(role, _smartSender());
         _;
+    }
+
+    function accessManager() external view returns (address) {
+        return _accessManager;
     }
 
     function hasRole(bytes32 role, address account) external view virtual returns (bool) {

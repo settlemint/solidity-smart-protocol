@@ -63,7 +63,6 @@ contract SMARTBond is
     error InsufficientUnderlyingBalance();
     error InvalidRedemptionAmount();
     error InsufficientRedeemableBalance();
-    error InvalidAmount();
 
     /// @notice Timestamp when the bond matures
     /// @dev Set at deployment and cannot be changed
