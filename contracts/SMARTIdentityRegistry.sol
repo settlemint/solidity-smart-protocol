@@ -196,7 +196,7 @@ contract SMARTIdentityRegistry is
     /// @inheritdoc ISMARTIdentityRegistry
     function isVerified(
         address _userAddress,
-        uint256[] memory requiredClaimTopics
+        uint256[] calldata requiredClaimTopics
     )
         external
         view

@@ -134,7 +134,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
     /// @dev Internal function to set the parameters for a compliance module.
     /// @param _module The address of the compliance module.
     /// @param _params The parameters to set for the compliance module.
-    function _smart_setParametersForComplianceModule(address _module, bytes memory _params) internal virtual {
+    function _smart_setParametersForComplianceModule(address _module, bytes calldata _params) internal virtual {
         if (__moduleIndex[_module] == 0) revert ModuleNotFound();
         __compliance.isValidComplianceModule(_module, _params);
         __moduleParameters[_module] = _params;
@@ -144,7 +144,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
     /// @dev Internal function to add a compliance module.
     /// @param _module The address of the compliance module.
     /// @param _params The parameters to set for the compliance module.
-    function _smart_addComplianceModule(address _module, bytes memory _params) internal virtual {
+    function _smart_addComplianceModule(address _module, bytes calldata _params) internal virtual {
         __compliance.isValidComplianceModule(_module, _params);
         if (__moduleIndex[_module] != 0) revert ModuleAlreadyAdded();
 
@@ -178,7 +178,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
 
     /// @dev Internal function to set the required claim topics.
     /// @param requiredClaimTopics_ The new required claim topics.
-    function _smart_setRequiredClaimTopics(uint256[] memory requiredClaimTopics_) internal virtual {
+    function _smart_setRequiredClaimTopics(uint256[] calldata requiredClaimTopics_) internal virtual {
         __requiredClaimTopics = requiredClaimTopics_;
         emit RequiredClaimTopicsUpdated(_smartSender(), __requiredClaimTopics);
     }
@@ -296,7 +296,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
         emit IdentityRegistryAdded(sender, identityRegistry_);
         emit ComplianceAdded(sender, compliance_);
         emit UpdatedTokenInformation(sender, decimals_, onchainID_);
-        emit RequiredClaimTopicsUpdated(sender, requiredClaimTopics_);
+        emit RequiredClaimTopicsUpdated(sender, __requiredClaimTopics);
     }
 
     // -- Internal Hook Helper Functions --
