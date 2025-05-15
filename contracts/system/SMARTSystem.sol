@@ -5,6 +5,7 @@ import { ERC2771Context, Context } from "@openzeppelin/contracts/metatx/ERC2771C
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import { ISMARTSystem } from "./ISMARTSystem.sol";
 import {
@@ -35,7 +36,7 @@ import { SMARTIdentityFactoryProxy } from "./identity-factory/SMARTIdentityFacto
 /// @notice Main contract for managing the SMART Protocol system components and their implementations.
 /// @dev This contract handles the deployment and upgrades of various modules like Compliance, Identity Registry, etc.
 /// It uses ERC2771Context for meta-transaction support and AccessControl for role-based permissions.
-contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
+contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl {
     // Expected interface IDs
     bytes4 private constant _ISMART_COMPLIANCE_ID = type(ISMARTCompliance).interfaceId;
     bytes4 private constant _ISMART_IDENTITY_REGISTRY_ID = type(ISMARTIdentityRegistry).interfaceId;
@@ -302,5 +303,9 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
 
     function _contextSuffixLength() internal view override(Context, ERC2771Context) returns (uint256) {
         return super._contextSuffixLength();
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(ERC165, AccessControl) returns (bool) {
+        return interfaceId == type(ISMARTSystem).interfaceId || super.supportsInterface(interfaceId);
     }
 }

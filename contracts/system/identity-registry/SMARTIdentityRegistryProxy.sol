@@ -2,6 +2,8 @@
 pragma solidity ^0.8.28;
 
 import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { SMARTIdentityRegistryImplementation } from "./SMARTIdentityRegistryImplementation.sol";
 import {
@@ -10,14 +12,21 @@ import {
     InvalidSystemAddress,
     ETHTransfersNotAllowed
 } from "../SMARTSystemErrors.sol";
-import "forge-std/console.sol";
 
 /// @title Proxy contract for SMART Identity Registry.
 /// @notice This contract serves as a proxy to the SMART Identity Registry implementation,
 /// allowing for upgradeability of the identity registry logic.
 /// It retrieves the implementation address from the ISMARTSystem contract.
 contract SMARTIdentityRegistryProxy is Proxy {
-    ISMARTSystem private _system;
+    bytes32 private constant _SYSTEM_SLOT = 0x524f57074757cf9111a710840ae36621195c9e71b86a3677158783402f22b8f8;
+
+    function _setSystem(ISMARTSystem system_) internal {
+        StorageSlot.getAddressSlot(_SYSTEM_SLOT).value = address(system_);
+    }
+
+    function _getSystem() internal view returns (ISMARTSystem) {
+        return ISMARTSystem(StorageSlot.getAddressSlot(_SYSTEM_SLOT).value);
+    }
 
     /// @notice Constructs the SMARTIdentityRegistryProxy.
     /// @dev Initializes the proxy by setting the system address and delegating a call
@@ -34,10 +43,13 @@ contract SMARTIdentityRegistryProxy is Proxy {
     )
         payable
     {
-        if (systemAddress == address(0)) revert InvalidSystemAddress();
-        _system = ISMARTSystem(systemAddress);
+        if (systemAddress == address(0) || !IERC165(systemAddress).supportsInterface(type(ISMARTSystem).interfaceId)) {
+            revert InvalidSystemAddress();
+        }
+        _setSystem(ISMARTSystem(systemAddress));
 
-        address implementation = _system.identityRegistryImplementation();
+        ISMARTSystem system = _getSystem();
+        address implementation = system.identityRegistryImplementation();
         if (implementation == address(0)) revert IdentityRegistryImplementationNotSet();
 
         bytes memory data = abi.encodeWithSelector(
@@ -55,14 +67,9 @@ contract SMARTIdentityRegistryProxy is Proxy {
     /// @dev This function is called by the EIP1967Proxy logic to determine where to delegate calls.
     /// @return implementationAddress The address of the identity registry implementation contract.
     function _implementation() internal view override returns (address) {
-        return _system.identityRegistryImplementation();
-    }
+        ISMARTSystem system = _getSystem();
 
-    /// @dev Overriding _fallback to log msg.data for debugging.
-    function _fallback() internal override {
-        console.log("SMARTIdentityRegistryStorageProxy _fallback msg.data:");
-        console.logBytes(msg.data);
-        super._fallback();
+        return system.identityRegistryImplementation();
     }
 
     /// @notice Rejects Ether transfers.
