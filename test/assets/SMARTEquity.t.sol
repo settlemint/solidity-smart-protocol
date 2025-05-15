@@ -4,7 +4,6 @@ pragma solidity 0.8.28;
 import { Test } from "forge-std/Test.sol";
 import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
 import { SMARTEquity } from "../../contracts/assets/SMARTEquity.sol";
-import { MockedForwarder } from "../utils/mocks/MockedForwarder.sol";
 import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";

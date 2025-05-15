@@ -6,7 +6,6 @@ import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
 
 import { ClaimUtils } from "../utils/ClaimUtils.sol";
 import { SMARTDeposit } from "../../contracts/assets/SMARTDeposit.sol";
-import { MockedForwarder } from "../utils/mocks/MockedForwarder.sol";
 import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";

@@ -12,7 +12,7 @@ import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol
 import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { MockedForwarder } from "../utils/mocks/MockedForwarder.sol";
+import { SMARTForwarder } from "../../contracts/vendor/SMARTForwarder.sol";
 import { SMARTTokenAccessManager } from "../../contracts/extensions/access-managed/manager/SMARTTokenAccessManager.sol";
 
 abstract contract AbstractSMARTAssetTest is Test {
@@ -31,7 +31,7 @@ abstract contract AbstractSMARTAssetTest is Test {
 
     SMARTTokenAccessManager public accessManager;
 
-    MockedForwarder public forwarder;
+    SMARTForwarder public forwarder;
 
     function setUpSMART(address _owner) public virtual {
         // --- Setup platform admin ---
@@ -78,7 +78,7 @@ abstract contract AbstractSMARTAssetTest is Test {
         vm.label(claimIssuerIdentity, "Claim Issuer Identity");
 
         // Initialize the forwarder
-        forwarder = new MockedForwarder();
+        forwarder = new SMARTForwarder();
 
         // Initialize the access manager
         vm.prank(_owner);
