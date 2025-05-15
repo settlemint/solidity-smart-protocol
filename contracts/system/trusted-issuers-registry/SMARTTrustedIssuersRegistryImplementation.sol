@@ -6,15 +6,16 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 // import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { AccessControlEnumerableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // OnchainID imports
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 
 // Interface imports
-import { IERC3643TrustedIssuersRegistry } from "./interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { IERC3643TrustedIssuersRegistry } from "./../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
 // --- Errors ---
 error InvalidIssuerAddress();
@@ -29,12 +30,12 @@ error AddressNotFoundInList(address addr);
 /// compliant with ERC-3643.
 /// @dev Provides efficient lookups for finding trusted issuers associated with specific claim topics.
 ///      Managed by AccessControl and upgradeable via UUPS.
-contract SMARTTrustedIssuersRegistry is
+contract SMARTTrustedIssuersRegistryImplementation is
     Initializable,
-    IERC3643TrustedIssuersRegistry,
+    ERC165Upgradeable,
     ERC2771ContextUpgradeable,
     AccessControlEnumerableUpgradeable,
-    UUPSUpgradeable
+    IERC3643TrustedIssuersRegistry
 {
     // --- Roles ---
     /// @notice Role required to add, remove, or update trusted issuers and their claim topics.
@@ -87,12 +88,12 @@ contract SMARTTrustedIssuersRegistry is
     ///      Grants the initial admin the `DEFAULT_ADMIN_ROLE` and `REGISTRAR_ROLE`.
     /// @param initialAdmin The address for initial admin and registrar roles.
     function initialize(address initialAdmin) public initializer {
-        __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
-        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
-        __UUPSUpgradeable_init();
-        // ERC2771Context initialized by constructor
+        __ERC165_init_unchained();
+        __AccessControlEnumerable_init_unchained();
+        // ERC2771Context is initialized by the constructor ERC2771ContextUpgradeable(trustedForwarder)
 
-        _grantRole(REGISTRAR_ROLE, initialAdmin); // Grant registrar role to initial admin
+        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
+        _grantRole(REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar?
     }
 
     // --- Issuer Management Functions (REGISTRAR_ROLE required) ---
@@ -345,13 +346,14 @@ contract SMARTTrustedIssuersRegistry is
         return ERC2771ContextUpgradeable._contextSuffixLength();
     }
 
-    // --- Upgradeability (UUPS) ---
-
-    /// @dev Authorizes an upgrade to a new implementation.
-    ///      Requires the caller to have the `DEFAULT_ADMIN_ROLE`.
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override(UUPSUpgradeable)
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    { }
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable)
+        returns (bool)
+    {
+        return interfaceId == type(IERC3643TrustedIssuersRegistry).interfaceId || super.supportsInterface(interfaceId);
+    }
 }

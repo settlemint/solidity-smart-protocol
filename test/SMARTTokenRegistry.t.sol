@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import { Test, console2 } from "forge-std/Test.sol";
-import { SMARTTokenRegistry } from "../contracts/SMARTTokenRegistry.sol";
+import { SMARTTokenRegistry } from "../contracts/system/token-registry/SMARTTokenRegistry.sol";
 // No need to import AccessControl just for the error if we declare it locally for testing
 
 contract SMARTTokenRegistryTest is Test {

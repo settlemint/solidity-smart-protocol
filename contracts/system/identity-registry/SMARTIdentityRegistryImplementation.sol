@@ -6,20 +6,21 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 // import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { AccessControlEnumerableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // OnchainID imports
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 
 // Interface imports
-import { ISMARTIdentityRegistry } from "./interface/ISMARTIdentityRegistry.sol";
-import { ISMART } from "./interface/ISMART.sol";
+import { ISMARTIdentityRegistry } from "./../../interface/ISMARTIdentityRegistry.sol";
+import { ISMART } from "./../../interface/ISMART.sol";
 
-import { IERC3643IdentityRegistryStorage } from "./interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
-import { IERC3643TrustedIssuersRegistry } from "./interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { IERC3643IdentityRegistryStorage } from "./../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { IERC3643TrustedIssuersRegistry } from "./../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
 // --- Errors ---
 error InvalidStorageAddress();
@@ -36,12 +37,11 @@ error IdentityAlreadyRegistered(address userAddress);
 /// @dev Uses a separate storage contract (`IERC3643IdentityRegistryStorage`) for identity data
 ///      and a `IERC3643TrustedIssuersRegistry` for verification logic.
 ///      Managed by AccessControl and upgradeable via UUPS.
-contract SMARTIdentityRegistry is
+contract SMARTIdentityRegistryImplementation is
     Initializable,
-    ISMARTIdentityRegistry,
     ERC2771ContextUpgradeable,
     AccessControlEnumerableUpgradeable,
-    UUPSUpgradeable
+    ISMARTIdentityRegistry
 {
     // --- Roles ---
     /// @notice Role required to register, update, and delete identities.
@@ -74,14 +74,16 @@ contract SMARTIdentityRegistry is
         public
         initializer
     {
-        __AccessControlEnumerable_init();
+        __ERC165_init_unchained();
+        __AccessControlEnumerable_init_unchained();
+        // ERC2771Context is initialized by its constructor
+
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
-        __UUPSUpgradeable_init();
 
         if (identityStorage_ == address(0)) revert InvalidStorageAddress();
         if (trustedIssuersRegistry_ == address(0)) revert InvalidRegistryAddress();
 
-        _grantRole(REGISTRAR_ROLE, initialAdmin);
+        _grantRole(REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar?
 
         _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
         emit IdentityStorageSet(_msgSender(), address(_identityStorage));
@@ -302,6 +304,7 @@ contract SMARTIdentityRegistry is
         emit IdentityRegistered(_msgSender(), _userAddress, _identity);
     }
 
+    // --- Context Overrides (ERC2771) ---
     function _msgSender()
         internal
         view
@@ -332,12 +335,14 @@ contract SMARTIdentityRegistry is
         return ERC2771ContextUpgradeable._contextSuffixLength();
     }
 
-    // --- Upgradeability ---
-    /// @dev Authorizes an upgrade to a new implementation.
-    ///      Requires the caller to have the `DEFAULT_ADMIN_ROLE`.
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override(UUPSUpgradeable)
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    { }
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlEnumerableUpgradeable)
+        returns (bool)
+    {
+        return interfaceId == type(ISMARTIdentityRegistry).interfaceId || super.supportsInterface(interfaceId);
+    }
 }

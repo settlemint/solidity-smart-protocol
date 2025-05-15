@@ -6,14 +6,15 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 // import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { AccessControlEnumerableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // OnchainID imports
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 // Interface imports
-import { IERC3643IdentityRegistryStorage } from "./interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { IERC3643IdentityRegistryStorage } from "./../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
 
 // --- Errors ---
 error InvalidIdentityWalletAddress();
@@ -30,16 +31,18 @@ error UnauthorizedCaller();
 /// @dev Stores mappings between investor wallets, their `IIdentity` contracts, and country codes.
 ///      Manages which `SMARTIdentityRegistry` contracts are authorized to modify this storage.
 ///      Uses AccessControl for administration (binding registries) and UUPS for upgradeability.
-contract SMARTIdentityRegistryStorage is
+contract SMARTIdentityRegistryStorageImplementation is
     Initializable,
-    IERC3643IdentityRegistryStorage,
     ERC2771ContextUpgradeable,
     AccessControlEnumerableUpgradeable,
-    UUPSUpgradeable
+    IERC3643IdentityRegistryStorage
 {
     // --- Roles ---
     /// @notice Role granted to bound `SMARTIdentityRegistry` contracts allowing them to modify storage.
     bytes32 public constant STORAGE_MODIFIER_ROLE = keccak256("STORAGE_MODIFIER_ROLE");
+
+    /// @notice Role granted to the `SMARTIdentityFactory` contract allowing it to manage bound registries.
+    bytes32 public constant MANAGE_REGISTRIES_ROLE = keccak256("MANAGE_REGISTRIES_ROLE");
 
     // --- Storage Variables ---
     /// @notice Struct holding the identity contract address and country code for a wallet.
@@ -88,12 +91,15 @@ contract SMARTIdentityRegistryStorage is
     /// @dev Sets up AccessControl with default admin rules and UUPS upgradeability.
     ///      Grants the initial admin the `DEFAULT_ADMIN_ROLE` and `STORAGE_MODIFIER_ROLE`.
     /// @param initialAdmin The address for the initial admin role.
-    function initialize(address initialAdmin) public initializer {
-        __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
-        __UUPSUpgradeable_init();
+    function initialize(address system, address initialAdmin) public initializer {
+        __ERC165_init_unchained(); // ERC165 is a base of AccessControlEnumerableUpgradeable
+        __AccessControlEnumerable_init_unchained();
+        // ERC2771Context is initialized by its constructor
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
-        _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin); // Allow initial admin to modify storage initially if needed
+        _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin); // Manually grant STORAGE_MODIFIER_ROLE
+
+        _grantRole(MANAGE_REGISTRIES_ROLE, system); // Grant MANAGE_REGISTRIES_ROLE to the system contract
     }
 
     // --- Storage Modification Functions (STORAGE_MODIFIER_ROLE required) ---
@@ -187,7 +193,7 @@ contract SMARTIdentityRegistryStorage is
     /// @notice Authorizes an `SMARTIdentityRegistry` contract to modify this storage.
     /// @dev Requires caller to have `DEFAULT_ADMIN_ROLE`. Grants `STORAGE_MODIFIER_ROLE` to the registry.
     /// @param _identityRegistry The address of the `SMARTIdentityRegistry` contract to bind.
-    function bindIdentityRegistry(address _identityRegistry) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function bindIdentityRegistry(address _identityRegistry) external onlyRole(MANAGE_REGISTRIES_ROLE) {
         if (_identityRegistry == address(0)) revert InvalidIdentityRegistryAddress();
         if (_boundIdentityRegistries[_identityRegistry]) revert IdentityRegistryAlreadyBound(_identityRegistry);
 
@@ -203,7 +209,7 @@ contract SMARTIdentityRegistryStorage is
     /// @notice Revokes authorization for an `SMARTIdentityRegistry` contract to modify this storage.
     /// @dev Requires caller to have `DEFAULT_ADMIN_ROLE`. Revokes `STORAGE_MODIFIER_ROLE` from the registry.
     /// @param _identityRegistry The address of the `SMARTIdentityRegistry` contract to unbind.
-    function unbindIdentityRegistry(address _identityRegistry) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function unbindIdentityRegistry(address _identityRegistry) external onlyRole(MANAGE_REGISTRIES_ROLE) {
         if (!_boundIdentityRegistries[_identityRegistry]) revert IdentityRegistryNotBound(_identityRegistry);
 
         _revokeRole(STORAGE_MODIFIER_ROLE, _identityRegistry);
@@ -284,13 +290,14 @@ contract SMARTIdentityRegistryStorage is
         return ERC2771ContextUpgradeable._contextSuffixLength();
     }
 
-    // --- Upgradeability (UUPS) ---
-
-    /// @dev Authorizes an upgrade to a new implementation.
-    ///      Requires the caller to have the `DEFAULT_ADMIN_ROLE`.
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override(UUPSUpgradeable)
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    { }
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlEnumerableUpgradeable)
+        returns (bool)
+    {
+        return interfaceId == type(IERC3643IdentityRegistryStorage).interfaceId || super.supportsInterface(interfaceId);
+    }
 }

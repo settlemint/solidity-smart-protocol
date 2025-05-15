@@ -3,7 +3,6 @@ pragma solidity 0.8.28;
 
 import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
 import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
-import { MockedForwarder } from "../utils/mocks/MockedForwarder.sol";
 import { ISMARTYield } from "../../contracts/extensions/yield/ISMARTYield.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { SMARTBond } from "../../contracts/assets/SMARTBond.sol";
@@ -84,9 +83,6 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         // Deploy mock underlying asset with same decimals
         underlyingAsset = new MockedERC20Token("Mock USD", "MUSD", DECIMALS);
         underlyingAsset.mint(owner, initialUnderlyingSupply); // Mint enough for all bonds
-
-        // Deploy forwarder first
-        forwarder = new MockedForwarder();
 
         bond = _createBondAndMint(
             "Test Bond",
