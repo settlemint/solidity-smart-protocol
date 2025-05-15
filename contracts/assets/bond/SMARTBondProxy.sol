@@ -8,10 +8,10 @@ import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
 import { SMARTBondImplementation } from "./SMARTBondImplementation.sol";
 
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
-import { ISMARTTokenRegistry } from "../../system/token-registry/ISMARTTokenRegistry.sol";
+import { ISMARTTokenFactory } from "../../system/token-factory/ISMARTTokenFactory.sol";
 
 import {
-    InvalidTokenRegistryAddress,
+    InvalidTokenFactoryAddress,
     TokenImplementationNotSet,
     ETHTransfersNotAllowed,
     InitializationFailed
@@ -21,21 +21,21 @@ import {
 /// @notice This contract serves as a proxy, allowing for upgradeability of the underlying bond logic.
 /// It retrieves the implementation address from the ISMARTTokenRegistry contract.
 contract SMARTBondProxy is Proxy {
-    // keccak256("org.smart.contracts.proxy.SMARTBondProxy.tokenRegistry")
-    bytes32 private constant _TOKEN_REGISTRY_SLOT = 0xd1db935aae0e76f9615c466c654e11a7e3dba446d479396b3750805a615abe15;
+    // keccak256("org.smart.contracts.proxy.SMARTBondProxy.tokenFactory")
+    bytes32 private constant _TOKEN_FACTORY_SLOT = 0x8154d1e41bb5a323fe0619b76db6fd0dfb7e53cd15405b6b1d93d4eafd078c22;
 
-    function _setTokenRegistry(ISMARTTokenRegistry tokenRegistry_) internal {
-        StorageSlot.getAddressSlot(_TOKEN_REGISTRY_SLOT).value = address(tokenRegistry_);
+    function _setTokenFactory(ISMARTTokenFactory tokenFactory_) internal {
+        StorageSlot.getAddressSlot(_TOKEN_FACTORY_SLOT).value = address(tokenFactory_);
     }
 
-    function _getTokenRegistry() internal view returns (ISMARTTokenRegistry) {
-        return ISMARTTokenRegistry(StorageSlot.getAddressSlot(_TOKEN_REGISTRY_SLOT).value);
+    function _getTokenFactory() internal view returns (ISMARTTokenFactory) {
+        return ISMARTTokenFactory(StorageSlot.getAddressSlot(_TOKEN_FACTORY_SLOT).value);
     }
 
     /// @notice Constructs the SMARTBondProxy.
-    /// @dev Initializes the proxy by setting the token registry address and delegating a call
-    /// to the `initialize` function of the implementation provided by the token registry.
-    /// @param tokenRegistryAddress The address of the token registry contract.
+    /// @dev Initializes the proxy by setting the token factory address and delegating a call
+    /// to the `initialize` function of the implementation provided by the token factory.
+    /// @param tokenFactoryAddress The address of the token factory contract.
     /// @param name_ The name of the bond.
     /// @param symbol_ The symbol of the bond.
     /// @param decimals_ The number of decimals of the bond.
@@ -49,7 +49,7 @@ contract SMARTBondProxy is Proxy {
     /// @param compliance_ The compliance of the bond.
     /// @param accessManager_ The access manager of the bond.
     constructor(
-        address tokenRegistryAddress,
+        address tokenFactoryAddress,
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
@@ -66,15 +66,15 @@ contract SMARTBondProxy is Proxy {
         payable
     {
         if (
-            tokenRegistryAddress == address(0)
-                || !IERC165(tokenRegistryAddress).supportsInterface(type(ISMARTTokenRegistry).interfaceId)
+            tokenFactoryAddress == address(0)
+                || !IERC165(tokenFactoryAddress).supportsInterface(type(ISMARTTokenFactory).interfaceId)
         ) {
-            revert InvalidTokenRegistryAddress();
+            revert InvalidTokenFactoryAddress();
         }
-        _setTokenRegistry(ISMARTTokenRegistry(tokenRegistryAddress));
+        _setTokenFactory(ISMARTTokenFactory(tokenFactoryAddress));
 
-        ISMARTTokenRegistry tokenRegistry_ = _getTokenRegistry();
-        address implementation = tokenRegistry_.tokenImplementation();
+        ISMARTTokenFactory tokenFactory_ = _getTokenFactory();
+        address implementation = tokenFactory_.tokenImplementation();
         if (implementation == address(0)) revert TokenImplementationNotSet();
 
         bytes memory data = abi.encodeWithSelector(
@@ -102,8 +102,8 @@ contract SMARTBondProxy is Proxy {
     /// @dev This function is called by the EIP1967Proxy logic to determine where to delegate calls.
     /// @return implementationAddress The address of the implementation contract provided by the token registry.
     function _implementation() internal view override returns (address) {
-        ISMARTTokenRegistry tokenRegistry_ = _getTokenRegistry();
-        return tokenRegistry_.tokenImplementation();
+        ISMARTTokenFactory tokenFactory_ = _getTokenFactory();
+        return tokenFactory_.tokenImplementation();
     }
 
     /// @notice Rejects Ether transfers.

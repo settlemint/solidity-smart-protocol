@@ -2,8 +2,8 @@
 pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
-import { AbstractSMARTTokenRegistryImplementation } from
-    "../../system/token-registry/AbstractSMARTTokenRegistryImplementation.sol";
+import { AbstractSMARTTokenFactoryImplementation } from
+    "../../system/token-factory/AbstractSMARTTokenFactoryImplementation.sol";
 
 // Interface imports
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
@@ -11,8 +11,8 @@ import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTCom
 // Local imports
 import { SMARTBondProxy } from "./SMARTBondProxy.sol";
 
-contract SMARTBondTokenRegistryImplementation is AbstractSMARTTokenRegistryImplementation {
-    constructor(address forwarder) AbstractSMARTTokenRegistryImplementation(forwarder) { }
+contract SMARTBondTokenFactoryImplementation is AbstractSMARTTokenFactoryImplementation {
+    constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
     function createBond(
         string memory name_,
