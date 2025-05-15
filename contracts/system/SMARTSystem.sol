@@ -327,6 +327,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         uint256 balance = address(this).balance;
         if (balance > 0) {
             // Send the entire balance to the caller (admin)
+            // slither-disable-next-line low-level-calls
             (bool sent,) = payable(_msgSender()).call{ value: balance }("");
             if (!sent) revert EtherWithdrawalFailed();
             emit EtherWithdrawn(_msgSender(), balance);
