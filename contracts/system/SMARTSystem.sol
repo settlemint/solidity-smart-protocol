@@ -6,6 +6,7 @@ import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol"
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import { ISMARTSystem } from "./ISMARTSystem.sol";
 import {
@@ -37,7 +38,7 @@ import { SMARTIdentityFactoryProxy } from "./identity-factory/SMARTIdentityFacto
 /// @notice Main contract for managing the SMART Protocol system components and their implementations.
 /// @dev This contract handles the deployment and upgrades of various modules like Compliance, Identity Registry, etc.
 /// It uses ERC2771Context for meta-transaction support and AccessControl for role-based permissions.
-contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl {
+contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, ReentrancyGuard {
     // Expected interface IDs
     bytes4 private constant _ISMART_COMPLIANCE_ID = type(ISMARTCompliance).interfaceId;
     bytes4 private constant _ISMART_IDENTITY_REGISTRY_ID = type(ISMARTIdentityRegistry).interfaceId;
@@ -166,7 +167,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl {
     }
 
     // --- Bootstrap Function ---
-    function bootstrap() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function bootstrap() public onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         // --- Checks ---
         if (_complianceImplementation == address(0)) revert ComplianceImplementationNotSet();
         if (_identityRegistryImplementation == address(0)) revert IdentityRegistryImplementationNotSet();
