@@ -31,8 +31,9 @@ contract SMARTIdentityRegistryStorageProxy is Proxy {
         address implementation = _system.identityRegistryStorageImplementation();
         if (implementation == address(0)) revert IdentityRegistryStorageImplementationNotSet();
 
-        bytes memory data =
-            abi.encodeWithSelector(SMARTIdentityRegistryStorageImplementation.initialize.selector, initialAdmin);
+        bytes memory data = abi.encodeWithSelector(
+            SMARTIdentityRegistryStorageImplementation.initialize.selector, systemAddress, initialAdmin
+        );
 
         (bool success,) = implementation.delegatecall(data);
         if (!success) revert InitializationFailed();

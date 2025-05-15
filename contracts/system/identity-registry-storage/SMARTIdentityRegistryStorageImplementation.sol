@@ -39,6 +39,9 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @notice Role granted to bound `SMARTIdentityRegistry` contracts allowing them to modify storage.
     bytes32 public constant STORAGE_MODIFIER_ROLE = keccak256("STORAGE_MODIFIER_ROLE");
 
+    /// @notice Role granted to the `SMARTIdentityFactory` contract allowing it to manage bound registries.
+    bytes32 public constant MANAGE_REGISTRIES_ROLE = keccak256("MANAGE_REGISTRIES_ROLE");
+
     // --- Storage Variables ---
     /// @notice Struct holding the identity contract address and country code for a wallet.
     struct Identity {
@@ -86,11 +89,13 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @dev Sets up AccessControl with default admin rules and UUPS upgradeability.
     ///      Grants the initial admin the `DEFAULT_ADMIN_ROLE` and `STORAGE_MODIFIER_ROLE`.
     /// @param initialAdmin The address for the initial admin role.
-    function initialize(address initialAdmin) public initializer {
+    function initialize(address system, address initialAdmin) public initializer {
         __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
-        _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin); // TODO: should he be the storage modifier?
+        _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin); // Manually grant STORAGE_MODIFIER_ROLE
+
+        _grantRole(MANAGE_REGISTRIES_ROLE, system); // Grant MANAGE_REGISTRIES_ROLE to the system contract
     }
 
     // --- Storage Modification Functions (STORAGE_MODIFIER_ROLE required) ---
@@ -184,7 +189,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @notice Authorizes an `SMARTIdentityRegistry` contract to modify this storage.
     /// @dev Requires caller to have `DEFAULT_ADMIN_ROLE`. Grants `STORAGE_MODIFIER_ROLE` to the registry.
     /// @param _identityRegistry The address of the `SMARTIdentityRegistry` contract to bind.
-    function bindIdentityRegistry(address _identityRegistry) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function bindIdentityRegistry(address _identityRegistry) external onlyRole(MANAGE_REGISTRIES_ROLE) {
         if (_identityRegistry == address(0)) revert InvalidIdentityRegistryAddress();
         if (_boundIdentityRegistries[_identityRegistry]) revert IdentityRegistryAlreadyBound(_identityRegistry);
 
@@ -200,7 +205,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @notice Revokes authorization for an `SMARTIdentityRegistry` contract to modify this storage.
     /// @dev Requires caller to have `DEFAULT_ADMIN_ROLE`. Revokes `STORAGE_MODIFIER_ROLE` from the registry.
     /// @param _identityRegistry The address of the `SMARTIdentityRegistry` contract to unbind.
-    function unbindIdentityRegistry(address _identityRegistry) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function unbindIdentityRegistry(address _identityRegistry) external onlyRole(MANAGE_REGISTRIES_ROLE) {
         if (!_boundIdentityRegistries[_identityRegistry]) revert IdentityRegistryNotBound(_identityRegistry);
 
         _revokeRole(STORAGE_MODIFIER_ROLE, _identityRegistry);

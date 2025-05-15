@@ -81,8 +81,10 @@ contract InfrastructureUtils is Test {
             address(tokenIdentityImpl),
             forwarder
         );
+        vm.label(address(systemFactory), "System Factory");
 
         system = ISMARTSystem(systemFactory.createSystem());
+        vm.label(address(system), "System");
         system.bootstrap();
 
         compliance = ISMARTCompliance(system.complianceProxy());
