@@ -5,45 +5,80 @@ pragma solidity 0.8.28;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-// import { ERC20PermitUpgradeable } from
-//     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import { ERC20VotesUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Constants
-import { SMARTConstants } from "./SMARTConstants.sol";
-import { SMARTRoles } from "./SMARTRoles.sol";
+import { SMARTRoles } from "../SMARTRoles.sol";
 
 // Interface imports
-import { SMARTComplianceModuleParamPair } from "../interface/structs/SMARTComplianceModuleParamPair.sol";
+import { ISMART } from "../../interface/ISMART.sol";
+import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
-import { SMARTUpgradeable } from "../extensions/core/SMARTUpgradeable.sol"; // Base SMART logic + ERC20
-import { SMARTHooks } from "../extensions/common/SMARTHooks.sol";
+import { SMARTUpgradeable } from "../../extensions/core/SMARTUpgradeable.sol"; // Base SMART logic + ERC20
+import { SMARTHooks } from "../../extensions/common/SMARTHooks.sol";
 
 // Feature extensions
-import { SMARTPausableUpgradeable } from "../extensions/pausable/SMARTPausableUpgradeable.sol";
-import { SMARTBurnableUpgradeable } from "../extensions/burnable/SMARTBurnableUpgradeable.sol";
-import { SMARTCustodianUpgradeable } from "../extensions/custodian/SMARTCustodianUpgradeable.sol";
-import { SMARTCollateralUpgradeable } from "../extensions/collateral/SMARTCollateralUpgradeable.sol";
-import { SMARTTokenAccessManagedUpgradeable } from "../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
+import { SMARTPausableUpgradeable } from "../../extensions/pausable/SMARTPausableUpgradeable.sol";
+import { SMARTBurnableUpgradeable } from "../../extensions/burnable/SMARTBurnableUpgradeable.sol";
+import { SMARTCustodianUpgradeable } from "../../extensions/custodian/SMARTCustodianUpgradeable.sol";
+import { SMARTTokenAccessManagedUpgradeable } from
+    "../../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
 
-/// @title SMARTDeposit
-/// @notice An implementation of a deposit using the SMART extension framework,
-///         backed by collateral and using custom roles.
-/// @dev Combines core SMART features (compliance, verification) with extensions for pausing,
-///      burning, custodian actions, and collateral tracking. Access control uses custom roles.
-contract SMARTDeposit is
+/// @title SMARTFund - A security token representing fund shares with management fees
+/// @notice This contract implements a security token that represents fund shares with voting rights,
+/// blocklist, custodian features, and management fee collection. It supports different fund classes
+/// and categories, and includes governance capabilities through the ERC20Votes extension.
+/// @dev Inherits from multiple OpenZeppelin contracts to provide comprehensive security token functionality
+/// with governance capabilities, meta-transactions support, and role-based access control.
+/// @custom:security-contact support@settlemint.com
+contract SMARTFundImplementation is
+    Initializable,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,
-    SMARTCollateralUpgradeable,
-    SMARTCustodianUpgradeable,
-    SMARTPausableUpgradeable,
     SMARTBurnableUpgradeable,
+    SMARTPausableUpgradeable,
+    SMARTCustodianUpgradeable,
+    ERC20VotesUpgradeable, // TODO: ??
     ERC2771ContextUpgradeable
 {
-    // ERC20PermitUpgradeable
+    using Math for uint256;
+    using SafeERC20 for IERC20;
+
+    /// @notice Custom errors for the SMARTFund contract
+    /// @dev These errors provide more gas-efficient and descriptive error handling
+    error InvalidTokenAddress();
+    error InsufficientTokenBalance();
+
+    /// @notice The timestamp of the last fee collection
+    /// @dev Used to calculate time-based management fees
+    uint40 private _lastFeeCollection;
+
+    /// @notice The management fee in basis points (1 basis point = 0.01%)
+    /// @dev Set at deployment and cannot be changed
+    uint16 private _managementFeeBps;
+
+    /// @notice The class of the fund (e.g., "Hedge SMARTFund", "Mutual SMARTFund")
+    /// @dev Set at deployment and cannot be changed
+    string private _fundClass;
+
+    /// @notice The category of the fund (e.g., "Long/Short Equity", "Global Macro")
+    /// @dev Set at deployment and cannot be changed
+    string private _fundCategory;
+
+    /// @notice Emitted when management fees are collected
+    /// @param sender The address that collected the management fees
+    /// @param amount The amount of tokens minted as management fees
+    /// @param timestamp The timestamp when the fees were collected
+    event ManagementFeeCollected(address indexed sender, uint256 amount, uint256 timestamp);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     /// @param forwarder_ The address of the forwarder contract.
     constructor(address forwarder_) payable ERC2771ContextUpgradeable(forwarder_) {
@@ -54,6 +89,9 @@ contract SMARTDeposit is
     /// @param name_ The name of the token.
     /// @param symbol_ The symbol of the token.
     /// @param decimals_ The number of decimals the token uses.
+    /// @param managementFeeBps_ The management fee in basis points (1 basis point = 0.01%)
+    /// @param fundClass_ The class of the fund (e.g., "Hedge SMARTFund", "Mutual SMARTFund")
+    /// @param fundCategory_ The category of the fund (e.g., "Long/Short Equity", "Global Macro")
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
     /// @param identityRegistry_ The address of the Identity Registry contract.
@@ -63,6 +101,9 @@ contract SMARTDeposit is
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
+        uint16 managementFeeBps_,
+        string memory fundClass_,
+        string memory fundCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -86,7 +127,62 @@ contract SMARTDeposit is
         __SMARTBurnable_init();
         __SMARTPausable_init();
         __SMARTTokenAccessManaged_init(accessManager_);
-        __SMARTCollateral_init(SMARTConstants.CLAIM_TOPIC_COLLATERAL);
+
+        _managementFeeBps = managementFeeBps_;
+        _fundClass = fundClass_;
+        _fundCategory = fundCategory_;
+        _lastFeeCollection = uint40(block.timestamp);
+    }
+
+    // --- View Functions ---
+
+    /// @notice Returns the fund class
+    /// @dev The fund class is immutable after construction
+    /// @return The fund class as a string (e.g., "Hedge SMARTFund", "Mutual SMARTFund")
+    function fundClass() external view returns (string memory) {
+        return _fundClass;
+    }
+
+    /// @notice Returns the fund category
+    /// @dev The fund category is immutable after construction
+    /// @return The fund category as a string (e.g., "Long/Short Equity", "Global Macro")
+    function fundCategory() external view returns (string memory) {
+        return _fundCategory;
+    }
+
+    /// @notice Returns the management fee in basis points
+    /// @dev One basis point equals 0.01%
+    /// @return The management fee in basis points
+    function managementFeeBps() external view returns (uint16) {
+        return _managementFeeBps;
+    }
+
+    /// @notice Returns the current timestamp for voting snapshots
+    /// @dev Implementation of ERC20Votes clock method for voting delay and period calculations
+    /// @return Current block timestamp cast to uint48
+    function clock() public view override returns (uint48) {
+        return uint48(block.timestamp);
+    }
+
+    // --- State-Changing Functions ---
+    /// @notice Collects management fee based on time elapsed and assets under management
+    /// @dev Only callable by addresses with DEFAULT_ADMIN_ROLE. Fee is calculated as:
+    /// (AUM * fee_rate * time_elapsed) / (100% * 1 year)
+    /// @return The amount of tokens minted as management fee
+    function collectManagementFee() public onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE) returns (uint256) {
+        uint256 timeElapsed = block.timestamp - _lastFeeCollection;
+        uint256 aum = totalSupply();
+
+        uint256 fee = Math.mulDiv(Math.mulDiv(aum, _managementFeeBps, 10_000), timeElapsed, 365 days);
+
+        if (fee > 0) {
+            address sender = _msgSender();
+            _mint(sender, fee);
+            emit ManagementFeeCollected(sender, fee, block.timestamp);
+        }
+
+        _lastFeeCollection = uint40(block.timestamp);
+        return fee;
     }
 
     // --- ISMART Implementation ---
@@ -375,7 +471,7 @@ contract SMARTDeposit is
     )
         internal
         virtual
-        override(SMARTCollateralUpgradeable, SMARTCustodianUpgradeable, SMARTUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._beforeMint(to, amount);
     }
@@ -388,7 +484,7 @@ contract SMARTDeposit is
     )
         internal
         virtual
-        override(SMARTCustodianUpgradeable, SMARTUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._beforeTransfer(from, to, amount);
     }
@@ -452,9 +548,9 @@ contract SMARTDeposit is
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTPausableUpgradeable, ERC20Upgradeable)
+        override(SMARTPausableUpgradeable, SMARTUpgradeable, ERC20VotesUpgradeable, ERC20Upgradeable)
     {
-        // Calls chain: ERC20Collateral -> SMARTPausable -> SMART -> ERC20
+        // Calls chain: SMARTPausable -> SMART -> ERC20Votes -> ERC20
         super._update(from, to, value);
     }
 

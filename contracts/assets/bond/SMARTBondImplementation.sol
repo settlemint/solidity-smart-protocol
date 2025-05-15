@@ -7,43 +7,90 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { ERC20VotesUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // Constants
-import { SMARTRoles } from "./SMARTRoles.sol";
+import { SMARTRoles } from "./../SMARTRoles.sol";
 
 // Interface imports
-import { ISMART } from "../interface/ISMART.sol";
-import { SMARTComplianceModuleParamPair } from "../interface/structs/SMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
-import { SMARTUpgradeable } from "../extensions/core/SMARTUpgradeable.sol"; // Base SMART logic + ERC20
-import { SMARTHooks } from "../extensions/common/SMARTHooks.sol";
+import { SMARTUpgradeable } from "../../extensions/core/SMARTUpgradeable.sol"; // Base SMART logic + ERC20
+import { SMARTHooks } from "../../extensions/common/SMARTHooks.sol";
 
 // Feature extensions
-import { SMARTPausableUpgradeable } from "../extensions/pausable/SMARTPausableUpgradeable.sol";
-import { SMARTBurnableUpgradeable } from "../extensions/burnable/SMARTBurnableUpgradeable.sol";
-import { SMARTCustodianUpgradeable } from "../extensions/custodian/SMARTCustodianUpgradeable.sol";
-import { SMARTTokenAccessManagedUpgradeable } from "../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
+import { SMARTPausableUpgradeable } from "../../extensions/pausable/SMARTPausableUpgradeable.sol";
+import { SMARTBurnableUpgradeable } from "../../extensions/burnable/SMARTBurnableUpgradeable.sol";
+import { SMARTCustodianUpgradeable } from "../../extensions/custodian/SMARTCustodianUpgradeable.sol";
+import { SMARTRedeemableUpgradeable } from "../../extensions/redeemable/SMARTRedeemableUpgradeable.sol";
+import { SMARTHistoricalBalancesUpgradeable } from
+    "../../extensions/historical-balances/SMARTHistoricalBalancesUpgradeable.sol";
+import { SMARTYieldUpgradeable } from "../../extensions/yield/SMARTYieldUpgradeable.sol";
+import { SMARTTokenAccessManagedUpgradeable } from
+    "../../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
+import { SMARTCappedUpgradeable } from "../../extensions/capped/SMARTCappedUpgradeable.sol";
+/// @title SMARTBond
+/// @notice An implementation of a bond using the SMART extension framework,
+///         backed by collateral and using custom roles.
+/// @dev Combines core SMART features (compliance, verification) with extensions for pausing,
+///      burning, custodian actions, and collateral tracking. Access control uses custom roles.
 
-contract SMARTEquity is
+contract SMARTBondImplementation is
+    Initializable,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,
     SMARTCustodianUpgradeable,
     SMARTPausableUpgradeable,
     SMARTBurnableUpgradeable,
-    ERC20VotesUpgradeable, // TODO?
-    ERC2771ContextUpgradeable
+    SMARTRedeemableUpgradeable,
+    SMARTHistoricalBalancesUpgradeable,
+    SMARTYieldUpgradeable,
+    SMARTCappedUpgradeable,
+    ERC2771ContextUpgradeable,
+    ReentrancyGuard
 {
-    error InvalidISIN();
-    error InvalidTokenAddress();
-    error InsufficientTokenBalance();
+    // --- Custom Errors ---
+    error BondAlreadyMatured();
+    error BondNotYetMatured();
+    error BondInvalidMaturityDate();
+    error InvalidUnderlyingAsset();
+    error InvalidFaceValue();
+    error InsufficientUnderlyingBalance();
+    error InvalidRedemptionAmount();
+    error InsufficientRedeemableBalance();
 
-    string private _equityClass;
-    string private _equityCategory;
+    /// @notice Timestamp when the bond matures
+    /// @dev Set at deployment and cannot be changed
+    uint256 private _maturityDate;
+
+    /// @notice Tracks whether the bond has matured
+    /// @dev Set to true when mature() is called after maturity date
+    bool public isMatured;
+
+    /// @notice The face value of the bond in underlying asset base units
+    /// @dev Set at deployment and cannot be changed
+    uint256 private _faceValue;
+
+    /// @notice The underlying asset contract used for face value denomination
+    /// @dev Must be a valid ERC20 token contract
+    IERC20 private _underlyingAsset;
+
+    /// @notice Tracks how many bonds each holder has redeemed
+    /// @dev Maps holder address to amount of bonds redeemed
+    mapping(address holder => uint256 redeemed) public bondRedeemed;
+
+    /// @notice Emitted when the bond reaches maturity and is closed
+    /// @param timestamp The block timestamp when the bond matured
+    event BondMatured(uint256 timestamp);
+
+    /// @notice Emitted when a bond is redeemed for underlying assets
+    /// @param sender The address that initiated the redemption
+    /// @param holder The address redeeming the bonds
+    /// @param bondAmount The amount of bonds redeemed
+    /// @param underlyingAmount The amount of underlying assets received
+    event BondRedeemed(address indexed sender, address indexed holder, uint256 bondAmount, uint256 underlyingAmount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     /// @param forwarder_ The address of the forwarder contract.
@@ -55,8 +102,10 @@ contract SMARTEquity is
     /// @param name_ The name of the token.
     /// @param symbol_ The symbol of the token.
     /// @param decimals_ The number of decimals the token uses.
-    /// @param equityClass_ The class of the equity.
-    /// @param equityCategory_ The category of the equity.
+    /// @param cap_ Token cap
+    /// @param maturityDate_ Bond maturity date
+    /// @param faceValue_ Bond face value
+    /// @param underlyingAsset_ Underlying asset contract address
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
     /// @param identityRegistry_ The address of the Identity Registry contract.
@@ -66,8 +115,10 @@ contract SMARTEquity is
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
-        string memory equityClass_,
-        string memory equityCategory_,
+        uint256 cap_,
+        uint256 maturityDate_,
+        uint256 faceValue_,
+        address underlyingAsset_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -77,6 +128,17 @@ contract SMARTEquity is
         public
         initializer
     {
+        if (maturityDate_ <= block.timestamp) revert BondInvalidMaturityDate();
+        if (faceValue_ == 0) revert InvalidFaceValue();
+        if (underlyingAsset_ == address(0)) revert InvalidUnderlyingAsset();
+
+        // Verify the underlying asset contract exists by attempting to call a view function
+        try IERC20(underlyingAsset_).totalSupply() returns (uint256) {
+            // Contract exists and implements IERC20
+        } catch {
+            revert InvalidUnderlyingAsset();
+        }
+
         __SMART_init(
             name_,
             symbol_,
@@ -87,27 +149,83 @@ contract SMARTEquity is
             requiredClaimTopics_,
             initialModulePairs_
         );
+        __SMARTTokenAccessManaged_init(accessManager_);
         __SMARTCustodian_init();
         __SMARTBurnable_init();
         __SMARTPausable_init();
-        __SMARTTokenAccessManaged_init(accessManager_);
+        __SMARTYield_init();
+        __SMARTRedeemable_init();
+        __SMARTHistoricalBalances_init();
+        __SMARTCapped_init(cap_);
 
-        _equityClass = equityClass_;
-        _equityCategory = equityCategory_;
+        _maturityDate = maturityDate_;
+        _faceValue = faceValue_;
+        _underlyingAsset = IERC20(underlyingAsset_);
     }
 
     // --- View Functions ---
 
-    /// @notice Returns the class of the equity.
-    /// @return The class of the equity.
-    function equityClass() public view returns (string memory) {
-        return _equityClass;
+    /// @notice Returns the timestamp when the bond matures
+    /// @return The maturity date timestamp
+    function maturityDate() external view returns (uint256) {
+        return _maturityDate;
     }
 
-    /// @notice Returns the category of the equity.
-    /// @return The category of the equity.
-    function equityCategory() public view returns (string memory) {
-        return _equityCategory;
+    /// @notice Returns the face value of the bond
+    /// @return The bond's face value in underlying asset base units
+    function faceValue() external view returns (uint256) {
+        return _faceValue;
+    }
+
+    /// @notice Returns the underlying asset contract
+    /// @return The ERC20 contract of the underlying asset
+    function underlyingAsset() external view returns (IERC20) {
+        return _underlyingAsset;
+    }
+
+    /// @notice Returns the amount of underlying assets held by the contract
+    /// @return The balance of underlying assets
+    function underlyingAssetBalance() public view returns (uint256) {
+        return _underlyingAsset.balanceOf(address(this));
+    }
+
+    /// @notice Returns the total amount of underlying assets needed for all potential redemptions
+    /// @return The total amount of underlying assets needed
+    function totalUnderlyingNeeded() public view returns (uint256) {
+        return _calculateUnderlyingAmount(totalSupply());
+    }
+
+    /// @notice Returns the amount of underlying assets missing for all potential redemptions
+    /// @return The amount of underlying assets missing (0 if there's enough or excess)
+    function missingUnderlyingAmount() public view returns (uint256) {
+        uint256 needed = totalUnderlyingNeeded();
+        uint256 current = underlyingAssetBalance();
+        return needed > current ? needed - current : 0;
+    }
+
+    /// @notice Returns the amount of excess underlying assets that can be withdrawn
+    /// @return The amount of excess underlying assets
+    function withdrawableUnderlyingAmount() public view returns (uint256) {
+        uint256 needed = totalUnderlyingNeeded();
+        uint256 current = underlyingAssetBalance();
+        return current > needed ? current - needed : 0;
+    }
+
+    // --- State-Changing Functions ---
+
+    /// @notice Closes off the bond at maturity
+    /// @dev Only callable by addresses with SUPPLY_MANAGEMENT_ROLE after maturity date
+    /// @dev Requires sufficient underlying assets for all potential redemptions
+    /// @dev TODO: check role
+    function mature() external onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE) {
+        if (block.timestamp < _maturityDate) revert BondNotYetMatured();
+        if (isMatured) revert BondAlreadyMatured();
+
+        uint256 needed = totalUnderlyingNeeded();
+        if (underlyingAssetBalance() < needed) revert InsufficientUnderlyingBalance();
+
+        isMatured = true;
+        emit BondMatured(block.timestamp);
     }
 
     // --- ISMART Implementation ---
@@ -359,6 +477,28 @@ contract SMARTEquity is
         _smart_unpause();
     }
 
+    // --- ISMARTYield Implementation ---
+
+    function setYieldSchedule(address schedule)
+        external
+        override
+        onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE)
+    {
+        _smart_setYieldSchedule(schedule);
+    }
+
+    function yieldBasisPerUnit(address) external view override returns (uint256) {
+        return _faceValue;
+    }
+
+    function yieldToken() external view override returns (IERC20) {
+        return _underlyingAsset;
+    }
+
+    function canManageYield(address manager) external view override returns (bool) {
+        return _hasRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, manager);
+    }
+
     // --- View Functions (Overrides) ---
     /// @inheritdoc ERC20Upgradeable
     function name() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
@@ -386,8 +526,14 @@ contract SMARTEquity is
         return super.decimals();
     }
 
-    function nonces(address owner) public view virtual override(NoncesUpgradeable) returns (uint256) {
-        return super.nonces(owner);
+    // --- Internal Functions ---
+
+    /// @notice Calculates the underlying asset amount for a given bond amount
+    /// @dev Divides by decimals first to prevent overflow when multiplying large numbers
+    /// @param bondAmount The amount of bonds to calculate for
+    /// @return The amount of underlying assets
+    function _calculateUnderlyingAmount(uint256 bondAmount) private view returns (uint256) {
+        return (bondAmount / (10 ** decimals())) * _faceValue;
     }
 
     // --- Hooks (Overrides for Chaining) ---
@@ -400,7 +546,7 @@ contract SMARTEquity is
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTCappedUpgradeable, SMARTCustodianUpgradeable, SMARTYieldUpgradeable, SMARTHooks)
     {
         super._beforeMint(to, amount);
     }
@@ -415,6 +561,10 @@ contract SMARTEquity is
         virtual
         override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
+        if (isMatured && (to != address(0))) {
+            revert BondAlreadyMatured();
+        }
+
         super._beforeTransfer(from, to, amount);
     }
 
@@ -439,11 +589,21 @@ contract SMARTEquity is
         virtual
         override(SMARTCustodianUpgradeable, SMARTHooks)
     {
+        if (!isMatured) revert BondNotYetMatured();
+        if (amount == 0) revert InvalidRedemptionAmount();
+
         super._beforeRedeem(owner, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    function _afterMint(address to, uint256 amount) internal virtual override(SMARTUpgradeable, SMARTHooks) {
+    function _afterMint(
+        address to,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMARTUpgradeable, SMARTHistoricalBalancesUpgradeable, SMARTHooks)
+    {
         super._afterMint(to, amount);
     }
 
@@ -455,17 +615,51 @@ contract SMARTEquity is
     )
         internal
         virtual
-        override(SMARTUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTHistoricalBalancesUpgradeable, SMARTHooks)
     {
         super._afterTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    function _afterBurn(address from, uint256 amount) internal virtual override(SMARTUpgradeable, SMARTHooks) {
+    function _afterBurn(
+        address from,
+        uint256 amount
+    )
+        internal
+        virtual
+        override(SMARTUpgradeable, SMARTHistoricalBalancesUpgradeable, SMARTHooks)
+    {
         super._afterBurn(from, amount);
     }
 
     // --- Internal Functions (Overrides) ---
+
+    /// @notice Implementation of the abstract burn execution using the base ERC20Upgradeable `_burn` function.
+    /// @dev Assumes the inheriting contract includes an ERC20Upgradeable implementation with an internal `_burn`
+    /// function.
+    function __redeemable_redeem(address from, uint256 amount) internal virtual override {
+        uint256 currentBalance = balanceOf(from);
+        uint256 currentRedeemed = bondRedeemed[from];
+        uint256 redeemable = currentBalance - currentRedeemed;
+
+        if (amount > redeemable) revert InsufficientRedeemableBalance();
+
+        uint256 underlyingAmount = _calculateUnderlyingAmount(amount);
+
+        uint256 contractBalance = underlyingAssetBalance();
+        if (contractBalance < underlyingAmount) {
+            revert InsufficientUnderlyingBalance();
+        }
+
+        bondRedeemed[from] = currentRedeemed + amount;
+
+        _burn(from, amount);
+
+        bool success = _underlyingAsset.transfer(from, underlyingAmount);
+        if (!success) revert InsufficientUnderlyingBalance();
+
+        emit BondRedeemed(_msgSender(), from, amount, underlyingAmount);
+    }
 
     /**
      * @dev Overrides _update to ensure Pausable and Collateral checks are applied.
@@ -477,9 +671,9 @@ contract SMARTEquity is
     )
         internal
         virtual
-        override(SMARTPausableUpgradeable, SMARTUpgradeable, ERC20VotesUpgradeable, ERC20Upgradeable)
+        override(SMARTPausableUpgradeable, SMARTUpgradeable, ERC20Upgradeable)
     {
-        // Calls chain: SMARTPausable -> SMART -> ERC20Votes -> ERC20
+        // Calls chain: SMARTPausable -> ERC20Capped -> SMART -> ERC20
         super._update(from, to, value);
     }
 

@@ -37,9 +37,10 @@ contract SMARTSystemFactory is ERC2771Context {
     // --- Events ---
 
     /// @notice Emitted when a new SMARTSystem instance is successfully created.
+    /// @param sender The address of the sender.
     /// @param systemAddress The address of the newly deployed SMARTSystem contract.
     /// @param initialAdmin The address set as the initial admin (DEFAULT_ADMIN_ROLE) for the new SMARTSystem.
-    event SMARTSystemCreated(address indexed systemAddress, address indexed initialAdmin);
+    event SMARTSystemCreated(address indexed sender, address indexed systemAddress, address indexed initialAdmin);
 
     // --- Constructor ---
 
@@ -121,7 +122,7 @@ contract SMARTSystemFactory is ERC2771Context {
         systemAddress = address(newSystem);
         smartSystems.push(systemAddress);
 
-        emit SMARTSystemCreated(systemAddress, initialAdmin);
+        emit SMARTSystemCreated(initialAdmin, systemAddress, initialAdmin);
 
         return systemAddress;
     }

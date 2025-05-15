@@ -18,8 +18,6 @@ import {
 /// allowing for upgradeability of the storage logic for the identity registry.
 /// It retrieves the implementation address from the ISMARTSystem contract.
 contract SMARTIdentityRegistryStorageProxy is Proxy {
-    // ISMARTSystem private _system; // Replaced by StorageSlot
-
     // keccak256("org.smart.contracts.proxy.SMARTIdentityRegistryStorageProxy.system")
     bytes32 private constant _SYSTEM_SLOT = 0x5ebC250a39d4036f126095bd09ef17d621714e9ea0442802bf8647e3d76bf04d;
 

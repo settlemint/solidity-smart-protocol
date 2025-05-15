@@ -19,11 +19,10 @@ contract SMARTTokenAccessManager is ISMARTTokenAccessManager, AccessControlEnume
 
     /// @dev Constructor grants initial roles to the deployer.
     /// @param forwarder Address of the trusted forwarder for ERC2771 meta-transactions.
-    constructor(address forwarder) AccessControlEnumerable() ERC2771Context(forwarder) {
-        address sender = _msgSender(); // Use _msgSender() to support deployment via forwarder
-
+    /// @param initialAdmin Address of the initial admin for the token.
+    constructor(address forwarder, address initialAdmin) AccessControlEnumerable() ERC2771Context(forwarder) {
         // Grant standard admin role (can manage other roles)
-        _grantRole(DEFAULT_ADMIN_ROLE, sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
     }
 
     /// @inheritdoc AccessControl

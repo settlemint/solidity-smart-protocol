@@ -18,8 +18,6 @@ import {
 /// allowing for upgradeability of the trusted issuers registry logic.
 /// It retrieves the implementation address from the ISMARTSystem contract.
 contract SMARTTrustedIssuersRegistryProxy is Proxy {
-    // ISMARTSystem private _system; // Replaced by StorageSlot
-
     // keccak256("org.smart.contracts.proxy.SMARTTrustedIssuersRegistryProxy.system")
     bytes32 private constant _SYSTEM_SLOT = 0x6fdD361b4a051470236ba6ce1ab028e722825f0fa1553913cf9758f4e87c015e;
 

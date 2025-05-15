@@ -10,6 +10,17 @@ interface ISMARTSystem {
     /// @dev This function should typically be called only once during the initial deployment.
     function bootstrap() external;
 
+    /// @notice Creates a new token factory implementation and proxy.
+    /// @param _typeName The human-readable type name of the token factory.
+    /// @param _factoryImplementation The address of the token factory implementation contract.
+    /// @param _tokenImplementation The address of the token implementation contract.
+    function createTokenFactory(
+        string calldata _typeName,
+        address _factoryImplementation,
+        address _tokenImplementation
+    )
+        external;
+
     /// @notice Returns the address of the current compliance module implementation.
     /// @return The address of the compliance implementation contract.
     function complianceImplementation() external view returns (address);
@@ -38,6 +49,11 @@ interface ISMARTSystem {
     /// @return The address of the token identity implementation contract.
     function tokenIdentityImplementation() external view returns (address);
 
+    /// @notice Returns the address of the current token registry implementation.
+    /// @param factoryTypeHash The hash of the factory type.
+    /// @return The address of the token factory implementation contract.
+    function tokenFactoryImplementation(bytes32 factoryTypeHash) external view returns (address);
+
     /// @notice Returns the address of the compliance module proxy.
     /// @return The address of the compliance proxy contract.
     function complianceProxy() external view returns (address);
@@ -57,4 +73,9 @@ interface ISMARTSystem {
     /// @notice Returns the address of the identity factory module proxy.
     /// @return The address of the identity factory proxy contract.
     function identityFactoryProxy() external view returns (address);
+
+    /// @notice Returns the address of the token factory proxy.
+    /// @param factoryTypeHash The hash of the factory type.
+    /// @return The address of the token factory proxy contract.
+    function tokenFactoryProxy(bytes32 factoryTypeHash) external view returns (address);
 }

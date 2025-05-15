@@ -18,8 +18,6 @@ import {
 /// allowing for upgradeability of the identity factory logic.
 /// It retrieves the implementation address from the ISMARTSystem contract.
 contract SMARTIdentityFactoryProxy is Proxy {
-    // ISMARTSystem private _system; // Replaced by StorageSlot
-
     // keccak256("org.smart.contracts.proxy.SMARTIdentityFactoryProxy.system")
     bytes32 private constant _SYSTEM_SLOT = 0x1a78f18b10619605209b8a247cac60491f01062a0a3901787532e80d6c2986c0;
 
