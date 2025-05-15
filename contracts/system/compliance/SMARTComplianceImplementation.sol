@@ -6,6 +6,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 // Interface imports
 import { ISMARTCompliance } from "./../../interface/ISMARTCompliance.sol";
@@ -19,7 +20,12 @@ import { ZeroAddressNotAllowed } from "./../../extensions/common/CommonErrors.so
 /// @dev This contract orchestrates compliance checks and notifications by delegating to registered
 ///      compliance modules associated with a specific ISMART token.
 ///      It uses AccessControl for administration
-contract SMARTComplianceImplementation is Initializable, ISMARTCompliance, ERC2771ContextUpgradeable {
+contract SMARTComplianceImplementation is
+    Initializable,
+    ISMARTCompliance,
+    ERC2771ContextUpgradeable,
+    ERC165Upgradeable
+{
     // --- Errors ---
     error InvalidModuleImplementation();
 
@@ -32,7 +38,9 @@ contract SMARTComplianceImplementation is Initializable, ISMARTCompliance, ERC27
     // --- Initializer ---
     /// @notice Initializes the compliance contract.
     /// @dev Sets up AccessControl with default admin rules.
-    function initialize() public initializer { }
+    function initialize() public initializer {
+        __ERC165_init_unchained();
+    }
 
     // --- ISMARTCompliance Implementation (State-Changing) ---
 
@@ -156,5 +164,10 @@ contract SMARTComplianceImplementation is Initializable, ISMARTCompliance, ERC27
         // Validate the provided parameters using the module's validation function
         // This external call can revert, which will propagate up.
         ISMARTComplianceModule(_module).validateParameters(_params);
+    }
+
+    /// @inheritdoc ERC165Upgradeable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
+        return interfaceId == type(ISMARTCompliance).interfaceId || super.supportsInterface(interfaceId);
     }
 }

@@ -8,6 +8,8 @@ import { AccessControlEnumerableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // OnchainID imports
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
@@ -30,9 +32,10 @@ error AddressNotFoundInList(address addr);
 ///      Managed by AccessControl and upgradeable via UUPS.
 contract SMARTTrustedIssuersRegistryImplementation is
     Initializable,
-    IERC3643TrustedIssuersRegistry,
+    ERC165Upgradeable,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable
+    AccessControlEnumerableUpgradeable,
+    IERC3643TrustedIssuersRegistry
 {
     // --- Roles ---
     /// @notice Role required to add, remove, or update trusted issuers and their claim topics.
@@ -85,10 +88,11 @@ contract SMARTTrustedIssuersRegistryImplementation is
     ///      Grants the initial admin the `DEFAULT_ADMIN_ROLE` and `REGISTRAR_ROLE`.
     /// @param initialAdmin The address for initial admin and registrar roles.
     function initialize(address initialAdmin) public initializer {
-        __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
-        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
-        // ERC2771Context initialized by constructor
+        __ERC165_init_unchained();
+        __AccessControlEnumerable_init_unchained();
+        // ERC2771Context is initialized by the constructor ERC2771ContextUpgradeable(trustedForwarder)
 
+        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
         _grantRole(REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar?
     }
 
@@ -340,5 +344,16 @@ contract SMARTTrustedIssuersRegistryImplementation is
         returns (uint256)
     {
         return ERC2771ContextUpgradeable._contextSuffixLength();
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable)
+        returns (bool)
+    {
+        return interfaceId == type(IERC3643TrustedIssuersRegistry).interfaceId || super.supportsInterface(interfaceId);
     }
 }

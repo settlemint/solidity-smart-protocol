@@ -9,6 +9,8 @@ import { AccessControlEnumerableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // Interface imports
 import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
@@ -38,6 +40,7 @@ error DeploymentAddressMismatch();
 ///      which determines the logic contract address. Uses Ownable for access control.
 contract SMARTIdentityFactoryImplementation is
     Initializable,
+    ERC165Upgradeable,
     ERC2771ContextUpgradeable,
     AccessControlEnumerableUpgradeable,
     ISMARTIdentityFactory
@@ -86,7 +89,9 @@ contract SMARTIdentityFactoryImplementation is
     function initialize(address systemAddress, address initialAdmin) public initializer {
         if (systemAddress == address(0)) revert InvalidSystemAddress();
 
-        __AccessControlEnumerable_init();
+        __ERC165_init_unchained();
+        __AccessControlEnumerable_init_unchained();
+
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
         _grantRole(REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar?
 
@@ -382,5 +387,16 @@ contract SMARTIdentityFactoryImplementation is
         returns (uint256)
     {
         return ERC2771ContextUpgradeable._contextSuffixLength();
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable)
+        returns (bool)
+    {
+        return interfaceId == type(ISMARTIdentityFactory).interfaceId || super.supportsInterface(interfaceId);
     }
 }

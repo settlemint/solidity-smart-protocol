@@ -2,9 +2,18 @@
 pragma solidity ^0.8.17;
 
 import { Identity } from "@onchainid/contracts/Identity.sol";
+import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 // TODO: fix this so that it can be managed by the tokens Access Control
 // TODO: fix to be ERC-2771 compatible
-contract SMARTTokenIdentityImplementation is Identity {
+// TODO: fix to be ERC-165 initialization
+contract SMARTTokenIdentityImplementation is Identity, ERC165Upgradeable {
     constructor(address initialManagementKey) Identity(initialManagementKey, true) { }
+
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return interfaceId == type(IIdentity).interfaceId || interfaceId == type(IERC165).interfaceId
+            || super.supportsInterface(interfaceId);
+    }
 }

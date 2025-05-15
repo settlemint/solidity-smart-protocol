@@ -8,6 +8,8 @@ import { AccessControlEnumerableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // OnchainID imports
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
@@ -31,9 +33,9 @@ error UnauthorizedCaller();
 ///      Uses AccessControl for administration (binding registries) and UUPS for upgradeability.
 contract SMARTIdentityRegistryStorageImplementation is
     Initializable,
-    IERC3643IdentityRegistryStorage,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable
+    AccessControlEnumerableUpgradeable,
+    IERC3643IdentityRegistryStorage
 {
     // --- Roles ---
     /// @notice Role granted to bound `SMARTIdentityRegistry` contracts allowing them to modify storage.
@@ -90,7 +92,9 @@ contract SMARTIdentityRegistryStorageImplementation is
     ///      Grants the initial admin the `DEFAULT_ADMIN_ROLE` and `STORAGE_MODIFIER_ROLE`.
     /// @param initialAdmin The address for the initial admin role.
     function initialize(address system, address initialAdmin) public initializer {
-        __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
+        __ERC165_init_unchained(); // ERC165 is a base of AccessControlEnumerableUpgradeable
+        __AccessControlEnumerable_init_unchained();
+        // ERC2771Context is initialized by its constructor
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
         _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin); // Manually grant STORAGE_MODIFIER_ROLE
@@ -284,5 +288,16 @@ contract SMARTIdentityRegistryStorageImplementation is
         returns (uint256)
     {
         return ERC2771ContextUpgradeable._contextSuffixLength();
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlEnumerableUpgradeable)
+        returns (bool)
+    {
+        return interfaceId == type(IERC3643IdentityRegistryStorage).interfaceId || super.supportsInterface(interfaceId);
     }
 }
