@@ -11,6 +11,7 @@ import {
     InvalidSystemAddress,
     ETHTransfersNotAllowed
 } from "../SMARTSystemErrors.sol";
+import "forge-std/console.sol";
 
 /// @title Proxy contract for SMART Identity Registry Storage.
 /// @notice This contract serves as a proxy to the SMART Identity Registry Storage implementation,
@@ -44,6 +45,13 @@ contract SMARTIdentityRegistryStorageProxy is Proxy {
     /// @return implementationAddress The address of the identity registry storage implementation contract.
     function _implementation() internal view override returns (address) {
         return _system.identityRegistryStorageImplementation();
+    }
+
+    /// @dev Overriding _fallback to log msg.data for debugging.
+    function _fallback() internal override {
+        console.log("SMARTIdentityRegistryStorageProxy _fallback msg.data:");
+        console.logBytes(msg.data);
+        super._fallback();
     }
 
     /// @notice Rejects Ether transfers.

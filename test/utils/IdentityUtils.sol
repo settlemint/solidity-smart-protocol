@@ -7,6 +7,7 @@ import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
 import { IERC3643TrustedIssuersRegistry } from "../../contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import "forge-std/console.sol";
 
 contract IdentityUtils is Test {
     address internal _platformAdmin;
@@ -50,6 +51,8 @@ contract IdentityUtils is Test {
 
         // Register the identity in the registry
         vm.startPrank(_platformAdmin);
+        console.log("Register identity");
+        console.log(address(_identityRegistry));
         _identityRegistry.registerIdentity(clientWalletAddress_, IIdentity(identity), countryCode_);
         vm.stopPrank();
 
