@@ -2,7 +2,8 @@
 pragma solidity ^0.8.28;
 
 import "./SMARTSystem.sol";
-import "./SMARTSystemErrors.sol"; // Assuming IndexOutOfBounds is defined here or in a common errors file
+import "./SMARTSystemErrors.sol"; // Assuming IndexOutOfBounds, and now Investor/TokenIdentityImplementationNotSet are
+    // here
 import { ERC2771Context, Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
 // --- Contract Definition ---
@@ -24,6 +25,10 @@ contract SMARTSystemFactory is ERC2771Context {
     address public defaultTrustedIssuersRegistryImplementation;
     /// @notice The default implementation address for the identity factory module.
     address public defaultIdentityFactoryImplementation;
+    /// @notice The default implementation address for the investor identity module.
+    address public defaultInvestorIdentityImplementation;
+    /// @notice The default implementation address for the token identity module.
+    address public defaultTokenIdentityImplementation;
     /// @notice The address of the trusted forwarder used by this factory and passed to new SMARTSystem instances.
     address public immutable factoryForwarder;
 
@@ -49,6 +54,8 @@ contract SMARTSystemFactory is ERC2771Context {
     /// @param trustedIssuersRegistryImplementation_ The default address for the trusted issuers registry module
     /// implementation.
     /// @param identityFactoryImplementation_ The default address for the identity factory module implementation.
+    /// @param investorIdentityImplementation_ The default address for the investor identity module implementation.
+    /// @param tokenIdentityImplementation_ The default address for the token identity module implementation.
     /// @param forwarder_ The address of the trusted forwarder for meta-transactions.
     constructor(
         address complianceImplementation_,
@@ -56,6 +63,8 @@ contract SMARTSystemFactory is ERC2771Context {
         address identityRegistryStorageImplementation_,
         address trustedIssuersRegistryImplementation_,
         address identityFactoryImplementation_,
+        address investorIdentityImplementation_,
+        address tokenIdentityImplementation_,
         address forwarder_
     )
         payable
@@ -72,12 +81,20 @@ contract SMARTSystemFactory is ERC2771Context {
         if (identityFactoryImplementation_ == address(0)) {
             revert IdentityFactoryImplementationNotSet();
         }
+        if (investorIdentityImplementation_ == address(0)) {
+            revert InvestorIdentityImplementationNotSet(); // Assumes this error is in SMARTSystemErrors.sol
+        }
+        if (tokenIdentityImplementation_ == address(0)) {
+            revert TokenIdentityImplementationNotSet(); // Assumes this error is in SMARTSystemErrors.sol
+        }
 
         defaultComplianceImplementation = complianceImplementation_;
         defaultIdentityRegistryImplementation = identityRegistryImplementation_;
         defaultIdentityRegistryStorageImplementation = identityRegistryStorageImplementation_;
         defaultTrustedIssuersRegistryImplementation = trustedIssuersRegistryImplementation_;
         defaultIdentityFactoryImplementation = identityFactoryImplementation_;
+        defaultInvestorIdentityImplementation = investorIdentityImplementation_;
+        defaultTokenIdentityImplementation = tokenIdentityImplementation_;
         factoryForwarder = forwarder_;
     }
 
@@ -88,15 +105,17 @@ contract SMARTSystemFactory is ERC2771Context {
     /// initial admin of the new SMARTSystem.
     /// @return systemAddress The address of the newly created SMARTSystem contract.
     function createSystem() public returns (address systemAddress) {
-        address currentMsgSender = _msgSender();
+        address initialAdmin = _msgSender();
 
         SMARTSystem newSystem = new SMARTSystem(
-            currentMsgSender,
+            initialAdmin,
             defaultComplianceImplementation,
             defaultIdentityRegistryImplementation,
             defaultIdentityRegistryStorageImplementation,
             defaultTrustedIssuersRegistryImplementation,
             defaultIdentityFactoryImplementation,
+            defaultInvestorIdentityImplementation,
+            defaultTokenIdentityImplementation,
             factoryForwarder
         );
 
