@@ -10,13 +10,13 @@ interface ISMARTSystem {
     /// @dev This function should typically be called only once during the initial deployment.
     function bootstrap() external;
 
-    /// @notice Creates a new token registry implementation and proxy.
-    /// @param _typeName The human-readable type name of the token registry.
-    /// @param _registryImplementation The address of the token registry implementation contract.
+    /// @notice Creates a new token factory implementation and proxy.
+    /// @param _typeName The human-readable type name of the token factory.
+    /// @param _factoryImplementation The address of the token factory implementation contract.
     /// @param _tokenImplementation The address of the token implementation contract.
-    function createTokenRegistry(
+    function createTokenFactory(
         string calldata _typeName,
-        address _registryImplementation,
+        address _factoryImplementation,
         address _tokenImplementation
     )
         external;
@@ -50,9 +50,9 @@ interface ISMARTSystem {
     function tokenIdentityImplementation() external view returns (address);
 
     /// @notice Returns the address of the current token registry implementation.
-    /// @param registryTypeHash The hash of the registry type.
-    /// @return The address of the token registry implementation contract.
-    function tokenRegistryImplementation(bytes32 registryTypeHash) external view returns (address);
+    /// @param factoryTypeHash The hash of the factory type.
+    /// @return The address of the token factory implementation contract.
+    function tokenFactoryImplementation(bytes32 factoryTypeHash) external view returns (address);
 
     /// @notice Returns the address of the compliance module proxy.
     /// @return The address of the compliance proxy contract.
@@ -74,8 +74,8 @@ interface ISMARTSystem {
     /// @return The address of the identity factory proxy contract.
     function identityFactoryProxy() external view returns (address);
 
-    /// @notice Returns the address of the token registry proxy.
-    /// @param registryTypeHash The hash of the registry type.
-    /// @return The address of the token registry proxy contract.
-    function tokenRegistryProxy(bytes32 registryTypeHash) external view returns (address);
+    /// @notice Returns the address of the token factory proxy.
+    /// @param factoryTypeHash The hash of the factory type.
+    /// @return The address of the token factory proxy contract.
+    function tokenFactoryProxy(bytes32 factoryTypeHash) external view returns (address);
 }

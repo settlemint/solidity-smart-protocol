@@ -4,62 +4,106 @@ pragma solidity ^0.8.28;
 import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
-import { ISMARTSystem } from "../ISMARTSystem.sol";
-import { SMARTIdentityFactoryImplementation } from "./SMARTIdentityFactoryImplementation.sol";
+
+import { SMARTBondImplementation } from "./SMARTBondImplementation.sol";
+
+import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
+import { ISMARTTokenRegistry } from "../../system/token-registry/ISMARTTokenRegistry.sol";
+
 import {
-    InitializationFailed,
-    IdentityFactoryImplementationNotSet,
-    InvalidSystemAddress,
-    ETHTransfersNotAllowed
-} from "../SMARTSystemErrors.sol";
+    InvalidTokenRegistryAddress,
+    TokenImplementationNotSet,
+    ETHTransfersNotAllowed,
+    InitializationFailed
+} from "../../system/SMARTSystemErrors.sol";
 
-/// @title Proxy contract for SMART Identity Factory.
-/// @notice This contract serves as a proxy to the SMART Identity Factory implementation,
-/// allowing for upgradeability of the identity factory logic.
-/// It retrieves the implementation address from the ISMARTSystem contract.
-contract SMARTIdentityFactoryProxy is Proxy {
-    // ISMARTSystem private _system; // Replaced by StorageSlot
+/// @title Proxy contract for SMART Bonds, retrieving implementation from Token Registry.
+/// @notice This contract serves as a proxy, allowing for upgradeability of the underlying bond logic.
+/// It retrieves the implementation address from the ISMARTTokenRegistry contract.
+contract SMARTBondProxy is Proxy {
+    // keccak256("org.smart.contracts.proxy.SMARTBondProxy.tokenRegistry")
+    bytes32 private constant _TOKEN_REGISTRY_SLOT = 0xd1db935aae0e76f9615c466c654e11a7e3dba446d479396b3750805a615abe15;
 
-    // keccak256("org.smart.contracts.proxy.SMARTIdentityFactoryProxy.system")
-    bytes32 private constant _SYSTEM_SLOT = 0x1a78f18b10619605209b8a247cac60491f01062a0a3901787532e80d6c2986c0;
-
-    function _setSystem(ISMARTSystem system_) internal {
-        StorageSlot.getAddressSlot(_SYSTEM_SLOT).value = address(system_);
+    function _setTokenRegistry(ISMARTTokenRegistry tokenRegistry_) internal {
+        StorageSlot.getAddressSlot(_TOKEN_REGISTRY_SLOT).value = address(tokenRegistry_);
     }
 
-    function _getSystem() internal view returns (ISMARTSystem) {
-        return ISMARTSystem(StorageSlot.getAddressSlot(_SYSTEM_SLOT).value);
+    function _getTokenRegistry() internal view returns (ISMARTTokenRegistry) {
+        return ISMARTTokenRegistry(StorageSlot.getAddressSlot(_TOKEN_REGISTRY_SLOT).value);
     }
 
-    /// @notice Constructs the SMARTIdentityFactoryProxy.
-    /// @dev Initializes the proxy by setting the system address and delegating a call
-    /// to the `initialize` function of the identity factory implementation.
-    /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
-    /// @param initialAdmin The address to be set as the initial admin for the identity factory.
-    constructor(address systemAddress, address initialAdmin) payable {
-        if (systemAddress == address(0) || !IERC165(systemAddress).supportsInterface(type(ISMARTSystem).interfaceId)) {
-            revert InvalidSystemAddress();
+    /// @notice Constructs the SMARTBondProxy.
+    /// @dev Initializes the proxy by setting the token registry address and delegating a call
+    /// to the `initialize` function of the implementation provided by the token registry.
+    /// @param tokenRegistryAddress The address of the token registry contract.
+    /// @param name_ The name of the bond.
+    /// @param symbol_ The symbol of the bond.
+    /// @param decimals_ The number of decimals of the bond.
+    /// @param cap_ The cap of the bond.
+    /// @param maturityDate_ The maturity date of the bond.
+    /// @param faceValue_ The face value of the bond.
+    /// @param underlyingAsset_ The underlying asset of the bond.
+    /// @param requiredClaimTopics_ The required claim topics of the bond.
+    /// @param initialModulePairs_ The initial module pairs of the bond.
+    /// @param identityRegistry_ The identity registry of the bond.
+    /// @param compliance_ The compliance of the bond.
+    /// @param accessManager_ The access manager of the bond.
+    constructor(
+        address tokenRegistryAddress,
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
+        uint256 cap_,
+        uint256 maturityDate_,
+        uint256 faceValue_,
+        address underlyingAsset_,
+        uint256[] memory requiredClaimTopics_,
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_,
+        address identityRegistry_,
+        address compliance_,
+        address accessManager_
+    )
+        payable
+    {
+        if (
+            tokenRegistryAddress == address(0)
+                || !IERC165(tokenRegistryAddress).supportsInterface(type(ISMARTTokenRegistry).interfaceId)
+        ) {
+            revert InvalidTokenRegistryAddress();
         }
-        _setSystem(ISMARTSystem(systemAddress));
+        _setTokenRegistry(ISMARTTokenRegistry(tokenRegistryAddress));
 
-        ISMARTSystem system_ = _getSystem();
-        address implementation = system_.identityFactoryImplementation();
-        if (implementation == address(0)) revert IdentityFactoryImplementationNotSet();
+        ISMARTTokenRegistry tokenRegistry_ = _getTokenRegistry();
+        address implementation = tokenRegistry_.tokenImplementation();
+        if (implementation == address(0)) revert TokenImplementationNotSet();
 
-        bytes memory data =
-            abi.encodeWithSelector(SMARTIdentityFactoryImplementation.initialize.selector, systemAddress, initialAdmin);
+        bytes memory data = abi.encodeWithSelector(
+            SMARTBondImplementation.initialize.selector,
+            name_,
+            symbol_,
+            decimals_,
+            cap_,
+            maturityDate_,
+            faceValue_,
+            underlyingAsset_,
+            requiredClaimTopics_,
+            initialModulePairs_,
+            identityRegistry_,
+            compliance_,
+            accessManager_
+        );
 
         // slither-disable-next-line low-level-calls
         (bool success,) = implementation.delegatecall(data);
         if (!success) revert InitializationFailed();
     }
 
-    /// @notice Returns the address of the current identity factory implementation.
+    /// @notice Returns the address of the current implementation.
     /// @dev This function is called by the EIP1967Proxy logic to determine where to delegate calls.
-    /// @return implementationAddress The address of the identity factory implementation contract.
+    /// @return implementationAddress The address of the implementation contract provided by the token registry.
     function _implementation() internal view override returns (address) {
-        ISMARTSystem system_ = _getSystem();
-        return system_.identityFactoryImplementation();
+        ISMARTTokenRegistry tokenRegistry_ = _getTokenRegistry();
+        return tokenRegistry_.tokenImplementation();
     }
 
     /// @notice Rejects Ether transfers.

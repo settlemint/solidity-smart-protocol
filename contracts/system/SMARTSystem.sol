@@ -19,12 +19,12 @@ import {
     TokenIdentityImplementationNotSet,
     InvalidImplementationInterface,
     EtherWithdrawalFailed,
-    InvalidTokenRegistryAddress,
-    TokenRegistryTypeAlreadyRegistered
+    InvalidTokenFactoryAddress,
+    TokenFactoryTypeAlreadyRegistered
 } from "./SMARTSystemErrors.sol";
 
 // Interface imports
-import { ISMARTTokenRegistry } from "./token-registry/ISMARTTokenRegistry.sol";
+import { ISMARTTokenFactory } from "./token-factory/ISMARTTokenFactory.sol";
 import { ISMARTCompliance } from "./../interface/ISMARTCompliance.sol";
 import { ISMARTIdentityFactory } from "./identity-factory/ISMARTIdentityFactory.sol"; // Reverted to original path
 import { IERC3643TrustedIssuersRegistry } from "./../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
@@ -36,7 +36,7 @@ import { SMARTIdentityRegistryProxy } from "./identity-registry/SMARTIdentityReg
 import { SMARTIdentityRegistryStorageProxy } from "./identity-registry-storage/SMARTIdentityRegistryStorageProxy.sol";
 import { SMARTTrustedIssuersRegistryProxy } from "./trusted-issuers-registry/SMARTTrustedIssuersRegistryProxy.sol";
 import { SMARTIdentityFactoryProxy } from "./identity-factory/SMARTIdentityFactoryProxy.sol";
-import { SMARTTokenRegistryProxy } from "./token-registry/SMARTTokenRegistryProxy.sol";
+import { SMARTTokenFactoryProxy } from "./token-factory/SMARTTokenFactoryProxy.sol";
 /// @title SMARTSystem Contract
 /// @notice Main contract for managing the SMART Protocol system components and their implementations.
 /// @dev This contract handles the deployment and upgrades of various modules like Compliance, Identity Registry, etc.
@@ -88,12 +88,12 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         address identityFactoryProxy
     );
 
-    /// @notice Emitted when a SMARTTokenRegistry is registered.
-    /// @param sender The address that registered the token registry.
-    /// @param typeName The human-readable type name of the token registry.
-    /// @param proxyAddress The address of the deployed token registry proxy.
-    /// @param implementationAddress The address of the deployed token registry implementation.
-    event TokenRegistryCreated(
+    /// @notice Emitted when a SMARTTokenFactory is registered.
+    /// @param sender The address that registered the token factory.
+    /// @param typeName The human-readable type name of the token factory.
+    /// @param proxyAddress The address of the deployed token factory proxy.
+    /// @param implementationAddress The address of the deployed token factory implementation.
+    event TokenFactoryCreated(
         address indexed sender, string typeName, address proxyAddress, address implementationAddress, uint256 timestamp
     );
 
@@ -122,9 +122,9 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     address private _identityImplementation;
     address private _tokenIdentityImplementation;
 
-    // Token Registries by Type
-    mapping(bytes32 typeHash => address tokenRegistryImplementationAddress) private tokenRegistryImplementationsByType;
-    mapping(bytes32 typeHash => address tokenRegistryProxyAddress) private tokenRegistryProxiesByType;
+    // Token Factories by Type
+    mapping(bytes32 typeHash => address tokenFactoryImplementationAddress) private tokenFactoryImplementationsByType;
+    mapping(bytes32 typeHash => address tokenFactoryProxyAddress) private tokenFactoryProxiesByType;
 
     // --- Internal Helper for Interface Check ---
     function _checkInterface(address implAddress, bytes4 interfaceId) private view {
@@ -240,32 +240,31 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     }
 
     /// @inheritdoc ISMARTSystem
-    function createTokenRegistry(
+    function createTokenFactory(
         string calldata _typeName,
-        address _registryImplementation,
+        address _factoryImplementation,
         address _tokenImplementation
     )
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
     {
-        if (address(_registryImplementation) == address(0)) revert InvalidTokenRegistryAddress();
-        _checkInterface(_registryImplementation, type(ISMARTTokenRegistry).interfaceId);
+        if (address(_factoryImplementation) == address(0)) revert InvalidTokenFactoryAddress();
+        _checkInterface(_factoryImplementation, type(ISMARTTokenFactory).interfaceId);
 
-        bytes32 registryTypeHash = keccak256(abi.encodePacked(_typeName));
+        bytes32 factoryTypeHash = keccak256(abi.encodePacked(_typeName));
 
-        if (tokenRegistryImplementationsByType[registryTypeHash] != address(0)) {
-            revert TokenRegistryTypeAlreadyRegistered(registryTypeHash);
+        if (tokenFactoryImplementationsByType[factoryTypeHash] != address(0)) {
+            revert TokenFactoryTypeAlreadyRegistered(factoryTypeHash);
         }
 
-        address _tokenRegistryProxy = address(new SMARTTokenRegistryProxy(address(this), registryTypeHash));
+        address _tokenFactoryProxy =
+            address(new SMARTTokenFactoryProxy(address(this), _msgSender(), factoryTypeHash, _tokenImplementation));
 
-        tokenRegistryImplementationsByType[registryTypeHash] = _registryImplementation;
-        tokenRegistryProxiesByType[registryTypeHash] = _tokenRegistryProxy;
+        tokenFactoryImplementationsByType[factoryTypeHash] = _factoryImplementation;
+        tokenFactoryProxiesByType[factoryTypeHash] = _tokenFactoryProxy;
 
-        emit TokenRegistryCreated(
-            _msgSender(), _typeName, _tokenRegistryProxy, _registryImplementation, block.timestamp
-        );
+        emit TokenFactoryCreated(_msgSender(), _typeName, _tokenFactoryProxy, _factoryImplementation, block.timestamp);
     }
 
     // --- Implementation Setter Functions ---
@@ -369,8 +368,8 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     }
 
     /// @inheritdoc ISMARTSystem
-    function tokenRegistryImplementation(bytes32 registryTypeHash) public view returns (address) {
-        return tokenRegistryImplementationsByType[registryTypeHash];
+    function tokenFactoryImplementation(bytes32 factoryTypeHash) public view returns (address) {
+        return tokenFactoryImplementationsByType[factoryTypeHash];
     }
 
     // --- Proxy Getter Functions ---
@@ -400,8 +399,8 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     }
 
     /// @inheritdoc ISMARTSystem
-    function tokenRegistryProxy(bytes32 registryTypeHash) public view returns (address) {
-        return tokenRegistryProxiesByType[registryTypeHash];
+    function tokenFactoryProxy(bytes32 factoryTypeHash) public view returns (address) {
+        return tokenFactoryProxiesByType[factoryTypeHash];
     }
 
     /// @notice Allows an admin to withdraw any Ether held by this contract.
