@@ -9,14 +9,10 @@ import {
     IdentityRegistryImplementationNotSet,
     IdentityRegistryStorageImplementationNotSet,
     TrustedIssuersRegistryImplementationNotSet,
-    IdentityFactoryImplementationNotSet
+    IdentityFactoryImplementationNotSet,
+    IdentityImplementationNotSet,
+    TokenIdentityImplementationNotSet
 } from "./SMARTSystemErrors.sol";
-
-// --- New Error Definitions ---
-/// @notice Error for when the investor identity implementation is not set.
-error InvestorIdentityImplementationNotSet();
-/// @notice Error for when the token identity implementation is not set.
-error TokenIdentityImplementationNotSet();
 
 import { SMARTComplianceProxy } from "./compliance/SMARTComplianceProxy.sol";
 import { SMARTIdentityRegistryProxy } from "./identity-registry/SMARTIdentityRegistryProxy.sol";
@@ -48,7 +44,7 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
     event IdentityFactoryImplementationUpdated(address indexed newImplementation);
     /// @notice Emitted when the investor identity module implementation is updated.
     /// @param newImplementation The address of the new investor identity module implementation.
-    event InvestorIdentityImplementationUpdated(address indexed newImplementation);
+    event IdentityImplementationUpdated(address indexed newImplementation);
     /// @notice Emitted when the token identity module implementation is updated.
     /// @param newImplementation The address of the new token identity module implementation.
     event TokenIdentityImplementationUpdated(address indexed newImplementation);
@@ -83,7 +79,7 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
     address private _identityFactoryImplementation;
     address private _identityFactoryProxy;
 
-    address private _investorIdentityImplementation;
+    address private _identityImplementation;
     address private _tokenIdentityImplementation;
 
     // --- Constructor ---
@@ -97,7 +93,7 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
     /// @param trustedIssuersRegistryImplementation_ The initial address of the trusted issuers registry module
     /// implementation.
     /// @param identityFactoryImplementation_ The initial address of the identity factory module implementation.
-    /// @param investorIdentityImplementation_ The initial address of the investor identity module implementation.
+    /// @param identityImplementation_ The initial address of the investor identity module implementation.
     /// @param tokenIdentityImplementation_ The initial address of the token identity module implementation.
     /// @param forwarder_ The address of the trusted forwarder for meta-transactions (ERC2771).
     constructor(
@@ -107,7 +103,7 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
         address identityRegistryStorageImplementation_,
         address trustedIssuersRegistryImplementation_,
         address identityFactoryImplementation_,
-        address investorIdentityImplementation_,
+        address identityImplementation_,
         address tokenIdentityImplementation_,
         address forwarder_
     )
@@ -125,7 +121,7 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
             revert TrustedIssuersRegistryImplementationNotSet();
         }
         if (identityFactoryImplementation_ == address(0)) revert IdentityFactoryImplementationNotSet();
-        if (investorIdentityImplementation_ == address(0)) revert InvestorIdentityImplementationNotSet();
+        if (identityImplementation_ == address(0)) revert IdentityImplementationNotSet();
         if (tokenIdentityImplementation_ == address(0)) revert TokenIdentityImplementationNotSet();
 
         _complianceImplementation = complianceImplementation_;
@@ -133,7 +129,7 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
         _identityRegistryStorageImplementation = identityRegistryStorageImplementation_;
         _trustedIssuersRegistryImplementation = trustedIssuersRegistryImplementation_;
         _identityFactoryImplementation = identityFactoryImplementation_;
-        _investorIdentityImplementation = investorIdentityImplementation_;
+        _identityImplementation = identityImplementation_;
         _tokenIdentityImplementation = tokenIdentityImplementation_;
     }
 
@@ -225,10 +221,10 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
     /// @notice Sets the implementation address for the investor identity module.
     /// @dev This function can only be called by an address with the DEFAULT_ADMIN_ROLE.
     /// @param implementation The new address of the investor identity module implementation.
-    function setInvestorIdentityImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (implementation == address(0)) revert InvestorIdentityImplementationNotSet();
-        _investorIdentityImplementation = implementation;
-        emit InvestorIdentityImplementationUpdated(implementation);
+    function setIdentityImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (implementation == address(0)) revert IdentityImplementationNotSet();
+        _identityImplementation = implementation;
+        emit IdentityImplementationUpdated(implementation);
     }
 
     /// @notice Sets the implementation address for the token identity module.
@@ -274,8 +270,8 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
 
     /// @notice Retrieves the current implementation address for the investor identity module.
     /// @return address The current address of the investor identity module implementation.
-    function investorIdentityImplementation() public view returns (address) {
-        return _investorIdentityImplementation;
+    function identityImplementation() public view returns (address) {
+        return _identityImplementation;
     }
 
     /// @notice Retrieves the current implementation address for the token identity module.

@@ -1,26 +1,32 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
-import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
+import { SMARTIdentityFactoryImplementation } from "./SMARTIdentityFactoryImplementation.sol";
+import {
+    InitializationFailed,
+    IdentityFactoryImplementationNotSet,
+    InvalidSystemAddress,
+    ETHTransfersNotAllowed
+} from "../SMARTSystemErrors.sol";
 
 contract SMARTIdentityFactoryProxy is Proxy {
     ISMARTSystem private _system;
 
-    /**
-     * @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
-     */
+    /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
     constructor(address systemAddress, address initialAdmin) payable {
+        if (systemAddress == address(0)) revert InvalidSystemAddress();
         _system = ISMARTSystem(systemAddress);
 
-        address implementation = _system.complianceImplementation();
-        require(implementation != address(0), "SMARTComplianceProxy: implementation not set in system");
+        address implementation = _system.identityFactoryImplementation();
+        if (implementation == address(0)) revert IdentityFactoryImplementationNotSet();
 
-        bytes memory data = abi.encodeWithSelector(SMARTComplianceImplementation.initialize.selector, initialAdmin);
+        bytes memory data =
+            abi.encodeWithSelector(SMARTIdentityFactoryImplementation.initialize.selector, systemAddress, initialAdmin);
 
         (bool success,) = implementation.delegatecall(data);
-        require(success, "SMARTComplianceProxy: initializer call failed");
+        if (!success) revert InitializationFailed();
     }
 
     function _implementation() internal view override returns (address) {
@@ -29,6 +35,6 @@ contract SMARTIdentityFactoryProxy is Proxy {
 
     /// @notice Rejects Ether transfers.
     receive() external payable {
-        revert("ETH transfers are not allowed");
+        revert ETHTransfersNotAllowed();
     }
 }

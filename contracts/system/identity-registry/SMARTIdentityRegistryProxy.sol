@@ -4,7 +4,12 @@ pragma solidity ^0.8.28;
 import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { SMARTIdentityRegistryImplementation } from "./SMARTIdentityRegistryImplementation.sol";
-import { InitializationFailed, IdentityRegistryImplementationNotSet } from "../SMARTSystemErrors.sol";
+import {
+    InitializationFailed,
+    IdentityRegistryImplementationNotSet,
+    InvalidSystemAddress,
+    ETHTransfersNotAllowed
+} from "../SMARTSystemErrors.sol";
 
 contract SMARTIdentityRegistryProxy is Proxy {
     ISMARTSystem private _system;
@@ -21,6 +26,7 @@ contract SMARTIdentityRegistryProxy is Proxy {
     )
         payable
     {
+        if (systemAddress == address(0)) revert InvalidSystemAddress();
         _system = ISMARTSystem(systemAddress);
 
         address implementation = _system.identityRegistryImplementation();
@@ -43,6 +49,6 @@ contract SMARTIdentityRegistryProxy is Proxy {
 
     /// @notice Rejects Ether transfers.
     receive() external payable {
-        revert("ETH transfers are not allowed");
+        revert ETHTransfersNotAllowed();
     }
 }

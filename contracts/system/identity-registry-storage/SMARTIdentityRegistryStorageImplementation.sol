@@ -90,7 +90,7 @@ contract SMARTIdentityRegistryStorageImplementation is
         __AccessControlEnumerable_init(); // This also calls __AccessControl_init()
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
-        _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin); // Allow initial admin to modify storage initially if needed
+        _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin); // TODO: should he be the storage modifier?
     }
 
     // --- Storage Modification Functions (STORAGE_MODIFIER_ROLE required) ---

@@ -7,4 +7,6 @@ interface ISMARTSystem {
     function identityRegistryStorageImplementation() external view returns (address);
     function identityFactoryImplementation() external view returns (address);
     function trustedIssuersRegistryImplementation() external view returns (address);
+    function identityImplementation() external view returns (address);
+    function tokenIdentityImplementation() external view returns (address);
 }

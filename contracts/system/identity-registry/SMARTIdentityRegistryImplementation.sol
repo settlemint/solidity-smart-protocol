@@ -78,7 +78,7 @@ contract SMARTIdentityRegistryImplementation is
         if (identityStorage_ == address(0)) revert InvalidStorageAddress();
         if (trustedIssuersRegistry_ == address(0)) revert InvalidRegistryAddress();
 
-        _grantRole(REGISTRAR_ROLE, initialAdmin);
+        _grantRole(REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar?
 
         _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
         emit IdentityStorageSet(_msgSender(), address(_identityStorage));

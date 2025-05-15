@@ -5,7 +5,12 @@ import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.so
 import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { SMARTTrustedIssuersRegistryImplementation } from "./SMARTTrustedIssuersRegistryImplementation.sol";
-import { InitializationFailed, TrustedIssuersRegistryImplementationNotSet } from "../SMARTSystemErrors.sol";
+import {
+    InitializationFailed,
+    TrustedIssuersRegistryImplementationNotSet,
+    InvalidSystemAddress,
+    ETHTransfersNotAllowed
+} from "../SMARTSystemErrors.sol";
 
 contract SMARTTrustedIssuersRegistryProxy is Proxy {
     ISMARTSystem private _system;
@@ -13,6 +18,7 @@ contract SMARTTrustedIssuersRegistryProxy is Proxy {
     /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
     /// @param initialAdmin The address for initial admin and registrar roles.
     constructor(address systemAddress, address initialAdmin) payable {
+        if (systemAddress == address(0)) revert InvalidSystemAddress();
         _system = ISMARTSystem(systemAddress);
 
         address implementation = _system.trustedIssuersRegistryImplementation();
@@ -31,6 +37,6 @@ contract SMARTTrustedIssuersRegistryProxy is Proxy {
 
     /// @notice Rejects Ether transfers.
     receive() external payable {
-        revert("ETH transfers are not allowed");
+        revert ETHTransfersNotAllowed();
     }
 }

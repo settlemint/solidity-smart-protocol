@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0
-
 pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
@@ -15,8 +14,11 @@ import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/m
 import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
 import { IImplementationAuthority } from "@onchainid/contracts/interface/IImplementationAuthority.sol";
 
+// System imports
+import { InvalidSystemAddress } from "../SMARTSystemErrors.sol";
+
 // Implementation imports
-import { IdentityProxy } from "@onchainid/contracts/proxy/IdentityProxy.sol";
+import { SMARTIdentityProxy } from "./identities/SMARTIdentityProxy.sol";
 
 // --- Errors ---
 error ZeroAddressNotAllowed();
@@ -41,8 +43,8 @@ contract SMARTIdentityFactoryImplementation is
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
     // --- Storage Variables ---
-    /// @notice The address of the ImplementationAuthority contract that dictates the logic for created identities.
-    address private _implementationAuthority;
+    /// @notice The address of the ISMARTSystem contract that provides the identity implementations.
+    address private _system;
 
     /// @notice Mapping to track used salts (derived from entity address) to prevent duplicates.
     mapping(bytes32 => bool) private _saltTakenByteSalt;
@@ -62,10 +64,6 @@ contract SMARTIdentityFactoryImplementation is
     /// @param identity The address of the deployed IdentityProxy.
     /// @param token The token contract address.
     event TokenIdentityCreated(address indexed sender, address indexed identity, address indexed token);
-    /// @notice Emitted when the ImplementationAuthority address is set or updated.
-    /// @param sender The address of the account that performed the update.
-    /// @param newAuthority The new address of the ImplementationAuthority.
-    event ImplementationAuthoritySet(address indexed sender, address indexed newAuthority);
 
     // --- Constructor --- (Disable direct construction)
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -76,16 +74,16 @@ contract SMARTIdentityFactoryImplementation is
     // --- Initializer ---
     /// @notice Initializes the identity factory.
     /// @dev Sets the initial owner and the ImplementationAuthority address.
-    /// @param initialOwner The address that will receive the ownership.
-    /// @param implementationAuthority_ The address of the `IImplementationAuthority` contract.
-    function initialize(address initialOwner, address implementationAuthority_) public initializer {
-        if (implementationAuthority_ == address(0)) revert InvalidAuthorityAddress();
+    /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
+    /// @param initialAdmin The address that will receive the ownership.
+    function initialize(address systemAddress, address initialAdmin) public initializer {
+        if (systemAddress == address(0)) revert InvalidSystemAddress();
+
         __AccessControlEnumerable_init();
-        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner);
-        _grantRole(REGISTRAR_ROLE, initialOwner);
-        // ERC2771Context is initialized by the constructor
-        _implementationAuthority = implementationAuthority_;
-        emit ImplementationAuthoritySet(_msgSender(), implementationAuthority_);
+        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
+        _grantRole(REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar?
+
+        _system = systemAddress;
     }
 
     // --- State-Changing Functions (Owner Controlled) ---
@@ -209,19 +207,18 @@ contract SMARTIdentityFactoryImplementation is
      * @return The pre-computed deployment address.
      */
     function getAddressForByteSalt(bytes32 _saltBytes, address _initialManager) public view returns (address) {
-        bytes memory proxyBytecode = type(IdentityProxy).creationCode;
-        // Constructor arguments for IdentityProxy: address implementationAuthority, address initialManagementKey
-        bytes memory constructorArgs = abi.encode(_implementationAuthority, _initialManager);
+        bytes memory proxyBytecode = type(SMARTIdentityProxy).creationCode;
+        // Constructor arguments for SMARTIdentityProxy: address system, address initialManagementKey
+        bytes memory constructorArgs = abi.encode(_system, _initialManager);
         return Create2.computeAddress(_saltBytes, keccak256(abi.encodePacked(proxyBytecode, constructorArgs)));
     }
 
     /**
-     * @notice Returns the address of the ImplementationAuthority contract managing the identities created by this
-     * factory.
-     * @return The address of the IImplementationAuthority contract.
+     * @notice Returns the address of the ISMARTSystem contract that provides the identity implementations.
+     * @return The address of the ISMARTSystem contract.
      */
-    function getImplementationAuthority() external view returns (address) {
-        return _implementationAuthority;
+    function getSystem() external view returns (address) {
+        return _system;
     }
 
     // --- Internal Functions ---
@@ -261,8 +258,8 @@ contract SMARTIdentityFactoryImplementation is
     function _deployIdentity(bytes32 _saltBytes, address _initialManager) private returns (address) {
         address predictedAddr = getAddressForByteSalt(_saltBytes, _initialManager);
 
-        bytes memory proxyBytecode = type(IdentityProxy).creationCode;
-        bytes memory constructorArgs = abi.encode(_implementationAuthority, _initialManager);
+        bytes memory proxyBytecode = type(SMARTIdentityProxy).creationCode;
+        bytes memory constructorArgs = abi.encode(_system, _initialManager);
         bytes memory deploymentBytecode = abi.encodePacked(proxyBytecode, constructorArgs);
 
         address deployedAddress = Create2.deploy(0, _saltBytes, deploymentBytecode);

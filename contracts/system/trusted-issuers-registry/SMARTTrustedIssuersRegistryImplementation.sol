@@ -89,7 +89,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
         // ERC2771Context initialized by constructor
 
-        _grantRole(REGISTRAR_ROLE, initialAdmin); // Grant registrar role to initial admin
+        _grantRole(REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar?
     }
 
     // --- Issuer Management Functions (REGISTRAR_ROLE required) ---
