@@ -1,8 +1,7 @@
 {
   "contract_inspector": {
       "enabled": true,
-      "scan_directories": ["contracts"],
-      "exclude_rules": []
+      "scan_directories": ["contracts"]
   },
   "dependency_checker": {
       "enabled": true
