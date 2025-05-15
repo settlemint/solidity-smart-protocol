@@ -16,7 +16,8 @@ import {
     IdentityFactoryImplementationNotSet,
     IdentityImplementationNotSet,
     TokenIdentityImplementationNotSet,
-    InvalidImplementationInterface
+    InvalidImplementationInterface,
+    EtherWithdrawalFailed
 } from "./SMARTSystemErrors.sol";
 
 // Interface imports
@@ -80,6 +81,11 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl {
         address trustedIssuersRegistryProxy,
         address identityFactoryProxy
     );
+
+    /// @notice Emitted when Ether is withdrawn from the contract by an admin.
+    /// @param to The address receiving the Ether.
+    /// @param amount The amount of Ether withdrawn.
+    event EtherWithdrawn(address indexed to, uint256 amount);
 
     // --- State Variables ---
 
@@ -310,6 +316,20 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl {
 
     function identityFactoryProxy() public view returns (address) {
         return _identityFactoryProxy;
+    }
+
+    /// @notice Allows an admin to withdraw any Ether held by this contract.
+    /// @dev This function is typically used to recover Ether sent to the contract accidentally
+    /// or if the constructor was made payable and received funds. It can only be called by an
+    /// address holding the DEFAULT_ADMIN_ROLE.
+    function withdrawEther() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 balance = address(this).balance;
+        if (balance > 0) {
+            // Send the entire balance to the caller (admin)
+            (bool sent,) = payable(_msgSender()).call{ value: balance }("");
+            if (!sent) revert EtherWithdrawalFailed();
+            emit EtherWithdrawn(_msgSender(), balance);
+        }
     }
 
     // --- Internal Functions ---
