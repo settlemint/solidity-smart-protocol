@@ -5,7 +5,21 @@ import { AccessControlEnumerableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ISMARTTokenFactory } from "./ISMARTTokenFactory.sol";
+import { ISMART } from "../../interface/ISMART.sol";
+
+// -- Errors --
+/// @notice Custom errors for the factory contract
+/// @dev Defines custom error types used by the contract for various failure conditions.
+
+error InvalidTokenAddress();
+/// @notice Error for attempting to unregister a token that is not registered.
+error InvalidImplementationAddress();
+/// @notice Error for when the provided token implementation address is the zero address.
+error ProxyCreationFailed(); // Added for CREATE2
+/// @notice Error when a CREATE2 proxy deployment fails.
+error AddressAlreadyDeployed(address predictedAddress); // Added for CREATE2
 
 /// @title SMARTTokenFactory - Contract for managing token registries with role-based access control
 /// @notice This contract provides functionality for registering tokens and checking their registration status,
@@ -21,41 +35,25 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @notice Role identifier for accounts permitted to register and unregister tokens.
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
-    /// @notice Custom errors for the factory contract
-    /// @dev Defines custom error types used by the contract for various failure conditions.
-    error InvalidTokenAddress();
-    /// @notice Error for when the provided token address is the zero address.
-    error TokenAlreadyRegistered(address token);
-    /// @notice Error for attempting to register an already registered token.
-    error TokenNotRegistered(address token);
-    /// @notice Error for attempting to unregister a token that is not registered.
-    error InvalidImplementationAddress();
-    /// @notice Error for when the provided token implementation address is the zero address.
-    error ProxyCreationFailed(); // Added for CREATE2
-    /// @notice Error when a CREATE2 proxy deployment fails.
-    error ProxyAddressAlreadyInUse(address predictedAddress); // Added for CREATE2
     /// @notice Error when a predicted CREATE2 address is already marked as deployed by this factory.
 
-    /// @notice Mapping indicating whether a token address is registered.
-    /// @dev Stores a boolean value for each token address, true if registered, false otherwise.
-    mapping(address tokenAddress => bool isRegistered) public isTokenRegistered;
-
-    /// @notice Mapping indicating whether a proxy address was deployed by this factory.
-    /// @dev Stores a boolean value for each proxy address, true if deployed by this factory.
-    mapping(address proxyAddress => bool isProxyDeployedByFactory) public isProxyDeployedByFactory; // Added for
+    /// @notice Mapping indicating whether a token address was deployed by this factory.
+    /// @dev Stores a boolean value for each token address, true if deployed by this factory.
+    mapping(address tokenAddress => bool isFactoryToken) public isFactoryToken; // Added for
         // CREATE2
 
     /// @notice Emitted when the token implementation address is updated.
     /// @param oldImplementation The address of the old token implementation.
     /// @param newImplementation The address of the new token implementation.
-    event TokenImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
+    event TokenImplementationUpdated(
+        address indexed sender, address indexed oldImplementation, address indexed newImplementation
+    );
 
     /// @notice Emitted when a new proxy contract is created using CREATE2.
-    /// @param proxyAddress The address of the newly created proxy.
-    /// @param salt The salt used for the CREATE2 deployment.
-    /// @param tokenTypeIdentifier A string identifying the type of token proxy created (e.g., "SMARTBondProxy").
-    event ProxyCreated( // Added for CREATE2
-    address indexed proxyAddress, bytes32 indexed salt, string tokenTypeIdentifier);
+    /// @param sender The address of the sender.
+    /// @param tokenAddress The address of the newly created token.
+    /// @param accessManager The address of the access manager.
+    event AssetCreated(address indexed sender, address indexed tokenAddress, address indexed accessManager);
 
     // --- State Variables ---
 
@@ -76,7 +74,10 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         if (initialAdmin == address(0)) {
             revert InvalidTokenAddress(); // Re-using for admin address, consider a more specific error if needed
         }
-        if (_tokenImplementation == address(0)) {
+        if (
+            _tokenImplementation == address(0)
+                && IERC165(_tokenImplementation).supportsInterface(type(ISMART).interfaceId)
+        ) {
             revert InvalidImplementationAddress();
         }
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
@@ -105,7 +106,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         }
         address oldImplementation = _tokenImplementation;
         _tokenImplementation = newImplementation;
-        emit TokenImplementationUpdated(oldImplementation, newImplementation);
+        emit TokenImplementationUpdated(_msgSender(), oldImplementation, newImplementation);
     }
 
     // --- CREATE2 Helper Functions ---
@@ -135,7 +136,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @param nameForSalt The name component for the salt.
     /// @param symbolForSalt The symbol component for the salt.
     /// @return predictedAddress The predicted address where the proxy would be deployed.
-    function _predictProxyAddressCREATE2(
+    function _predictProxyAddress(
         bytes memory proxyCreationCode,
         bytes memory encodedConstructorArgs,
         string memory nameForSalt,
@@ -156,25 +157,25 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @dev This internal function handles the prediction, deployment, and registration of the proxy.
     /// @param proxyCreationCode The creation bytecode of the proxy contract.
     /// @param encodedConstructorArgs ABI-encoded constructor arguments for the proxy.
+    /// @param accessManager The address of the access manager.
     /// @param nameForSalt The name component for the salt calculation.
     /// @param symbolForSalt The symbol component for the salt calculation.
-    /// @param tokenTypeIdentifier A string to identify the type of token proxy created in the event.
     /// @return deployedAddress The address of the newly deployed proxy contract.
-    function _deployProxyCREATE2(
+    function _deployProxy(
         bytes memory proxyCreationCode,
         bytes memory encodedConstructorArgs,
+        address accessManager,
         string memory nameForSalt,
-        string memory symbolForSalt,
-        string memory tokenTypeIdentifier
+        string memory symbolForSalt
     )
         internal
         returns (address deployedAddress)
     {
         address predictedAddress =
-            _predictProxyAddressCREATE2(proxyCreationCode, encodedConstructorArgs, nameForSalt, symbolForSalt);
+            _predictProxyAddress(proxyCreationCode, encodedConstructorArgs, nameForSalt, symbolForSalt);
 
-        if (isProxyDeployedByFactory[predictedAddress]) {
-            revert ProxyAddressAlreadyInUse(predictedAddress);
+        if (isFactoryToken[predictedAddress]) {
+            revert AddressAlreadyDeployed(predictedAddress);
         }
 
         bytes32 salt = _calculateSalt(nameForSalt, symbolForSalt);
@@ -195,10 +196,16 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
             revert ProxyCreationFailed();
         }
 
-        isProxyDeployedByFactory[deployedAddress] = true;
-        emit ProxyCreated(deployedAddress, salt, tokenTypeIdentifier);
+        isFactoryToken[deployedAddress] = true;
+
+        _finalizeTokenCreation(deployedAddress, accessManager);
 
         return deployedAddress;
+    }
+
+    function _finalizeTokenCreation(address tokenAddress, address accessManager) internal virtual {
+        // TODO: create the identity
+        emit AssetCreated(_msgSender(), tokenAddress, accessManager);
     }
 
     // --- ERC2771Context Overrides ---

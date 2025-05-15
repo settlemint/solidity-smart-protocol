@@ -10,6 +10,7 @@ import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTCom
 
 // Local imports
 import { SMARTBondProxy } from "./SMARTBondProxy.sol";
+import { SMARTTokenAccessManager } from "../../extensions/access-managed/manager/SMARTTokenAccessManager.sol";
 
 contract SMARTBondTokenFactoryImplementation is AbstractSMARTTokenFactoryImplementation {
     constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
@@ -25,12 +26,14 @@ contract SMARTBondTokenFactoryImplementation is AbstractSMARTTokenFactoryImpleme
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
-        address compliance_,
-        address accessManager_
+        address compliance_
     )
         external
         returns (address deployedBondAddress)
     {
+        // TODO: make accessManager also upgradeable
+        SMARTTokenAccessManager accessManager = new SMARTTokenAccessManager(address(trustedForwarder()), _msgSender());
+
         // ABI encode constructor arguments for SMARTBondProxy
         bytes memory constructorArgs = abi.encode(
             address(this),
@@ -45,13 +48,13 @@ contract SMARTBondTokenFactoryImplementation is AbstractSMARTTokenFactoryImpleme
             initialModulePairs_,
             identityRegistry_,
             compliance_,
-            accessManager_
+            accessManager
         );
 
         // Get the creation bytecode of SMARTBondProxy
         bytes memory proxyBytecode = type(SMARTBondProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        deployedBondAddress = _deployProxyCREATE2(proxyBytecode, constructorArgs, name_, symbol_, "SMARTBondProxy");
+        return _deployProxy(proxyBytecode, constructorArgs, address(accessManager), name_, symbol_);
     }
 }
