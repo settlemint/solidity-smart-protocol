@@ -15,19 +15,19 @@ contract SMARTSystemFactory is ERC2771Context {
     // --- State Variables ---
 
     /// @notice The default implementation address for the compliance module.
-    address public defaultComplianceImplementation;
+    address public immutable defaultComplianceImplementation;
     /// @notice The default implementation address for the identity registry module.
-    address public defaultIdentityRegistryImplementation;
+    address public immutable defaultIdentityRegistryImplementation;
     /// @notice The default implementation address for the identity registry storage module.
-    address public defaultIdentityRegistryStorageImplementation;
+    address public immutable defaultIdentityRegistryStorageImplementation;
     /// @notice The default implementation address for the trusted issuers registry module.
-    address public defaultTrustedIssuersRegistryImplementation;
+    address public immutable defaultTrustedIssuersRegistryImplementation;
     /// @notice The default implementation address for the identity factory module.
-    address public defaultIdentityFactoryImplementation;
+    address public immutable defaultIdentityFactoryImplementation;
     /// @notice The default implementation address for the identity module.
-    address public defaultIdentityImplementation;
+    address public immutable defaultIdentityImplementation;
     /// @notice The default implementation address for the token identity module.
-    address public defaultTokenIdentityImplementation;
+    address public immutable defaultTokenIdentityImplementation;
     /// @notice The address of the trusted forwarder used by this factory and passed to new SMARTSystem instances.
     address public immutable factoryForwarder;
 
