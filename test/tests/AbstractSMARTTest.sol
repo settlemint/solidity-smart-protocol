@@ -208,7 +208,7 @@ abstract contract AbstractSMARTTest is Test {
     //                      INITIALIZATION & BASIC TESTS
     // =====================================================================
 
-    function test_InitialState() public {
+    function test_InitialState() public view {
         require(address(token) != address(0), "Token not deployed");
     }
 }

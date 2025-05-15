@@ -9,7 +9,7 @@ import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/int
 // TODO: fix to be ERC-2771 compatible
 // TODO: fix to be ERC-165 initialization
 contract SMARTIdentityImplementation is Identity, ERC165Upgradeable {
-    constructor(address initialManagementKey) Identity(initialManagementKey, true) { }
+    constructor() Identity(address(0), true) { }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return interfaceId == type(IIdentity).interfaceId || interfaceId == type(IERC165).interfaceId

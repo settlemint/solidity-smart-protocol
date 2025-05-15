@@ -8,7 +8,6 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 // SMART interfaces
 import { ISMARTIdentityRegistry } from "./ISMARTIdentityRegistry.sol";
 import { ISMARTCompliance } from "./ISMARTCompliance.sol";
-import { ISMARTComplianceModule } from "./ISMARTComplianceModule.sol";
 
 // Structs
 import { SMARTComplianceModuleParamPair } from "./structs/SMARTComplianceModuleParamPair.sol";

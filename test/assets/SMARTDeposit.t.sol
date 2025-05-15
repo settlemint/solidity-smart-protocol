@@ -145,7 +145,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         );
 
         vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
-        SMARTDeposit deposit_ = SMARTDeposit(address(new ERC1967Proxy(address(smartDepositImplementation), data)));
+        new ERC1967Proxy(address(smartDepositImplementation), data);
         vm.stopPrank();
     }
 
