@@ -13,13 +13,14 @@ import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/m
 // Interface imports
 import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
 import { IImplementationAuthority } from "@onchainid/contracts/interface/IImplementationAuthority.sol";
+import { ISMARTIdentityFactory } from "./ISMARTIdentityFactory.sol";
 
 // System imports
 import { InvalidSystemAddress } from "../SMARTSystemErrors.sol";
 
 // Implementation imports
 import { SMARTIdentityProxy } from "./identities/SMARTIdentityProxy.sol";
-import { SMARTIdentityProxy as TokenIdentityProxy } from "./identities/SMARTTokenIdentityProxy.sol";
+import { SMARTTokenIdentityProxy } from "./identities/SMARTTokenIdentityProxy.sol";
 
 // --- Errors ---
 error ZeroAddressNotAllowed();
@@ -38,7 +39,8 @@ error DeploymentAddressMismatch();
 contract SMARTIdentityFactoryImplementation is
     Initializable,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable
+    AccessControlEnumerableUpgradeable,
+    ISMARTIdentityFactory
 {
     // --- Constants ---
     string public constant TOKEN_SALT_PREFIX = "Token";
@@ -327,7 +329,7 @@ contract SMARTIdentityFactoryImplementation is
         view
         returns (bytes memory, bytes memory)
     {
-        bytes memory proxyBytecode = type(TokenIdentityProxy).creationCode;
+        bytes memory proxyBytecode = type(SMARTTokenIdentityProxy).creationCode;
         bytes memory constructorArgs = abi.encode(_system, _initialManager);
         return (proxyBytecode, constructorArgs);
     }

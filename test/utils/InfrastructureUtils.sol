@@ -83,7 +83,7 @@ contract InfrastructureUtils is Test {
         );
 
         system = ISMARTSystem(systemFactory.createSystem());
-        system.bootstrap(platformAdmin);
+        system.bootstrap();
 
         compliance = ISMARTCompliance(system.complianceProxy());
         vm.label(address(compliance), "Compliance");
