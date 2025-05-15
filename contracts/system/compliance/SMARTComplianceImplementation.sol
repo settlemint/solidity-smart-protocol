@@ -15,6 +15,9 @@ import { ISMART } from "./../../interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "./../../interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ZeroAddressNotAllowed } from "./../../extensions/common/CommonErrors.sol";
 
+// --- Errors ---
+error InvalidModuleImplementation();
+
 /// @title SMART Compliance Contract
 /// @notice Upgradeable implementation of the main compliance contract for SMART tokens.
 /// @dev This contract orchestrates compliance checks and notifications by delegating to registered
@@ -26,9 +29,6 @@ contract SMARTComplianceImplementation is
     ERC2771ContextUpgradeable,
     ERC165Upgradeable
 {
-    // --- Errors ---
-    error InvalidModuleImplementation();
-
     // --- Constructor --- (Disable direct construction)
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address trustedForwarder) payable ERC2771ContextUpgradeable(trustedForwarder) {
