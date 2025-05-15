@@ -18,7 +18,44 @@ import { SMARTIdentityRegistryStorageProxy } from "./identity-registry-storage/S
 import { SMARTTrustedIssuersRegistryProxy } from "./trusted-issuers-registry/SMARTTrustedIssuersRegistryProxy.sol";
 import { SMARTIdentityFactoryProxy } from "./identity-factory/SMARTIdentityFactoryProxy.sol";
 
+/// @title SMARTSystem Contract
+/// @notice Main contract for managing the SMART Protocol system components and their implementations.
+/// @dev This contract handles the deployment and upgrades of various modules like Compliance, Identity Registry, etc.
+/// It uses ERC2771Context for meta-transaction support and AccessControl for role-based permissions.
 contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
+    // --- Events ---
+
+    /// @notice Emitted when the compliance module implementation is updated.
+    /// @param newImplementation The address of the new compliance module implementation.
+    event ComplianceImplementationUpdated(address indexed newImplementation);
+    /// @notice Emitted when the identity registry module implementation is updated.
+    /// @param newImplementation The address of the new identity registry module implementation.
+    event IdentityRegistryImplementationUpdated(address indexed newImplementation);
+    /// @notice Emitted when the identity registry storage module implementation is updated.
+    /// @param newImplementation The address of the new identity registry storage module implementation.
+    event IdentityRegistryStorageImplementationUpdated(address indexed newImplementation);
+    /// @notice Emitted when the trusted issuers registry module implementation is updated.
+    /// @param newImplementation The address of the new trusted issuers registry module implementation.
+    event TrustedIssuersRegistryImplementationUpdated(address indexed newImplementation);
+    /// @notice Emitted when the identity factory module implementation is updated.
+    /// @param newImplementation The address of the new identity factory module implementation.
+    event IdentityFactoryImplementationUpdated(address indexed newImplementation);
+    /// @notice Emitted when the system has been bootstrapped, creating proxy contracts for all modules.
+    /// @param complianceProxy The address of the deployed SMARTComplianceProxy.
+    /// @param identityRegistryProxy The address of the deployed SMARTIdentityRegistryProxy.
+    /// @param identityRegistryStorageProxy The address of the deployed SMARTIdentityRegistryStorageProxy.
+    /// @param trustedIssuersRegistryProxy The address of the deployed SMARTTrustedIssuersRegistryProxy.
+    /// @param identityFactoryProxy The address of the deployed SMARTIdentityFactoryProxy.
+    event Bootstrapped(
+        address complianceProxy,
+        address identityRegistryProxy,
+        address identityRegistryStorageProxy,
+        address trustedIssuersRegistryProxy,
+        address identityFactoryProxy
+    );
+
+    // --- State Variables ---
+
     address private _complianceImplementation;
     address private _complianceProxy;
 
@@ -34,6 +71,18 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
     address private _identityFactoryImplementation;
     address private _identityFactoryProxy;
 
+    // --- Constructor ---
+
+    /// @notice Constructor for the SMARTSystem contract.
+    /// @param initialAdmin_ The address of the initial administrator (DEFAULT_ADMIN_ROLE).
+    /// @param complianceImplementation_ The initial address of the compliance module implementation.
+    /// @param identityRegistryImplementation_ The initial address of the identity registry module implementation.
+    /// @param identityRegistryStorageImplementation_ The initial address of the identity registry storage module
+    /// implementation.
+    /// @param trustedIssuersRegistryImplementation_ The initial address of the trusted issuers registry module
+    /// implementation.
+    /// @param identityFactoryImplementation_ The initial address of the identity factory module implementation.
+    /// @param forwarder_ The address of the trusted forwarder for meta-transactions (ERC2771).
     constructor(
         address initialAdmin_,
         address complianceImplementation_,
@@ -43,6 +92,7 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
         address identityFactoryImplementation_,
         address forwarder_
     )
+        payable
         ERC2771Context(forwarder_)
     {
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin_);
@@ -54,6 +104,11 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
         _identityFactoryImplementation = identityFactoryImplementation_;
     }
 
+    // --- Bootstrap Function ---
+
+    /// @notice Bootstraps the system by deploying proxy contracts for all modules.
+    /// @dev This function can only be called by an address with the DEFAULT_ADMIN_ROLE.
+    /// @dev Reverts if any of the module implementations are not set (address(0)).
     function bootstrap() public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_complianceImplementation == address(0)) {
             revert ComplianceImplementationNotSet();
@@ -76,47 +131,91 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
         _identityRegistryStorageProxy = address(new SMARTIdentityRegistryStorageProxy(address(this)));
         _trustedIssuersRegistryProxy = address(new SMARTTrustedIssuersRegistryProxy(address(this)));
         _identityFactoryProxy = address(new SMARTIdentityFactoryProxy(address(this)));
+
+        emit Bootstrapped(
+            _complianceProxy,
+            _identityRegistryProxy,
+            _identityRegistryStorageProxy,
+            _trustedIssuersRegistryProxy,
+            _identityFactoryProxy
+        );
     }
 
+    // --- Implementation Setter Functions ---
+
+    /// @notice Sets the implementation address for the compliance module.
+    /// @dev This function can only be called by an address with the DEFAULT_ADMIN_ROLE.
+    /// @param implementation The new address of the compliance module implementation.
     function setComplianceImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _complianceImplementation = implementation;
+        emit ComplianceImplementationUpdated(implementation);
     }
 
+    /// @notice Sets the implementation address for the identity registry module.
+    /// @dev This function can only be called by an address with the DEFAULT_ADMIN_ROLE.
+    /// @param implementation The new address of the identity registry module implementation.
     function setIdentityRegistryImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _identityRegistryImplementation = implementation;
+        emit IdentityRegistryImplementationUpdated(implementation);
     }
 
+    /// @notice Sets the implementation address for the identity registry storage module.
+    /// @dev This function can only be called by an address with the DEFAULT_ADMIN_ROLE.
+    /// @param implementation The new address of the identity registry storage module implementation.
     function setIdentityRegistryStorageImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _identityRegistryStorageImplementation = implementation;
+        emit IdentityRegistryStorageImplementationUpdated(implementation);
     }
 
+    /// @notice Sets the implementation address for the trusted issuers registry module.
+    /// @dev This function can only be called by an address with the DEFAULT_ADMIN_ROLE.
+    /// @param implementation The new address of the trusted issuers registry module implementation.
     function setTrustedIssuersRegistryImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _trustedIssuersRegistryImplementation = implementation;
+        emit TrustedIssuersRegistryImplementationUpdated(implementation);
     }
 
+    /// @notice Sets the implementation address for the identity factory module.
+    /// @dev This function can only be called by an address with the DEFAULT_ADMIN_ROLE.
+    /// @param implementation The new address of the identity factory module implementation.
     function setIdentityFactoryImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _identityFactoryImplementation = implementation;
+        emit IdentityFactoryImplementationUpdated(implementation);
     }
 
+    // --- Implementation Getter Functions ---
+
+    /// @notice Retrieves the current implementation address for the compliance module.
+    /// @return address The current address of the compliance module implementation.
     function complianceImplementation() public view returns (address) {
         return _complianceImplementation;
     }
 
+    /// @notice Retrieves the current implementation address for the identity registry module.
+    /// @return address The current address of the identity registry module implementation.
     function identityRegistryImplementation() public view returns (address) {
         return _identityRegistryImplementation;
     }
 
+    /// @notice Retrieves the current implementation address for the identity registry storage module.
+    /// @return address The current address of the identity registry storage module implementation.
     function identityRegistryStorageImplementation() public view returns (address) {
         return _identityRegistryStorageImplementation;
     }
 
+    /// @notice Retrieves the current implementation address for the trusted issuers registry module.
+    /// @return address The current address of the trusted issuers registry module implementation.
     function trustedIssuersRegistryImplementation() public view returns (address) {
         return _trustedIssuersRegistryImplementation;
     }
 
+    /// @notice Retrieves the current implementation address for the identity factory module.
+    /// @return address The current address of the identity factory module implementation.
     function identityFactoryImplementation() public view returns (address) {
         return _identityFactoryImplementation;
     }
+
+    // --- Internal Functions ---
 
     /// @notice Returns the message sender in the context of meta-transactions
     /// @dev Overrides both Context and ERC2771Context to support meta-transactions
