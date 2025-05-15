@@ -14,6 +14,9 @@ import {
     TokenIdentityImplementationNotSet
 } from "./SMARTSystemErrors.sol";
 
+// Interface imports
+import { IERC3643IdentityRegistryStorage } from "./../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+
 import { SMARTComplianceProxy } from "./compliance/SMARTComplianceProxy.sol";
 import { SMARTIdentityRegistryProxy } from "./identity-registry/SMARTIdentityRegistryProxy.sol";
 import { SMARTIdentityRegistryStorageProxy } from "./identity-registry-storage/SMARTIdentityRegistryStorageProxy.sol";
@@ -167,6 +170,11 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
         );
         _identityFactoryProxy = address(new SMARTIdentityFactoryProxy(address(this), initialAdmin));
 
+        // Bind Registry to Storage
+        IERC3643IdentityRegistryStorage(_identityRegistryStorageProxy).bindIdentityRegistry(
+            address(_identityRegistryProxy)
+        );
+
         emit Bootstrapped(
             _complianceProxy,
             _identityRegistryProxy,
@@ -278,6 +286,38 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
     /// @return address The current address of the token identity module implementation.
     function tokenIdentityImplementation() public view returns (address) {
         return _tokenIdentityImplementation;
+    }
+
+    // --- Proxy Getter Functions ---
+
+    /// @notice Retrieves the current address for the compliance module proxy.
+    /// @return address The current address of the compliance module proxy.
+    function complianceProxy() public view returns (address) {
+        return _complianceProxy;
+    }
+
+    /// @notice Retrieves the current address for the identity registry module proxy.
+    /// @return address The current address of the identity registry module proxy.
+    function identityRegistryProxy() public view returns (address) {
+        return _identityRegistryProxy;
+    }
+
+    /// @notice Retrieves the current address for the identity registry storage module proxy.
+    /// @return address The current address of the identity registry storage module proxy.
+    function identityRegistryStorageProxy() public view returns (address) {
+        return _identityRegistryStorageProxy;
+    }
+
+    /// @notice Retrieves the current address for the trusted issuers registry module proxy.
+    /// @return address The current address of the trusted issuers registry module proxy.
+    function trustedIssuersRegistryProxy() public view returns (address) {
+        return _trustedIssuersRegistryProxy;
+    }
+
+    /// @notice Retrieves the current address for the identity factory module proxy.
+    /// @return address The current address of the identity factory module proxy.
+    function identityFactoryProxy() public view returns (address) {
+        return _identityFactoryProxy;
     }
 
     // --- Internal Functions ---

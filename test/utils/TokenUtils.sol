@@ -3,12 +3,9 @@ pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { SMARTIdentityFactory } from "../../contracts/SMARTIdentityFactory.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { SMART } from "../../contracts/extensions/core/SMART.sol";
-import { SMARTCompliance } from "../../contracts/SMARTCompliance.sol";
-import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
 import { SMARTPausable } from "../../contracts/extensions/pausable/SMARTPausable.sol";
 import { SMARTBurnable } from "../../contracts/extensions/burnable/SMARTBurnable.sol";
 import { SMARTRedeemable } from "../../contracts/extensions/redeemable/SMARTRedeemable.sol";
@@ -16,17 +13,21 @@ import { SMARTCustodian } from "../../contracts/extensions/custodian/SMARTCustod
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { SMARTToken } from "../../contracts/SMARTToken.sol";
 
+import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
+import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
+import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
+
 contract TokenUtils is Test {
     address internal _platformAdmin;
-    SMARTIdentityFactory internal _identityFactory;
-    SMARTCompliance internal _compliance; // Reference if needed, though factory uses it
-    SMARTIdentityRegistry internal _identityRegistry;
+    ISMARTIdentityFactory internal _identityFactory;
+    ISMARTCompliance internal _compliance; // Reference if needed, though factory uses it
+    ISMARTIdentityRegistry internal _identityRegistry;
 
     constructor(
         address platformAdmin_,
-        SMARTIdentityFactory identityFactory_,
-        SMARTIdentityRegistry identityRegistry_,
-        SMARTCompliance compliance_ // Pass compliance even if factory uses it, might be needed elsewhere
+        ISMARTIdentityFactory identityFactory_,
+        ISMARTIdentityRegistry identityRegistry_,
+        ISMARTCompliance compliance_ // Pass compliance even if factory uses it, might be needed elsewhere
     ) {
         _platformAdmin = platformAdmin_;
         _identityFactory = identityFactory_;

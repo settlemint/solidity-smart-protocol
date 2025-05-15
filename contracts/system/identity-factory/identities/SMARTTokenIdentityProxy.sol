@@ -12,16 +12,18 @@ import {
 import { ZeroAddressNotAllowed } from "../SMARTIdentityErrors.sol";
 import { Identity } from "@onchainid/contracts/Identity.sol";
 
-contract SMARTIdentityProxy is Proxy {
+/// @title Proxy contract for SMART Token Identity.
+/// @notice This contract serves as a proxy to the SMART Token Identity implementation,
+/// allowing for upgradeability of the token-bound identity logic. It is based on the ERC725 standard.
+/// It retrieves the implementation address from the ISMARTSystem contract.
+contract SMARTTokenIdentityProxy is Proxy {
     ISMARTSystem private _system;
 
-    /**
-     *  @dev constructor of the proxy Identity contract
-     *  @param systemAddress the implementation Authority contract address
-     *  @param initialManagementKey the management key at deployment
-     *  the proxy is going to use the logic deployed on the implementation contract
-     *  deployed at an address listed in the ImplementationAuthority contract
-     */
+    /// @dev Constructor of the proxy Token Identity contract.
+    /// @param systemAddress The address of the ISMARTSystem contract.
+    /// @param initialManagementKey The initial management key for the token identity.
+    /// @notice The proxy will use the logic deployed on the implementation contract
+    /// (tokenIdentityImplementation) whose address is listed in the ISMARTSystem contract.
     constructor(address systemAddress, address initialManagementKey) {
         if (systemAddress == address(0)) revert InvalidSystemAddress();
         _system = ISMARTSystem(systemAddress);
@@ -38,6 +40,9 @@ contract SMARTIdentityProxy is Proxy {
         if (!success) revert InitializationFailed();
     }
 
+    /// @notice Returns the address of the current token identity implementation.
+    /// @dev This function is called by the EIP1967Proxy logic to determine where to delegate calls.
+    /// @return implementationAddress The address of the token identity implementation contract.
     function _implementation() internal view override returns (address) {
         return _system.tokenIdentityImplementation();
     }

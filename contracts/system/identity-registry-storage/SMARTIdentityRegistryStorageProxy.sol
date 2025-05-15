@@ -12,9 +12,16 @@ import {
     ETHTransfersNotAllowed
 } from "../SMARTSystemErrors.sol";
 
+/// @title Proxy contract for SMART Identity Registry Storage.
+/// @notice This contract serves as a proxy to the SMART Identity Registry Storage implementation,
+/// allowing for upgradeability of the storage logic for the identity registry.
+/// It retrieves the implementation address from the ISMARTSystem contract.
 contract SMARTIdentityRegistryStorageProxy is Proxy {
     ISMARTSystem private _system;
 
+    /// @notice Constructs the SMARTIdentityRegistryStorageProxy.
+    /// @dev Initializes the proxy by setting the system address and delegating a call
+    /// to the `initialize` function of the identity registry storage implementation.
     /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
     /// @param initialAdmin The address for initial admin and registrar roles.
     constructor(address systemAddress, address initialAdmin) payable {
@@ -31,6 +38,9 @@ contract SMARTIdentityRegistryStorageProxy is Proxy {
         if (!success) revert InitializationFailed();
     }
 
+    /// @notice Returns the address of the current identity registry storage implementation.
+    /// @dev This function is called by the EIP1967Proxy logic to determine where to delegate calls.
+    /// @return implementationAddress The address of the identity registry storage implementation contract.
     function _implementation() internal view override returns (address) {
         return _system.identityRegistryStorageImplementation();
     }

@@ -7,7 +7,6 @@ import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
-import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
 import { TestConstants } from "../Constants.sol";
 import { ClaimUtils } from "../utils/ClaimUtils.sol";
 import { IdentityUtils } from "../utils/IdentityUtils.sol";
@@ -117,13 +116,11 @@ abstract contract AbstractSMARTTest is Test {
         address tokenAddress = address(token);
 
         vm.prank(platformAdmin);
-        SMARTIdentityRegistry(payable(registryAddress)).grantRole(TestConstants.REGISTRAR_ROLE, tokenAddress); // Use
-            // variable
+        IAccessControl(payable(registryAddress)).grantRole(TestConstants.REGISTRAR_ROLE, tokenAddress);
 
         // Verify the role was granted
         assertTrue(
-            SMARTIdentityRegistry(payable(registryAddress)).hasRole(TestConstants.REGISTRAR_ROLE, tokenAddress), // Use
-                // variable
+            IAccessControl(payable(registryAddress)).hasRole(TestConstants.REGISTRAR_ROLE, tokenAddress),
             "Token was not granted REGISTRAR_ROLE"
         );
     }

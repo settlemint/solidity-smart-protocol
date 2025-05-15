@@ -12,16 +12,18 @@ import {
 import { ZeroAddressNotAllowed } from "../SMARTIdentityErrors.sol";
 import { Identity } from "@onchainid/contracts/Identity.sol";
 
+/// @title Proxy contract for SMART Identity.
+/// @notice This contract serves as a proxy to the SMART Identity implementation,
+/// allowing for upgradeability of the identity logic. It is based on the ERC725 standard.
+/// It retrieves the implementation address from the ISMARTSystem contract.
 contract SMARTIdentityProxy is Proxy {
     ISMARTSystem private _system;
 
-    /**
-     *  @dev constructor of the proxy Identity contract
-     *  @param systemAddress the implementation Authority contract address
-     *  @param initialManagementKey the management key at deployment
-     *  the proxy is going to use the logic deployed on the implementation contract
-     *  deployed at an address listed in the ImplementationAuthority contract
-     */
+    /// @dev constructor of the proxy Identity contract
+    /// @param systemAddress The address of the ISMARTSystem contract.
+    /// @param initialManagementKey The initial management key for the identity.
+    /// @notice The proxy will use the logic deployed on the implementation contract,
+    /// whose address is listed in the ISMARTSystem contract.
     constructor(address systemAddress, address initialManagementKey) {
         if (systemAddress == address(0)) revert InvalidSystemAddress();
         _system = ISMARTSystem(systemAddress);
@@ -38,6 +40,9 @@ contract SMARTIdentityProxy is Proxy {
         if (!success) revert InitializationFailed();
     }
 
+    /// @notice Returns the address of the current identity implementation.
+    /// @dev This function is called by the EIP1967Proxy logic to determine where to delegate calls.
+    /// @return implementationAddress The address of the identity implementation contract.
     function _implementation() internal view override returns (address) {
         return _system.identityImplementation();
     }

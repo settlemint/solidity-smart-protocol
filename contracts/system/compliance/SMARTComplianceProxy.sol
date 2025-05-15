@@ -11,9 +11,16 @@ import {
     ETHTransfersNotAllowed
 } from "../SMARTSystemErrors.sol";
 
+/// @title Proxy contract for SMART Compliance.
+/// @notice This contract serves as a proxy to the SMART Compliance implementation,
+/// allowing for upgradeability of the compliance logic.
+/// It retrieves the implementation address from the ISMARTSystem contract.
 contract SMARTComplianceProxy is Proxy {
     ISMARTSystem private _system;
 
+    /// @notice Constructs the SMARTComplianceProxy.
+    /// @dev Initializes the proxy by setting the system address and delegating a call
+    /// to the `initialize` function of the compliance implementation.
     /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
     constructor(address systemAddress) payable {
         if (systemAddress == address(0)) revert InvalidSystemAddress();
@@ -28,6 +35,9 @@ contract SMARTComplianceProxy is Proxy {
         if (!success) revert InitializationFailed();
     }
 
+    /// @notice Returns the address of the current compliance implementation.
+    /// @dev This function is called by the EIP1967Proxy logic to determine where to delegate calls.
+    /// @return implementationAddress The address of the compliance implementation contract.
     function _implementation() internal view override returns (address) {
         return _system.complianceImplementation();
     }

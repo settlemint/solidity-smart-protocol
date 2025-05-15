@@ -12,9 +12,16 @@ import {
     ETHTransfersNotAllowed
 } from "../SMARTSystemErrors.sol";
 
+/// @title Proxy contract for SMART Trusted Issuers Registry.
+/// @notice This contract serves as a proxy to the SMART Trusted Issuers Registry implementation,
+/// allowing for upgradeability of the trusted issuers registry logic.
+/// It retrieves the implementation address from the ISMARTSystem contract.
 contract SMARTTrustedIssuersRegistryProxy is Proxy {
     ISMARTSystem private _system;
 
+    /// @notice Constructs the SMARTTrustedIssuersRegistryProxy.
+    /// @dev Initializes the proxy by setting the system address and delegating a call
+    /// to the `initialize` function of the trusted issuers registry implementation.
     /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
     /// @param initialAdmin The address for initial admin and registrar roles.
     constructor(address systemAddress, address initialAdmin) payable {
@@ -31,6 +38,9 @@ contract SMARTTrustedIssuersRegistryProxy is Proxy {
         if (!success) revert InitializationFailed();
     }
 
+    /// @notice Returns the address of the current trusted issuers registry implementation.
+    /// @dev This function is called by the EIP1967Proxy logic to determine where to delegate calls.
+    /// @return implementationAddress The address of the trusted issuers registry implementation contract.
     function _implementation() internal view override returns (address) {
         return _system.trustedIssuersRegistryImplementation();
     }

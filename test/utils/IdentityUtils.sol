@@ -4,21 +4,21 @@ pragma solidity ^0.8.24;
 import { Test } from "forge-std/Test.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
-import { SMARTIdentityFactory } from "../../contracts/SMARTIdentityFactory.sol";
-import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
-import { SMARTTrustedIssuersRegistry } from "../../contracts/SMARTTrustedIssuersRegistry.sol";
+import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
+import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
+import { IERC3643TrustedIssuersRegistry } from "../../contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
 contract IdentityUtils is Test {
     address internal _platformAdmin;
-    SMARTIdentityFactory internal _identityFactory;
-    SMARTIdentityRegistry internal _identityRegistry;
-    SMARTTrustedIssuersRegistry internal _trustedIssuersRegistry;
+    ISMARTIdentityFactory internal _identityFactory;
+    ISMARTIdentityRegistry internal _identityRegistry;
+    IERC3643TrustedIssuersRegistry internal _trustedIssuersRegistry;
 
     constructor(
         address platformAdmin_,
-        SMARTIdentityFactory identityFactory_,
-        SMARTIdentityRegistry identityRegistry_,
-        SMARTTrustedIssuersRegistry trustedIssuersRegistry_
+        ISMARTIdentityFactory identityFactory_,
+        ISMARTIdentityRegistry identityRegistry_,
+        IERC3643TrustedIssuersRegistry trustedIssuersRegistry_
     ) {
         _platformAdmin = platformAdmin_;
         _identityFactory = identityFactory_;

@@ -2,10 +2,10 @@
 pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
-import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
-import { SMARTIdentityFactory } from "../../contracts/SMARTIdentityFactory.sol";
+import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
+import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
 
 contract ClaimUtils is Test {
     // Signature Schemes (ERC735)
@@ -14,8 +14,8 @@ contract ClaimUtils is Test {
     address internal _platformAdmin;
     address internal _claimIssuer;
     uint256 internal _claimIssuerPrivateKey;
-    SMARTIdentityRegistry internal _identityRegistry;
-    SMARTIdentityFactory internal _identityFactory;
+    ISMARTIdentityRegistry internal _identityRegistry;
+    ISMARTIdentityFactory internal _identityFactory;
 
     uint256 internal _collateralClaimTopic;
     uint256 internal _kycClaimTopic;
@@ -25,8 +25,8 @@ contract ClaimUtils is Test {
         address platformAdmin_,
         address claimIssuer_,
         uint256 claimIssuerPrivateKey_,
-        SMARTIdentityRegistry identityRegistry_,
-        SMARTIdentityFactory identityFactory_,
+        ISMARTIdentityRegistry identityRegistry_,
+        ISMARTIdentityFactory identityFactory_,
         uint256 collateralClaimTopic_,
         uint256 kycClaimTopic_,
         uint256 amlClaimTopic_

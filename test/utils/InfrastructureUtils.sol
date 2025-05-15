@@ -2,29 +2,53 @@
 pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
-import { Identity } from "@onchainid/contracts/Identity.sol";
-import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
-import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
-import { ImplementationAuthority } from "@onchainid/contracts/proxy/ImplementationAuthority.sol";
-import { SMARTIdentityRegistryStorage } from "../../contracts/SMARTIdentityRegistryStorage.sol";
-import { SMARTTrustedIssuersRegistry } from "../../contracts/SMARTTrustedIssuersRegistry.sol";
-import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
-import { SMARTCompliance } from "../../contracts/SMARTCompliance.sol";
-import { SMARTIdentityFactory } from "../../contracts/SMARTIdentityFactory.sol";
-import { ISMART } from "../../contracts/interface/ISMART.sol";
-import { CountryAllowListComplianceModule } from "../../contracts/compliance/CountryAllowListComplianceModule.sol";
-import { CountryBlockListComplianceModule } from "../../contracts/compliance/CountryBlockListComplianceModule.sol";
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { MockedComplianceModule } from "./mocks/MockedComplianceModule.sol";
+import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
+
+// System
+import { SMARTSystemFactory } from "../../contracts/system/SMARTSystemFactory.sol";
+import { ISMARTSystem } from "../../contracts/system/ISMARTSystem.sol";
+
+// Implementations
+import { SMARTIdentityRegistryStorageImplementation } from
+    "../../contracts/system/identity-registry-storage/SMARTIdentityRegistryStorageImplementation.sol";
+import { SMARTTrustedIssuersRegistryImplementation } from
+    "../../contracts/system/trusted-issuers-registry/SMARTTrustedIssuersRegistryImplementation.sol";
+import { SMARTIdentityRegistryImplementation } from
+    "../../contracts/system/identity-registry/SMARTIdentityRegistryImplementation.sol";
+import { SMARTComplianceImplementation } from "../../contracts/system/compliance/SMARTComplianceImplementation.sol";
+import { SMARTIdentityFactoryImplementation } from
+    "../../contracts/system/identity-factory/SMARTIdentityFactoryImplementation.sol";
+
+import { SMARTIdentityImplementation } from
+    "../../contracts/system/identity-factory/identities/SMARTIdentityImplementation.sol";
+import { SMARTTokenIdentityImplementation } from
+    "../../contracts/system/identity-factory/identities/SMARTTokenIdentityImplementation.sol";
+
+// Interfaces
+import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
+import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
+import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
+import { IERC3643TrustedIssuersRegistry } from "../../contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { IERC3643IdentityRegistryStorage } from "../../contracts/interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+
+// Compliance Modules
+import { CountryAllowListComplianceModule } from
+    "../../contracts/system/compliance/modules/CountryAllowListComplianceModule.sol";
+import { CountryBlockListComplianceModule } from
+    "../../contracts/system/compliance/modules/CountryBlockListComplianceModule.sol";
 
 contract InfrastructureUtils is Test {
+    // System
+    SMARTSystemFactory public systemFactory;
+    ISMARTSystem public system;
+
     // Core Contract Instances (now holding proxy addresses)
-    SMARTIdentityRegistryStorage public identityRegistryStorage; // Proxy
-    SMARTTrustedIssuersRegistry public trustedIssuersRegistry; // Proxy
-    SMARTIdentityRegistry public identityRegistry; // Proxy
-    SMARTCompliance public compliance; // Proxy
-    SMARTIdentityFactory public identityFactory; // Proxy
-    ImplementationAuthority public implementationAuthority;
+    IERC3643IdentityRegistryStorage public identityRegistryStorage; // Proxy
+    IERC3643TrustedIssuersRegistry public trustedIssuersRegistry; // Proxy
+    ISMARTIdentityRegistry public identityRegistry; // Proxy
+    ISMARTCompliance public compliance; // Proxy
+    ISMARTIdentityFactory public identityFactory; // Proxy
 
     // Compliance Modules
     MockedComplianceModule public mockedComplianceModule;
@@ -33,50 +57,44 @@ contract InfrastructureUtils is Test {
 
     // --- Setup ---
     constructor(address platformAdmin) {
+        address forwarder = address(0);
         // --- Deploy Implementations ---
-        Identity identityImpl = new Identity(address(0), true); // Deploy Identity impl needed by authority
-        SMARTIdentityRegistryStorage storageImpl = new SMARTIdentityRegistryStorage(address(0));
-        SMARTTrustedIssuersRegistry issuersImpl = new SMARTTrustedIssuersRegistry(address(0));
-        SMARTCompliance complianceImpl = new SMARTCompliance(address(0));
-        SMARTIdentityFactory factoryImpl = new SMARTIdentityFactory(address(0));
-        SMARTIdentityRegistry registryImpl = new SMARTIdentityRegistry(address(0));
+        IIdentity identityImpl = new SMARTIdentityImplementation(forwarder);
+        IIdentity tokenIdentityImpl = new SMARTTokenIdentityImplementation(forwarder);
 
-        // --- Deploy Proxies and Initialize using Helper ---
+        SMARTIdentityRegistryStorageImplementation storageImpl =
+            new SMARTIdentityRegistryStorageImplementation(forwarder);
+        SMARTTrustedIssuersRegistryImplementation issuersImpl = new SMARTTrustedIssuersRegistryImplementation(forwarder);
+        SMARTComplianceImplementation complianceImpl = new SMARTComplianceImplementation(forwarder);
+        SMARTIdentityRegistryImplementation registryImpl = new SMARTIdentityRegistryImplementation(forwarder);
+        SMARTIdentityFactoryImplementation factoryImpl = new SMARTIdentityFactoryImplementation(forwarder);
+
+        // --- Deploy System ---
         vm.startPrank(platformAdmin); // Use admin for initialization and binding
-
-        // --- Deploy ImplementationAuthority FIRST ---
-        implementationAuthority = new ImplementationAuthority(address(identityImpl));
-
-        // Storage Proxy
-        bytes memory storageInitData = abi.encodeCall(SMARTIdentityRegistryStorage.initialize, (platformAdmin));
-        identityRegistryStorage = SMARTIdentityRegistryStorage(_deployProxy(address(storageImpl), storageInitData));
-        vm.label(address(identityRegistryStorage), "Identity Registry Storage");
-
-        // Issuers Proxy
-        bytes memory issuersInitData = abi.encodeCall(SMARTTrustedIssuersRegistry.initialize, (platformAdmin));
-        trustedIssuersRegistry = SMARTTrustedIssuersRegistry(_deployProxy(address(issuersImpl), issuersInitData));
-        vm.label(address(trustedIssuersRegistry), "Trusted Issuers Registry");
-
-        // Compliance Proxy
-        bytes memory complianceInitData = abi.encodeCall(SMARTCompliance.initialize, (platformAdmin));
-        compliance = SMARTCompliance(_deployProxy(address(complianceImpl), complianceInitData));
-        vm.label(address(compliance), "Compliance");
-        // Factory Proxy - Pass ImplementationAuthority address
-        bytes memory factoryInitData =
-            abi.encodeCall(SMARTIdentityFactory.initialize, (platformAdmin, address(implementationAuthority)));
-        identityFactory = SMARTIdentityFactory(_deployProxy(address(factoryImpl), factoryInitData));
-        vm.label(address(identityFactory), "Identity Factory");
-
-        // Registry Proxy
-        bytes memory registryInitData = abi.encodeCall(
-            SMARTIdentityRegistry.initialize,
-            (platformAdmin, address(identityRegistryStorage), address(trustedIssuersRegistry))
+        systemFactory = new SMARTSystemFactory(
+            address(complianceImpl),
+            address(registryImpl),
+            address(storageImpl),
+            address(issuersImpl),
+            address(factoryImpl),
+            address(identityImpl),
+            address(tokenIdentityImpl),
+            forwarder
         );
-        identityRegistry = SMARTIdentityRegistry(_deployProxy(address(registryImpl), registryInitData));
-        vm.label(address(identityRegistry), "Identity Registry");
 
-        // Bind Registry to Storage
-        identityRegistryStorage.bindIdentityRegistry(address(identityRegistry));
+        system = ISMARTSystem(systemFactory.createSystem());
+        system.bootstrap(platformAdmin);
+
+        compliance = ISMARTCompliance(system.complianceProxy());
+        vm.label(address(compliance), "Compliance");
+        identityRegistry = ISMARTIdentityRegistry(system.identityRegistryProxy());
+        vm.label(address(identityRegistry), "Identity Registry");
+        identityRegistryStorage = IERC3643IdentityRegistryStorage(system.identityRegistryStorageProxy());
+        vm.label(address(identityRegistryStorage), "Identity Registry Storage");
+        trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(system.trustedIssuersRegistryProxy());
+        vm.label(address(trustedIssuersRegistry), "Trusted Issuers Registry");
+        identityFactory = ISMARTIdentityFactory(system.identityFactoryProxy());
+        vm.label(address(identityFactory), "Identity Factory");
 
         // --- Deploy Other Contracts ---
         mockedComplianceModule = new MockedComplianceModule();
@@ -87,24 +105,5 @@ contract InfrastructureUtils is Test {
         vm.label(address(countryBlockListComplianceModule), "Country Block List Compliance Module");
 
         vm.stopPrank();
-    }
-
-    // --- Helper Functions ---
-
-    /**
-     * @notice Deploys an ERC1967Proxy for a given implementation and initializes it.
-     * @param implementation The address of the implementation contract.
-     * @param initializeData The abi.encodeCall(...) data for the initialize function.
-     * @return proxyAddress The address of the deployed proxy contract.
-     */
-    function _deployProxy(
-        address implementation,
-        bytes memory initializeData
-    )
-        internal
-        returns (address proxyAddress)
-    {
-        ERC1967Proxy proxy = new ERC1967Proxy(implementation, initializeData);
-        return address(proxy);
     }
 }

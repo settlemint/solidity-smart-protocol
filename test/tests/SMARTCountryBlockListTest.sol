@@ -2,19 +2,15 @@
 pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
-import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplianceModule.sol";
-import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
-import { SMARTIdentityRegistry } from "../../contracts/SMARTIdentityRegistry.sol";
+
 import { TestConstants } from "../Constants.sol";
-import { ClaimUtils } from "../utils/ClaimUtils.sol";
-import { IdentityUtils } from "../utils/IdentityUtils.sol";
-import { TokenUtils } from "../utils/TokenUtils.sol";
+
 import { InfrastructureUtils } from "../utils/InfrastructureUtils.sol";
-import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.sol";
-import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { CountryBlockListComplianceModule } from "../../contracts/compliance/CountryBlockListComplianceModule.sol";
 import { AbstractSMARTTest } from "./AbstractSMARTTest.sol";
+
+import { CountryBlockListComplianceModule } from
+    "../../contracts/system/compliance/modules/CountryBlockListComplianceModule.sol";
 
 abstract contract SMARTCountryBlockListTest is AbstractSMARTTest {
     // Module-specific variables
