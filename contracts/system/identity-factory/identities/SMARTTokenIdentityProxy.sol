@@ -37,7 +37,7 @@ contract SMARTTokenIdentityProxy is Proxy {
     /// @param initialManagementKey The initial management key for the token identity.
     /// @notice The proxy will use the logic deployed on the implementation contract
     /// (tokenIdentityImplementation) whose address is listed in the ISMARTSystem contract.
-    constructor(address systemAddress, address initialManagementKey) {
+    constructor(address systemAddress, address initialManagementKey) payable {
         if (systemAddress == address(0) || !IERC165(systemAddress).supportsInterface(type(ISMARTSystem).interfaceId)) {
             revert InvalidSystemAddress();
         }
