@@ -292,14 +292,14 @@ contract SMARTIdentityFactoryImplementation is
     /// @dev Computes the deterministic address for a SMARTIdentityProxy (for wallets).
     function _computeWalletProxyAddress(bytes32 _saltBytes, address _initialManager) internal view returns (address) {
         (bytes memory proxyBytecode, bytes memory constructorArgs) = _getWalletProxyAndConstructorArgs(_initialManager);
-        // slither-disable-next-line packed-encoder
+        // slither-disable-next-line encode-packed-collision
         return Create2.computeAddress(_saltBytes, keccak256(abi.encodePacked(proxyBytecode, constructorArgs)));
     }
 
     /// @dev Computes the deterministic address for a TokenIdentityProxy.
     function _computeTokenProxyAddress(bytes32 _saltBytes, address _initialManager) internal view returns (address) {
         (bytes memory proxyBytecode, bytes memory constructorArgs) = _getTokenProxyAndConstructorArgs(_initialManager);
-        // slither-disable-next-line packed-encoder
+        // slither-disable-next-line encode-packed-collision
         return Create2.computeAddress(_saltBytes, keccak256(abi.encodePacked(proxyBytecode, constructorArgs)));
     }
 
@@ -351,7 +351,7 @@ contract SMARTIdentityFactoryImplementation is
         private
         returns (address)
     {
-        // slither-disable-next-line packed-encoder
+        // slither-disable-next-line encode-packed-collision
         bytes memory deploymentBytecode = abi.encodePacked(_proxyBytecode, _constructorArgs);
 
         address deployedAddress = Create2.deploy(0, _saltBytes, deploymentBytecode);
