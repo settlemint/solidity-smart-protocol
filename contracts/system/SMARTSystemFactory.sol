@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import "./SMARTSystem.sol";
 import "./SMARTSystemErrors.sol";
-import { ERC2771Context, Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
 // --- Contract Definition ---
 
@@ -139,28 +139,5 @@ contract SMARTSystemFactory is ERC2771Context {
     function getSystemAtIndex(uint256 index) public view returns (address) {
         if (index >= smartSystems.length) revert IndexOutOfBounds(index, smartSystems.length);
         return smartSystems[index];
-    }
-
-    // --- ERC2771Context Overrides ---
-
-    /// @notice Returns the message sender in the context of meta-transactions.
-    /// @dev Overrides both Context and ERC2771Context to support meta-transactions.
-    /// @return The address of the message sender.
-    function _msgSender() internal view override(Context, ERC2771Context) returns (address) {
-        return super._msgSender();
-    }
-
-    /// @notice Returns the message data in the context of meta-transactions.
-    /// @dev Overrides both Context and ERC2771Context to support meta-transactions.
-    /// @return The message data.
-    function _msgData() internal view override(Context, ERC2771Context) returns (bytes calldata) {
-        return super._msgData();
-    }
-
-    /// @notice Returns the length of the context suffix for meta-transactions.
-    /// @dev Overrides both Context and ERC2771Context to support meta-transactions.
-    /// @return The length of the context suffix.
-    function _contextSuffixLength() internal view override(Context, ERC2771Context) returns (uint256) {
-        return super._contextSuffixLength();
     }
 }
