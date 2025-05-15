@@ -19,6 +19,7 @@ import { InvalidSystemAddress } from "../SMARTSystemErrors.sol";
 
 // Implementation imports
 import { SMARTIdentityProxy } from "./identities/SMARTIdentityProxy.sol";
+import { SMARTIdentityProxy as TokenIdentityProxy } from "./identities/SMARTTokenIdentityProxy.sol";
 
 // --- Errors ---
 error ZeroAddressNotAllowed();
@@ -39,6 +40,10 @@ contract SMARTIdentityFactoryImplementation is
     ERC2771ContextUpgradeable,
     AccessControlEnumerableUpgradeable
 {
+    // --- Constants ---
+    string public constant TOKEN_SALT_PREFIX = "Token";
+    string public constant WALLET_SALT_PREFIX = "OID";
+
     // --- Roles ---
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
@@ -88,15 +93,13 @@ contract SMARTIdentityFactoryImplementation is
 
     // --- State-Changing Functions (Owner Controlled) ---
 
-    /**
-     * @notice Creates a deterministic IdentityProxy for an investor wallet.
-     * @dev Calculates salt, deploys proxy via CREATE2, sets initial management key to the wallet itself,
-     *      removes deployer key, adds specified management keys, and maps wallet to identity.
-     *      Only callable by the factory owner.
-     * @param _wallet The investor wallet address (will also be initial owner/manager).
-     * @param _managementKeys Optional array of additional management keys (keccak256 hashes) to add.
-     * @return The address of the newly created IdentityProxy.
-     */
+    /// @notice Creates a deterministic IdentityProxy for an investor wallet.
+    /// @dev Calculates salt, deploys proxy via CREATE2, sets initial management key to the wallet itself,
+    ///      removes deployer key, adds specified management keys, and maps wallet to identity.
+    ///      Only callable by the factory owner.
+    /// @param _wallet The investor wallet address (will also be initial owner/manager).
+    /// @param _managementKeys Optional array of additional management keys (keccak256 hashes) to add.
+    /// @return The address of the newly created IdentityProxy.
     function createIdentity(
         address _wallet,
         bytes32[] calldata _managementKeys
@@ -109,7 +112,7 @@ contract SMARTIdentityFactoryImplementation is
         if (_identities[_wallet] != address(0)) revert WalletAlreadyLinked(_wallet);
 
         // Deploy identity with _wallet as the initial management key passed to proxy constructor
-        address identity = _createIdentityInternal("OID", _wallet, _wallet);
+        address identity = _createAndRegisterWalletIdentity(_wallet, _wallet);
         IERC734 identityContract = IERC734(identity);
 
         // Add specified management keys
@@ -129,15 +132,13 @@ contract SMARTIdentityFactoryImplementation is
         return identity;
     }
 
-    /**
-     * @notice Creates a deterministic IdentityProxy for a token contract.
-     * @dev Calculates salt, deploys proxy via CREATE2, sets initial management key to the specified token owner,
-     *      and maps token address to identity.
-     *      Only callable by the factory owner.
-     * @param _token The token contract address.
-     * @param _tokenOwner The address designated as the owner/manager of the token's identity.
-     * @return The address of the newly created IdentityProxy.
-     */
+    /// @notice Creates a deterministic IdentityProxy for a token contract.
+    /// @dev Calculates salt, deploys proxy via CREATE2, sets initial management key to the specified token owner,
+    ///      and maps token address to identity.
+    ///      Only callable by the factory owner.
+    /// @param _token The token contract address.
+    /// @param _tokenOwner The address designated as the owner/manager of the token\'s identity.
+    /// @return The address of the newly created IdentityProxy.
     function createTokenIdentity(
         address _token,
         address _tokenOwner
@@ -151,7 +152,7 @@ contract SMARTIdentityFactoryImplementation is
         if (_tokenIdentities[_token] != address(0)) revert TokenAlreadyLinked(_token);
 
         // Deploy identity with _tokenOwner as the initial management key
-        address identity = _createIdentityInternal("Token", _token, _tokenOwner);
+        address identity = _createAndRegisterTokenIdentity(_token, _tokenOwner);
 
         _tokenIdentities[_token] = identity;
         emit TokenIdentityCreated(_msgSender(), identity, _token);
@@ -160,111 +161,192 @@ contract SMARTIdentityFactoryImplementation is
 
     // --- View Functions ---
 
-    /**
-     * @notice Retrieves the deployed IdentityProxy address for a given investor wallet.
-     * @param _wallet The investor wallet address.
-     * @return The address of the IdentityProxy, or address(0) if not created.
-     */
+    /// @notice Retrieves the deployed IdentityProxy address for a given investor wallet.
+    /// @param _wallet The investor wallet address.
+    /// @return The address of the IdentityProxy, or address(0) if not created.
     function getIdentity(address _wallet) external view returns (address) {
         return _identities[_wallet];
     }
 
-    /**
-     * @notice Retrieves the deployed IdentityProxy address for a given token contract.
-     * @param _token The token contract address.
-     * @return The address of the IdentityProxy, or address(0) if not created.
-     */
+    /// @notice Retrieves the deployed IdentityProxy address for a given token contract.
+    /// @param _token The token contract address.
+    /// @return The address of the IdentityProxy, or address(0) if not created.
     function getTokenIdentity(address _token) external view returns (address) {
         return _tokenIdentities[_token];
     }
 
-    /**
-     * @notice Computes the deterministic address where an IdentityProxy *will be* deployed for a given salt string and
-     * initial manager.
-     * @dev Uses CREATE2 address calculation based on factory address, salt, and proxy bytecode + constructor args.
-     * @param _saltString The unique salt string (e.g., "OID" + wallet address as hex).
-     * @param _initialManager The address that will be the initial management key passed to the proxy constructor.
-     * @return The pre-computed deployment address.
-     */
-    function getAddressForSaltString(
-        string calldata _saltString,
+    /// @notice Computes the deterministic address where an IdentityProxy *will be* deployed for an investor wallet.
+    /// @dev Calculates the salt internally using the WALLET_SALT_PREFIX and the wallet address.
+    ///      Uses CREATE2 address calculation based on factory address, this internally generated salt,
+    ///      and proxy bytecode + constructor args (which include the initial manager).
+    /// @param _walletAddress The investor wallet address for which to calculate the identity address.
+    /// @param _initialManager The address that will be the initial management key passed to the proxy constructor.
+    /// @return The pre-computed deployment address.
+    function calculateWalletIdentityAddress(
+        address _walletAddress,
         address _initialManager
     )
         public
         view
         returns (address)
     {
-        bytes32 saltBytes = keccak256(abi.encodePacked(_saltString));
-        return getAddressForByteSalt(saltBytes, _initialManager);
+        (bytes32 saltBytes,) = _calculateSalt(WALLET_SALT_PREFIX, _walletAddress);
+        return _computeWalletProxyAddress(saltBytes, _initialManager);
     }
 
-    /**
-     * @notice Computes the deterministic address where an IdentityProxy *will be* deployed for a given salt hash and
-     * initial manager.
-     * @dev Internal logic used by `getAddressForSaltString` and deployment.
-     * @param _saltBytes The keccak256 hash of the unique salt string.
-     * @param _initialManager The address that will be the initial management key passed to the proxy constructor.
-     * @return The pre-computed deployment address.
-     */
-    function getAddressForByteSalt(bytes32 _saltBytes, address _initialManager) public view returns (address) {
-        bytes memory proxyBytecode = type(SMARTIdentityProxy).creationCode;
-        // Constructor arguments for SMARTIdentityProxy: address system, address initialManagementKey
-        bytes memory constructorArgs = abi.encode(_system, _initialManager);
-        return Create2.computeAddress(_saltBytes, keccak256(abi.encodePacked(proxyBytecode, constructorArgs)));
+    /// @notice Computes the deterministic address where an IdentityProxy *will be* deployed for a token contract.
+    /// @dev Calculates the salt internally using the TOKEN_SALT_PREFIX and the token address.
+    ///      Uses CREATE2 address calculation based on factory address, this internally generated salt,
+    ///      and proxy bytecode + constructor args (which include the initial manager).
+    /// @param _tokenAddress The token contract address for which to calculate the identity address.
+    /// @param _initialManager The address that will be the initial management key passed to the proxy constructor.
+    /// @return The pre-computed deployment address.
+    function calculateTokenIdentityAddress(
+        address _tokenAddress,
+        address _initialManager
+    )
+        public
+        view
+        returns (address)
+    {
+        (bytes32 saltBytes,) = _calculateSalt(TOKEN_SALT_PREFIX, _tokenAddress);
+        return _computeTokenProxyAddress(saltBytes, _initialManager);
     }
 
-    /**
-     * @notice Returns the address of the ISMARTSystem contract that provides the identity implementations.
-     * @return The address of the ISMARTSystem contract.
-     */
+    /// @notice Returns the address of the ISMARTSystem contract that provides the identity implementations.
+    /// @return The address of the ISMARTSystem contract.
     function getSystem() external view returns (address) {
         return _system;
     }
 
     // --- Internal Functions ---
 
-    /**
-     * @dev Internal function to compute salt, check availability, and deploy the identity proxy.
-     * @param _saltPrefix Prefix for the salt ("OID" or "Token").
-     * @param _entityAddress The address of the wallet or token being identified.
-     * @param _initialManagerAddress The address to set as the initial management key in the IdentityProxy constructor.
-     * @return The address of the deployed IdentityProxy.
-     */
-    function _createIdentityInternal(
-        string memory _saltPrefix,
-        address _entityAddress,
+    /// @dev Internal function to compute salt, check availability, and deploy a wallet identity proxy.
+    /// @param _walletAddress The address of the wallet being identified.
+    /// @param _initialManagerAddress The address to set as the initial management key.
+    /// @return The address of the deployed SMARTIdentityProxy.
+    function _createAndRegisterWalletIdentity(
+        address _walletAddress,
         address _initialManagerAddress
     )
         private
         returns (address)
     {
-        string memory saltString = string.concat(_saltPrefix, Strings.toHexString(_entityAddress));
-        bytes32 saltBytes = keccak256(abi.encodePacked(saltString));
+        (bytes32 saltBytes, string memory saltString) = _calculateSalt(WALLET_SALT_PREFIX, _walletAddress);
 
         if (_saltTakenByteSalt[saltBytes]) revert SaltAlreadyTaken(saltString);
 
-        address identity = _deployIdentity(saltBytes, _initialManagerAddress);
+        address identity = _deployWalletProxy(saltBytes, _initialManagerAddress);
 
         _saltTakenByteSalt[saltBytes] = true;
         return identity;
     }
 
-    /**
-     * @dev Deploys an IdentityProxy using Create2.
-     * @param _saltBytes The keccak256 hash of the unique salt string.
-     * @param _initialManager The address to be passed as initialManagementKey to the IdentityProxy constructor.
-     * @return The address of the deployed IdentityProxy.
-     */
-    function _deployIdentity(bytes32 _saltBytes, address _initialManager) private returns (address) {
-        address predictedAddr = getAddressForByteSalt(_saltBytes, _initialManager);
+    /// @dev Internal function to compute salt, check availability, and deploy a token identity proxy.
+    /// @param _tokenAddress The address of the token being identified.
+    /// @param _initialManagerAddress The address to set as the initial management key.
+    /// @return The address of the deployed TokenIdentityProxy.
+    function _createAndRegisterTokenIdentity(
+        address _tokenAddress,
+        address _initialManagerAddress
+    )
+        private
+        returns (address)
+    {
+        (bytes32 saltBytes, string memory saltString) = _calculateSalt(TOKEN_SALT_PREFIX, _tokenAddress);
 
+        if (_saltTakenByteSalt[saltBytes]) revert SaltAlreadyTaken(saltString);
+
+        address identity = _deployTokenProxy(saltBytes, _initialManagerAddress);
+
+        _saltTakenByteSalt[saltBytes] = true;
+        return identity;
+    }
+
+    /// @dev Calculates the salt for a given prefix and address.
+    /// @param _saltPrefix The prefix for the salt.
+    /// @param _address The address to calculate the salt for.
+    /// @return saltBytes The calculated salt.
+    /// @return saltString The calculated salt as a string.
+    function _calculateSalt(
+        string memory _saltPrefix,
+        address _address
+    )
+        internal
+        pure
+        returns (bytes32 saltBytes, string memory saltString)
+    {
+        saltString = string.concat(_saltPrefix, Strings.toHexString(_address));
+        saltBytes = keccak256(abi.encodePacked(saltString));
+
+        return (saltBytes, saltString);
+    }
+
+    /// @dev Computes the deterministic address for a SMARTIdentityProxy (for wallets).
+    function _computeWalletProxyAddress(bytes32 _saltBytes, address _initialManager) internal view returns (address) {
+        (bytes memory proxyBytecode, bytes memory constructorArgs) = _getWalletProxyAndConstructorArgs(_initialManager);
+        return Create2.computeAddress(_saltBytes, keccak256(abi.encodePacked(proxyBytecode, constructorArgs)));
+    }
+
+    /// @dev Computes the deterministic address for a TokenIdentityProxy.
+    function _computeTokenProxyAddress(bytes32 _saltBytes, address _initialManager) internal view returns (address) {
+        (bytes memory proxyBytecode, bytes memory constructorArgs) = _getTokenProxyAndConstructorArgs(_initialManager);
+        return Create2.computeAddress(_saltBytes, keccak256(abi.encodePacked(proxyBytecode, constructorArgs)));
+    }
+
+    /// @dev Deploys a SMARTIdentityProxy (for wallets) using Create2.
+    function _deployWalletProxy(bytes32 _saltBytes, address _initialManager) private returns (address) {
+        address predictedAddr = _computeWalletProxyAddress(_saltBytes, _initialManager);
+
+        (bytes memory proxyBytecode, bytes memory constructorArgs) = _getWalletProxyAndConstructorArgs(_initialManager);
+
+        return _deployProxy(predictedAddr, proxyBytecode, constructorArgs, _saltBytes);
+    }
+
+    /// @dev Deploys a TokenIdentityProxy using Create2.
+    function _deployTokenProxy(bytes32 _saltBytes, address _initialManager) private returns (address) {
+        address predictedAddr = _computeTokenProxyAddress(_saltBytes, _initialManager);
+
+        (bytes memory proxyBytecode, bytes memory constructorArgs) = _getTokenProxyAndConstructorArgs(_initialManager);
+
+        return _deployProxy(predictedAddr, proxyBytecode, constructorArgs, _saltBytes);
+    }
+
+    function _getWalletProxyAndConstructorArgs(address _initialManager)
+        private
+        view
+        returns (bytes memory, bytes memory)
+    {
         bytes memory proxyBytecode = type(SMARTIdentityProxy).creationCode;
         bytes memory constructorArgs = abi.encode(_system, _initialManager);
-        bytes memory deploymentBytecode = abi.encodePacked(proxyBytecode, constructorArgs);
+        return (proxyBytecode, constructorArgs);
+    }
+
+    function _getTokenProxyAndConstructorArgs(address _initialManager)
+        private
+        view
+        returns (bytes memory, bytes memory)
+    {
+        bytes memory proxyBytecode = type(TokenIdentityProxy).creationCode;
+        bytes memory constructorArgs = abi.encode(_system, _initialManager);
+        return (proxyBytecode, constructorArgs);
+    }
+
+    /// @dev Deploys a proxy using Create2.
+    function _deployProxy(
+        address _predictedAddr,
+        bytes memory _proxyBytecode,
+        bytes memory _constructorArgs,
+        bytes32 _saltBytes
+    )
+        private
+        returns (address)
+    {
+        bytes memory deploymentBytecode = abi.encodePacked(_proxyBytecode, _constructorArgs);
 
         address deployedAddress = Create2.deploy(0, _saltBytes, deploymentBytecode);
 
-        if (deployedAddress != predictedAddr) revert DeploymentAddressMismatch();
+        if (deployedAddress != _predictedAddr) revert DeploymentAddressMismatch();
         return deployedAddress;
     }
 

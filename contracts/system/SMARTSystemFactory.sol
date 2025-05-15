@@ -121,7 +121,7 @@ contract SMARTSystemFactory is ERC2771Context {
         systemAddress = address(newSystem);
         smartSystems.push(systemAddress);
 
-        emit SMARTSystemCreated(systemAddress, currentMsgSender);
+        emit SMARTSystemCreated(systemAddress, initialAdmin);
 
         return systemAddress;
     }
