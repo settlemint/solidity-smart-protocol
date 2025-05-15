@@ -49,6 +49,7 @@ contract SMARTIdentityFactoryProxy is Proxy {
         bytes memory data =
             abi.encodeWithSelector(SMARTIdentityFactoryImplementation.initialize.selector, systemAddress, initialAdmin);
 
+        // slither-disable-next-line low-level-calls
         (bool success,) = implementation.delegatecall(data);
         if (!success) revert InitializationFailed();
     }

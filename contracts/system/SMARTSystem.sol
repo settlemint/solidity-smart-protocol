@@ -161,6 +161,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl {
 
     // --- Bootstrap Function ---
     function bootstrap() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        // --- Checks ---
         if (_complianceImplementation == address(0)) revert ComplianceImplementationNotSet();
         if (_identityRegistryImplementation == address(0)) revert IdentityRegistryImplementationNotSet();
         if (_identityRegistryStorageImplementation == address(0)) revert IdentityRegistryStorageImplementationNotSet();
@@ -169,22 +170,41 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl {
 
         address initialAdmin = _msgSender();
 
-        _complianceProxy = address(new SMARTComplianceProxy(address(this)));
-        _identityRegistryStorageProxy = address(new SMARTIdentityRegistryStorageProxy(address(this), initialAdmin));
-        _trustedIssuersRegistryProxy = address(new SMARTTrustedIssuersRegistryProxy(address(this), initialAdmin));
-        _identityRegistryProxy = address(
+        // --- Interactions (Part 1: Create proxy instances and store in local variables) ---
+        // Create all proxy instances first and capture their addresses in local variables.
+        // This helps to separate the "interaction" of contract creation from "effects" on state.
+        address localComplianceProxy = address(new SMARTComplianceProxy(address(this)));
+        address localIdentityRegistryStorageProxy =
+            address(new SMARTIdentityRegistryStorageProxy(address(this), initialAdmin));
+        address localTrustedIssuersRegistryProxy =
+            address(new SMARTTrustedIssuersRegistryProxy(address(this), initialAdmin));
+        // Note: SMARTIdentityRegistryProxy's constructor takes the addresses of other newly created proxies.
+        // These are passed as local variables, which is fine as they don't rely on this contract's state being
+        // prematurely read.
+        address localIdentityRegistryProxy = address(
             new SMARTIdentityRegistryProxy(
-                address(this), initialAdmin, _identityRegistryStorageProxy, _trustedIssuersRegistryProxy
+                address(this), initialAdmin, localIdentityRegistryStorageProxy, localTrustedIssuersRegistryProxy
             )
         );
-        _identityFactoryProxy = address(new SMARTIdentityFactoryProxy(address(this), initialAdmin));
+        address localIdentityFactoryProxy = address(new SMARTIdentityFactoryProxy(address(this), initialAdmin));
 
-        IERC3643IdentityRegistryStorage(_identityRegistryStorageProxy).bindIdentityRegistry(
-            address(_identityRegistryProxy)
+        // --- Effects (Update state variables) ---
+        // Now, update all state variables in one go using the addresses from local variables.
+        _complianceProxy = localComplianceProxy;
+        _identityRegistryStorageProxy = localIdentityRegistryStorageProxy;
+        _trustedIssuersRegistryProxy = localTrustedIssuersRegistryProxy;
+        _identityRegistryProxy = localIdentityRegistryProxy;
+        _identityFactoryProxy = localIdentityFactoryProxy;
+
+        // --- Interactions (Part 2: Call methods on newly created proxies) ---
+        // All state variables for proxies are now set.
+        // Perform any interactions that depend on the new state.
+        IERC3643IdentityRegistryStorage(localIdentityRegistryStorageProxy).bindIdentityRegistry(
+            localIdentityRegistryProxy // Using local variable, or _identityRegistryProxy which is now set.
         );
 
         emit Bootstrapped(
-            _complianceProxy,
+            _complianceProxy, // These will now use the updated state values
             _identityRegistryProxy,
             _identityRegistryStorageProxy,
             _trustedIssuersRegistryProxy,

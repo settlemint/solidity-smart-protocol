@@ -49,6 +49,7 @@ contract SMARTTrustedIssuersRegistryProxy is Proxy {
         bytes memory data =
             abi.encodeWithSelector(SMARTTrustedIssuersRegistryImplementation.initialize.selector, initialAdmin);
 
+        // slither-disable-next-line low-level-calls
         (bool success,) = implementation.delegatecall(data);
         if (!success) revert InitializationFailed();
     }

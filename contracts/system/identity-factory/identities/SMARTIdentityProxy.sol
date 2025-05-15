@@ -51,7 +51,7 @@ contract SMARTIdentityProxy is Proxy {
 
         bytes memory data = abi.encodeWithSelector(Identity.initialize.selector, initialManagementKey);
 
-        // solhint-disable-next-line avoid-low-level-calls
+        // slither-disable-next-line low-level-calls
         (bool success,) = implementation.delegatecall(data);
         if (!success) revert InitializationFailed();
     }

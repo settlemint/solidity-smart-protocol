@@ -59,6 +59,7 @@ contract SMARTIdentityRegistryProxy is Proxy {
             trustedIssuersRegistry
         );
 
+        // slither-disable-next-line low-level-calls
         (bool success,) = implementation.delegatecall(data);
         if (!success) revert InitializationFailed();
     }

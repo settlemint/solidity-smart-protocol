@@ -48,6 +48,7 @@ contract SMARTComplianceProxy is Proxy {
 
         bytes memory data = abi.encodeWithSelector(SMARTComplianceImplementation.initialize.selector);
 
+        // slither-disable-next-line low-level-calls
         (bool success,) = implementation.delegatecall(data);
 
         if (!success) revert InitializationFailed();
