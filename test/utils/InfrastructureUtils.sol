@@ -57,8 +57,9 @@ contract InfrastructureUtils is Test {
 
     // --- Setup ---
     constructor(address platformAdmin) {
+        // --- Predeployed implementations ---
         address forwarder = address(0);
-        // --- Deploy Implementations ---
+
         IIdentity identityImpl = new SMARTIdentityImplementation(forwarder);
         IIdentity tokenIdentityImpl = new SMARTTokenIdentityImplementation(forwarder);
 
@@ -69,8 +70,6 @@ contract InfrastructureUtils is Test {
         SMARTIdentityRegistryImplementation registryImpl = new SMARTIdentityRegistryImplementation(forwarder);
         SMARTIdentityFactoryImplementation factoryImpl = new SMARTIdentityFactoryImplementation(forwarder);
 
-        // --- Deploy System ---
-        vm.startPrank(platformAdmin); // Use admin for initialization and binding
         systemFactory = new SMARTSystemFactory(
             address(complianceImpl),
             address(registryImpl),
@@ -83,6 +82,8 @@ contract InfrastructureUtils is Test {
         );
         vm.label(address(systemFactory), "System Factory");
 
+        vm.startPrank(platformAdmin); // Use admin for initialization and binding
+        // --- During onboarding ---
         system = ISMARTSystem(systemFactory.createSystem());
         vm.label(address(system), "System");
         system.bootstrap();
