@@ -35,6 +35,7 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
     address private _identityFactoryProxy;
 
     constructor(
+        address initialAdmin_,
         address complianceImplementation_,
         address identityRegistryImplementation_,
         address identityRegistryStorageImplementation_,
@@ -44,7 +45,7 @@ contract SMARTSystem is ISMARTSystem, ERC2771Context, AccessControl {
     )
         ERC2771Context(forwarder_)
     {
-        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin_);
 
         _complianceImplementation = complianceImplementation_;
         _identityRegistryImplementation = identityRegistryImplementation_;
