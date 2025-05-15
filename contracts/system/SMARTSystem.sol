@@ -18,10 +18,13 @@ import {
     IdentityImplementationNotSet,
     TokenIdentityImplementationNotSet,
     InvalidImplementationInterface,
-    EtherWithdrawalFailed
+    EtherWithdrawalFailed,
+    InvalidTokenRegistryAddress,
+    TokenRegistryTypeAlreadyRegistered
 } from "./SMARTSystemErrors.sol";
 
 // Interface imports
+import { ISMARTTokenRegistry } from "./token-registry/ISMARTTokenRegistry.sol";
 import { ISMARTCompliance } from "./../interface/ISMARTCompliance.sol";
 import { ISMARTIdentityFactory } from "./identity-factory/ISMARTIdentityFactory.sol"; // Reverted to original path
 import { IERC3643TrustedIssuersRegistry } from "./../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
@@ -33,11 +36,12 @@ import { SMARTIdentityRegistryProxy } from "./identity-registry/SMARTIdentityReg
 import { SMARTIdentityRegistryStorageProxy } from "./identity-registry-storage/SMARTIdentityRegistryStorageProxy.sol";
 import { SMARTTrustedIssuersRegistryProxy } from "./trusted-issuers-registry/SMARTTrustedIssuersRegistryProxy.sol";
 import { SMARTIdentityFactoryProxy } from "./identity-factory/SMARTIdentityFactoryProxy.sol";
-
+import { SMARTTokenRegistryProxy } from "./token-registry/SMARTTokenRegistryProxy.sol";
 /// @title SMARTSystem Contract
 /// @notice Main contract for managing the SMART Protocol system components and their implementations.
 /// @dev This contract handles the deployment and upgrades of various modules like Compliance, Identity Registry, etc.
 /// It uses ERC2771Context for meta-transaction support and AccessControl for role-based permissions.
+
 contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, ReentrancyGuard {
     // Expected interface IDs
     bytes4 private constant _ISMART_COMPLIANCE_ID = type(ISMARTCompliance).interfaceId;
@@ -50,25 +54,25 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
 
     /// @notice Emitted when the compliance module implementation is updated.
     /// @param newImplementation The address of the new compliance module implementation.
-    event ComplianceImplementationUpdated(address indexed newImplementation);
+    event ComplianceImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the identity registry module implementation is updated.
     /// @param newImplementation The address of the new identity registry module implementation.
-    event IdentityRegistryImplementationUpdated(address indexed newImplementation);
+    event IdentityRegistryImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the identity registry storage module implementation is updated.
     /// @param newImplementation The address of the new identity registry storage module implementation.
-    event IdentityRegistryStorageImplementationUpdated(address indexed newImplementation);
+    event IdentityRegistryStorageImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the trusted issuers registry module implementation is updated.
     /// @param newImplementation The address of the new trusted issuers registry module implementation.
-    event TrustedIssuersRegistryImplementationUpdated(address indexed newImplementation);
+    event TrustedIssuersRegistryImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the identity factory module implementation is updated.
     /// @param newImplementation The address of the new identity factory module implementation.
-    event IdentityFactoryImplementationUpdated(address indexed newImplementation);
+    event IdentityFactoryImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the investor identity module implementation is updated.
     /// @param newImplementation The address of the new investor identity module implementation.
-    event IdentityImplementationUpdated(address indexed newImplementation);
+    event IdentityImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the token identity module implementation is updated.
     /// @param newImplementation The address of the new token identity module implementation.
-    event TokenIdentityImplementationUpdated(address indexed newImplementation);
+    event TokenIdentityImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the system has been bootstrapped, creating proxy contracts for all modules.
     /// @param complianceProxy The address of the deployed SMARTComplianceProxy.
     /// @param identityRegistryProxy The address of the deployed SMARTIdentityRegistryProxy.
@@ -76,11 +80,21 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// @param trustedIssuersRegistryProxy The address of the deployed SMARTTrustedIssuersRegistryProxy.
     /// @param identityFactoryProxy The address of the deployed SMARTIdentityFactoryProxy.
     event Bootstrapped(
+        address indexed sender,
         address complianceProxy,
         address identityRegistryProxy,
         address identityRegistryStorageProxy,
         address trustedIssuersRegistryProxy,
         address identityFactoryProxy
+    );
+
+    /// @notice Emitted when a SMARTTokenRegistry is registered.
+    /// @param sender The address that registered the token registry.
+    /// @param typeName The human-readable type name of the token registry.
+    /// @param proxyAddress The address of the deployed token registry proxy.
+    /// @param implementationAddress The address of the deployed token registry implementation.
+    event TokenRegistryCreated(
+        address indexed sender, string typeName, address proxyAddress, address implementationAddress, uint256 timestamp
     );
 
     /// @notice Emitted when Ether is withdrawn from the contract by an admin.
@@ -107,6 +121,10 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
 
     address private _identityImplementation;
     address private _tokenIdentityImplementation;
+
+    // Token Registries by Type
+    mapping(bytes32 typeHash => address tokenRegistryImplementationAddress) private tokenRegistryImplementationsByType;
+    mapping(bytes32 typeHash => address tokenRegistryProxyAddress) private tokenRegistryProxiesByType;
 
     // --- Internal Helper for Interface Check ---
     function _checkInterface(address implAddress, bytes4 interfaceId) private view {
@@ -167,6 +185,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     }
 
     // --- Bootstrap Function ---
+    /// @inheritdoc ISMARTSystem
     function bootstrap() public onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         // --- Checks ---
         if (_complianceImplementation == address(0)) revert ComplianceImplementationNotSet();
@@ -211,6 +230,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         );
 
         emit Bootstrapped(
+            _msgSender(),
             _complianceProxy, // These will now use the updated state values
             _identityRegistryProxy,
             _identityRegistryStorageProxy,
@@ -219,104 +239,166 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         );
     }
 
+    /// @inheritdoc ISMARTSystem
+    function createTokenRegistry(
+        string calldata _typeName,
+        address _implementation
+    )
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        nonReentrant
+    {
+        if (address(_implementation) == address(0)) revert InvalidTokenRegistryAddress();
+        _checkInterface(_implementation, type(ISMARTTokenRegistry).interfaceId);
+
+        bytes32 registryTypeHash = keccak256(abi.encodePacked(_typeName));
+
+        if (tokenRegistryImplementationsByType[registryTypeHash] != address(0)) {
+            revert TokenRegistryTypeAlreadyRegistered(registryTypeHash);
+        }
+
+        address _tokenRegistryProxy = address(new SMARTTokenRegistryProxy(address(this), registryTypeHash));
+
+        tokenRegistryImplementationsByType[registryTypeHash] = _implementation;
+        tokenRegistryProxiesByType[registryTypeHash] = _tokenRegistryProxy;
+
+        emit TokenRegistryCreated(_msgSender(), _typeName, _tokenRegistryProxy, _implementation, block.timestamp);
+    }
+
     // --- Implementation Setter Functions ---
+    /// @notice Sets the compliance implementation address.
+    /// @param implementation The address of the new compliance implementation.
     function setComplianceImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (implementation == address(0)) revert ComplianceImplementationNotSet();
         _checkInterface(implementation, _ISMART_COMPLIANCE_ID);
         _complianceImplementation = implementation;
-        emit ComplianceImplementationUpdated(implementation);
+        emit ComplianceImplementationUpdated(_msgSender(), implementation);
     }
 
+    /// @notice Sets the identity registry implementation address.
+    /// @param implementation The address of the new identity registry implementation.
     function setIdentityRegistryImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (implementation == address(0)) revert IdentityRegistryImplementationNotSet();
         _checkInterface(implementation, _ISMART_IDENTITY_REGISTRY_ID);
         _identityRegistryImplementation = implementation;
-        emit IdentityRegistryImplementationUpdated(implementation);
+        emit IdentityRegistryImplementationUpdated(_msgSender(), implementation);
     }
 
+    /// @notice Sets the identity registry storage implementation address.
+    /// @param implementation The address of the new identity registry storage implementation.
     function setIdentityRegistryStorageImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (implementation == address(0)) revert IdentityRegistryStorageImplementationNotSet();
         _checkInterface(implementation, _IERC3643_IDENTITY_REGISTRY_STORAGE_ID);
         _identityRegistryStorageImplementation = implementation;
-        emit IdentityRegistryStorageImplementationUpdated(implementation);
+        emit IdentityRegistryStorageImplementationUpdated(_msgSender(), implementation);
     }
 
+    /// @notice Sets the trusted issuers registry implementation address.
+    /// @param implementation The address of the new trusted issuers registry implementation.
     function setTrustedIssuersRegistryImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (implementation == address(0)) revert TrustedIssuersRegistryImplementationNotSet();
         _checkInterface(implementation, _IERC3643_TRUSTED_ISSUERS_REGISTRY_ID);
         _trustedIssuersRegistryImplementation = implementation;
-        emit TrustedIssuersRegistryImplementationUpdated(implementation);
+        emit TrustedIssuersRegistryImplementationUpdated(_msgSender(), implementation);
     }
 
+    /// @notice Sets the identity factory implementation address.
+    /// @param implementation The address of the new identity factory implementation.
     function setIdentityFactoryImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (implementation == address(0)) revert IdentityFactoryImplementationNotSet();
         _checkInterface(implementation, _ISMART_IDENTITY_FACTORY_ID);
         _identityFactoryImplementation = implementation;
-        emit IdentityFactoryImplementationUpdated(implementation);
+        emit IdentityFactoryImplementationUpdated(_msgSender(), implementation);
     }
 
+    /// @notice Sets the identity implementation address.
+    /// @param implementation The address of the new identity implementation.
     function setIdentityImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (implementation == address(0)) revert IdentityImplementationNotSet();
         _checkInterface(implementation, type(IIdentity).interfaceId);
         _identityImplementation = implementation;
-        emit IdentityImplementationUpdated(implementation);
+        emit IdentityImplementationUpdated(_msgSender(), implementation);
     }
 
+    /// @notice Sets the token identity implementation address.
+    /// @param implementation The address of the new token identity implementation.
     function setTokenIdentityImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (implementation == address(0)) revert TokenIdentityImplementationNotSet();
         _checkInterface(implementation, type(IIdentity).interfaceId);
         _tokenIdentityImplementation = implementation;
-        emit TokenIdentityImplementationUpdated(implementation);
+        emit TokenIdentityImplementationUpdated(_msgSender(), implementation);
     }
 
     // --- Implementation Getter Functions ---
+    /// @inheritdoc ISMARTSystem
     function complianceImplementation() public view returns (address) {
         return _complianceImplementation;
     }
 
+    /// @inheritdoc ISMARTSystem
     function identityRegistryImplementation() public view returns (address) {
         return _identityRegistryImplementation;
     }
 
+    /// @inheritdoc ISMARTSystem
     function identityRegistryStorageImplementation() public view returns (address) {
         return _identityRegistryStorageImplementation;
     }
 
+    /// @inheritdoc ISMARTSystem
     function trustedIssuersRegistryImplementation() public view returns (address) {
         return _trustedIssuersRegistryImplementation;
     }
 
+    /// @inheritdoc ISMARTSystem
     function identityFactoryImplementation() public view returns (address) {
         return _identityFactoryImplementation;
     }
 
+    /// @inheritdoc ISMARTSystem
     function identityImplementation() public view returns (address) {
         return _identityImplementation;
     }
 
+    /// @inheritdoc ISMARTSystem
     function tokenIdentityImplementation() public view returns (address) {
         return _tokenIdentityImplementation;
     }
 
+    /// @inheritdoc ISMARTSystem
+    function tokenRegistryImplementation(bytes32 registryTypeHash) public view returns (address) {
+        return tokenRegistryImplementationsByType[registryTypeHash];
+    }
+
     // --- Proxy Getter Functions ---
+    /// @inheritdoc ISMARTSystem
     function complianceProxy() public view returns (address) {
         return _complianceProxy;
     }
 
+    /// @inheritdoc ISMARTSystem
     function identityRegistryProxy() public view returns (address) {
         return _identityRegistryProxy;
     }
 
+    /// @inheritdoc ISMARTSystem
     function identityRegistryStorageProxy() public view returns (address) {
         return _identityRegistryStorageProxy;
     }
 
+    /// @inheritdoc ISMARTSystem
     function trustedIssuersRegistryProxy() public view returns (address) {
         return _trustedIssuersRegistryProxy;
     }
 
+    /// @inheritdoc ISMARTSystem
     function identityFactoryProxy() public view returns (address) {
         return _identityFactoryProxy;
+    }
+
+    /// @inheritdoc ISMARTSystem
+    function tokenRegistryProxy(bytes32 registryTypeHash) public view returns (address) {
+        return tokenRegistryProxiesByType[registryTypeHash];
     }
 
     /// @notice Allows an admin to withdraw any Ether held by this contract.

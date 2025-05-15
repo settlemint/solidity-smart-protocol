@@ -19,8 +19,6 @@ import { Identity } from "@onchainid/contracts/Identity.sol";
 /// allowing for upgradeability of the token-bound identity logic. It is based on the ERC725 standard.
 /// It retrieves the implementation address from the ISMARTSystem contract.
 contract SMARTTokenIdentityProxy is Proxy {
-    // ISMARTSystem private _system; // Replaced by StorageSlot
-
     // keccak256("org.smart.contracts.proxy.SMARTTokenIdentityProxy.system")
     bytes32 private constant _SYSTEM_SLOT = 0x4daB14fe28c3f2b5015f84ab98dd06c520603d8d9f3317f1ae7537d2c65aef3c;
 

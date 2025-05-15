@@ -18,8 +18,6 @@ import {
 /// allowing for upgradeability of the compliance logic.
 /// It retrieves the implementation address from the ISMARTSystem contract.
 contract SMARTComplianceProxy is Proxy {
-    // ISMARTSystem private _system; // Replaced by StorageSlot
-
     // keccak256("org.smart.contracts.proxy.SMARTComplianceProxy.system")
     bytes32 private constant _SYSTEM_SLOT = 0x3c9a03fd17b2e1a4f04e739ba7ecf5b4195f2c7c8e2206e09c6426c1b549df2b;
 
