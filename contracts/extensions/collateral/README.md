@@ -8,7 +8,7 @@ The collateral extension ensures that new tokens can only be minted if the token
 
 Key components include:
 
-- **`_SMARTCollateralLogic.sol`**: An internal abstract contract containing the core logic for finding and validating the global collateral claim and the hook logic (`_collateral_beforeMintLogic`) that enforces the check before minting. It defines necessary custom errors (`InsufficientCollateral`, `InvalidCollateralTopic`). *Note: Depending on the implementation changes, the exact signature and usage of `findValidCollateralClaim` within the logic might differ from the attached version.*
+- **`_SMARTCollateralLogic.sol`**: An internal abstract contract containing the core logic for finding and validating the global collateral claim and the hook logic (`_collateral_beforeMintLogic`) that enforces the check before minting. It defines necessary custom errors (`InsufficientCollateral`, `InvalidCollateralTopic`). _Note: Depending on the implementation changes, the exact signature and usage of `findValidCollateralClaim` within the logic might differ from the attached version._
 - **`SMARTCollateral.sol`**: The standard (non-upgradeable) implementation. It inherits `_SMARTCollateralLogic` and integrates the check into the `_beforeMint` hook of a standard SMART token.
 - **`SMARTCollateralUpgradeable.sol`**: The upgradeable implementation. It inherits `_SMARTCollateralLogic`, is `Initializable`, and integrates the check into the `_beforeMint` hook of an upgradeable SMART token.
 
@@ -16,7 +16,7 @@ Key components include:
 
 - **Global Collateral Verification**: Automatically checks for a single, valid collateral claim on the **token's identity** before allowing minting.
 - **Claim Validation**: Verifies claim topic, issuer trust, issuer validity (`isClaimValid`), data decoding, and expiry.
-- **Global Supply Cap**: Ensures the collateral amount specified in the claim is greater than or equal to the projected total token supply *after* the mint.
+- **Global Supply Cap**: Ensures the collateral amount specified in the claim is greater than or equal to the projected total token supply _after_ the mint.
 - **Hook Integration**: Leverages the `_beforeMint` hook from `SMARTHooks` to seamlessly integrate the check into the minting process.
 - **Configurable Topic**: The specific ERC-735 claim topic representing the global collateral is configured during initialization.
 - **Standard & Upgradeable**: Provides both standard and upgradeable versions.
@@ -28,8 +28,8 @@ To use this extension:
 1. **Inherit the Base Extension**: Choose either `SMARTCollateral` (for standard contracts) or `SMARTCollateralUpgradeable` (for upgradeable contracts) and inherit it in your main SMART token contract.
 2. **Inherit Core SMART & ERC20**: Ensure your main contract also inherits the corresponding core SMART implementation (`SMART` or `SMARTUpgradeable`) and ERC20 implementation (`ERC20` or `ERC20Upgradeable`). These provide necessary functions like `totalSupply`, `onchainID`, `identityRegistry`, and the `_beforeMint` hook framework.
 3. **Implement Constructor/Initializer**:
-    - **Standard (`SMARTCollateral`)**: In the final contract's `constructor`, call parent constructors, including passing the `collateralProofTopic_` to the `SMARTCollateral` constructor (which calls `_SMARTCollateral_init`).
-    - **Upgradeable (`SMARTCollateralUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__SMART_init`) and then call `__SMARTCollateralUpgradeable_init(collateralProofTopic_)`.
+   - **Standard (`SMARTCollateral`)**: In the final contract's `constructor`, call parent constructors, including passing the `collateralProofTopic_` to the `SMARTCollateral` constructor (which calls `_SMARTCollateral_init`).
+   - **Upgradeable (`SMARTCollateralUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__SMART_init`) and then call `__SMARTCollateralUpgradeable_init(collateralProofTopic_)`.
 
 ## Collateral Claim Requirements
 
@@ -46,7 +46,7 @@ The collateral check logic (within `_collateral_beforeMintLogic`) verifies these
 
 ## Authorization
 
-This extension does not manage minting permissions itself. It acts as a check *within* the minting process. The authorization for *who* can call the `mint` function is handled by other parts of the SMART token implementation (e.g., Minter Role in `SMARTMintableAccessControlAuthorization`).
+This extension does not manage minting permissions itself. It acts as a check _within_ the minting process. The authorization for _who_ can call the `mint` function is handled by other parts of the SMART token implementation (e.g., Minter Role in `SMARTMintableAccessControlAuthorization`).
 
 ## Security Considerations
 

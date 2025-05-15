@@ -33,7 +33,7 @@ Build your own blockchain usecase with ease.
 | **Upgradeability**                       | Centralized via Implementation Authority        | UUPSUpgradeable per contract                                         | More decentralized and manageable upgrade control              |
 | **Authorization**                        | Agent-based role system                         | Hook-based and access-control agnostic                               | Compatible with OpenZeppelin AccessControl or custom systems   |
 | **Meta-Transaction Support**             | Not specified in core standard                  | ERC-2771 compatible (trusted forwarders)                             | Enables gasless transactions via relayers                      |
-| **Immutability**                         | Name and symbol are mutable                     | Following ERC20, which makes it immutable                            |  Following the ERC20 standard           |
+| **Immutability**                         | Name and symbol are mutable                     | Following ERC20, which makes it immutable                            | Following the ERC20 standard                                   |
 
 ## ✅ Conclusion
 

@@ -60,8 +60,8 @@ contract InfrastructureUtils is Test {
         // --- Predeployed implementations ---
         address forwarder = address(0);
 
-        IIdentity identityImpl = new SMARTIdentityImplementation(forwarder);
-        IIdentity tokenIdentityImpl = new SMARTTokenIdentityImplementation(forwarder);
+        IIdentity identityImpl = new SMARTIdentityImplementation();
+        IIdentity tokenIdentityImpl = new SMARTTokenIdentityImplementation();
 
         SMARTIdentityRegistryStorageImplementation storageImpl =
             new SMARTIdentityRegistryStorageImplementation(forwarder);

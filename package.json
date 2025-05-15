@@ -35,7 +35,13 @@
   "scripts": {
     "dependencies": "forge soldeer install && npm run patch:onchainid",
     "patch:onchainid": "./scripts/patch-onchainid.sh",
-    "clean": "git clean -fdX -e '.env' -e '.env.*' -e '!.env' -e '!.env.*' && find . -type f \\( -name 'pnpm-lock.yaml' -o -name 'package-lock.json' -o -name 'yarn.lock' -o -name 'bun.lockb' -o -name 'bun.lock' \\) -exec rm -f {} + && npm install"
+    "clean": "git clean -fdX -e '.env' -e '.env.*' -e '!.env' -e '!.env.*' && find . -type f \\( -name 'pnpm-lock.yaml' -o -name 'package-lock.json' -o -name 'yarn.lock' -o -name 'bun.lockb' -o -name 'bun.lock' \\) -exec rm -f {} + && npm install",
+    "deploy:remote": "settlemint scs hardhat deploy remote --deployment-id smart-protocol",
+    "deploy:local": "settlemint scs hardhat deploy local --deployment-id smart-protocol-local --reset",
+    "lint": "solhint --config .solhint.json ./contracts/**/*.sol",
+    "format": "settlemint scs foundry format && prettier --write .",
+    "compile:forge": "settlemint scs foundry build --sizes",
+    "compile:hardhat": "settlemint scs hardhat build"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-foundry": "1.1.3",

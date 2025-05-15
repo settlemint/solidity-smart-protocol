@@ -33,12 +33,12 @@ To build a token using this extension:
 
 1. **Choose Implementation**: Decide between `SMART` (standard) or `SMARTUpgradeable`.
 2. **Inherit Base Contracts**:
-    - Inherit your chosen implementation (`SMART` or `SMARTUpgradeable`).
-    - Inherit an authorization contract implementing `_SMARTAuthorizationHooks` (e.g., `SMARTAccessControlAuthorization`).
-    - **Upgradeable Only**: Inherit an access control contract for UUPS upgrades (e.g., `OwnableUpgradeable` or `AccessControlUpgradeable`).
+   - Inherit your chosen implementation (`SMART` or `SMARTUpgradeable`).
+   - Inherit an authorization contract implementing `_SMARTAuthorizationHooks` (e.g., `SMARTAccessControlAuthorization`).
+   - **Upgradeable Only**: Inherit an access control contract for UUPS upgrades (e.g., `OwnableUpgradeable` or `AccessControlUpgradeable`).
 3. **Implement Constructor/Initializer**:
-    - **Standard (`SMART`)**: Create a `constructor` that calls the `SMART` constructor, passing all required parameters. Grant initial roles (e.g., `TOKEN_ADMIN_ROLE`, `MINTER_ROLE`) to the deployer or designated addresses.
-    - **Upgradeable (`SMARTUpgradeable`)**: Create an `initialize` function. Inside, call the initializers for `ERC20Upgradeable`, `UUPSUpgradeable`, your chosen UUPS access control contract, your chosen authorization contract (if it has an initializer), AND finally `__SMART_init`, passing all required parameters. Grant initial roles within the initializer.
+   - **Standard (`SMART`)**: Create a `constructor` that calls the `SMART` constructor, passing all required parameters. Grant initial roles (e.g., `TOKEN_ADMIN_ROLE`, `MINTER_ROLE`) to the deployer or designated addresses.
+   - **Upgradeable (`SMARTUpgradeable`)**: Create an `initialize` function. Inside, call the initializers for `ERC20Upgradeable`, `UUPSUpgradeable`, your chosen UUPS access control contract, your chosen authorization contract (if it has an initializer), AND finally `__SMART_init`, passing all required parameters. Grant initial roles within the initializer.
 4. **Implement Abstract Functions**: Ensure any abstract functions from inherited contracts (especially `_authorizeUpgrade` for `SMARTUpgradeable` and potentially `_msgSender`/`hasRole` if not using standard OZ AccessControl) are implemented in your final concrete contract.
 5. **Deploy**: Deploy your final contract. For upgradeable contracts, deploy using a proxy pattern (e.g., via Hardhat Upgrades plugin).
 
