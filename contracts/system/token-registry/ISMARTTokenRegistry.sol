@@ -3,5 +3,5 @@ pragma solidity 0.8.28;
 
 interface ISMARTTokenRegistry {
     /// @notice Initializes the token registry.
-    function initialize() external;
+    function initialize(address tokenImplementation) external;
 }

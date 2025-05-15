@@ -12,8 +12,14 @@ interface ISMARTSystem {
 
     /// @notice Creates a new token registry implementation and proxy.
     /// @param _typeName The human-readable type name of the token registry.
-    /// @param _implementation The address of the token registry implementation contract.
-    function createTokenRegistry(string calldata _typeName, address _implementation) external;
+    /// @param _registryImplementation The address of the token registry implementation contract.
+    /// @param _tokenImplementation The address of the token implementation contract.
+    function createTokenRegistry(
+        string calldata _typeName,
+        address _registryImplementation,
+        address _tokenImplementation
+    )
+        external;
 
     /// @notice Returns the address of the current compliance module implementation.
     /// @return The address of the compliance implementation contract.

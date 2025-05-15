@@ -242,14 +242,15 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// @inheritdoc ISMARTSystem
     function createTokenRegistry(
         string calldata _typeName,
-        address _implementation
+        address _registryImplementation,
+        address _tokenImplementation
     )
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
     {
-        if (address(_implementation) == address(0)) revert InvalidTokenRegistryAddress();
-        _checkInterface(_implementation, type(ISMARTTokenRegistry).interfaceId);
+        if (address(_registryImplementation) == address(0)) revert InvalidTokenRegistryAddress();
+        _checkInterface(_registryImplementation, type(ISMARTTokenRegistry).interfaceId);
 
         bytes32 registryTypeHash = keccak256(abi.encodePacked(_typeName));
 
@@ -259,10 +260,12 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
 
         address _tokenRegistryProxy = address(new SMARTTokenRegistryProxy(address(this), registryTypeHash));
 
-        tokenRegistryImplementationsByType[registryTypeHash] = _implementation;
+        tokenRegistryImplementationsByType[registryTypeHash] = _registryImplementation;
         tokenRegistryProxiesByType[registryTypeHash] = _tokenRegistryProxy;
 
-        emit TokenRegistryCreated(_msgSender(), _typeName, _tokenRegistryProxy, _implementation, block.timestamp);
+        emit TokenRegistryCreated(
+            _msgSender(), _typeName, _tokenRegistryProxy, _registryImplementation, block.timestamp
+        );
     }
 
     // --- Implementation Setter Functions ---

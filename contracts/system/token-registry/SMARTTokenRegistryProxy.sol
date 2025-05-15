@@ -47,7 +47,8 @@ contract SMARTTokenRegistryProxy is Proxy {
     /// to the `initialize` function of the token registry implementation.
     /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
     /// @param registryTypeHash The hash of the registry type.
-    constructor(address systemAddress, bytes32 registryTypeHash) payable {
+    /// @param tokenImplementation The address of the token implementation contract.
+    constructor(address systemAddress, bytes32 registryTypeHash, address tokenImplementation) payable {
         if (systemAddress == address(0) || !IERC165(systemAddress).supportsInterface(type(ISMARTSystem).interfaceId)) {
             revert InvalidSystemAddress();
         }
@@ -58,7 +59,7 @@ contract SMARTTokenRegistryProxy is Proxy {
         address implementation = system_.tokenRegistryImplementation(registryTypeHash);
         if (implementation == address(0)) revert TokenRegistryImplementationNotSet(registryTypeHash);
 
-        bytes memory data = abi.encodeWithSelector(ISMARTTokenRegistry.initialize.selector);
+        bytes memory data = abi.encodeWithSelector(ISMARTTokenRegistry.initialize.selector, tokenImplementation);
 
         // slither-disable-next-line low-level-calls
         (bool success,) = implementation.delegatecall(data);
