@@ -75,7 +75,6 @@ contract SMARTSystemFactory is ERC2771Context {
         address tokenIdentityImplementation_,
         address forwarder_
     )
-        payable
         ERC2771Context(forwarder_)
     {
         if (complianceImplementation_ == address(0)) revert ComplianceImplementationNotSet();
