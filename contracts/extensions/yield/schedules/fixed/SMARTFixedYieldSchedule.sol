@@ -243,7 +243,7 @@ contract SMARTFixedYieldSchedule is
     /// @return The total amount of unclaimed yield
     function totalUnclaimedYield() public view returns (uint256) {
         uint256 lastPeriod = lastCompletedPeriod();
-        if (lastPeriod == 0) return 0;
+        if (lastPeriod < 1) return 0;
 
         uint256 totalYieldAccrued = 0;
         // Note: Basis per unit might vary per holder, but for total unclaimed,
@@ -289,7 +289,7 @@ contract SMARTFixedYieldSchedule is
     /// @return The total accrued yield amount
     function calculateAccruedYield(address holder) public view returns (uint256) {
         uint256 currentPeriod_ = currentPeriod();
-        if (currentPeriod_ == 0) revert ScheduleNotActive();
+        if (currentPeriod_ < 1) revert ScheduleNotActive();
 
         uint256 basis = _token.yieldBasisPerUnit(holder);
         uint256 fromPeriod = _lastClaimedPeriod[holder] + 1;
@@ -327,7 +327,7 @@ contract SMARTFixedYieldSchedule is
     /// @dev Calculates and transfers all unclaimed yield for completed periods
     function claimYield() external nonReentrant whenNotPaused {
         uint256 lastPeriod = lastCompletedPeriod();
-        if (lastPeriod == 0) revert NoYieldAvailable();
+        if (lastPeriod < 1) revert NoYieldAvailable();
 
         uint256 fromPeriod = _lastClaimedPeriod[_msgSender()] + 1;
         if (fromPeriod > lastPeriod) revert NoYieldAvailable();
@@ -406,7 +406,7 @@ contract SMARTFixedYieldSchedule is
         if (to == address(0)) revert InvalidUnderlyingAsset();
 
         uint256 balance = _underlyingAsset.balanceOf(address(this));
-        if (balance == 0) revert InsufficientUnderlyingBalance();
+        if (balance < 1) revert InsufficientUnderlyingBalance();
 
         bool success = _underlyingAsset.transfer(to, balance);
         if (!success) revert InsufficientUnderlyingBalance();
