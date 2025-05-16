@@ -10,7 +10,8 @@ import {
     IdentityFactoryImplementationNotSet,
     IdentityImplementationNotSet,
     TokenIdentityImplementationNotSet,
-    IndexOutOfBounds
+    IndexOutOfBounds,
+    InvalidForwarderAddress
 } from "./SMARTSystemErrors.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
@@ -93,6 +94,9 @@ contract SMARTSystemFactory is ERC2771Context {
         }
         if (tokenIdentityImplementation_ == address(0)) {
             revert TokenIdentityImplementationNotSet(); // Assumes this error is in SMARTSystemErrors.sol
+        }
+        if (forwarder_ == address(0)) {
+            revert InvalidForwarderAddress();
         }
 
         defaultComplianceImplementation = complianceImplementation_;
