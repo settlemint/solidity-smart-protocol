@@ -35,7 +35,7 @@ contract SMARTComplianceProxy is Proxy {
     /// @dev Initializes the proxy by setting the system address and delegating a call
     /// to the `initialize` function of the compliance implementation.
     /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
-    constructor(address systemAddress) payable {
+    constructor(address systemAddress) {
         if (systemAddress == address(0) || !IERC165(systemAddress).supportsInterface(type(ISMARTSystem).interfaceId)) {
             revert InvalidSystemAddress();
         }

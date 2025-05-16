@@ -18,7 +18,7 @@ import { ISMART } from "../../interface/ISMART.sol";
 
 abstract contract SMARTExtensionUpgradeable is Initializable, _SMARTExtension, ERC20Upgradeable {
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() payable {
+    constructor() {
         _disableInitializers();
     }
 

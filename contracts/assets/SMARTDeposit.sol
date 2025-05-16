@@ -45,7 +45,7 @@ contract SMARTDeposit is
     // ERC20PermitUpgradeable
     /// @custom:oz-upgrades-unsafe-allow constructor
     /// @param forwarder_ The address of the forwarder contract.
-    constructor(address forwarder_) payable ERC2771ContextUpgradeable(forwarder_) {
+    constructor(address forwarder_) ERC2771ContextUpgradeable(forwarder_) {
         _disableInitializers();
     }
 

@@ -36,7 +36,7 @@ contract SMARTIdentityFactoryProxy is Proxy {
     /// to the `initialize` function of the identity factory implementation.
     /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
     /// @param initialAdmin The address to be set as the initial admin for the identity factory.
-    constructor(address systemAddress, address initialAdmin) payable {
+    constructor(address systemAddress, address initialAdmin) {
         if (systemAddress == address(0) || !IERC165(systemAddress).supportsInterface(type(ISMARTSystem).interfaceId)) {
             revert InvalidSystemAddress();
         }
