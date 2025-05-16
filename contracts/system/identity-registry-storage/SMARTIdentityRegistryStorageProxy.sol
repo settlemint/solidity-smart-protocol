@@ -36,7 +36,7 @@ contract SMARTIdentityRegistryStorageProxy is Proxy {
     /// to the `initialize` function of the identity registry storage implementation.
     /// @param systemAddress The address of the ISMARTSystem contract that provides the implementation.
     /// @param initialAdmin The address for initial admin and registrar roles.
-    constructor(address systemAddress, address initialAdmin) payable {
+    constructor(address systemAddress, address initialAdmin) {
         if (systemAddress == address(0) || !IERC165(systemAddress).supportsInterface(type(ISMARTSystem).interfaceId)) {
             revert InvalidSystemAddress();
         }

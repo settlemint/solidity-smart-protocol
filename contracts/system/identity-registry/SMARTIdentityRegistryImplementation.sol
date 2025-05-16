@@ -55,7 +55,7 @@ contract SMARTIdentityRegistryImplementation is
 
     // --- Constructor ---
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address trustedForwarder) payable ERC2771ContextUpgradeable(trustedForwarder) {
+    constructor(address trustedForwarder) ERC2771ContextUpgradeable(trustedForwarder) {
         _disableInitializers();
     }
 

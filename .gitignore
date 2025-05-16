@@ -36,7 +36,7 @@ build
 lcov.info
 
 # Hardhat Ignition
-ignition/deployments/chain-*
+ignition/deployments
 
 # Soldeer
 /dependencies

@@ -33,7 +33,7 @@ abstract contract AbstractCountryComplianceModule is AbstractComplianceModule {
      * @dev Grants the deployer the `DEFAULT_ADMIN_ROLE` (via AbstractComplianceModule)
      *      and the `GLOBAL_LIST_MANAGER_ROLE` specific to country list management.
      */
-    constructor() payable AbstractComplianceModule() {
+    constructor() AbstractComplianceModule() {
         _grantRole(GLOBAL_LIST_MANAGER_ROLE, _msgSender());
     }
 

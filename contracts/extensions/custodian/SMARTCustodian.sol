@@ -23,7 +23,7 @@ import { LengthMismatch } from "./../common/CommonErrors.sol";
 abstract contract SMARTCustodian is SMARTExtension, _SMARTCustodianLogic {
     // Note: Assumes the final contract inherits ERC20 and SMART
 
-    constructor() payable {
+    constructor() {
         __SMARTCustodian_init_unchained();
     }
 

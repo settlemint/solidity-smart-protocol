@@ -37,7 +37,7 @@ contract SMARTTokenRegistry is ERC2771Context, AccessControlEnumerable {
     /// @dev Sets up the initial admin and registrar roles using AccessControl's _grantRole.
     /// @param forwarder The address of the trusted forwarder for meta-transactions.
     /// @param initialAdmin The address of the initial admin and registrar.
-    constructor(address forwarder, address initialAdmin) payable ERC2771Context(forwarder) {
+    constructor(address forwarder, address initialAdmin) ERC2771Context(forwarder) {
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
         _grantRole(REGISTRAR_ROLE, initialAdmin);
     }

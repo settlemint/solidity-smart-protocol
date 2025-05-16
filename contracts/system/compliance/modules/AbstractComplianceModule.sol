@@ -24,7 +24,7 @@ abstract contract AbstractComplianceModule is AccessControl, ISMARTComplianceMod
     /**
      * @dev Grants the deployer the `DEFAULT_ADMIN_ROLE` for managing access control within the module itself.
      */
-    constructor() payable {
+    constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
