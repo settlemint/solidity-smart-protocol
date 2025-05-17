@@ -1,5 +1,6 @@
 # Setup instructions
 
+- Install forge using foundryup: `curl -L https://foundry.paradigm.xyz | bash` followed by `foundryup` and setting the PATH if needed.
 - Before running the code, you need to install the dependencies by running `npm install` followed by `npm run dependencies`
 
 # Testing instructions
