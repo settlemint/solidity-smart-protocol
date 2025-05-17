@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.28;
 
 /// @notice Error thrown when an operation would cause the total supply to exceed the defined cap.
 /// @param newSupply The total supply that would result from the operation.

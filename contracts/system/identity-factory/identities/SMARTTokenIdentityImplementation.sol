@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.28;
 
 import { Identity } from "@onchainid/contracts/Identity.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";

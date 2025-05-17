@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.28;
 
 /// @title Interface for the SMART Capped Extension
 /// @notice Defines the external functions for interacting with the SMART Capped extension.
