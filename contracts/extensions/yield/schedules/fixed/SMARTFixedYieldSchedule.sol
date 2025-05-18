@@ -248,13 +248,13 @@ contract SMARTFixedYieldSchedule is
         uint256 totalYieldAccrued = 0;
         // Note: Basis per unit might vary per holder, but for total unclaimed,
         // we use the generic basis for address(0). Assume this basis is constant over time.
-        uint256 basis = ISMARTYield(_token).yieldBasisPerUnit(address(0));
+        uint256 basis = _token.yieldBasisPerUnit(address(0));
 
         // Iterate through each completed period to calculate yield based on historical total supply
         for (uint256 period = 1; period <= lastPeriod; period++) {
             uint256 periodEndTimestamp = _periodEndTimestamps[period - 1];
             // Fetch the total supply as it was at the end of the specific period
-            uint256 historicalTotalSupply = ISMARTYield(_token).totalSupplyAt(periodEndTimestamp);
+            uint256 historicalTotalSupply = _token.totalSupplyAt(periodEndTimestamp);
             if (historicalTotalSupply > 0) {
                 // Calculate yield for this specific period using its historical supply
                 totalYieldAccrued += (historicalTotalSupply * basis * _rate) / RATE_BASIS_POINTS;
@@ -278,7 +278,7 @@ contract SMARTFixedYieldSchedule is
 
         // Get total supply and basis for yield calculation
         uint256 totalSupply = IERC20(address(_token)).totalSupply();
-        uint256 basis = ISMARTYield(_token).yieldBasisPerUnit(address(0));
+        uint256 basis = _token.yieldBasisPerUnit(address(0));
 
         // Calculate yield for one period
         return (totalSupply * basis * _rate) / RATE_BASIS_POINTS;

@@ -131,7 +131,7 @@ contract SMARTIdentityRegistryImplementation is
     function deleteIdentity(address _userAddress) external override onlyRole(REGISTRAR_ROLE) {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
 
-        IIdentity identityToDelete = IIdentity(_identityStorage.storedIdentity(_userAddress));
+        IIdentity identityToDelete = _identityStorage.storedIdentity(_userAddress);
         _identityStorage.removeIdentityFromStorage(_userAddress);
 
         emit IdentityRemoved(_msgSender(), _userAddress, identityToDelete);
@@ -152,7 +152,7 @@ contract SMARTIdentityRegistryImplementation is
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
 
-        IIdentity oldInvestorIdentity = IIdentity(_identityStorage.storedIdentity(_userAddress));
+        IIdentity oldInvestorIdentity = _identityStorage.storedIdentity(_userAddress);
         _identityStorage.modifyStoredIdentity(_userAddress, _identity);
 
         emit IdentityUpdated(_msgSender(), oldInvestorIdentity, _identity);
@@ -208,7 +208,7 @@ contract SMARTIdentityRegistryImplementation is
         if (!this.contains(_userAddress)) return false;
         if (requiredClaimTopics.length == 0) return true;
 
-        IIdentity identityToVerify = IIdentity(_identityStorage.storedIdentity(_userAddress));
+        IIdentity identityToVerify = _identityStorage.storedIdentity(_userAddress);
         uint256 requiredClaimTopicsLength = requiredClaimTopics.length;
         for (uint256 i = 0; i < requiredClaimTopicsLength;) {
             uint256 currentTopic = requiredClaimTopics[i];
@@ -274,7 +274,7 @@ contract SMARTIdentityRegistryImplementation is
 
     /// @inheritdoc ISMARTIdentityRegistry
     function identity(address _userAddress) public view override returns (IIdentity) {
-        return IIdentity(_identityStorage.storedIdentity(_userAddress));
+        return _identityStorage.storedIdentity(_userAddress);
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
