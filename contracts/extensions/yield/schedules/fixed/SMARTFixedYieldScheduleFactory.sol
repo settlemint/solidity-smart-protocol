@@ -18,10 +18,7 @@ import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.so
 contract SMARTFixedYieldScheduleFactory is ERC2771Context {
     /// @notice Custom errors for the FixedYieldFactory contract
     /// @dev These errors provide more gas-efficient and descriptive error handling
-    error TokenNotYieldEnabled();
-    error ScheduleSetupFailed();
     error NotAuthorized();
-    error InvalidUnderlyingAsset();
 
     /// @notice Emitted when a new fixed yield schedule is created
     /// @param schedule The address of the newly created fixed yield schedule

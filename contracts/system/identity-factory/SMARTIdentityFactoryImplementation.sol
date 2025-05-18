@@ -30,7 +30,6 @@ error SaltAlreadyTaken(string salt);
 error WalletAlreadyLinked(address wallet);
 error WalletInManagementKeys(); // Consider if still needed
 error TokenAlreadyLinked(address token);
-error InvalidAuthorityAddress();
 error DeploymentAddressMismatch();
 
 /// @title SMART Identity Factory

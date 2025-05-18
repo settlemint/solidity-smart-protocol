@@ -24,7 +24,6 @@ error IdentityDoesNotExist(address userAddress);
 error InvalidIdentityRegistryAddress();
 error IdentityRegistryAlreadyBound(address registryAddress);
 error IdentityRegistryNotBound(address registryAddress);
-error UnauthorizedCaller();
 
 /// @title SMART Identity Registry Storage
 /// @notice Upgradeable storage contract for identity registry data, adhering to ERC-3643 storage interface.

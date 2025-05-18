@@ -33,13 +33,9 @@ contract SMARTFixedYieldSchedule is
     error InvalidRate();
     error InvalidInterval();
     error NoYieldAvailable();
-    error YieldDistributionFailed();
     error ScheduleNotActive();
-    error ScheduleExpired();
-    error TokenNotYieldEnabled();
     error InsufficientUnderlyingBalance();
     error InvalidUnderlyingAsset();
-    error PeriodAlreadyClaimed();
     error InvalidAmount();
     error YieldTransferFailed();
     error InvalidPeriod();
