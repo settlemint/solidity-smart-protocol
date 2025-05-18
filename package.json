@@ -42,7 +42,8 @@
     "lint": "solhint --config .solhint.json ./contracts/**/*.sol",
     "format": "settlemint scs foundry format && prettier --write .",
     "compile:forge": "settlemint scs foundry build --sizes",
-    "compile:hardhat": "settlemint scs hardhat build"
+    "compile:hardhat": "settlemint scs hardhat build",
+    "test": "forge test -vvv"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-foundry": "1.1.3",
