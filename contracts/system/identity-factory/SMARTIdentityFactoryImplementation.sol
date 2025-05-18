@@ -56,11 +56,11 @@ contract SMARTIdentityFactoryImplementation is
     address private _system;
 
     /// @notice Mapping to track used salts (derived from entity address) to prevent duplicates.
-    mapping(bytes32 => bool) private _saltTakenByteSalt;
+    mapping(bytes32 byteSalt => bool isTaken) private _saltTakenByteSalt;
     /// @notice Mapping from investor wallet address to its deployed IdentityProxy address.
-    mapping(address => address) private _identities;
+    mapping(address wallet => address identityProxy) private _identities;
     /// @notice Mapping from token contract address to its deployed IdentityProxy address.
-    mapping(address => address) private _tokenIdentities;
+    mapping(address token => address identityProxy) private _tokenIdentities;
 
     // --- Events ---
     /// @notice Emitted when a new identity is created for an investor wallet.

@@ -11,7 +11,7 @@ abstract contract _SMARTExtension is ISMART, SMARTContext, SMARTHooks {
     bool internal __isForcedUpdate;
 
     // Mapping to check if an interface ID is registered for O(1) lookups.
-    mapping(bytes4 => bool) internal _isInterfaceRegistered;
+    mapping(bytes4 interfaceId => bool isRegistered) internal _isInterfaceRegistered;
 
     /**
      * @dev Registers an interface ID internally for ERC165 support.

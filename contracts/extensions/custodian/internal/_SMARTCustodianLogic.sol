@@ -33,9 +33,9 @@ import { ISMARTCustodian } from "../ISMARTCustodian.sol";
 abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     // -- Storage Variables --
     /// @notice Mapping from address to its frozen status (true if frozen, false otherwise).
-    mapping(address => bool) internal __frozen;
+    mapping(address account => bool isFrozen) internal __frozen;
     /// @notice Mapping from address to the amount of tokens specifically frozen for that address.
-    mapping(address => uint256) internal __frozenTokens;
+    mapping(address account => uint256 amount) internal __frozenTokens;
 
     // -- Internal Setup Function --
 

@@ -34,9 +34,10 @@ abstract contract _SMARTLogic is _SMARTExtension {
     address internal __onchainID; // Optional on-chain identifier address
     ISMARTIdentityRegistry internal __identityRegistry; // The identity registry contract
     ISMARTCompliance internal __compliance; // The compliance contract
-    mapping(address => uint256) internal __moduleIndex; // Module address => index + 1 in __complianceModuleList (for
+    mapping(address module => uint256 indexPlusOne) internal __moduleIndex; // Module address => index + 1 in
+        // __complianceModuleList (for
         // existence check)
-    mapping(address => bytes) internal __moduleParameters; // Module address => associated parameters
+    mapping(address module => bytes parameters) internal __moduleParameters; // Module address => associated parameters
     address[] internal __complianceModuleList; // List of active compliance module addresses
     uint256[] internal __requiredClaimTopics; // Claim topics required for verification
 
