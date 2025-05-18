@@ -2,7 +2,6 @@
 pragma solidity ^0.8.28;
 
 import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
-import { SMARTHooks } from "./../../common/SMARTHooks.sol";
 import { Redeemed } from "./../SMARTRedeemableEvents.sol";
 import { ISMARTRedeemable } from "./../ISMARTRedeemable.sol";
 /// @title Internal Logic for SMART Redeemable Extension

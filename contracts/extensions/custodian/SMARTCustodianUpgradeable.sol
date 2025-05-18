@@ -13,7 +13,6 @@ import { SMARTHooks } from "./../common/SMARTHooks.sol";
 import { _SMARTCustodianLogic } from "./internal/_SMARTCustodianLogic.sol";
 
 // Error imports
-import { LengthMismatch } from "./../common/CommonErrors.sol";
 
 /// @title Upgradeable SMART Custodian Extension
 /// @notice Upgradeable extension that adds custodian features (freezing, forced transfer, recovery) to a SMART token.

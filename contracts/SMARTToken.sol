@@ -10,14 +10,10 @@ import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol"
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Interface imports
-import { ISMART } from "./interface/ISMART.sol";
-import { ISMARTIdentityRegistry } from "./interface/ISMARTIdentityRegistry.sol";
-import { ISMARTCompliance } from "./interface/ISMARTCompliance.sol";
 import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
 import { SMART } from "./extensions/core/SMART.sol";
-import { SMARTExtension } from "./extensions/common/SMARTExtension.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
 
 // Feature extensions

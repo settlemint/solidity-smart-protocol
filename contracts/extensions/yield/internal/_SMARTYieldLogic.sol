@@ -2,7 +2,6 @@
 pragma solidity ^0.8.28;
 
 import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
-import { SMARTHooks } from "./../../common/SMARTHooks.sol";
 import { ISMARTYield } from "./../ISMARTYield.sol";
 import { ISMARTYieldSchedule } from "./../schedules/ISMARTYieldSchedule.sol";
 import { ZeroAddressNotAllowed } from "./../../common/CommonErrors.sol";

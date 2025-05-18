@@ -7,8 +7,6 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "./../common/SMARTHooks.sol";
-import { ISMART } from "./../../interface/ISMART.sol";
-import { SMARTContext } from "./../common/SMARTContext.sol";
 
 // Internal implementation imports
 import { _SMARTCollateralLogic } from "./internal/_SMARTCollateralLogic.sol";

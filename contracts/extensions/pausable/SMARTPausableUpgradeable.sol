@@ -8,7 +8,6 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
-import { SMARTHooks } from "../common/SMARTHooks.sol";
 
 // Internal implementation imports
 import { _SMARTPausableLogic } from "./internal/_SMARTPausableLogic.sol";

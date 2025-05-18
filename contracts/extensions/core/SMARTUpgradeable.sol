@@ -8,7 +8,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 // Interface imports
-import { ISMART } from "../../interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
@@ -18,7 +17,6 @@ import { SMARTHooks } from "../common/SMARTHooks.sol";
 import { _SMARTLogic } from "./internal/_SMARTLogic.sol";
 
 // Error imports
-import { LengthMismatch } from "../common/CommonErrors.sol";
 
 /// @title Upgradeable SMART Token Implementation (UUPS)
 /// @notice Upgradeable implementation of the core SMART token functionality using the UUPS proxy pattern.
