@@ -119,7 +119,8 @@ contract SMARTIdentityFactoryImplementation is
         if (_identities[_wallet] != address(0)) revert WalletAlreadyLinked(_wallet);
 
         // Deploy identity with _wallet as the initial management key passed to proxy constructor
-        address identity = _createAndRegisterWalletIdentity(_wallet, _wallet);
+        address identity =
+            _createAndRegisterWalletIdentity({ _walletAddress: _wallet, _initialManagerAddress: _wallet });
         IERC734 identityContract = IERC734(identity);
 
         // Add specified management keys

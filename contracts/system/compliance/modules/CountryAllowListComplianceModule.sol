@@ -86,7 +86,7 @@ contract CountryAllowListComplianceModule is AbstractCountryComplianceModule {
         view
         override // Overrides AbstractComplianceModule.canTransfer
     {
-        (bool hasIdentity, uint16 receiverCountry) = _getUserCountry(_token, _to);
+        (bool hasIdentity, uint16 receiverCountry) = _getUserCountry(_to, _token);
 
         // Condition 1: If no identity/country, allow transfer (cannot enforce allowlist)
         if (!hasIdentity || receiverCountry == 0) {
