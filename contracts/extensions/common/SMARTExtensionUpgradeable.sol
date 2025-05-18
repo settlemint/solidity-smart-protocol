@@ -24,8 +24,4 @@ abstract contract SMARTExtensionUpgradeable is Initializable, _SMARTExtension, E
     function _smartSender() internal view virtual override(SMARTContext) returns (address) {
         return _msgSender();
     }
-
-    function _smartData() internal view virtual override(SMARTContext) returns (bytes calldata) {
-        return _msgData();
-    }
 }

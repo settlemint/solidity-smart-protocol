@@ -17,8 +17,4 @@ abstract contract SMARTExtension is _SMARTExtension, ERC20 {
     function _smartSender() internal view virtual override(SMARTContext) returns (address) {
         return _msgSender();
     }
-
-    function _smartData() internal view virtual override(SMARTContext) returns (bytes calldata) {
-        return _msgData();
-    }
 }
