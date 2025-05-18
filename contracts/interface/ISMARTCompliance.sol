@@ -3,59 +3,101 @@ pragma solidity ^0.8.28;
 
 import { SMARTComplianceModuleParamPair } from "./structs/SMARTComplianceModuleParamPair.sol";
 
-/// @title ISMART Compliance Interface
-/// @notice Defines the interface for the main compliance contract used by SMART tokens.
-///         This contract is responsible for checking transfer legality and potentially logging/acting on transfers.
-
+/// @title ISMART Compliance Oracle Interface
+/// @notice This interface defines the functions for a central compliance contract designed to work with SMART tokens.
+/// Its primary role is to determine the legality of token operations (transfers, mints, burns) by orchestrating checks
+/// across one or more registered compliance modules.
+/// @dev The main compliance contract acts as a gateway or an oracle for compliance decisions.
+/// It typically holds a list of active compliance modules and their specific parameters for a given token.
+/// - `canTransfer`: A view function to pre-check if an operation is allowed.
+/// - `transferred`, `created`, `destroyed`: Hooks called by the token *after* an operation has successfully occurred,
+/// allowing modules to update state or log.
+/// - Module Validation: Functions to validate compliance modules before they are added to a token's configuration.
+/// This contract itself usually doesn't implement specific rules but delegates them to individual
+/// `ISMARTComplianceModule` contracts.
 interface ISMARTCompliance {
-    /// @notice Checks if a transfer is compliant according to the rules enforced by this contract and its modules.
-    /// @dev This function MUST be view only and should not modify state. It should revert if the transfer is not
-    /// allowed.
-    ///      It typically delegates checks to registered compliance modules.
-    /// @param _token The address of the ISMART token contract initiating the check.
-    /// @param _from The sender address (address(0) for mints).
-    /// @param _to The recipient address (address(0) for burns).
-    /// @param _amount The amount of tokens involved in the potential transfer.
-    /// @return True if the transfer is compliant, otherwise reverts.
-    function canTransfer(address _token, address _from, address _to, uint256 _amount) external view returns (bool);
+    /// @notice Checks if a potential token operation (transfer, mint, or burn) is compliant with all configured rules.
+    /// @dev This function MUST be a `view` function (it should not modify state).
+    ///      It is called by the `ISMART` token contract *before* executing an operation.
+    ///      The implementation should iterate through all active compliance modules associated with the `_token`,
+    ///      calling each module's `canTransfer` function with the operation details and module-specific parameters.
+    ///      If any module indicates non-compliance (e.g., by reverting), this `canTransfer` function should also
+    /// revert.
+    ///      If all modules permit the operation, it returns `true`.
+    /// @param _token The address of the `ISMART` token contract initiating the compliance check.
+    /// @param _from The address of the token sender. For mint operations, this will be `address(0)`.
+    /// @param _to The address of the token recipient. For burn operations, this will be `address(0)`.
+    /// @param _amount The quantity of tokens involved in the potential operation.
+    /// @return isCompliant `true` if the operation is compliant with all rules, otherwise the function should revert.
+    function canTransfer(
+        address _token,
+        address _from,
+        address _to,
+        uint256 _amount
+    )
+        external
+        view
+        returns (bool isCompliant);
 
-    /// @notice Called by the token contract AFTER a successful transfer occurs.
-    /// @dev This function can modify state (e.g., update counters, log). It should only be callable by the bound token
-    /// contract.
-    ///      It typically notifies registered compliance modules.
-    /// @param _token The address of the ISMART token contract where the transfer occurred.
-    /// @param _from The sender address.
-    /// @param _to The recipient address.
-    /// @param _amount The amount of tokens transferred.
+    /// @notice Hook function called by the `ISMART` token contract *after* a token transfer has successfully occurred.
+    /// @dev This function CAN modify state. It is intended for compliance modules that need to update their internal
+    /// state
+    ///      (e.g., transaction counters, volume trackers) or log information post-transfer.
+    ///      The implementation should only be callable by the `_token` contract it is associated with.
+    ///      It typically iterates through active compliance modules and calls their `transferred` hook.
+    /// @param _token The address of the `ISMART` token contract where the transfer occurred.
+    /// @param _from The address of the token sender.
+    /// @param _to The address of the token recipient.
+    /// @param _amount The quantity of tokens that were transferred.
     function transferred(address _token, address _from, address _to, uint256 _amount) external;
 
-    /// @notice Called by the token contract AFTER a successful mint operation occurs.
-    /// @dev This function can modify state. It should only be callable by the bound token contract.
-    ///      It typically notifies registered compliance modules.
-    /// @param _token The address of the ISMART token contract where the mint occurred.
-    /// @param _to The recipient address.
-    /// @param _amount The amount of tokens minted.
+    /// @notice Hook function called by the `ISMART` token contract *after* new tokens have been successfully minted.
+    /// @dev This function CAN modify state. It allows compliance modules to react to minting events.
+    ///      The implementation should only be callable by the `_token` contract.
+    ///      It typically iterates through active compliance modules and calls their `created` hook.
+    /// @param _token The address of the `ISMART` token contract where the mint occurred.
+    /// @param _to The address that received the newly minted tokens.
+    /// @param _amount The quantity of tokens that were minted.
     function created(address _token, address _to, uint256 _amount) external;
 
-    /// @notice Called by the token contract AFTER a successful burn/redeem operation occurs.
-    /// @dev This function can modify state. It should only be callable by the bound token contract.
-    ///      It typically notifies registered compliance modules.
-    /// @param _token The address of the ISMART token contract where the burn occurred.
-    /// @param _from The address whose tokens were burned.
-    /// @param _amount The amount of tokens burned.
+    /// @notice Hook function called by the `ISMART` token contract *after* tokens have been successfully burned
+    /// (destroyed).
+    /// @dev This function CAN modify state. It allows compliance modules to react to burn events.
+    ///      The implementation should only be callable by the `_token` contract.
+    ///      It typically iterates through active compliance modules and calls their `destroyed` hook.
+    /// @param _token The address of the `ISMART` token contract where the burn occurred.
+    /// @param _from The address from which tokens were burned.
+    /// @param _amount The quantity of tokens that were burned.
     function destroyed(address _token, address _from, uint256 _amount) external;
 
     // --- Compliance Module Validation (Views) ---
 
-    /// @notice Validates if a module implements the required interface AND if the provided parameters are valid for it.
-    /// @dev Reverts if the module address is invalid, does not support `ISMARTComplianceModule`, or if parameters are
-    /// rejected by the module's `validateParameters`.
-    /// @param _module The address of the module to validate.
-    /// @param _params The parameters to validate against the module.
+    /// @notice Validates a single potential compliance module and its proposed parameters.
+    /// @dev This function is a `view` function and MUST NOT modify state.
+    ///      It is typically called by an `ISMART` token contract (or a factory) when attempting to add a new compliance
+    /// module
+    ///      or update an existing module's parameters for that token.
+    ///      The validation steps usually include:
+    ///      1. Checking if `_module` is a non-zero address.
+    ///      2. Verifying that the `_module` contract implements the `ISMARTComplianceModule` interface (e.g., via
+    /// ERC165 `supportsInterface`).
+    ///      3. Calling the `_module.validateParameters(_params)` function to ensure the provided `_params` are valid
+    /// for that specific module.
+    ///      If any validation step fails, this function should revert (e.g., `_module.validateParameters` itself might
+    /// revert with `InvalidParameters`).
+    /// @param _module The address of the compliance module contract to be validated.
+    /// @param _params The ABI-encoded parameters to be validated against the `_module`.
     function isValidComplianceModule(address _module, bytes calldata _params) external view;
 
-    /// @notice Validates multiple compliance modules and their corresponding parameters.
-    /// @dev Reverts if any pair in the array fails the checks performed by `isValidComplianceModule`.
-    /// @param _pairs An array of module-parameter pairs to validate.
+    /// @notice Validates an array of compliance module and parameter pairs.
+    /// @dev This function is a `view` function and MUST NOT modify state.
+    ///      It iterates through each `SMARTComplianceModuleParamPair` in the `_pairs` array
+    ///      and calls `isValidComplianceModule` for each pair.
+    ///      If any pair in the array fails validation (i.e., `isValidComplianceModule` reverts), this entire function
+    /// call should revert.
+    ///      This is useful for validating a complete set of modules and parameters in a single call, for instance, when
+    /// initializing a token.
+    /// @param _pairs An array of `SMARTComplianceModuleParamPair` structs, each containing a module address and its
+    /// parameters.
     function areValidComplianceModules(SMARTComplianceModuleParamPair[] calldata _pairs) external view;
 }
