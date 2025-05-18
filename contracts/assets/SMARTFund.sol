@@ -51,8 +51,6 @@ contract SMARTFund is
 
     /// @notice Custom errors for the SMARTFund contract
     /// @dev These errors provide more gas-efficient and descriptive error handling
-    error InvalidTokenAddress();
-    error InsufficientTokenBalance();
 
     /// @notice The timestamp of the last fee collection
     /// @dev Used to calculate time-based management fees

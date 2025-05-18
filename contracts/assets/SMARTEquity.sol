@@ -36,10 +36,6 @@ contract SMARTEquity is
     ERC20VotesUpgradeable, // TODO?
     ERC2771ContextUpgradeable
 {
-    error InvalidISIN();
-    error InvalidTokenAddress();
-    error InsufficientTokenBalance();
-
     string private _equityClass;
     string private _equityCategory;
 
