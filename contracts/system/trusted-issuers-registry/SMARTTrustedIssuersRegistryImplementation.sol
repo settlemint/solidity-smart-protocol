@@ -321,7 +321,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
         view
         virtual
         override(ContextUpgradeable, ERC2771ContextUpgradeable)
-        returns (address sender)
+        returns (address)
     {
         return ERC2771ContextUpgradeable._msgSender();
     }
