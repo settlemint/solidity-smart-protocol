@@ -76,9 +76,9 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// @param trustedIssuersRegistryProxy The address of the deployed SMARTTrustedIssuersRegistryProxy.
     /// @param identityFactoryProxy The address of the deployed SMARTIdentityFactoryProxy.
     event Bootstrapped(
-        address complianceProxy,
-        address identityRegistryProxy,
-        address identityRegistryStorageProxy,
+        address indexed complianceProxy,
+        address indexed identityRegistryProxy,
+        address indexed identityRegistryStorageProxy,
         address trustedIssuersRegistryProxy,
         address identityFactoryProxy
     );
