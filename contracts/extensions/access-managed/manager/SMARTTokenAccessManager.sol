@@ -40,6 +40,32 @@ contract SMARTTokenAccessManager is ISMARTTokenAccessManager, AccessControlEnume
         return AccessControl.hasRole(role, account);
     }
 
+    /// @notice Grants `role` to each address in `accounts`.
+    /// @param role The role identifier to grant.
+    /// @param accounts The addresses that will receive the role.
+    function batchGrantRole(bytes32 role, address[] calldata accounts) external override {
+        uint256 length = accounts.length;
+        for (uint256 i = 0; i < length;) {
+            grantRole(role, accounts[i]);
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /// @notice Revokes `role` from each address in `accounts`.
+    /// @param role The role identifier to revoke.
+    /// @param accounts The addresses that will lose the role.
+    function batchRevokeRole(bytes32 role, address[] calldata accounts) external override {
+        uint256 length = accounts.length;
+        for (uint256 i = 0; i < length;) {
+            revokeRole(role, accounts[i]);
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     /// @inheritdoc ERC2771Context
     function _msgSender() internal view virtual override(Context, ERC2771Context) returns (address) {
         return super._msgSender(); // Use ERC2771Context's implementation
