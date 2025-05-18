@@ -23,7 +23,7 @@ contract CountryAllowListComplianceModule is AbstractCountryComplianceModule {
 
     // --- Events ---
     /// @notice Emitted when countries are added to or removed from the global allowlist of this module instance.
-    event GlobalAllowedCountriesUpdated(uint16[] countries, bool allowed);
+    event GlobalAllowedCountriesUpdated(uint16[] countries, bool indexed allowed);
 
     // --- Global Allow List Management (Manager Role Only) ---
 

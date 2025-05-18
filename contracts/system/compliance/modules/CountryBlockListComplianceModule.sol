@@ -23,7 +23,7 @@ contract CountryBlockListComplianceModule is AbstractCountryComplianceModule {
 
     // --- Events ---
     /// @notice Emitted when countries are added to or removed from the global blocklist of this module instance.
-    event GlobalBlockedCountriesUpdated(uint16[] countries, bool blocked);
+    event GlobalBlockedCountriesUpdated(uint16[] countries, bool indexed blocked);
 
     // --- Global Block List Management (Manager Role Only) ---
 

@@ -82,7 +82,7 @@ contract SMARTBond is
 
     /// @notice Emitted when the bond reaches maturity and is closed
     /// @param timestamp The block timestamp when the bond matured
-    event BondMatured(uint256 timestamp);
+    event BondMatured(uint256 indexed timestamp);
 
     /// @notice Emitted when a bond is redeemed for underlying assets
     /// @param sender The address that initiated the redemption
