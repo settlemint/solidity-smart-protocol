@@ -4,44 +4,63 @@ pragma solidity ^0.8.28;
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 // Base contract imports
-import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
+import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol"; // Base for upgradeable
+    // extensions
 
 // Internal implementation imports
-import { _SMARTPausableLogic } from "./internal/_SMARTPausableLogic.sol";
+import { _SMARTPausableLogic } from "./internal/_SMARTPausableLogic.sol"; // Core pausable state and modifiers
 
 /// @title Upgradeable SMART Pausable Extension
-/// @notice Upgradeable extension that adds pausable functionality to a SMART token.
-/// @dev Inherits pausable logic from `_SMARTPausableLogic`, `SMARTExtensionUpgradeable`, and `Initializable`.
-///      Applies the `whenNotPaused` modifier to the `_update` function to pause token transfers.
-///      Expects the final contract to inherit `ERC20Upgradeable` and core `SMARTUpgradeable` logic.
-///      Requires an accompanying authorization contract (e.g., `SMARTPausableAccessControlAuthorization`).
+/// @notice This abstract contract provides the upgradeable (UUPS proxy pattern) implementation of pausable
+///         functionality for a SMART token.
+/// @dev It integrates the pausable logic from `_SMARTPausableLogic` with an `ERC20Upgradeable` token.
+///      Similar to its non-upgradeable counterpart (`SMARTPausable.sol`), this is achieved by overriding
+///      the `ERC20Upgradeable._update` function and applying the `whenNotPaused` modifier from
+///      `_SMARTPausableLogic`. This halts standard token movements (transfers, mints, burns) when paused.
+///      This contract is 'abstract' and intended for inheritance by a final, deployable, upgradeable SMART token.
+///      The final token contract would also inherit `ERC20Upgradeable`, `SMARTUpgradeable`, `UUPSUpgradeable`,
+///      and an upgradeable authorization mechanism for pause/unpause controls.
+///      It includes an `__SMARTPausable_init` initializer that calls the unchained initializer from the logic
+///      contract to register the pausable interface for ERC165.
 abstract contract SMARTPausableUpgradeable is Initializable, SMARTExtensionUpgradeable, _SMARTPausableLogic {
-    // Note: Assumes the final contract inherits ERC20Upgradeable and SMARTUpgradeable
+    // Developer Note: The final concrete contract inheriting `SMARTPausableUpgradeable` must also inherit:
+    // 1. `ERC20Upgradeable` (e.g., via `SMARTUpgradeable.sol`).
+    // 2. `UUPSUpgradeable` for the upgrade mechanism and implement `_authorizeUpgrade`.
+    // 3. An upgradeable authorization contract (e.g., an upgradeable version of
+    //    `SMARTPausableAccessControlAuthorization.sol`) to manage who can pause/unpause.
+    // In the final contract's `initialize` function, ensure `__SMARTPausable_init()` is called after other
+    // essential initializers like `__ERC20_init`, `__Ownable_init` (or `__AccessControl_init`), and `__SMART_init`.
 
     // -- Initializer --
-    /// @notice Initializes the pausable extension specific state.
-    /// @dev Calls the initializer for PausableUpgradeable logic via `_SMARTPausableLogic` inheritance implicitly?
-    ///      (OZ PausableUpgradeable doesn't have an explicit initializer, state is handled by _pause/_unpause)
-    ///      This initializer is currently empty but provided for consistency.
-    ///      Should be called within the main contract's `initialize` function.
+
+    /// @notice Initializer for the Upgradeable Pausable extension.
+    /// @dev This function MUST be called once by the `initialize` function of the final concrete (and proxy-deployed)
+    ///      contract. It uses the `onlyInitializing` modifier from `Initializable` to ensure it runs only during
+    ///      the proxy setup or a reinitialization phase if allowed by the upgrade pattern.
+    ///      It calls `__SMARTPausable_init_unchained` from `_SMARTPausableLogic` to perform essential setup,
+    ///      primarily registering the `ISMARTPausable` interface ID for ERC165 introspection.
+    ///      Note: OpenZeppelin's `PausableUpgradeable` itself doesn't have an explicit initializer; its state
+    ///      (`_paused`) is managed directly by its `_pause()` and `_unpause()` internal functions. This custom
+    ///      `__SMARTPausable_init` is mainly for our framework's ERC165 registration consistency.
     function __SMARTPausable_init() internal onlyInitializing {
+        // Initialize the core pausable logic (mainly for ERC165 interface registration).
         __SMARTPausable_init_unchained();
     }
 
     // -- Internal Hooks & Overrides --
 
     /**
-     * @notice Overrides the base ERC20Upgradeable `_update` function.
-     * @dev Applies the `whenNotPaused` modifier (inherited from `_SMARTPausableLogic`)
-     *      to ensure that token transfers (mints, burns, standard transfers)
-     *      can only occur when the contract is not paused.
-     *      Delegates the actual update logic to the parent implementation (likely `SMARTUpgradeable`).
-     * @param from The sender address.
-     * @param to The recipient address.
-     * @param value The amount being transferred.
+     * @notice Overrides the base `ERC20Upgradeable._update` function to integrate pausable functionality.
+     * @dev Applies the `whenNotPaused` modifier (inherited from `_SMARTPausableLogic`) to ensure that
+     *      token operations (mints, burns, standard transfers) via `_update` can only occur when the contract
+     *      is not paused.
+     *      Delegates the actual ledger update logic to `super._update`, which would call the next `_update`
+     *      in the inheritance chain (e.g., `SMARTUpgradeable`'s `_update`).
+     * @param from The address from which tokens are being sent (or `address(0)` for mints).
+     * @param to The address to which tokens are being sent (or `address(0)` for burns).
+     * @param value The amount of tokens being affected.
      */
     function _update(
         address from,
@@ -50,10 +69,12 @@ abstract contract SMARTPausableUpgradeable is Initializable, SMARTExtensionUpgra
     )
         internal
         virtual
-        override(ERC20Upgradeable) // Override the base ERC20 update
-        whenNotPaused // Apply modifier from _SMARTPausableLogic
+        override(ERC20Upgradeable) // Specifies that this overrides `_update` from `ERC20Upgradeable`.
+        whenNotPaused // Applies the modifier from `_SMARTPausableLogic`.
     {
-        // super._update will call the next _update in the inheritance chain (e.g., SMARTUpgradeable's _update)
+        // `super._update` calls the `_update` function of the parent contract in the inheritance hierarchy
+        // that also overrides `_update`. For an upgradeable SMART token, this is likely `SMARTUpgradeable`,
+        // which handles SMARTHooks before calling the base `ERC20Upgradeable._update`.
         super._update(from, to, value);
     }
 }
