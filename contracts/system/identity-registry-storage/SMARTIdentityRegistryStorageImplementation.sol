@@ -52,19 +52,19 @@ contract SMARTIdentityRegistryStorageImplementation is
     }
 
     /// @notice Mapping from investor wallet address => Identity struct.
-    mapping(address => Identity) private _identities;
+    mapping(address wallet => Identity identity) private _identities;
     /// @notice Array storing all wallet addresses that have a registered identity.
     address[] private _identityWallets;
     /// @notice Mapping from wallet address => index+1 in the `_identityWallets` array (for O(1) removal).
-    mapping(address => uint256) private _identityWalletsIndex;
+    mapping(address wallet => uint256 indexPlusOne) private _identityWalletsIndex;
 
     /// @notice Mapping indicating if an `SMARTIdentityRegistry` address is bound (true) or not (false).
-    mapping(address => bool) private _boundIdentityRegistries;
+    mapping(address registry => bool isBound) private _boundIdentityRegistries;
     /// @notice Array storing the addresses of all bound `SMARTIdentityRegistry` contracts.
     address[] private _boundIdentityRegistryAddresses;
     /// @notice Mapping from bound registry address => index+1 in the `_boundIdentityRegistryAddresses` array (for O(1)
     /// removal).
-    mapping(address => uint256) private _boundIdentityRegistriesIndex;
+    mapping(address registry => uint256 indexPlusOne) private _boundIdentityRegistriesIndex;
 
     // --- Events ---
     /// @notice Emitted when a new identity record is stored.

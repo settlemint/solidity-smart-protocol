@@ -23,7 +23,7 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
     // -- State Variables --
 
     // Track historical balances for each account
-    mapping(address account => Checkpoints.Trace208) private _balanceCheckpoints;
+    mapping(address account => Checkpoints.Trace208 checkpoints) private _balanceCheckpoints;
 
     // Track historical total supply
     Checkpoints.Trace208 private _totalSupplyCheckpoints;

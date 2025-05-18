@@ -19,7 +19,7 @@ import { ISMARTComplianceModule } from "../../../interface/ISMARTComplianceModul
 contract CountryAllowListComplianceModule is AbstractCountryComplianceModule {
     // --- State Variables ---
     /// @notice Mapping storing the global allowlist for this module instance (country code => allowed status).
-    mapping(uint16 => bool) private _globalAllowedCountries;
+    mapping(uint16 country => bool isAllowed) private _globalAllowedCountries;
 
     // --- Events ---
     /// @notice Emitted when countries are added to or removed from the global allowlist of this module instance.

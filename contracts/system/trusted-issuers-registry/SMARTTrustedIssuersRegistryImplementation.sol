@@ -50,15 +50,15 @@ contract SMARTTrustedIssuersRegistryImplementation is
     }
 
     /// @notice Primary mapping from issuer address => TrustedIssuer struct.
-    mapping(address => TrustedIssuer) private _trustedIssuers;
+    mapping(address issuerAddress => TrustedIssuer issuerDetails) private _trustedIssuers;
     /// @notice Array storing all trusted issuer addresses for iteration.
     address[] private _issuerAddresses;
 
     /// @notice Mapping from claim topic => array of issuer addresses trusted for that topic.
-    mapping(uint256 => address[]) private _issuersByClaimTopic;
+    mapping(uint256 claimTopic => address[] issuers) private _issuersByClaimTopic;
     /// @notice Mapping for efficient removal: claim topic => issuer address => index+1 in `_issuersByClaimTopic[topic]`
     /// array.
-    mapping(uint256 => mapping(address => uint256)) private _claimTopicIssuerIndex;
+    mapping(uint256 claimTopic => mapping(address issuer => uint256 indexPlusOne)) private _claimTopicIssuerIndex;
 
     // --- Events ---
     /// @notice Emitted when a new trusted issuer is added.
