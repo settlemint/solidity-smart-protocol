@@ -281,10 +281,10 @@ contract SMARTIdentityFactoryImplementation is
     )
         internal
         pure
-        returns (bytes32 saltBytes, string memory saltString)
+        returns (bytes32, string memory)
     {
-        saltString = string.concat(_saltPrefix, Strings.toHexString(_address));
-        saltBytes = keccak256(abi.encodePacked(saltString));
+        string memory saltString = string.concat(_saltPrefix, Strings.toHexString(_address));
+        bytes32 saltBytes = keccak256(abi.encodePacked(saltString));
 
         return (saltBytes, saltString);
     }
@@ -367,7 +367,7 @@ contract SMARTIdentityFactoryImplementation is
         view
         virtual
         override(ContextUpgradeable, ERC2771ContextUpgradeable)
-        returns (address sender)
+        returns (address)
     {
         return ERC2771ContextUpgradeable._msgSender();
     }

@@ -110,8 +110,8 @@ contract SMARTSystemFactory is ERC2771Context {
     /// @notice Creates a new SMARTSystem instance using the factory's default implementation addresses.
     /// @dev The caller of this function (msg.sender, or the original signer in a meta-transaction) will be set as the
     /// initial admin of the new SMARTSystem.
-    /// @return systemAddress The address of the newly created SMARTSystem contract.
-    function createSystem() public returns (address systemAddress) {
+    /// @return The address of the newly created SMARTSystem contract.
+    function createSystem() public returns (address) {
         address initialAdmin = _msgSender();
 
         SMARTSystem newSystem = new SMARTSystem(
@@ -126,7 +126,7 @@ contract SMARTSystemFactory is ERC2771Context {
             factoryForwarder
         );
 
-        systemAddress = address(newSystem);
+        address systemAddress = address(newSystem);
         smartSystems.push(systemAddress);
 
         emit SMARTSystemCreated(systemAddress, initialAdmin);
