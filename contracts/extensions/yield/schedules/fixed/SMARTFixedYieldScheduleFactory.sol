@@ -7,49 +7,93 @@ import { ISMARTYield } from "./../../ISMARTYield.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
-/// @title FixedYieldFactory - A factory contract for creating fixed yield schedules
-/// @notice This contract allows the creation of new fixed yield schedules with deterministic addresses
-/// using CREATE2. It provides functionality to create and manage yield schedules for tokens that
-/// support the ERC20Yield extension, enabling periodic yield distributions based on token balances.
-/// @dev Inherits from ERC2771Context for meta-transaction support. Uses CREATE2 for deterministic
-/// deployment addresses and maintains a registry of all created schedules. Only authorized yield
-/// managers can create schedules. Each schedule is automatically set on the corresponding token.
-/// @custom:security-contact support@settlemint.com
+/// @title Factory for Creating SMARTFixedYieldSchedule Contracts
+/// @notice This contract serves as a factory to deploy new instances of `SMARTFixedYieldSchedule` contracts.
+/// It allows for the creation of these yield schedules with deterministic addresses using the CREATE2 opcode,
+/// if a unique salt is derived from the schedule parameters.
+/// @dev Key features of this factory:
+/// - **Deployment of Schedules**: Provides a `create` function to deploy new `SMARTFixedYieldSchedule` instances.
+/// - **CREATE2**: Leverages `CREATE2` for deploying schedules, allowing their addresses to be pre-calculated if the
+/// salt (derived from creation parameters) is known.
+/// - **Authorization**: The `create` function checks if the caller (`_msgSender()`) is authorized to manage yield on
+/// the target `token` (via `token.canManageYield()`).
+/// - **Registry**: Maintains an array `allSchedules` to keep track of all yield schedule contracts created by this
+/// factory.
+/// - **Meta-transactions**: Inherits `ERC2771Context` to support gasless schedule creation if a trusted forwarder is
+/// configured.
+/// This factory simplifies the deployment process for fixed yield schedules and ensures that only authorized parties
+/// can set them up for a given token.
+/// @custom:security-contact support@settlemint.com Ensure the `trustedForwarder` is correctly configured if
+/// meta-transactions are used.
 contract SMARTFixedYieldScheduleFactory is ERC2771Context {
-    /// @notice Custom errors for the FixedYieldFactory contract
-    /// @dev These errors provide more gas-efficient and descriptive error handling
+    /// @notice Custom error types for the factory contract.
+    /// @dev Provides more gas-efficient and descriptive error handling.
+
+    /// @dev Reverted by the `create` function if the caller (`_msgSender()`) does not have permission
+    /// to manage yield for the specified `token` (as determined by `token.canManageYield(_msgSender())`).
     error NotAuthorized();
 
-    /// @notice Emitted when a new fixed yield schedule is created
-    /// @param schedule The address of the newly created fixed yield schedule
+    /// @notice Emitted when a new `SMARTFixedYieldSchedule` contract is successfully created and deployed by this
+    /// factory.
+    /// @param schedule The address of the newly deployed `SMARTFixedYieldSchedule` contract.
+    /// @param creator The address that initiated the creation of the yield schedule (the `_msgSender()` in the `create`
+    /// function).
     event SMARTFixedYieldScheduleCreated(address indexed schedule, address indexed creator);
 
-    /// @notice Array of all fixed yield schedules created by this factory
-    /// @dev Stores references to all created schedules for tracking and enumeration
+    /// @notice An array that stores references (addresses cast to `ISMARTFixedYieldSchedule`) to all fixed yield
+    /// schedule contracts created by this factory.
+    /// @dev This allows for enumeration or tracking of all deployed schedules. It is `public`, so a getter
+    /// `allSchedules(uint256)` is automatically generated.
+    /// Use `allSchedulesLength()` to get the number of schedules created.
     ISMARTFixedYieldSchedule[] public allSchedules;
 
-    /// @notice Deploys a new FixedYieldFactory contract
-    /// @dev Sets up the factory with meta-transaction support
-    /// @param forwarder The address of the trusted forwarder for meta-transactions
-    constructor(address forwarder) ERC2771Context(forwarder) { }
+    /// @notice Constructor for the `SMARTFixedYieldScheduleFactory`.
+    /// @dev Initializes the factory contract, including setting up support for meta-transactions via ERC2771Context.
+    /// @param forwarder The address of the trusted forwarder contract for meta-transactions (e.g., a GSN forwarder).
+    ///                  If meta-transactions are not used, this can be `address(0)`, but then `ERC2771Context` features
+    /// related to it won't be active.
+    constructor(address forwarder) ERC2771Context(forwarder) {
+        // The ERC2771Context constructor is called with the forwarder address.
+    }
 
-    /// @notice Returns the total number of fixed yield schedules created by this factory
-    /// @dev Provides a way to enumerate all created schedules
-    /// @return The total number of yield schedules created
-    function allSchedulesLength() external view returns (uint256) {
+    /// @notice Returns the total number of fixed yield schedule contracts that have been created by this factory.
+    /// @dev This can be used in conjunction with the public `allSchedules` array getter to iterate through all created
+    /// schedules.
+    /// For example, a loop from `0` to `allSchedulesLength() - 1` can retrieve each schedule address using
+    /// `allSchedules(i)`.
+    /// @return count The total count of schedules in the `allSchedules` array.
+    function allSchedulesLength() external view returns (uint256 count) {
         return allSchedules.length;
     }
 
-    /// @notice Creates a new fixed yield schedule for a token
-    /// @dev Uses CREATE2 for deterministic addresses and requires the caller to have yield management
-    /// permissions on the token. Automatically sets the created schedule on the token. The schedule
-    /// will distribute yield according to the specified rate and interval.
-    /// @param token The ERC20Yield-compatible token to create the yield schedule for
-    /// @param startTime The timestamp when yield distribution should start (must be in the future)
-    /// @param endTime The timestamp when yield distribution should end (must be after startTime)
-    /// @param rate The yield rate in basis points (1 basis point = 0.01%, e.g., 500 = 5%)
-    /// @param interval The interval between yield distributions in seconds (must be > 0)
-    /// @return The address of the newly created yield schedule
+    /// @notice Creates and deploys a new `SMARTFixedYieldSchedule` contract for a given SMART token.
+    /// @dev This function performs the following steps:
+    /// 1. **Authorization Check**: Verifies that the caller (`_msgSender()`) has permission to manage yield for the
+    /// target `token` by calling `token.canManageYield(_msgSender())`. If not, it reverts with `NotAuthorized`.
+    /// 2. **Salt Generation**: Computes a unique `salt` for the CREATE2 opcode. The salt is derived from the `token`
+    /// address and all the schedule parameters (`startTime`, `endTime`, `rate`, `interval`). This ensures that
+    /// deploying a schedule with the exact same parameters for the same token will result in the same contract address
+    /// (if deployed via this factory and salt scheme).
+    /// 3. **Deployment**: Deploys a new `SMARTFixedYieldSchedule` contract using the `new SMARTFixedYieldSchedule{salt:
+    /// salt}(...)` syntax (CREATE2).
+    ///    The `initialOwner` of the new schedule contract is set to the `_msgSender()` (the creator).
+    ///    The `trustedForwarder()` of this factory is passed to the new schedule for its own ERC2771 context.
+    /// 4. **Event Emission**: Emits a `SMARTFixedYieldScheduleCreated` event with the address of the new schedule and
+    /// the creator's address.
+    /// 5. **Registry Update**: Adds the new schedule contract's address (cast to `ISMARTFixedYieldSchedule`) to the
+    /// `allSchedules` array.
+    /// Note: The line `token.setYieldSchedule(scheduleAddress)` is commented out. This implies that setting the
+    /// schedule on the token itself is a separate step, to be performed by an authorized party after the schedule
+    /// contract is deployed. This separation can be useful for operational workflows or if `setYieldSchedule` has its
+    /// own complex authorization that shouldn't be mixed here.
+    /// @param token The `ISMARTYield`-compliant token for which the yield schedule is being created.
+    /// @param startTime The Unix timestamp when the yield distribution should start. Must be in the future at the time
+    /// of schedule deployment.
+    /// @param endTime The Unix timestamp when the yield distribution should end. Must be after `startTime`.
+    /// @param rate The yield rate in basis points (e.g., 500 for 5%). Must be greater than 0.
+    /// @param interval The interval between yield distributions in seconds (e.g., 86400 for daily). Must be greater
+    /// than 0.
+    /// @return scheduleAddress The address of the newly created and deployed `SMARTFixedYieldSchedule` contract.
     function create(
         ISMARTYield token,
         uint256 startTime,
@@ -58,23 +102,40 @@ contract SMARTFixedYieldScheduleFactory is ERC2771Context {
         uint256 interval
     )
         external
-        returns (address)
+        returns (address scheduleAddress)
     {
+        // Check if the caller is authorized to manage yield for the given token.
         if (!token.canManageYield(_msgSender())) revert NotAuthorized();
 
+        // Generate a unique salt for CREATE2 deployment based on token and schedule parameters.
+        // This allows for deterministic address generation.
         bytes32 salt = keccak256(abi.encodePacked(address(token), startTime, endTime, rate, interval));
-        address schedule = address(
-            new SMARTFixedYieldSchedule{ salt: salt }(
-                address(token), _msgSender(), startTime, endTime, rate, interval, trustedForwarder()
-            )
+
+        // Deploy the new SMARTFixedYieldSchedule contract using CREATE2 (via the `salt` option).
+        // The creator (`_msgSender()`) becomes the initial owner/admin of the new schedule.
+        // The factory's trusted forwarder is passed to the new schedule.
+        SMARTFixedYieldSchedule newScheduleInstance = new SMARTFixedYieldSchedule{ salt: salt }(
+            address(token), // The token this schedule is for.
+            _msgSender(), // The creator becomes the initial admin of the schedule.
+            startTime, // Schedule start time.
+            endTime, // Schedule end time.
+            rate, // Yield rate (basis points).
+            interval, // Distribution interval (seconds).
+            trustedForwarder() // Forwarder for meta-transactions for the new schedule.
         );
+        scheduleAddress = address(newScheduleInstance);
 
-        // Set the yield schedule on the token
-        // we cannot do this here anymore, since AccessControl won't work then
-        // token.setYieldSchedule(schedule);
+        // IMPORTANT: The line below was originally commented out. If the factory is intended to also set
+        // the schedule on the token, it would be uncommented. However, its current state suggests
+        // that `token.setYieldSchedule(scheduleAddress)` is a separate action to be performed by an authorized entity.
+        // This might be due to AccessControl configurations on `setYieldSchedule` that this factory doesn't manage.
+        // token.setYieldSchedule(scheduleAddress);
 
-        emit SMARTFixedYieldScheduleCreated(schedule, _msgSender());
-        allSchedules.push(SMARTFixedYieldSchedule(schedule));
-        return schedule;
+        // Emit an event to log the creation of the new schedule.
+        emit SMARTFixedYieldScheduleCreated(scheduleAddress, _msgSender());
+        // Add the new schedule to the list of all schedules created by this factory.
+        allSchedules.push(newScheduleInstance); // Implicit cast from SMARTFixedYieldSchedule to
+            // ISMARTFixedYieldSchedule
+        return scheduleAddress;
     }
 }

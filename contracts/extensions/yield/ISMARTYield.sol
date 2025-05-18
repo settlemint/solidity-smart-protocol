@@ -4,27 +4,58 @@ pragma solidity ^0.8.28;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ISMARTHistoricalBalances } from "./../historical-balances/ISMARTHistoricalBalances.sol";
 
+/// @title Interface for the SMART Yield Extension
+/// @notice This interface defines the functions that a SMART Yield token extension must implement.
+/// It allows for the management of a yield schedule associated with a token, which dictates how yield is accrued and
+/// paid out.
+/// This interface also inherits from `ISMARTHistoricalBalances`, indicating that any implementing contract
+/// must also support querying token balances at historical points in time, a feature often crucial for accurate yield
+/// calculations.
+/// @dev This interface is intended to be implemented by contracts that provide yield-generating capabilities for
+/// tokens.
+/// The functions are external, allowing them to be called from other contracts or off-chain applications.
 interface ISMARTYield is ISMARTHistoricalBalances {
-    /// @notice Sets the yield schedule for this token
-    /// @dev Override this function to add additional access control if needed
-    /// @param schedule The address of the yield schedule contract
+    /// @notice Sets or updates the yield schedule contract for this token.
+    /// @dev This function is crucial for configuring how yield is generated and distributed for the token.
+    /// The `schedule` address points to another smart contract that implements the `ISMARTYieldSchedule` interface (or
+    /// a more specific one like `ISMARTFixedYieldSchedule`).
+    /// This schedule contract will contain the detailed logic for yield calculation, timing, and distribution.
+    /// Implementers should consider adding access control to this function (e.g., only allowing an admin or owner role)
+    /// to prevent unauthorized changes to the yield mechanism.
+    /// @param schedule The address of the smart contract that defines the yield schedule. This contract must adhere to
+    /// `ISMARTYieldSchedule`.
     function setYieldSchedule(address schedule) external;
 
-    /// @notice Returns the basis amount used to calculate yield per token unit
-    /// @dev Override this function to define the yield calculation basis. For example, face value for bonds or token
-    /// value for shares
-    /// @param holder The address to get the yield basis for, allowing for holder-specific basis amounts
-    /// @return The basis amount per token unit used in yield calculations
-    function yieldBasisPerUnit(address holder) external view returns (uint256);
+    /// @notice Returns the basis amount used to calculate yield per single unit of the token (e.g., per 1 token with 18
+    /// decimals).
+    /// @dev The "yield basis" is a fundamental value upon which yield calculations are performed. For example:
+    /// - For a bond-like token, this might be its face value (e.g., 100 USD).
+    /// - For an equity-like token, it might be its nominal value or a value derived from an oracle.
+    /// This function allows the basis to be specific to a `holder`, enabling scenarios where different holders might
+    /// have different
+    /// yield bases (though often it will be a global value, in which case `holder` might be ignored).
+    /// The returned value is typically a raw number (e.g., if basis is $100 and token has 2 decimals, this might return
+    /// 10000).
+    /// @param holder The address of the token holder for whom the yield basis is being queried. This allows for
+    /// holder-specific configurations.
+    /// @return basisPerUnit The amount (in the smallest unit of the basis currency/asset) per single unit of the token,
+    /// used for yield calculations.
+    function yieldBasisPerUnit(address holder) external view returns (uint256 basisPerUnit);
 
-    /// @notice Returns the token used for yield payments
-    /// @dev Override this function to specify which token is used for yield payments
-    /// @return The token used for yield payments
-    function yieldToken() external view returns (IERC20);
+    /// @notice Returns the ERC20 token contract that is used for paying out the yield.
+    /// @dev Yield can be paid in the token itself or in a different token (e.g., a stablecoin).
+    /// This function specifies which ERC20 token will be transferred to holders when they claim their accrued yield.
+    /// @return paymentToken An `IERC20` interface instance representing the token used for yield payments.
+    function yieldToken() external view returns (IERC20 paymentToken);
 
-    /// @notice Checks if an address can manage yield on this token
-    /// @dev Override this function to implement permission checks
-    /// @param manager The address to check
-    /// @return True if the address can manage yield
-    function canManageYield(address manager) external view returns (bool);
+    /// @notice Checks if a given address has the permission to manage yield-related settings for this token.
+    /// @dev "Managing yield" could include actions like calling `setYieldSchedule` or other administrative functions
+    /// related to the yield mechanism (if any are defined in the implementing contract).
+    /// This function is essential for access control, ensuring that only authorized entities can alter critical yield
+    /// parameters.
+    /// Implementers should define the logic for what constitutes a "yield manager" (e.g., holding a specific role in an
+    /// AccessControl system).
+    /// @param manager The address to check for yield management permissions.
+    /// @return canManage A boolean value: `true` if the `manager` address can manage yield settings, `false` otherwise.
+    function canManageYield(address manager) external view returns (bool canManage);
 }
