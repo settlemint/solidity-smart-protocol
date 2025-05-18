@@ -251,7 +251,7 @@ contract SMARTFixedYieldSchedule is
         uint256 basis = ISMARTYield(_token).yieldBasisPerUnit(address(0));
 
         // Iterate through each completed period to calculate yield based on historical total supply
-        for (uint256 period = 1; period <= lastPeriod; period++) {
+        for (uint256 period = 1; period <= lastPeriod; ++period) {
             uint256 periodEndTimestamp = _periodEndTimestamps[period - 1];
             // Fetch the total supply as it was at the end of the specific period
             uint256 historicalTotalSupply = ISMARTYield(_token).totalSupplyAt(periodEndTimestamp);
@@ -297,7 +297,7 @@ contract SMARTFixedYieldSchedule is
 
         // Calculate yield for complete unclaimed periods
         uint256 completePeriodAmount = 0;
-        for (uint256 period = fromPeriod; period <= lastCompleted; period++) {
+        for (uint256 period = fromPeriod; period <= lastCompleted; ++period) {
             uint256 balance = _token.balanceOfAt(holder, _periodEndTimestamps[period - 1]);
             if (balance > 0) {
                 completePeriodAmount += (balance * basis * _rate) / RATE_BASIS_POINTS;
@@ -339,7 +339,7 @@ contract SMARTFixedYieldSchedule is
         uint256[] memory periodAmounts = new uint256[](lastPeriod - fromPeriod + 1);
 
         // Calculate yield for each unclaimed period using historical balances
-        for (uint256 period = fromPeriod; period <= lastPeriod; period++) {
+        for (uint256 period = fromPeriod; period <= lastPeriod; ++period) {
             uint256 balance = _token.balanceOfAt(_msgSender(), _periodEndTimestamps[period - 1]);
             if (balance > 0) {
                 uint256 periodYield = (balance * basis * _rate) / RATE_BASIS_POINTS;
