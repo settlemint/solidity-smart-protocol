@@ -2,7 +2,6 @@
 pragma solidity ^0.8.28;
 
 import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
-import { SMARTHooks } from "./../../common/SMARTHooks.sol";
 import { FutureLookup } from "./../SMARTHistoricalBalancesErrors.sol";
 import { ISMARTHistoricalBalances } from "./../ISMARTHistoricalBalances.sol";
 import { CheckpointUpdated } from "./../SMARTHistoricalBalancesEvents.sol";

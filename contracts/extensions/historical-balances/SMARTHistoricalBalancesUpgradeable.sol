@@ -9,7 +9,6 @@ import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
-import { SMARTContext } from "./../common/SMARTContext.sol";
 
 // Internal implementation imports
 import { _SMARTHistoricalBalancesLogic } from "./internal/_SMARTHistoricalBalancesLogic.sol";

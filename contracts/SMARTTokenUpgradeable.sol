@@ -11,12 +11,10 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 // Interface imports
-import { ISMART } from "./interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
 import { SMARTUpgradeable } from "./extensions/core/SMARTUpgradeable.sol";
-import { SMARTExtensionUpgradeable } from "./extensions/common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
 
 // Feature extensions
