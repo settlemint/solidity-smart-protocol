@@ -1,20 +1,34 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
+/// @title Interface for SMART Token Collateral Verification
+/// @notice This interface defines the external functions for a SMART token extension that verifies
+///         collateral claims before allowing certain operations (typically minting).
+///         The collateral is represented by a specific ERC-735 claim on an OnchainID identity contract.
+///         In Solidity, an interface outlines *what* functions a contract offers publicly but not *how* they work.
+///         This allows for standardized interactions with any contract implementing this collateral logic.
 interface ISMARTCollateral {
-    /// @notice Finds the first valid collateral claim for a given identity address based on the configured topic.
-    /// @dev Iterates through trusted issuers for the `collateralProofTopic`. For each potential claim found
-    ///      on the user's identity contract (`onchainID`), it checks:
-    ///      1. The claim's topic matches `collateralProofTopic`.
-    ///      2. The claim's issuer is listed in the `identityRegistry`'s `issuersRegistry` as trusted for this topic.
-    ///      3. The trusted issuer contract confirms the claim is currently valid (`isClaimValid`).
-    ///      4. The claim data can be decoded into an amount and expiry timestamp.
-    ///      5. The claim has not expired (`decodedExpiry > block.timestamp`).
-    ///      Returns the details of the *first* claim that satisfies all conditions.
-    /// @return amount The collateral amount decoded from the valid claim data (0 if no valid claim found).
-    /// @return issuer The address of the trusted claim issuer contract that issued the valid claim (address(0) if
-    /// none).
-    /// @return expiryTimestamp The expiry timestamp decoded from the valid claim data (0 if no valid claim found).
+    /// @notice Attempts to find the first valid collateral claim associated with the token contract's
+    ///         own OnchainID identity, based on a pre-configured claim topic.
+    /// @dev This function is expected to perform several checks:
+    ///      1. Retrieve claim IDs from the token's identity contract (`this.onchainID()`) for the configured
+    /// `collateralProofTopic`.
+    ///      2. For each claim, verify its issuer is trusted for that topic via the `identityRegistry`'s
+    /// `issuersRegistry`.
+    ///      3. Confirm the trusted issuer contract itself deems the claim valid (e.g., via
+    /// `IClaimIssuer.isClaimValid`).
+    ///      4. Decode the claim data, which is expected to contain a collateral `amount` and an `expiryTimestamp`.
+    ///      5. Ensure the claim has not expired (i.e., `decodedExpiry > block.timestamp`).
+    ///      The function should return the details of the *first* claim that successfully passes all these validations.
+    ///      If no such claim is found, it should return zero values.
+    ///      This is a `view` function, meaning it reads blockchain state but does not modify it, and thus
+    ///      does not consume gas when called as a read-only operation from off-chain.
+    /// @return amount The collateral amount (e.g., maximum permissible total supply) decoded from the valid claim data.
+    ///                Returns 0 if no valid collateral claim is found.
+    /// @return issuer The address of the trusted `IClaimIssuer` contract that issued the valid collateral claim.
+    ///                Returns `address(0)` if no valid claim is found.
+    /// @return expiryTimestamp The expiry timestamp (Unix time) decoded from the valid claim data.
+    ///                         Returns 0 if no valid claim is found or if the found claim has already expired.
     function findValidCollateralClaim()
         external
         view
