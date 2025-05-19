@@ -292,60 +292,60 @@ jobs:
           branch: main
           file_pattern: "package.json README.md all_allocations.json"
 
-      - name: Set up Docker Buildx
-        if: env.TAG == 'latest'
-        uses: docker/setup-buildx-action@v3
+      # - name: Set up Docker Buildx
+      #   if: env.TAG == 'latest'
+      #   uses: docker/setup-buildx-action@v3
 
-      - name: Install Cosign
-        if: env.TAG == 'latest'
-        uses: sigstore/cosign-installer@v3
+      # - name: Install Cosign
+      #   if: env.TAG == 'latest'
+      #   uses: sigstore/cosign-installer@v3
 
-      - name: Login to GitHub Container Registry
-        if: env.TAG == 'latest'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Login to GitHub Container Registry
+      #   if: env.TAG == 'latest'
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.repository_owner }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker meta
-        if: env.TAG == 'latest'
-        id: docker_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ghcr.io/${{ github.repository }}
-          tags: |
-            type=schedule
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha
+      # - name: Docker meta
+      #   if: env.TAG == 'latest'
+      #   id: docker_meta
+      #   uses: docker/metadata-action@v5
+      #   with:
+      #     images: |
+      #       ghcr.io/${{ github.repository }}
+      #     tags: |
+      #       type=schedule
+      #       type=ref,event=branch
+      #       type=ref,event=pr
+      #       type=semver,pattern={{version}}
+      #       type=semver,pattern={{major}}.{{minor}}
+      #       type=semver,pattern={{major}}
+      #       type=sha
 
-      - name: Build and push
-        if: env.TAG == 'latest'
-        uses: docker/build-push-action@v6
-        id: build-and-push
-        with:
-          platforms: linux/amd64,linux/arm64
-          provenance: true
-          sbom: true
-          push: true
-          load: false
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
-          no-cache: true
+      # - name: Build and push
+      #   if: env.TAG == 'latest'
+      #   uses: docker/build-push-action@v6
+      #   id: build-and-push
+      #   with:
+      #     platforms: linux/amd64,linux/arm64
+      #     provenance: true
+      #     sbom: true
+      #     push: true
+      #     load: false
+      #     tags: ${{ steps.docker_meta.outputs.tags }}
+      #     labels: ${{ steps.docker_meta.outputs.labels }}
+      #     no-cache: true
 
-      - name: Sign the images with GitHub OIDC Token
-        if: env.TAG == 'latest'
-        env:
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes ${images}
+      # - name: Sign the images with GitHub OIDC Token
+      #   if: env.TAG == 'latest'
+      #   env:
+      #     DIGEST: ${{ steps.build-and-push.outputs.digest }}
+      #     TAGS: ${{ steps.docker_meta.outputs.tags }}
+      #   run: |
+      #     images=""
+      #     for tag in ${TAGS}; do
+      #       images+="${tag}@${DIGEST} "
+      #     done
+      #     cosign sign --yes ${images}
