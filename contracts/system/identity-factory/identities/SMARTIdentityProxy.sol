@@ -13,6 +13,7 @@ import {
 } from "../../SMARTSystemErrors.sol";
 import { ZeroAddressNotAllowed } from "../SMARTIdentityErrors.sol";
 import { Identity } from "@onchainid/contracts/Identity.sol";
+import { ISMARTIdentity } from "./ISMARTIdentity.sol";
 
 /// @title SMART Identity Proxy Contract (for Wallet Identities)
 /// @author SettleMint Tokenization Services
@@ -81,7 +82,7 @@ contract SMARTIdentityProxy is Proxy {
 
         // Prepare the call data for delegatecalling Identity.initialize(initialManagementKey)
         // The selector is for the initialize function in the OnchainID `Identity` contract.
-        bytes memory data = abi.encodeWithSelector(Identity.initialize.selector, initialManagementKey);
+        bytes memory data = abi.encodeWithSelector(ISMARTIdentity.initialize.selector, initialManagementKey);
 
         // Perform the delegatecall to initialize the identity logic in the context of this proxy's storage.
         // slither-disable-next-line low-level-calls: Delegatecall is inherent and fundamental to proxy functionality.

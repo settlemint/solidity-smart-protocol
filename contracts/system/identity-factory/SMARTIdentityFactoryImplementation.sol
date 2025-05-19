@@ -14,13 +14,13 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 
 // Interface imports
 import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
-// IImplementationAuthority is not directly used, consider removing if not needed for future use.
-// import { IImplementationAuthority } from "@onchainid/contracts/interface/IImplementationAuthority.sol";
 import { ISMARTIdentityFactory } from "./ISMARTIdentityFactory.sol";
+import { ISMARTIdentity } from "./identities/ISMARTIdentity.sol";
+import { ISMARTTokenIdentity } from "./identities/ISMARTTokenIdentity.sol";
 
 // System imports
 import { InvalidSystemAddress } from "../SMARTSystemErrors.sol"; // Assuming this is correctly placed
-
+import { ISMARTSystem } from "../ISMARTSystem.sol";
 // Implementation imports
 import { SMARTIdentityProxy } from "./identities/SMARTIdentityProxy.sol";
 import { SMARTTokenIdentityProxy } from "./identities/SMARTTokenIdentityProxy.sol";
@@ -49,6 +49,10 @@ error TokenAlreadyLinked(address token);
 /// @dev This is a critical error suggesting a potential issue in the CREATE2 computation, salt, or deployment bytecode,
 /// or an unexpected change in blockchain state between prediction and deployment.
 error DeploymentAddressMismatch();
+/// @notice Indicates that the identity implementation is invalid.
+error InvalidIdentityImplementation();
+/// @notice Indicates that the token identity implementation is invalid.
+error InvalidTokenIdentityImplementation();
 
 /// @title SMART Identity Factory Implementation
 /// @author SettleMint Tokenization Services
@@ -151,9 +155,23 @@ contract SMARTIdentityFactoryImplementation is
         __ERC165_init_unchained();
         __AccessControlEnumerable_init_unchained();
 
+        if (
+            !IERC165(ISMARTSystem(systemAddress).identityImplementation()).supportsInterface(
+                type(ISMARTIdentity).interfaceId
+            )
+        ) {
+            revert InvalidIdentityImplementation();
+        }
+
+        if (
+            !IERC165(ISMARTSystem(systemAddress).tokenIdentityImplementation()).supportsInterface(
+                type(ISMARTTokenIdentity).interfaceId
+            )
+        ) {
+            revert InvalidTokenIdentityImplementation();
+        }
+
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
-        // TODO: Confirm if the initialAdmin should always be the default registrar.
-        // For now, granting REGISTRAR_ROLE to initialAdmin by default.
         _grantRole(REGISTRAR_ROLE, initialAdmin);
 
         _system = systemAddress;

@@ -13,6 +13,7 @@ import {
 } from "../../SMARTSystemErrors.sol";
 import { ZeroAddressNotAllowed } from "../SMARTIdentityErrors.sol";
 import { Identity } from "@onchainid/contracts/Identity.sol";
+import { ISMARTTokenIdentity } from "./ISMARTTokenIdentity.sol";
 
 /// @title SMART Token Identity Proxy Contract (for Token-Bound Identities)
 /// @author SettleMint Tokenization Services
@@ -69,15 +70,15 @@ contract SMARTTokenIdentityProxy is Proxy {
     ///    If this `delegatecall` fails, the proxy deployment reverts.
     /// @param systemAddress The address of the `ISMARTSystem` contract. This system contract provides the address of
     /// the `SMARTTokenIdentityImplementation` logic contract.
-    /// @param initialManagementKey The address to be set as the first management key for this token's identity (e.g.,
-    /// the token owner or a designated admin).
-    constructor(address systemAddress, address initialManagementKey) {
+    /// @param accessManager The address of the `ISMARTTokenAccessManager` contract. This manager contract handles
+    /// the access control for the token's identity.
+    constructor(address systemAddress, address accessManager) {
         if (systemAddress == address(0) || !IERC165(systemAddress).supportsInterface(type(ISMARTSystem).interfaceId)) {
             revert InvalidSystemAddress();
         }
         _setSystem(ISMARTSystem(systemAddress));
 
-        if (initialManagementKey == address(0)) revert ZeroAddressNotAllowed();
+        if (accessManager == address(0)) revert ZeroAddressNotAllowed();
 
         ISMARTSystem system_ = _getSystem();
         address implementation = system_.tokenIdentityImplementation(); // Fetches the token-specific identity impl.
@@ -85,7 +86,7 @@ contract SMARTTokenIdentityProxy is Proxy {
 
         // Prepare the call data for delegatecalling Identity.initialize(initialManagementKey)
         // The selector is for the initialize function in the OnchainID `Identity` contract.
-        bytes memory data = abi.encodeWithSelector(Identity.initialize.selector, initialManagementKey);
+        bytes memory data = abi.encodeWithSelector(ISMARTTokenIdentity.initialize.selector, accessManager);
 
         // Perform the delegatecall to initialize the identity logic in the context of this proxy's storage.
         // slither-disable-next-line low-level-calls: Delegatecall is inherent and fundamental to proxy functionality.

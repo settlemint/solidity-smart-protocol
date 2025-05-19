@@ -46,16 +46,14 @@ abstract contract _SMARTTokenAccessManagedLogic is _SMARTExtension, ISMARTTokenA
         emit AccessManagerSet(_smartSender(), accessManager_);
     }
 
-    /**
-     * @dev Modifier: Restricts access to a function to only accounts that have a specific role
-     *      as determined by the `_accessManager`.
-     *      A 'modifier' in Solidity is a way to change the behavior of a function.
-     *      It typically checks a condition before executing the function's code.
-     *      If the condition checked by `_checkRole` is not met, the transaction will revert.
-     *      The `_` (underscore) in the modifier's body is where the code of the function
-     *      using this modifier will be executed.
-     * @param role The `bytes32` identifier of the role required to access the function.
-     */
+    /// @dev Modifier: Restricts access to a function to only accounts that have a specific role
+    ///      as determined by the `_accessManager`.
+    ///      A 'modifier' in Solidity is a way to change the behavior of a function.
+    ///      It typically checks a condition before executing the function's code.
+    ///      If the condition checked by `_checkRole` is not met, the transaction will revert.
+    ///      The `_` (underscore) in the modifier's body is where the code of the function
+    ///      using this modifier will be executed.
+    /// @param role The `bytes32` identifier of the role required to access the function.
     modifier onlyAccessManagerRole(bytes32 role) {
         _checkRole(role, _smartSender());
         _;
