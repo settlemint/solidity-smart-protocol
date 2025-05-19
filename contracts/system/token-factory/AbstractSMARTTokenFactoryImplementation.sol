@@ -10,6 +10,8 @@ import { ISMARTTokenFactory } from "./ISMARTTokenFactory.sol";
 import { ISMART } from "../../interface/ISMART.sol";
 import { SMARTTokenAccessManagerProxy } from "../access-manager/SMARTTokenAccessManagerProxy.sol";
 import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { ISMARTSystem } from "../ISMARTSystem.sol";
+import { ISMARTIdentityFactory } from "../identity-factory/ISMARTIdentityFactory.sol";
 // -- Errors --
 /// @notice Custom errors for the factory contract
 /// @dev Defines custom error types used by the contract for various failure conditions.
@@ -53,8 +55,11 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @notice Emitted when a new proxy contract is created using CREATE2.
     /// @param sender The address of the sender.
     /// @param tokenAddress The address of the newly created token.
+    /// @param tokenIdentity The address of the token identity.
     /// @param accessManager The address of the access manager.
-    event AssetCreated(address indexed sender, address indexed tokenAddress, address indexed accessManager);
+    event TokenAssetCreated(
+        address indexed sender, address indexed tokenAddress, address indexed tokenIdentity, address accessManager
+    );
 
     // --- State Variables ---
 
@@ -181,7 +186,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @param nameForSalt The name component for the salt calculation.
     /// @param symbolForSalt The symbol component for the salt calculation.
     /// @return deployedAddress The address of the newly deployed proxy contract.
-    function _deployProxy(
+    function _deployToken(
         bytes memory proxyCreationCode,
         bytes memory encodedConstructorArgs,
         address accessManager,
@@ -224,8 +229,13 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     }
 
     function _finalizeTokenCreation(address tokenAddress, address accessManager) internal virtual {
-        // TODO: create the identity
-        emit AssetCreated(_msgSender(), tokenAddress, accessManager);
+        ISMARTSystem system_ = ISMARTSystem(_systemAddress);
+        ISMARTIdentityFactory identityFactory_ = ISMARTIdentityFactory(system_.identityFactoryProxy());
+        address tokenIdentity = identityFactory_.createTokenIdentity(tokenAddress, accessManager);
+
+        ISMART(tokenAddress).setOnchainID(tokenIdentity);
+
+        emit TokenAssetCreated(_msgSender(), tokenAddress, tokenIdentity, accessManager);
     }
 
     // --- ERC2771Context Overrides ---

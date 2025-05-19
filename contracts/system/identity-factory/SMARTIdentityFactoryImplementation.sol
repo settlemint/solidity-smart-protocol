@@ -247,11 +247,12 @@ contract SMARTIdentityFactoryImplementation is
     /// 3. Stores the mapping from the `_token` address to the new `identity` contract address.
     /// 4. Emits a `TokenIdentityCreated` event.
     /// @param _token The address of the token contract for which the identity is being created.
-    /// @param _tokenOwner The address that will be designated as the initial owner/manager of the token's identity.
+    /// @param _accessManager The address of the access manager contract that will be set as the initial owner/manager
+    /// of the token's identity.
     /// @return address The address of the newly created and registered `SMARTTokenIdentityProxy` contract.
     function createTokenIdentity(
         address _token,
-        address _tokenOwner
+        address _accessManager
     )
         external
         virtual
@@ -260,11 +261,11 @@ contract SMARTIdentityFactoryImplementation is
         returns (address)
     {
         if (_token == address(0)) revert ZeroAddressNotAllowed();
-        if (_tokenOwner == address(0)) revert ZeroAddressNotAllowed();
+        if (_accessManager == address(0)) revert ZeroAddressNotAllowed();
         if (_tokenIdentities[_token] != address(0)) revert TokenAlreadyLinked(_token);
 
         // Deploy identity with _tokenOwner as the initial management key
-        address identity = _createAndRegisterTokenIdentity(_token, _tokenOwner);
+        address identity = _createAndRegisterTokenIdentity(_token, _accessManager);
 
         _tokenIdentities[_token] = identity;
         emit TokenIdentityCreated(_msgSender(), identity, _token);
@@ -379,20 +380,14 @@ contract SMARTIdentityFactoryImplementation is
     /// @dev Calculates a unique salt for the `_tokenAddress`, checks if the salt has been taken, deploys
     ///      the `SMARTTokenIdentityProxy` using `_deployTokenProxy`, and marks the salt as taken.
     /// @param _tokenAddress The address of the token for which to create an identity.
-    /// @param _initialManagerAddress The address to be set as the initial management key in the proxy's constructor.
+    /// @param _accessManager The address of the access manager contract that will be set as the initial owner/manager
     /// @return address The address of the newly deployed `SMARTTokenIdentityProxy`.
-    function _createAndRegisterTokenIdentity(
-        address _tokenAddress,
-        address _initialManagerAddress
-    )
-        private
-        returns (address)
-    {
+    function _createAndRegisterTokenIdentity(address _tokenAddress, address _accessManager) private returns (address) {
         (bytes32 saltBytes, string memory saltString) = _calculateSalt(TOKEN_SALT_PREFIX, _tokenAddress);
 
         if (_saltTakenByteSalt[saltBytes]) revert SaltAlreadyTaken(saltString);
 
-        address identity = _deployTokenProxy(saltBytes, _initialManagerAddress);
+        address identity = _deployTokenProxy(saltBytes, _accessManager);
 
         _saltTakenByteSalt[saltBytes] = true;
         return identity;
@@ -463,11 +458,11 @@ contract SMARTIdentityFactoryImplementation is
     /// @dev Similar to `_deployWalletProxy` but for token identities, using `_computeTokenProxyAddress` and
     /// `_getTokenProxyAndConstructorArgs`.
     /// @param _saltBytes The `bytes32` salt for the CREATE2 deployment.
-    /// @param _initialManager The address to be set as the initial manager in the proxy's constructor.
+    /// @param _accessManager The address of the access manager contract that will be set as the initial owner/manager
     /// @return address The address of the newly deployed `SMARTTokenIdentityProxy`.
-    function _deployTokenProxy(bytes32 _saltBytes, address _initialManager) private returns (address) {
-        address predictedAddr = _computeTokenProxyAddress(_saltBytes, _initialManager);
-        (bytes memory proxyBytecode, bytes memory constructorArgs) = _getTokenProxyAndConstructorArgs(_initialManager);
+    function _deployTokenProxy(bytes32 _saltBytes, address _accessManager) private returns (address) {
+        address predictedAddr = _computeTokenProxyAddress(_saltBytes, _accessManager);
+        (bytes memory proxyBytecode, bytes memory constructorArgs) = _getTokenProxyAndConstructorArgs(_accessManager);
         return _deployProxy(predictedAddr, proxyBytecode, constructorArgs, _saltBytes);
     }
 
@@ -490,17 +485,17 @@ contract SMARTIdentityFactoryImplementation is
     /// @notice Internal helper to get the creation bytecode and encoded constructor arguments for
     /// `SMARTTokenIdentityProxy`.
     /// @dev The constructor of `SMARTTokenIdentityProxy` takes the `_system` address (from factory state) and
-    /// `_initialManager`.
-    /// @param _initialManager The address to be encoded as the initial manager argument.
+    /// `_accessManager`.
+    /// @param _accessManager The address of the access manager contract that will be set as the initial owner/manager
     /// @return proxyBytecode The creation bytecode of `SMARTTokenIdentityProxy`.
-    /// @return constructorArgs The ABI-encoded constructor arguments (`_system`, `_initialManager`).
-    function _getTokenProxyAndConstructorArgs(address _initialManager)
+    /// @return constructorArgs The ABI-encoded constructor arguments (`_system`, `_accessManager`).
+    function _getTokenProxyAndConstructorArgs(address _accessManager)
         private
         view
         returns (bytes memory proxyBytecode, bytes memory constructorArgs)
     {
         proxyBytecode = type(SMARTTokenIdentityProxy).creationCode;
-        constructorArgs = abi.encode(_system, _initialManager);
+        constructorArgs = abi.encode(_system, _accessManager);
         // No explicit return needed due to named return variables
     }
 
