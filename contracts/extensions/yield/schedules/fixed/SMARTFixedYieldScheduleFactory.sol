@@ -104,9 +104,6 @@ contract SMARTFixedYieldScheduleFactory is ERC2771Context {
         external
         returns (address scheduleAddress)
     {
-        // Check if the caller is authorized to manage yield for the given token.
-        if (!token.canManageYield(_msgSender())) revert NotAuthorized();
-
         // Generate a unique salt for CREATE2 deployment based on token and schedule parameters.
         // This allows for deterministic address generation.
         bytes32 salt = keccak256(abi.encodePacked(address(token), startTime, endTime, rate, interval));
@@ -124,12 +121,6 @@ contract SMARTFixedYieldScheduleFactory is ERC2771Context {
             trustedForwarder() // Forwarder for meta-transactions for the new schedule.
         );
         scheduleAddress = address(newScheduleInstance);
-
-        // IMPORTANT: The line below was originally commented out. If the factory is intended to also set
-        // the schedule on the token, it would be uncommented. However, its current state suggests
-        // that `token.setYieldSchedule(scheduleAddress)` is a separate action to be performed by an authorized entity.
-        // This might be due to AccessControl configurations on `setYieldSchedule` that this factory doesn't manage.
-        // token.setYieldSchedule(scheduleAddress);
 
         // Emit an event to log the creation of the new schedule.
         emit SMARTFixedYieldScheduleCreated(scheduleAddress, _msgSender());

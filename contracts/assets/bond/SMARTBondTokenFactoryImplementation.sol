@@ -4,8 +4,10 @@ pragma solidity ^0.8.28;
 // OpenZeppelin imports
 import { AbstractSMARTTokenFactoryImplementation } from
     "../../system/token-factory/AbstractSMARTTokenFactoryImplementation.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // Interface imports
+import { ISMARTBond } from "./ISMARTBond.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Local imports
@@ -56,5 +58,9 @@ contract SMARTBondTokenFactoryImplementation is AbstractSMARTTokenFactoryImpleme
 
         // Deploy using the helper from the abstract contract
         return _deployProxy(proxyBytecode, constructorArgs, address(accessManager), name_, symbol_);
+    }
+
+    function isValidTokenImplementation(address tokenImplementation_) public view returns (bool) {
+        return IERC165(tokenImplementation_).supportsInterface(type(ISMARTBond).interfaceId);
     }
 }

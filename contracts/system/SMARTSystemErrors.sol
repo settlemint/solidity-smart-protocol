@@ -71,7 +71,21 @@ error InvalidImplementationInterface(address implAddress, bytes4 interfaceId);
 /// @dev This can happen if the contract does not have enough Ether, or if the recipient address cannot accept Ether
 /// (e.g., it's a contract without a payable fallback/receive function that reverts on Ether receipt).
 error EtherWithdrawalFailed();
+
+/// @notice Error indicating that an invalid token factory address was provided.
 error InvalidTokenFactoryAddress();
+
+/// @notice Error indicating that the token factory implementation address has not been set.
 error TokenFactoryImplementationNotSet(bytes32 registryTypeHash);
+
+/// @notice Error indicating that a token factory type hash has already been registered.
 error TokenFactoryTypeAlreadyRegistered(bytes32 registryTypeHash);
+
+/// @notice Error indicating that the token implementation address has not been set.
 error TokenImplementationNotSet();
+
+/// @notice Error indicating that an invalid token implementation address was provided.
+error InvalidTokenImplementationAddress();
+
+/// @notice Error indicating that an invalid token implementation interface was provided.
+error InvalidTokenImplementationInterface();

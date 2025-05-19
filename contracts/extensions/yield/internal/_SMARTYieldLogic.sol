@@ -16,8 +16,8 @@ import { YieldScheduleSet } from "./../SMARTYieldEvents.sol";
 /// @dev This contract is designed to be inherited by other contracts (either standard or upgradeable versions of the
 /// yield extension)
 /// that will integrate this logic into a full token implementation.
-/// It implements the `ISMARTYield` interface (partially, as some functions like `yieldBasisPerUnit`, `yieldToken`,
-/// `canManageYield` are expected to be overridden or implemented by the final contract).
+/// It implements the `ISMARTYield` interface (partially, as some functions like `yieldBasisPerUnit`, `yieldToken` are
+/// expected to be overridden or implemented by the final contract).
 /// Key functionalities:
 /// - Storing the address of the `yieldSchedule` contract.
 /// - Providing an internal function `_smart_setYieldSchedule` to set this schedule with necessary checks.

@@ -20,7 +20,9 @@ import {
     InvalidImplementationInterface,
     EtherWithdrawalFailed,
     InvalidTokenFactoryAddress,
-    TokenFactoryTypeAlreadyRegistered
+    TokenFactoryTypeAlreadyRegistered,
+    InvalidTokenImplementationAddress,
+    InvalidTokenImplementationInterface
 } from "./SMARTSystemErrors.sol";
 
 // Interface imports
@@ -374,6 +376,11 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     {
         if (address(_factoryImplementation) == address(0)) revert InvalidTokenFactoryAddress();
         _checkInterface(_factoryImplementation, type(ISMARTTokenFactory).interfaceId);
+
+        if (address(_tokenImplementation) == address(0)) revert InvalidTokenImplementationAddress();
+        if (!ISMARTTokenFactory(_factoryImplementation).isValidTokenImplementation(_tokenImplementation)) {
+            revert InvalidTokenImplementationInterface();
+        }
 
         bytes32 factoryTypeHash = keccak256(abi.encodePacked(_typeName));
 

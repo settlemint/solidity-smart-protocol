@@ -14,6 +14,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 import { SMARTRoles } from "./../SMARTRoles.sol";
 
 // Interface imports
+import { ISMARTBond } from "./ISMARTBond.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
@@ -39,6 +40,7 @@ import { SMARTCappedUpgradeable } from "../../extensions/capped/SMARTCappedUpgra
 
 contract SMARTBondImplementation is
     Initializable,
+    ISMARTBond,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,
     SMARTCustodianUpgradeable,
@@ -126,6 +128,7 @@ contract SMARTBondImplementation is
         address accessManager_
     )
         public
+        override
         initializer
     {
         if (maturityDate_ <= block.timestamp) revert BondInvalidMaturityDate();
@@ -495,10 +498,6 @@ contract SMARTBondImplementation is
         return _underlyingAsset;
     }
 
-    function canManageYield(address manager) external view override returns (bool) {
-        return _hasRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, manager);
-    }
-
     // --- View Functions (Overrides) ---
     /// @inheritdoc ERC20Upgradeable
     function name() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
@@ -524,6 +523,11 @@ contract SMARTBondImplementation is
     {
         // Delegation to SMARTUpgradeable -> _SMARTLogic ensures correct value is returned
         return super.decimals();
+    }
+
+    /// @inheritdoc SMARTUpgradeable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(SMARTUpgradeable) returns (bool) {
+        return interfaceId == type(ISMARTBond).interfaceId || super.supportsInterface(interfaceId);
     }
 
     // --- Internal Functions ---

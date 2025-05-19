@@ -5,7 +5,7 @@ import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
 
-import { SMARTBondImplementation } from "./SMARTBondImplementation.sol";
+import { ISMARTBond } from "./ISMARTBond.sol";
 
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMARTTokenFactory } from "../../system/token-factory/ISMARTTokenFactory.sol";
@@ -78,7 +78,7 @@ contract SMARTBondProxy is Proxy {
         if (implementation == address(0)) revert TokenImplementationNotSet();
 
         bytes memory data = abi.encodeWithSelector(
-            SMARTBondImplementation.initialize.selector,
+            ISMARTBond.initialize.selector,
             name_,
             symbol_,
             decimals_,
