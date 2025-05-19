@@ -13,8 +13,7 @@ import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { SMARTForwarder } from "../../contracts/vendor/SMARTForwarder.sol";
-import { SMARTBondTokenFactoryImplementation } from
-    "../../contracts/assets/bond/SMARTBondTokenFactoryImplementation.sol";
+import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { SMARTBondImplementation } from "../../contracts/assets/bond/SMARTBondImplementation.sol";
 
 abstract contract AbstractSMARTAssetTest is Test {
@@ -31,7 +30,7 @@ abstract contract AbstractSMARTAssetTest is Test {
     address public identityRegistry;
     address public compliance;
 
-    SMARTTokenAccessManager public accessManager;
+    ISMARTTokenAccessManager public accessManager;
 
     SMARTForwarder public forwarder;
 
@@ -81,7 +80,6 @@ abstract contract AbstractSMARTAssetTest is Test {
 
         // Initialize the access manager
         vm.prank(_owner);
-        accessManager = new SMARTTokenAccessManager(address(forwarder));
     }
 
     function _setUpIdentity(address _wallet) internal {
