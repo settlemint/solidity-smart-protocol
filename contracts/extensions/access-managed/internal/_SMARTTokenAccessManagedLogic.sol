@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import { ZeroAddressNotAllowed } from "../../common/CommonErrors.sol";
 import { ISMARTTokenAccessManaged } from "./../ISMARTTokenAccessManaged.sol";
-import { ISMARTTokenAccessManager } from "./../manager/ISMARTTokenAccessManager.sol";
+import { ISMARTTokenAccessManager } from "./../ISMARTTokenAccessManager.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 import { AccessManagerSet } from "../SMARTTokenAccessManagedEvents.sol";
 import { AccessControlUnauthorizedAccount } from "../SMARTTokenAccessManagedErrors.sol";

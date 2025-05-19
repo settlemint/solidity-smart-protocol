@@ -8,11 +8,11 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 
 // Interface imports
 import { ISMARTBond } from "./ISMARTBond.sol";
+import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Local imports
 import { SMARTBondProxy } from "./SMARTBondProxy.sol";
-import { SMARTTokenAccessManager } from "../../extensions/access-managed/manager/SMARTTokenAccessManager.sol";
 
 contract SMARTBondTokenFactoryImplementation is AbstractSMARTTokenFactoryImplementation {
     constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
@@ -33,8 +33,8 @@ contract SMARTBondTokenFactoryImplementation is AbstractSMARTTokenFactoryImpleme
         external
         returns (address deployedBondAddress)
     {
-        // TODO: make accessManager also upgradeable
-        SMARTTokenAccessManager accessManager = new SMARTTokenAccessManager(address(trustedForwarder()), _msgSender());
+        // Create the access manager for the token
+        ISMARTTokenAccessManager accessManager = _createAccessManager();
 
         // ABI encode constructor arguments for SMARTBondProxy
         bytes memory constructorArgs = abi.encode(
@@ -50,7 +50,7 @@ contract SMARTBondTokenFactoryImplementation is AbstractSMARTTokenFactoryImpleme
             initialModulePairs_,
             identityRegistry_,
             compliance_,
-            accessManager
+            address(accessManager)
         );
 
         // Get the creation bytecode of SMARTBondProxy

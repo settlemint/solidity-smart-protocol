@@ -10,6 +10,7 @@ import {
     IdentityFactoryImplementationNotSet,
     IdentityImplementationNotSet,
     TokenIdentityImplementationNotSet,
+    TokenAccessManagerImplementationNotSet,
     IndexOutOfBounds
 } from "./SMARTSystemErrors.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
@@ -56,6 +57,10 @@ contract SMARTSystemFactory is ERC2771Context {
     /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial token identity
     /// implementation.
     address public immutable defaultTokenIdentityImplementation;
+    /// @notice The default contract address for the token access manager contract's logic (implementation).
+    /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial token access manager
+    /// implementation.
+    address public immutable defaultTokenAccessManagerImplementation;
     /// @notice The address of the trusted forwarder contract used by this factory for meta-transactions (ERC2771).
     /// @dev This same forwarder address will also be passed to each new `SMARTSystem` instance created by this factory,
     /// enabling them to support meta-transactions as well.
@@ -99,6 +104,7 @@ contract SMARTSystemFactory is ERC2771Context {
         address identityFactoryImplementation_,
         address identityImplementation_,
         address tokenIdentityImplementation_,
+        address tokenAccessManagerImplementation_,
         address forwarder_
     )
         ERC2771Context(forwarder_) // Initializes ERC2771 support with the provided forwarder address.
@@ -122,6 +128,10 @@ contract SMARTSystemFactory is ERC2771Context {
         if (tokenIdentityImplementation_ == address(0)) {
             revert TokenIdentityImplementationNotSet(); // Assumes this custom error is defined in SMARTSystemErrors.sol
         }
+        if (tokenAccessManagerImplementation_ == address(0)) {
+            revert TokenAccessManagerImplementationNotSet(); // Assumes this custom error is defined in
+                // SMARTSystemErrors.sol
+        }
 
         // Set the immutable state variables with the provided addresses.
         defaultComplianceImplementation = complianceImplementation_;
@@ -131,6 +141,7 @@ contract SMARTSystemFactory is ERC2771Context {
         defaultIdentityFactoryImplementation = identityFactoryImplementation_;
         defaultIdentityImplementation = identityImplementation_;
         defaultTokenIdentityImplementation = tokenIdentityImplementation_;
+        defaultTokenAccessManagerImplementation = tokenAccessManagerImplementation_;
         factoryForwarder = forwarder_; // Store the forwarder address for use by this factory and new systems.
     }
 
@@ -162,6 +173,7 @@ contract SMARTSystemFactory is ERC2771Context {
             defaultIdentityFactoryImplementation,
             defaultIdentityImplementation,
             defaultTokenIdentityImplementation,
+            defaultTokenAccessManagerImplementation,
             factoryForwarder // The same forwarder is used for the new system.
         );
 

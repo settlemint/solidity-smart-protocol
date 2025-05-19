@@ -122,6 +122,17 @@ interface ISMARTSystem {
     /// identity logic.
     function tokenIdentityImplementation() external view returns (address tokenIdentityImplementationAddress);
 
+    /// @notice Retrieves the current, active smart contract address of the token access manager contract's logic.
+    /// @dev Token access managers are responsible for managing access control for tokens.
+    /// This function returns the address of the base implementation (template) contract that new token access
+    /// managers will be created from.
+    /// This address can change if the underlying logic for token access managers is upgraded.
+    /// @return tokenAccessManagerImplementationAddress The blockchain address of the smart contract containing the
+    function tokenAccessManagerImplementation()
+        external
+        view
+        returns (address tokenAccessManagerImplementationAddress);
+
     /// @notice Returns the address of the current token registry implementation.
     /// @param factoryTypeHash The hash of the factory type.
     /// @return The address of the token factory implementation contract.

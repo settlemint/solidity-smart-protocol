@@ -8,7 +8,8 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ISMARTTokenFactory } from "./ISMARTTokenFactory.sol";
 import { ISMART } from "../../interface/ISMART.sol";
-
+import { SMARTTokenAccessManagerProxy } from "../access-manager/SMARTTokenAccessManagerProxy.sol";
+import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
 // -- Errors --
 /// @notice Custom errors for the factory contract
 /// @dev Defines custom error types used by the contract for various failure conditions.
@@ -57,6 +58,9 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
 
     // --- State Variables ---
 
+    /// @dev The address of the `ISMARTSystem` contract.
+    address internal _systemAddress;
+
     /// @notice Address of the underlying token implementation contract.
     /// @dev This address points to the contract that holds the core logic for token operations.
     address internal _tokenImplementation;
@@ -68,9 +72,18 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     }
 
     /// @inheritdoc ISMARTTokenFactory
-    /// @param initialAdmin The address to be granted the DEFAULT_ADMIN_ROLE and REGISTRAR_ROLE.
+    /// @param systemAddress The address of the `ISMARTSystem` contract.
     /// @param tokenImplementation_ The initial address of the token implementation contract.
-    function initialize(address initialAdmin, address tokenImplementation_) external override initializer {
+    /// @param initialAdmin The address to be granted the DEFAULT_ADMIN_ROLE and REGISTRAR_ROLE.
+    function initialize(
+        address systemAddress,
+        address tokenImplementation_,
+        address initialAdmin
+    )
+        external
+        override
+        initializer
+    {
         if (initialAdmin == address(0)) {
             revert InvalidTokenAddress(); // Re-using for admin address, consider a more specific error if needed
         }
@@ -84,6 +97,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         _grantRole(REGISTRAR_ROLE, initialAdmin);
 
         _tokenImplementation = tokenImplementation_;
+        _systemAddress = systemAddress;
     }
 
     /// @inheritdoc ISMARTTokenFactory
@@ -109,7 +123,13 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         emit TokenImplementationUpdated(_msgSender(), oldImplementation, newImplementation);
     }
 
-    // --- CREATE2 Helper Functions ---
+    // --- Internal Functions ---
+    /// @notice Creates a new access manager for a token.
+    /// @dev This function creates a new access manager for a token using the `SMARTTokenAccessManagerProxy`.
+    /// @return accessManager The address of the new access manager.
+    function _createAccessManager() internal virtual returns (ISMARTTokenAccessManager) {
+        return ISMARTTokenAccessManager(address(new SMARTTokenAccessManagerProxy(_systemAddress, _msgSender())));
+    }
 
     /// @notice Calculates the salt for CREATE2 deployment.
     /// @dev Combines the name and symbol into a unique salt value.
