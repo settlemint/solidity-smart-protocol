@@ -11,7 +11,7 @@ import { TestConstants } from "../Constants.sol";
 import { ClaimUtils } from "../utils/ClaimUtils.sol";
 import { IdentityUtils } from "../utils/IdentityUtils.sol";
 import { TokenUtils } from "../utils/TokenUtils.sol";
-import { InfrastructureUtils } from "../utils/InfrastructureUtils.sol";
+import { SystemUtils } from "../utils/SystemUtils.sol";
 import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { SMARTToken } from "../../contracts/SMARTToken.sol";
@@ -40,7 +40,7 @@ abstract contract AbstractSMARTTest is Test {
     uint256 internal claimIssuerPrivateKey = 0x12345;
 
     // --- Utils ---
-    InfrastructureUtils internal infrastructureUtils;
+    SystemUtils internal systemUtils;
     IdentityUtils internal identityUtils;
     ClaimUtils internal claimUtils;
     TokenUtils internal tokenUtils;
@@ -54,8 +54,8 @@ abstract contract AbstractSMARTTest is Test {
         platformAdmin = makeAddr("Platform Admin");
 
         // --- Setup infrastructure ---
-        infrastructureUtils = new InfrastructureUtils(platformAdmin);
-        mockComplianceModule = infrastructureUtils.mockedComplianceModule();
+        systemUtils = new SystemUtils(platformAdmin);
+        mockComplianceModule = systemUtils.mockedComplianceModule();
 
         // --- Initialize Actors ---
         tokenIssuer = makeAddr("Token issuer");
@@ -68,25 +68,22 @@ abstract contract AbstractSMARTTest is Test {
         // --- Setup utilities
         identityUtils = new IdentityUtils(
             platformAdmin,
-            infrastructureUtils.identityFactory(),
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.trustedIssuersRegistry()
+            systemUtils.identityFactory(),
+            systemUtils.identityRegistry(),
+            systemUtils.trustedIssuersRegistry()
         );
         claimUtils = new ClaimUtils(
             platformAdmin,
             claimIssuer,
             claimIssuerPrivateKey,
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.identityFactory(),
+            systemUtils.identityRegistry(),
+            systemUtils.identityFactory(),
             TestConstants.CLAIM_TOPIC_COLLATERAL,
             TestConstants.CLAIM_TOPIC_KYC,
             TestConstants.CLAIM_TOPIC_AML
         );
         tokenUtils = new TokenUtils(
-            platformAdmin,
-            infrastructureUtils.identityFactory(),
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.compliance()
+            platformAdmin, systemUtils.identityFactory(), systemUtils.identityRegistry(), systemUtils.compliance()
         );
 
         // --- Initialize Test Data FIRST ---
@@ -112,7 +109,7 @@ abstract contract AbstractSMARTTest is Test {
 
         // Grant REGISTRAR_ROLE to the token contract on the Identity Registry
         // Needed for custody address recovery
-        address registryAddress = address(infrastructureUtils.identityRegistry());
+        address registryAddress = address(systemUtils.identityRegistry());
         address tokenAddress = address(token);
 
         vm.prank(platformAdmin);

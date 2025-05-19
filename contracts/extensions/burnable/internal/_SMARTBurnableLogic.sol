@@ -45,29 +45,6 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, ISMARTBurnable {
     /// @param amount The quantity of tokens to burn.
     function __burnable_executeBurn(address from, uint256 amount) internal virtual;
 
-    // -- Public Interface Functions (from ISMARTBurnable) --
-
-    /// @notice Burns (destroys) a specific amount of tokens from a given user's address.
-    /// @dev This is the public-facing function that users or other contracts will call to initiate a burn.
-    ///      It internally calls `_smart_burn` to perform the operation.
-    ///      Authorization (i.e., who is allowed to call this) is typically handled before this function,
-    ///      or by an authorization hook within `_smart_burn` if implemented in a derived contract.
-    ///      This implementation directly calls the internal logic.
-    /// @param userAddress The address from which tokens will be burned.
-    /// @param amount The amount of tokens to burn.
-    function burn(address userAddress, uint256 amount) external virtual override {
-        _smart_burn(userAddress, amount);
-    }
-
-    /// @notice Burns tokens from multiple addresses in a single transaction.
-    /// @dev This public-facing function allows for batch burning. It internally calls `_smart_batchBurn`.
-    ///      It reverts with `LengthMismatch` if the `userAddresses` and `amounts` arrays are not of equal length.
-    /// @param userAddresses An array of addresses to burn tokens from.
-    /// @param amounts An array of corresponding token amounts to burn.
-    function batchBurn(address[] calldata userAddresses, uint256[] calldata amounts) external virtual override {
-        _smart_batchBurn(userAddresses, amounts);
-    }
-
     // -- Internal Implementation for Burnable Functions --
 
     /// @notice Internal core function to perform a single burn operation.

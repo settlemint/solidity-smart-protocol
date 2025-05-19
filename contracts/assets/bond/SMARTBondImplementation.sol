@@ -15,6 +15,7 @@ import { SMARTRoles } from "./../SMARTRoles.sol";
 
 // Interface imports
 import { ISMARTBond } from "./ISMARTBond.sol";
+import { ISMARTBurnable } from "../../extensions/burnable/ISMARTBurnable.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
@@ -24,6 +25,7 @@ import { SMARTHooks } from "../../extensions/common/SMARTHooks.sol";
 // Feature extensions
 import { SMARTPausableUpgradeable } from "../../extensions/pausable/SMARTPausableUpgradeable.sol";
 import { SMARTBurnableUpgradeable } from "../../extensions/burnable/SMARTBurnableUpgradeable.sol";
+import { _SMARTBurnableLogic } from "../../extensions/burnable/SMARTBurnableUpgradeable.sol";
 import { SMARTCustodianUpgradeable } from "../../extensions/custodian/SMARTCustodianUpgradeable.sol";
 import { SMARTRedeemableUpgradeable } from "../../extensions/redeemable/SMARTRedeemableUpgradeable.sol";
 import { SMARTHistoricalBalancesUpgradeable } from
@@ -170,37 +172,37 @@ contract SMARTBondImplementation is
 
     /// @notice Returns the timestamp when the bond matures
     /// @return The maturity date timestamp
-    function maturityDate() external view returns (uint256) {
+    function maturityDate() external view override returns (uint256) {
         return _maturityDate;
     }
 
     /// @notice Returns the face value of the bond
     /// @return The bond's face value in underlying asset base units
-    function faceValue() external view returns (uint256) {
+    function faceValue() external view override returns (uint256) {
         return _faceValue;
     }
 
     /// @notice Returns the underlying asset contract
     /// @return The ERC20 contract of the underlying asset
-    function underlyingAsset() external view returns (IERC20) {
+    function underlyingAsset() external view override returns (IERC20) {
         return _underlyingAsset;
     }
 
     /// @notice Returns the amount of underlying assets held by the contract
     /// @return The balance of underlying assets
-    function underlyingAssetBalance() public view returns (uint256) {
+    function underlyingAssetBalance() public view override returns (uint256) {
         return _underlyingAsset.balanceOf(address(this));
     }
 
     /// @notice Returns the total amount of underlying assets needed for all potential redemptions
     /// @return The total amount of underlying assets needed
-    function totalUnderlyingNeeded() public view returns (uint256) {
+    function totalUnderlyingNeeded() public view override returns (uint256) {
         return _calculateUnderlyingAmount(totalSupply());
     }
 
     /// @notice Returns the amount of underlying assets missing for all potential redemptions
     /// @return The amount of underlying assets missing (0 if there's enough or excess)
-    function missingUnderlyingAmount() public view returns (uint256) {
+    function missingUnderlyingAmount() public view override returns (uint256) {
         uint256 needed = totalUnderlyingNeeded();
         uint256 current = underlyingAssetBalance();
         return needed > current ? needed - current : 0;
@@ -208,7 +210,7 @@ contract SMARTBondImplementation is
 
     /// @notice Returns the amount of excess underlying assets that can be withdrawn
     /// @return The amount of excess underlying assets
-    function withdrawableUnderlyingAmount() public view returns (uint256) {
+    function withdrawableUnderlyingAmount() public view override returns (uint256) {
         uint256 needed = totalUnderlyingNeeded();
         uint256 current = underlyingAssetBalance();
         return current > needed ? current - needed : 0;
@@ -220,7 +222,7 @@ contract SMARTBondImplementation is
     /// @dev Only callable by addresses with SUPPLY_MANAGEMENT_ROLE after maturity date
     /// @dev Requires sufficient underlying assets for all potential redemptions
     /// @dev TODO: check role
-    function mature() external onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE) {
+    function mature() external override onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE) {
         if (block.timestamp < _maturityDate) revert BondNotYetMatured();
         if (isMatured) revert BondAlreadyMatured();
 
@@ -347,7 +349,7 @@ contract SMARTBondImplementation is
         uint256 amount
     )
         external
-        override
+        override(ISMARTBurnable)
         onlyAccessManagerRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE)
     {
         _smart_burn(userAddress, amount);
@@ -358,7 +360,7 @@ contract SMARTBondImplementation is
         uint256[] calldata amounts
     )
         external
-        override
+        override(ISMARTBurnable)
         onlyAccessManagerRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE)
     {
         _smart_batchBurn(userAddresses, amounts);

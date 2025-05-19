@@ -6,7 +6,7 @@ import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplian
 
 import { TestConstants } from "../Constants.sol";
 
-import { InfrastructureUtils } from "../utils/InfrastructureUtils.sol";
+import { SystemUtils } from "../utils/SystemUtils.sol";
 import { AbstractSMARTTest } from "./AbstractSMARTTest.sol";
 
 import { CountryBlockListComplianceModule } from
@@ -31,7 +31,7 @@ abstract contract SMARTCountryBlockListTest is AbstractSMARTTest {
         // Don't call _mintInitialBalances() here since we're minting in the test
 
         // Setup CountryBlockListComplianceModule
-        blockModule = infrastructureUtils.countryBlockListComplianceModule();
+        blockModule = systemUtils.countryBlockListComplianceModule();
 
         // Configure blocked countries (US only)
         blockedCountries = new uint16[](1);

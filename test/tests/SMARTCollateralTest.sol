@@ -134,8 +134,8 @@ abstract contract SMARTCollateralTest is AbstractSMARTTest {
             platformAdmin,
             untrustedIssuerWallet,
             untrustedIssuerPK,
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.identityFactory(),
+            systemUtils.identityRegistry(),
+            systemUtils.identityFactory(),
             TestConstants.CLAIM_TOPIC_COLLATERAL,
             TestConstants.CLAIM_TOPIC_KYC,
             TestConstants.CLAIM_TOPIC_AML

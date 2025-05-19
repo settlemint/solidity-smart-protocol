@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import { Test } from "forge-std/Test.sol";
-import { InfrastructureUtils } from "../utils/InfrastructureUtils.sol";
+import { SystemUtils } from "../utils/SystemUtils.sol";
 import { TestConstants } from "../Constants.sol";
 import { TokenUtils } from "../utils/TokenUtils.sol";
 import { ClaimUtils } from "../utils/ClaimUtils.sol";
@@ -13,7 +13,9 @@ import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { SMARTForwarder } from "../../contracts/vendor/SMARTForwarder.sol";
-import { SMARTTokenAccessManager } from "../../contracts/extensions/access-managed/manager/SMARTTokenAccessManager.sol";
+import { SMARTBondTokenFactoryImplementation } from
+    "../../contracts/assets/bond/SMARTBondTokenFactoryImplementation.sol";
+import { SMARTBondImplementation } from "../../contracts/assets/bond/SMARTBondImplementation.sol";
 
 abstract contract AbstractSMARTAssetTest is Test {
     address public platformAdmin;
@@ -21,7 +23,7 @@ abstract contract AbstractSMARTAssetTest is Test {
 
     uint256 internal claimIssuerPrivateKey = 0x12345;
 
-    InfrastructureUtils internal infrastructureUtils;
+    SystemUtils internal systemUtils;
     TokenUtils internal tokenUtils;
     ClaimUtils internal claimUtils;
     IdentityUtils internal identityUtils;
@@ -41,32 +43,29 @@ abstract contract AbstractSMARTAssetTest is Test {
         claimIssuer = vm.addr(claimIssuerPrivateKey);
 
         // Set up utils
-        infrastructureUtils = new InfrastructureUtils(platformAdmin);
+        systemUtils = new SystemUtils(platformAdmin);
         tokenUtils = new TokenUtils(
-            platformAdmin,
-            infrastructureUtils.identityFactory(),
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.compliance()
+            platformAdmin, systemUtils.identityFactory(), systemUtils.identityRegistry(), systemUtils.compliance()
         );
         claimUtils = new ClaimUtils(
             platformAdmin,
             claimIssuer,
             claimIssuerPrivateKey,
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.identityFactory(),
+            systemUtils.identityRegistry(),
+            systemUtils.identityFactory(),
             SMARTConstants.CLAIM_TOPIC_COLLATERAL,
             TestConstants.CLAIM_TOPIC_KYC,
             TestConstants.CLAIM_TOPIC_AML
         );
         identityUtils = new IdentityUtils(
             platformAdmin,
-            infrastructureUtils.identityFactory(),
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.trustedIssuersRegistry()
+            systemUtils.identityFactory(),
+            systemUtils.identityRegistry(),
+            systemUtils.trustedIssuersRegistry()
         );
 
-        identityRegistry = address(infrastructureUtils.identityRegistry());
-        compliance = address(infrastructureUtils.compliance());
+        identityRegistry = address(systemUtils.identityRegistry());
+        compliance = address(systemUtils.compliance());
 
         // Initialize the claim issuer
         uint256[] memory claimTopics = new uint256[](2);
@@ -120,8 +119,8 @@ abstract contract AbstractSMARTAssetTest is Test {
             platformAdmin,
             claimIssuer_,
             claimIssuerPrivateKey_,
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.identityFactory(),
+            systemUtils.identityRegistry(),
+            systemUtils.identityFactory(),
             SMARTConstants.CLAIM_TOPIC_COLLATERAL,
             TestConstants.CLAIM_TOPIC_KYC,
             TestConstants.CLAIM_TOPIC_AML

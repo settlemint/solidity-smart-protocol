@@ -24,6 +24,8 @@ import { SMARTIdentityImplementation } from
     "../../contracts/system/identity-factory/identities/SMARTIdentityImplementation.sol";
 import { SMARTTokenIdentityImplementation } from
     "../../contracts/system/identity-factory/identities/SMARTTokenIdentityImplementation.sol";
+import { SMARTTokenAccessManagerImplementation } from
+    "../../contracts/system/access-manager/SMARTTokenAccessManagerImplementation.sol";
 
 // Interfaces
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
@@ -31,6 +33,7 @@ import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/I
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
 import { IERC3643TrustedIssuersRegistry } from "../../contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 import { IERC3643IdentityRegistryStorage } from "../../contracts/interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 
 // Compliance Modules
 import { CountryAllowListComplianceModule } from
@@ -38,7 +41,7 @@ import { CountryAllowListComplianceModule } from
 import { CountryBlockListComplianceModule } from
     "../../contracts/system/compliance/modules/CountryBlockListComplianceModule.sol";
 
-contract InfrastructureUtils is Test {
+contract SystemUtils is Test {
     // System
     SMARTSystemFactory public systemFactory;
     ISMARTSystem public system;
@@ -60,8 +63,8 @@ contract InfrastructureUtils is Test {
         // --- Predeployed implementations ---
         address forwarder = address(0);
 
-        IIdentity identityImpl = new SMARTIdentityImplementation();
-        IIdentity tokenIdentityImpl = new SMARTTokenIdentityImplementation();
+        IIdentity identityImpl = new SMARTIdentityImplementation(forwarder);
+        IIdentity tokenIdentityImpl = new SMARTTokenIdentityImplementation(forwarder);
 
         SMARTIdentityRegistryStorageImplementation storageImpl =
             new SMARTIdentityRegistryStorageImplementation(forwarder);
@@ -69,6 +72,7 @@ contract InfrastructureUtils is Test {
         SMARTComplianceImplementation complianceImpl = new SMARTComplianceImplementation(forwarder);
         SMARTIdentityRegistryImplementation registryImpl = new SMARTIdentityRegistryImplementation(forwarder);
         SMARTIdentityFactoryImplementation factoryImpl = new SMARTIdentityFactoryImplementation(forwarder);
+        SMARTTokenAccessManagerImplementation accessManagerImpl = new SMARTTokenAccessManagerImplementation(forwarder);
 
         systemFactory = new SMARTSystemFactory(
             address(complianceImpl),
@@ -78,6 +82,7 @@ contract InfrastructureUtils is Test {
             address(factoryImpl),
             address(identityImpl),
             address(tokenIdentityImpl),
+            address(accessManagerImpl),
             forwarder
         );
         vm.label(address(systemFactory), "System Factory");

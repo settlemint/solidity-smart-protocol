@@ -395,6 +395,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
+        returns (address)
     {
         if (address(_factoryImplementation) == address(0)) revert InvalidTokenFactoryAddress();
         _checkInterface(_factoryImplementation, _ISMART_TOKEN_FACTORY_ID);
@@ -417,6 +418,8 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         tokenFactoryProxiesByType[factoryTypeHash] = _tokenFactoryProxy;
 
         emit TokenFactoryCreated(_msgSender(), _typeName, _tokenFactoryProxy, _factoryImplementation, block.timestamp);
+
+        return _tokenFactoryProxy;
     }
 
     // --- Implementation Setter Functions ---

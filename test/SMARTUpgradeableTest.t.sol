@@ -35,8 +35,8 @@ contract SMARTUpgradeableTest is
             "TSTB",
             18, // Standard decimals
             address(0), // onchainID will be set by _createAndSetTokenOnchainID via proxy
-            address(infrastructureUtils.identityRegistry()),
-            address(infrastructureUtils.compliance()),
+            address(systemUtils.identityRegistry()),
+            address(systemUtils.compliance()),
             requiredClaimTopics,
             modulePairs,
             TestConstants.CLAIM_TOPIC_COLLATERAL,

@@ -5,7 +5,8 @@ import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
 import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
 import { ISMARTYield } from "../../contracts/extensions/yield/ISMARTYield.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
-import { SMARTBond } from "../../contracts/assets/SMARTBond.sol";
+import { ISMARTBond } from "../../contracts/assets/bond/ISMARTBond.sol";
+import { ISMARTBondFactory } from "../../contracts/assets/bond/ISMARTBondFactory.sol";
 import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
@@ -19,7 +20,8 @@ import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol
 import { YieldScheduleAlreadySet, YieldScheduleActive } from "../../contracts/extensions/yield/SMARTYieldErrors.sol";
 
 contract SMARTBondTest is AbstractSMARTAssetTest {
-    SMARTBond public bond;
+    ISMARTBondFactory public bondFactory;
+    ISMARTBond public bond;
     MockedERC20Token public underlyingAsset;
 
     address public owner;
@@ -64,6 +66,14 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
 
         // Initialize SMART
         setUpSMART(owner);
+
+        // Set up the Bond Factory
+        SMARTBondFactoryImplementation bondFactoryImpl = new SMARTBondFactoryImplementation();
+        SMARTBondImplementation bondImpl = new SMARTBondImplementation();
+
+        bondFactory = ISMARTBondFactory(
+            systemUtils.system().createTokenFactory("Bond", address(bondFactoryImpl), address(bondImpl))
+        );
 
         // Initialize identities
         address[] memory identities = new address[](4);

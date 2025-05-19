@@ -31,7 +31,8 @@ interface ISMARTSystem {
         address _factoryImplementation,
         address _tokenImplementation
     )
-        external;
+        external
+        returns (address);
 
     /// @notice Retrieves the current, active smart contract address of the compliance module's logic.
     /// @dev Compliance modules are responsible for enforcing rules and restrictions on token transfers, account

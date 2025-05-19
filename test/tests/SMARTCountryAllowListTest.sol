@@ -7,7 +7,7 @@ import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplian
 
 import { TestConstants } from "../Constants.sol";
 
-import { InfrastructureUtils } from "../utils/InfrastructureUtils.sol";
+import { SystemUtils } from "../utils/SystemUtils.sol";
 import { AbstractSMARTTest } from "./AbstractSMARTTest.sol";
 
 import { CountryAllowListComplianceModule } from
@@ -30,7 +30,7 @@ abstract contract SMARTCountryAllowListTest is AbstractSMARTTest {
         // Don't call _mintInitialBalances() here since we're minting in the test
 
         // Setup CountryAllowListComplianceModule
-        allowModule = infrastructureUtils.countryAllowListComplianceModule();
+        allowModule = systemUtils.countryAllowListComplianceModule();
 
         // Set allowed countries in the module (globally) - using allowedCountries from SMARTTest
         vm.prank(platformAdmin);
