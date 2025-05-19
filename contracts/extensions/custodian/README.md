@@ -18,22 +18,22 @@ Key components include:
 
 - **Address Freezing:** Freeze/unfreeze entire addresses, preventing standard transfers (`FREEZER_ROLE` required).
 - **Partial Token Freezing:** Freeze/unfreeze specific amounts of tokens for an address (`FREEZER_ROLE` required).
-- **Forced Transfers:** Allow authorized transfer of tokens *from* any address *to* any address, bypassing standard transfer rules and automatically unfreezing tokens if needed (`FORCED_TRANSFER_ROLE` required).
+- **Forced Transfers:** Allow authorized transfer of tokens _from_ any address _to_ any address, bypassing standard transfer rules and automatically unfreezing tokens if needed (`FORCED_TRANSFER_ROLE` required).
 - **Address Recovery:** Facilitate asset recovery from a lost/compromised wallet to a new wallet linked to the same verified identity. Transfers balance, frozen status, and updates the identity registry (`RECOVERY_ROLE` required, plus `REGISTRAR_ROLE` on Identity Registry).
-- **Transfer Control Integration:** Hooks into standard token operations (`_beforeMint`, `_beforeTransfer`, `_beforeBurn`, `_beforeRedeem`) to enforce freezing rules (e.g., block transfers involving frozen addresses, require sufficient *unfrozen* balance for standard transfers/redeems).
+- **Transfer Control Integration:** Hooks into standard token operations (`_beforeMint`, `_beforeTransfer`, `_beforeBurn`, `_beforeRedeem`) to enforce freezing rules (e.g., block transfers involving frozen addresses, require sufficient _unfrozen_ balance for standard transfers/redeems).
 
 ## Usage
 
 To use this extension:
 
 1. **Inherit Base Contracts**:
-    - Inherit the core `SMART` or `SMARTUpgradeable` implementation.
-    - Inherit the corresponding custodian implementation (`SMARTCustodian` or `SMARTCustodianUpgradeable`).
-    - Inherit an authorization contract implementing `_SMARTCustodianAuthorizationHooks` (e.g., `SMARTCustodianAccessControlAuthorization`).
-    - Inherit necessary base contracts (e.g., `ERC20`/`ERC20Upgradeable`, `AccessControlUpgradeable`/`OwnableUpgradeable` if applicable).
+   - Inherit the core `SMART` or `SMARTUpgradeable` implementation.
+   - Inherit the corresponding custodian implementation (`SMARTCustodian` or `SMARTCustodianUpgradeable`).
+   - Inherit an authorization contract implementing `_SMARTCustodianAuthorizationHooks` (e.g., `SMARTCustodianAccessControlAuthorization`).
+   - Inherit necessary base contracts (e.g., `ERC20`/`ERC20Upgradeable`, `AccessControlUpgradeable`/`OwnableUpgradeable` if applicable).
 2. **Implement Constructor/Initializer**:
-    - **Standard (`SMARTCustodian`)**: In the final contract's `constructor`, call the constructors of parent contracts (like `SMART`). Grant initial custodian roles (`FREEZER_ROLE`, etc.).
-    - **Upgradeable (`SMARTCustodianUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__AccessControl_init`, `__SMART_init`) and then call `__SMARTCustodian_init()`. Grant initial custodian roles.
+   - **Standard (`SMARTCustodian`)**: In the final contract's `constructor`, call the constructors of parent contracts (like `SMART`). Grant initial custodian roles (`FREEZER_ROLE`, etc.).
+   - **Upgradeable (`SMARTCustodianUpgradeable`)**: In the final contract's `initialize` function, call initializers for parent contracts (e.g., `__ERC20_init`, `__AccessControl_init`, `__SMART_init`) and then call `__SMARTCustodian_init()`. Grant initial custodian roles.
 3. **Implement Abstract Functions**: Ensure `identityRegistry()` and `requiredClaimTopics()` from `_SMARTCustodianLogic` are implemented (usually by inheriting the core `SMART` or `SMARTUpgradeable` which provides these).
 4. **Grant Roles**: Grant the necessary roles (`FREEZER_ROLE`, `FORCED_TRANSFER_ROLE`, `RECOVERY_ROLE`) to the appropriate admin/custodian addresses.
 5. **Identity Registry Permission**: Ensure the token contract address has the `REGISTRAR_ROLE` on the configured `IdentityRegistry` contract to allow the `recoveryAddress` function to update registrations.

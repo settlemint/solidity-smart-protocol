@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
 // Adjust import path assuming SMARTInfrastructureSetup will be in ./utils/
 import { Test } from "forge-std/Test.sol";
@@ -208,7 +208,7 @@ abstract contract AbstractSMARTTest is Test {
     //                      INITIALIZATION & BASIC TESTS
     // =====================================================================
 
-    function test_InitialState() public {
+    function test_InitialState() public view {
         require(address(token) != address(0), "Token not deployed");
     }
 }

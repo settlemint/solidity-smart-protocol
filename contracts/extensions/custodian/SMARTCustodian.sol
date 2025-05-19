@@ -12,62 +12,112 @@ import { SMARTHooks } from "./../common/SMARTHooks.sol";
 import { _SMARTCustodianLogic } from "./internal/_SMARTCustodianLogic.sol";
 
 // Error imports
-import { LengthMismatch } from "./../common/CommonErrors.sol";
 
-/// @title Standard SMART Custodian Extension
-/// @notice Standard (non-upgradeable) extension that adds custodian features (freezing, forced transfer, recovery) to a
-/// SMART token.
-/// @dev Inherits core custodian logic from `_SMARTCustodianLogic`, `SMARTExtension`,
-///      and expects the final contract to inherit a standard `ERC20` implementation and core `SMART` logic.
-///      Requires an accompanying authorization contract (e.g., `SMARTCustodianAccessControlAuthorization`).
+/// @title Standard (Non-Upgradeable) SMART Custodian Extension
+/// @notice This abstract contract provides the non-upgradeable implementation of custodian features
+///         (like freezing, forced transfers, recovery) for a SMART token.
+/// @dev It integrates the core logic from `_SMARTCustodianLogic` with a standard ERC20 token.
+///      This contract is 'abstract' because it expects the final, deployable token contract to:
+///      1. Inherit a full ERC20 implementation (which provides `balanceOf` and `_update`).
+///      2. Inherit the main `SMART` token contract (which provides core SMART functionalities and hooks).
+///      3. Inherit an authorization mechanism (e.g., `SMARTCustodianAccessControlAuthorization` or a custom one)
+///         to control access to the sensitive custodian functions exposed by `_SMARTCustodianLogic`.
+///      The constructor calls `__SMARTCustodian_init_unchained()` to register the custodian interface.
+///      It implements the abstract functions `__custodian_getBalance` and `__custodian_executeTransferUpdate`
+///      from `_SMARTCustodianLogic` using standard `ERC20.balanceOf` and `ERC20._update` respectively.
+///      It also overrides `SMARTHooks` (`_beforeMint`, `_beforeTransfer`, etc.) to inject custodian-specific
+///      checks (e.g., preventing transfers involving frozen addresses) by calling the corresponding
+///      `__custodian_...Logic` helper functions from `_SMARTCustodianLogic` and then `super.hook()`
+///      to maintain the hook chain.
 abstract contract SMARTCustodian is SMARTExtension, _SMARTCustodianLogic {
-    // Note: Assumes the final contract inherits ERC20 and SMART
+    // Developer Note: The final concrete contract inheriting this `SMARTCustodian` must also inherit:
+    // 1. A standard ERC20 implementation (e.g., OpenZeppelin's `ERC20.sol` or the project's `SMART.sol` which
+    //    itself inherits `ERC20`).
+    // 2. An authorization contract that implements the authorization hooks required by `_SMARTCustodianLogic`
+    //    (e.g., `SMARTCustodianAccessControlAuthorization.sol` or a custom variant).
+    // 3. The core `SMART.sol` (or equivalent) if not already covered by point 1, to ensure all SMART features and
+    //    hooks are present.
 
-    constructor() payable {
+    /// @notice Constructor for the standard SMART Custodian extension.
+    /// @dev Calls the `__SMARTCustodian_init_unchained` internal initializer from `_SMARTCustodianLogic`.
+    ///      This step is crucial for registering the `ISMARTCustodian` interface ID for ERC165 introspection,
+    ///      allowing other contracts to discover that this token supports custodian functionalities.
+    constructor() {
+        // Initialize the custodian logic, primarily for ERC165 interface registration.
         __SMARTCustodian_init_unchained();
     }
 
-    // -- Internal Hook Implementations (Dependencies) --
+    // -- Internal Hook Implementations (Dependencies for _SMARTCustodianLogic) --
 
-    /// @notice Implementation of the abstract balance getter using standard ERC20.balanceOf.
+    /// @notice Provides the concrete implementation for `_SMARTCustodianLogic`'s abstract balance getter.
+    /// @dev This function is called by `_SMARTCustodianLogic` whenever it needs to know the token balance
+    ///      of an account.
+    ///      It assumes that the final contract inheriting `SMARTCustodian` also inherits a standard ERC20
+    ///      contract that provides the public `balanceOf(address account)` view function.
     /// @inheritdoc _SMARTCustodianLogic
+    /// @param account The address whose balance is to be retrieved.
+    /// @return uint256 The token balance of the `account`.
     function __custodian_getBalance(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account); // Assumes ERC20.balanceOf is available
+        // Delegates to the `balanceOf` function assumed to be available from an inherited ERC20 contract.
+        return balanceOf(account);
     }
 
-    /// @notice Implementation of the abstract transfer executor using standard ERC20._update.
+    /// @notice Provides the concrete implementation for `_SMARTCustodianLogic`'s abstract transfer executor.
+    /// @dev This function is called by `_SMARTCustodianLogic` (e.g., during a `forcedTransfer` or `recoveryAddress`)
+    ///      to perform the actual token ledger update (mint, transfer, or burn).
+    ///      It assumes the final contract inherits an ERC20 implementation that has an internal `_update` function
+    ///      (like OpenZeppelin's `ERC20._update`). Crucially, this `_update` function in the final SMART token
+    ///      is expected to be overridden to call the `SMARTHooks` system, ensuring that all relevant pre and post
+    ///      processing logic (including custodian checks for non-forced updates) is executed.
     /// @inheritdoc _SMARTCustodianLogic
+    /// @param from The sender address (or `address(0)` for mints).
+    /// @param to The recipient address (or `address(0)` for burns).
+    /// @param amount The amount of tokens to be affected.
     function __custodian_executeTransferUpdate(address from, address to, uint256 amount) internal virtual override {
-        _update(from, to, amount); // Assumes ERC20._update is available and overridden by SMART to handle hooks
+        // Delegates to the `_update` function from the inherited ERC20 contract.
+        // This `_update` is expected to be the one from `SMART.sol` (or similar) which calls
+        // `__smart_beforeUpdateLogic` and `__smart_afterUpdateLogic`, thus integrating all hooks.
+        _update(from, to, amount);
     }
 
-    // -- Hooks (Overrides) --
+    // -- Hooks (Overrides of SMARTHooks) --
+    // These overrides integrate custodian checks into the standard token operation lifecycle.
+    // They call the specific `__custodian_...Logic` helper from `_SMARTCustodianLogic`
+    // and then `super.<hookName>(...)` to ensure the hook chain is preserved for other extensions.
 
     /// @inheritdoc SMARTHooks
-    /// @dev Adds check to prevent minting to a frozen address.
+    /// @dev Overrides the `_beforeMint` hook to add custodian-specific checks.
+    ///      Specifically, it calls `__custodian_beforeMintLogic` to prevent minting to a frozen address.
     function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
-        __custodian_beforeMintLogic(to);
-        super._beforeMint(to, amount); // Call next hook in the chain
+        __custodian_beforeMintLogic(to); // Custodian check: e.g., is recipient frozen?
+        super._beforeMint(to, amount); // Call the next hook in the chain (e.g., core SMART logic, other
+            // extensions).
     }
 
     /// @inheritdoc SMARTHooks
-    /// @dev Adds checks for frozen sender/recipient and sufficient unfrozen balance.
+    /// @dev Overrides the `_beforeTransfer` hook to add custodian-specific checks.
+    ///      Calls `__custodian_beforeTransferLogic` to check if sender or recipient are frozen, and if
+    ///      the sender has sufficient *unfrozen* balance for standard transfers.
     function _beforeTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
-        __custodian_beforeTransferLogic(from, to, amount);
-        super._beforeTransfer(from, to, amount); // Call next hook in the chain
+        __custodian_beforeTransferLogic(from, to, amount); // Custodian checks for standard transfers.
+        super._beforeTransfer(from, to, amount); // Continue with other hooks.
     }
 
     /// @inheritdoc SMARTHooks
-    /// @dev Adds logic to automatically unfreeze tokens if a burn requires them (for admin burns).
+    /// @dev Overrides the `_beforeBurn` hook to add custodian-specific logic.
+    ///      Calls `__custodian_beforeBurnLogic`, which might, for example, automatically unfreeze a portion
+    ///      of tokens if an administrative burn needs to consume partially frozen tokens.
     function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        __custodian_beforeBurnLogic(from, amount);
-        super._beforeBurn(from, amount); // Call next hook in the chain
+        __custodian_beforeBurnLogic(from, amount); // Custodian logic for burns.
+        super._beforeBurn(from, amount); // Continue with other hooks.
     }
 
     /// @inheritdoc SMARTHooks
-    /// @dev Adds checks for frozen sender and sufficient unfrozen balance (for user-initiated redeems).
+    /// @dev Overrides the `_beforeRedeem` hook (often user-initiated burns) for custodian checks.
+    ///      Calls `__custodian_beforeRedeemLogic` to check if the redeemer is frozen or has insufficient
+    ///      unfrozen balance.
     function _beforeRedeem(address from, uint256 amount) internal virtual override(SMARTHooks) {
-        __custodian_beforeRedeemLogic(from, amount);
-        super._beforeRedeem(from, amount); // Call next hook in the chain
+        __custodian_beforeRedeemLogic(from, amount); // Custodian checks for user-initiated redeems.
+        super._beforeRedeem(from, amount); // Continue with other hooks.
     }
 }

@@ -26,13 +26,15 @@ Key components include:
 To use this extension:
 
 1. **Inherit Base Contracts**:
-    - Inherit the core `SMART` or `SMARTUpgradeable` implementation.
-    - Inherit the corresponding historical balances implementation (`SMARTHistoricalBalances` or `SMARTHistoricalBalancesUpgradeable`).
-    - Ensure necessary base contracts (e.g., `ERC20`/`ERC20Upgradeable`, `Context`/`ContextUpgradeable`, `SMARTExtension`/`SMARTExtensionUpgradeable`) are also inherited by your final token contract.
+
+   - Inherit the core `SMART` or `SMARTUpgradeable` implementation.
+   - Inherit the corresponding historical balances implementation (`SMARTHistoricalBalances` or `SMARTHistoricalBalancesUpgradeable`).
+   - Ensure necessary base contracts (e.g., `ERC20`/`ERC20Upgradeable`, `Context`/`ContextUpgradeable`, `SMARTExtension`/`SMARTExtensionUpgradeable`) are also inherited by your final token contract.
 
 2. **Implement Constructor/Initializer**:
-    - **Standard (`SMARTHistoricalBalances`)**: Ensure parent constructors (like `SMART`) are called in the final contract's `constructor`.
-    - **Upgradeable (`SMARTHistoricalBalancesUpgradeable`)**: In the final contract's `initialize` function, ensure parent initializers (e.g., `__ERC20_init`, `__SMART_init`, `__SMART_init_extensions`) are called. Then, call `__SMARTHistoricalBalances_init()` as part of the extension initialization process (typically handled by `__SMART_init_extensions` if this extension is registered).
+
+   - **Standard (`SMARTHistoricalBalances`)**: Ensure parent constructors (like `SMART`) are called in the final contract's `constructor`.
+   - **Upgradeable (`SMARTHistoricalBalancesUpgradeable`)**: In the final contract's `initialize` function, ensure parent initializers (e.g., `__ERC20_init`, `__SMART_init`, `__SMART_init_extensions`) are called. Then, call `__SMARTHistoricalBalances_init()` as part of the extension initialization process (typically handled by `__SMART_init_extensions` if this extension is registered).
 
 3. **Hook Integration**: The extension automatically hooks into `_afterMint`, `_afterBurn`, and `_afterTransfer`. No further manual hook setup is generally required for its core functionality.
 

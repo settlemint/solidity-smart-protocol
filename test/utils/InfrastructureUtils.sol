@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
 import { Test } from "forge-std/Test.sol";
 import { MockedComplianceModule } from "./mocks/MockedComplianceModule.sol";
@@ -60,8 +60,8 @@ contract InfrastructureUtils is Test {
         // --- Predeployed implementations ---
         address forwarder = address(0);
 
-        IIdentity identityImpl = new SMARTIdentityImplementation(forwarder);
-        IIdentity tokenIdentityImpl = new SMARTTokenIdentityImplementation(forwarder);
+        IIdentity identityImpl = new SMARTIdentityImplementation();
+        IIdentity tokenIdentityImpl = new SMARTTokenIdentityImplementation();
 
         SMARTIdentityRegistryStorageImplementation storageImpl =
             new SMARTIdentityRegistryStorageImplementation(forwarder);

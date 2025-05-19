@@ -1,21 +1,39 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
+/// @title Interface for the SMART Redeemable Extension
+/// @notice This interface defines the functions that a SMART Redeemable token extension must implement.
+/// It allows token holders to redeem (burn) their own tokens, effectively reducing the total supply.
+/// @dev This interface is intended to be implemented by contracts that provide redeemable token functionality.
+/// The functions defined here are external, meaning they can be called from outside the contract.
 interface ISMARTRedeemable {
     // -- State-Changing Functions --
 
-    /// @notice Allows the caller (token holder) to redeem (burn) their own tokens.
-    /// @dev Calls the `_beforeRedeem` hook, executes the burn via the abstract `_redeemable_executeBurn`,
-    ///      calls the `_afterRedeem` hook, and emits the `Redeemed` event.
-    ///      Relies on the inheriting contract to provide `_msgSender`.
-    /// @param amount The amount of tokens the caller wishes to redeem.
-    /// @return True upon successful execution.
-    function redeem(uint256 amount) external returns (bool);
+    /// @notice Allows the caller (the token holder) to redeem a specific amount of their own tokens.
+    /// @dev When a token holder calls this function, the specified `amount` of their tokens will be burned (destroyed).
+    /// This action reduces both the token holder's balance and the total supply of the token.
+    /// The function should:
+    /// 1. Optionally execute a `_beforeRedeem` hook for pre-redemption logic.
+    /// 2. Perform the burn operation via an internal function like `_redeemable_executeBurn`.
+    /// 3. Optionally execute an `_afterRedeem` hook for post-redemption logic.
+    /// 4. Emit a `Redeemed` event to log the transaction on the blockchain.
+    /// The contract implementing this interface is expected to use `_msgSender()` to identify the caller.
+    /// @param amount The quantity of tokens the caller wishes to redeem. Must be less than or equal to the caller's
+    /// balance.
+    /// @return success A boolean value indicating whether the redemption was successful (typically `true`).
+    function redeem(uint256 amount) external returns (bool success);
 
-    /// @notice Allows the caller (token holder) to redeem (burn) their own tokens.
-    /// @dev Calls the `_beforeRedeem` hook, executes the burn via the abstract `_redeemable_executeBurn`,
-    ///      calls the `_afterRedeem` hook, and emits the `Redeemed` event.
-    ///      Relies on the inheriting contract to provide `_msgSender`.
-    /// @return True upon successful execution.
-    function redeemAll() external returns (bool);
+    /// @notice Allows the caller (the token holder) to redeem all of their own tokens.
+    /// @dev When a token holder calls this function, their entire balance of this token will be burned (destroyed).
+    /// This action reduces the token holder's balance to zero and decreases the total supply of the token accordingly.
+    /// The function should:
+    /// 1. Determine the caller's current token balance.
+    /// 2. Optionally execute a `_beforeRedeem` hook for pre-redemption logic with the full balance amount.
+    /// 3. Perform the burn operation for the full balance via an internal function like `_redeemable_executeBurn`.
+    /// 4. Optionally execute an `_afterRedeem` hook for post-redemption logic with the full balance amount.
+    /// 5. Emit a `Redeemed` event to log the transaction on the blockchain.
+    /// The contract implementing this interface is expected to use `_msgSender()` to identify the caller.
+    /// @return success A boolean value indicating whether the redemption of all tokens was successful (typically
+    /// `true`).
+    function redeemAll() external returns (bool success);
 }

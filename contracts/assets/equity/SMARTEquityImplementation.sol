@@ -2,7 +2,6 @@
 pragma solidity 0.8.28;
 
 // OpenZeppelin imports
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -16,7 +15,6 @@ import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Non
 import { SMARTRoles } from "../SMARTRoles.sol";
 
 // Interface imports
-import { ISMART } from "../../interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
@@ -39,16 +37,12 @@ contract SMARTEquityImplementation is
     ERC20VotesUpgradeable, // TODO?
     ERC2771ContextUpgradeable
 {
-    error InvalidISIN();
-    error InvalidTokenAddress();
-    error InsufficientTokenBalance();
-
     string private _equityClass;
     string private _equityCategory;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     /// @param forwarder_ The address of the forwarder contract.
-    constructor(address forwarder_) payable ERC2771ContextUpgradeable(forwarder_) {
+    constructor(address forwarder_) ERC2771ContextUpgradeable(forwarder_) {
         _disableInitializers();
     }
 

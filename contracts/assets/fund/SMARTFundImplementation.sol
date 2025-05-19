@@ -5,7 +5,6 @@ pragma solidity 0.8.28;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC20VotesUpgradeable } from
@@ -18,7 +17,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SMARTRoles } from "../SMARTRoles.sol";
 
 // Interface imports
-import { ISMART } from "../../interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
@@ -54,8 +52,6 @@ contract SMARTFundImplementation is
 
     /// @notice Custom errors for the SMARTFund contract
     /// @dev These errors provide more gas-efficient and descriptive error handling
-    error InvalidTokenAddress();
-    error InsufficientTokenBalance();
 
     /// @notice The timestamp of the last fee collection
     /// @dev Used to calculate time-based management fees
@@ -81,7 +77,7 @@ contract SMARTFundImplementation is
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     /// @param forwarder_ The address of the forwarder contract.
-    constructor(address forwarder_) payable ERC2771ContextUpgradeable(forwarder_) {
+    constructor(address forwarder_) ERC2771ContextUpgradeable(forwarder_) {
         _disableInitializers();
     }
 

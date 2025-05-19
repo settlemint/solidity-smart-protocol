@@ -40,7 +40,7 @@ The `_authorizeBurn` hook allows for custom authorization logic. The provided `S
 Alternative authorization strategies could include:
 
 - Allowing only the token contract owner (`Ownable`).
-- Allowing *any* token holder to burn *only their own* tokens (requires modifying the `_authorizeBurn` logic and potentially the `burn` function signature if self-burning is the primary goal).
+- Allowing _any_ token holder to burn _only their own_ tokens (requires modifying the `_authorizeBurn` logic and potentially the `burn` function signature if self-burning is the primary goal).
 - Implementing time-locks or multi-sig requirements for burn operations.
 
 ## Security Considerations

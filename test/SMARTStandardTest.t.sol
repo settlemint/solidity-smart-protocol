@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
 // This file now represents the test suite for the STANDARD token implementation.
 // It inherits the common test logic and infrastructure setup.

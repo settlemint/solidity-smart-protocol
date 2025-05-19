@@ -7,38 +7,66 @@ import { AbstractCountryComplianceModule } from "./AbstractCountryComplianceModu
 // Interface imports
 import { ISMARTComplianceModule } from "../../../interface/ISMARTComplianceModule.sol"; // Needed for @inheritdoc
 
-/**
- * @title Country BlockList Compliance Module
- * @notice Compliance module restricting transfers TO users whose country IS in the combined blocklist.
- * @dev Combines a global blocklist (managed within this specific module instance via `GLOBAL_LIST_MANAGER_ROLE`)
- *      with a token-specific list of additional blocked countries provided via parameters.
- *      Transfers are blocked if the receiver's country is in either the global list OR the token-specific list.
- *      If the receiver has no identity or country, the transfer is implicitly allowed (not blocked) by this module.
- * @custom:parameters Standard format: `abi.encode(uint16[] memory additionalBlockedCountries)`
- */
+/// @title Country Block-List Compliance Module
+/// @author SettleMint Tokenization Services
+/// @notice This compliance module restricts token transfers *to* users if their registered country is on a prohibited
+/// list (block-list).
+/// @dev It inherits from `AbstractCountryComplianceModule` and implements a country-based block-list logic.
+/// The module combines two sources for the block-list:
+/// 1. **Global Block-List**: A list of country codes maintained within this specific module instance.
+///    This list can be managed by addresses holding the `GLOBAL_LIST_MANAGER_ROLE` (inherited from
+/// `AbstractCountryComplianceModule`).
+/// 2. **Token-Specific Block-List**: An additional list of country codes provided via the `_params` argument when this
+/// module
+///    is registered with a particular `ISMART` token. The format for these parameters is `abi.encode(uint16[] memory
+/// additionalBlockedCountries)`.
+/// A transfer *to* a recipient is BLOCKED (i.e., `canTransfer` reverts) if:
+///    - The recipient has a registered identity in the token's `ISMARTIdentityRegistry` AND their country code is known
+/// (not 0),
+///    - AND the recipient's registered country code is present in this module instance's global block-list,
+///    - OR the recipient's registered country code is present in the token-specific list of blocked countries passed
+/// via `_params`.
+/// If the recipient has no identity or their country code is 0, the transfer is implicitly ALLOWED by this module
+/// because it cannot determine if they are from a blocked country.
+/// Similarly, if their known country is not on any block-list, the transfer is allowed.
+/// @custom:parameters The `_params` data for this module should be ABI-encoded as a dynamic array of `uint16` country
+/// codes:
+///                   `abi.encode(uint16[] memory additionalBlockedCountries)`. These are countries blocked *in
+/// addition* to the global list for a specific token.
 contract CountryBlockListComplianceModule is AbstractCountryComplianceModule {
     // --- State Variables ---
-    /// @notice Mapping storing the global blocklist for this module instance (country code => blocked status).
-    mapping(uint16 => bool) private _globalBlockedCountries;
+    /// @notice Stores the global block-list for this specific instance of the `CountryBlockListComplianceModule`.
+    /// @dev This mapping holds country codes (ISO 3166-1 numeric) as keys and a boolean `isBlocked` as the value.
+    /// If `_globalBlockedCountries[countryCode]` is `true`, then that country is part of this module's global
+    /// block-list.
+    /// This list is managed by users with the `GLOBAL_LIST_MANAGER_ROLE` via the `setGlobalBlockedCountries` function.
+    mapping(uint16 country => bool isBlocked) private _globalBlockedCountries;
 
     // --- Events ---
-    /// @notice Emitted when countries are added to or removed from the global blocklist of this module instance.
-    event GlobalBlockedCountriesUpdated(uint16[] countries, bool blocked);
+    /// @notice Emitted when one or more countries are added to or removed from this module instance's global
+    /// block-list.
+    /// @param countries An array of country codes (ISO 3166-1 numeric) that were updated.
+    /// @param blocked A boolean indicating whether the specified `countries` were added (`true`) to or removed
+    /// (`false`) from the global block-list.
+    event GlobalBlockedCountriesUpdated(uint16[] countries, bool indexed blocked);
 
     // --- Global Block List Management (Manager Role Only) ---
 
-    /**
-     * @notice Adds or removes countries from the global blocklist specific to this module instance.
-     * @dev Requires the caller to have the `GLOBAL_LIST_MANAGER_ROLE`.
-     * @param _countries Array of country codes (ISO 3166-1 numeric).
-     * @param _block `true` to add countries to the global blocklist, `false` to remove them.
-     */
+    /// @notice Adds or removes multiple countries from this module instance's global block-list.
+    /// @dev This function can only be called by addresses that have been granted the `GLOBAL_LIST_MANAGER_ROLE` for
+    /// this module instance.
+    /// It iterates through the `_countries` array and sets their status in the `_globalBlockedCountries` mapping.
+    /// @param _countries An array of country codes (ISO 3166-1 numeric) to be added or removed.
+    /// @param _block If `true`, the specified `_countries` will be added to the global block-list (or updated if
+    /// already present).
+    ///               If `false`, the specified `_countries` will be removed from the global block-list.
     function setGlobalBlockedCountries(
         uint16[] calldata _countries,
         bool _block
     )
         external
-        onlyRole(GLOBAL_LIST_MANAGER_ROLE)
+        virtual
+        onlyRole(GLOBAL_LIST_MANAGER_ROLE) // Ensures only authorized managers can call this
     {
         uint256 countriesLength = _countries.length;
         for (uint256 i = 0; i < countriesLength;) {
@@ -52,54 +80,68 @@ contract CountryBlockListComplianceModule is AbstractCountryComplianceModule {
 
     // --- Views ---
 
-    /**
-     * @notice Checks if a country code is present in the global blocklist of this module instance.
-     * @param _country The country code (ISO 3166-1 numeric) to check.
-     * @return True if the country is globally blocked by this module, false otherwise.
-     */
-    function isGloballyBlocked(uint16 _country) public view returns (bool) {
+    /// @notice Checks if a specific country code is present in this module instance's global block-list.
+    /// @param _country The country code (ISO 3166-1 numeric) to check.
+    /// @return `true` if the `_country` is part of the global block-list for this module instance, `false` otherwise.
+    function isGloballyBlocked(uint16 _country) public view virtual returns (bool) {
         return _globalBlockedCountries[_country];
     }
 
     // --- Compliance Check --- (ISMARTComplianceModule Implementation)
 
-    /**
-     * @inheritdoc ISMARTComplianceModule
-     * @dev Checks if a transfer should be blocked based on the receiver's country.
-     *      Blocks the transfer (reverts) if:
-     *      1. The receiver has a registered identity and country code AND
-     *      2. The receiver's country is in this module's global blocklist OR
-     *      3. The receiver's country is in the token-specific additional blocked countries list (`_params`).
-     *      Allows the transfer implicitly if the receiver has no identity/country or is not in any blocklist.
-     * @param _token Address of the ISMART token contract.
-     * @param _to Address of the receiver.
-     * @param _params ABI-encoded `uint16[]` of additional blocked country codes specific to the token.
-     */
+    /// @inheritdoc ISMARTComplianceModule
+    /// @notice Determines if a transfer to a recipient should be blocked based on their country's presence in the
+    /// combined block-lists.
+    /// @dev This function implements the core compliance logic for the `CountryBlockListComplianceModule`.
+    /// It is called by the `SMARTComplianceImplementation` before a token transfer.
+    /// The logic is as follows:
+    /// 1. Retrieve the recipient's (`_to`) country code using `_getUserCountry` (from
+    /// `AbstractCountryComplianceModule`).
+    /// 2. If the recipient has no identity or their country code is 0 (unknown), the transfer is allowed by this module
+    /// (return without reverting).
+    ///    This is because the module cannot enforce a block-list if the country is unknown.
+    /// 3. If the recipient's country is in this module's `_globalBlockedCountries` (checked via `isGloballyBlocked`),
+    ///    the transfer is blocked, and the function reverts with `ComplianceCheckFailed("Receiver country globally
+    /// blocked")`.
+    /// 4. If not globally blocked, decode the token-specific `additionalBlockedCountries` from `_params` (using
+    /// `_decodeParams`).
+    /// 5. Check if the recipient's country is present in this `additionalBlockedCountries` list. If yes,
+    ///    the transfer is blocked, and the function reverts with `ComplianceCheckFailed("Receiver country blocked for
+    /// token")`.
+    /// 6. If the recipient's country is known and not found in any block-list, the transfer is allowed by this module
+    /// (function completes without reverting).
+    /// @param _token Address of the `ISMART` token contract for which the compliance check is being performed.
+    /// @param _to Address of the recipient whose country is being checked against the block-list.
+    /// @param _params ABI-encoded `uint16[]` of additional country codes blocked specifically for this `_token`,
+    ///                in addition to the module's global block-list.
     function canTransfer(
         address _token,
-        address, /* _from */
+        address, /* _from - unused */
         address _to,
-        uint256, /* _value */
+        uint256, /* _value - unused */
         bytes calldata _params
     )
         external
         view
-        override // Overrides AbstractComplianceModule.canTransfer
+        virtual
+        override // Overrides canTransfer from AbstractCountryComplianceModule
     {
         (bool hasIdentity, uint16 receiverCountry) = _getUserCountry(_token, _to);
 
-        // Condition 1: Only apply blocklist if identity and country are known
+        // Condition 1: Only apply block-list if identity and country are known.
+        // If no identity or country is 0, this module cannot determine if they are blocked, so it allows the transfer.
         if (!hasIdentity || receiverCountry == 0) {
-            return; // Cannot enforce blocklist, so allow
+            return; // Allow transfer as country cannot be determined for blocking.
         }
 
-        // Condition 2: Check this module's global block list
+        // Condition 2: Check if the receiver's country is in this module instance's global block-list.
         if (isGloballyBlocked(receiverCountry)) {
             revert ComplianceCheckFailed("Receiver country globally blocked");
         }
 
-        // Condition 3: Check token-specific additional blocked countries
-        uint16[] memory additionalBlockedCountries = _decodeParams(_params); // Decodes uint16[]
+        // Condition 3: If not in the global list, check the token-specific additional blocked countries provided in
+        // _params.
+        uint16[] memory additionalBlockedCountries = _decodeParams(_params); // Decodes abi.encode(uint16[])
         uint256 additionalBlockedCountriesLength = additionalBlockedCountries.length;
         for (uint256 i = 0; i < additionalBlockedCountriesLength;) {
             if (additionalBlockedCountries[i] == receiverCountry) {
@@ -110,15 +152,16 @@ contract CountryBlockListComplianceModule is AbstractCountryComplianceModule {
             }
         }
 
-        // If not blocked by global or token-specific list, allow implicitly
+        // If the country is known and not found in either the global or token-specific block-list, the transfer is
+        // allowed by this module.
     }
 
     // --- Module Info --- (ISMARTComplianceModule Implementation)
 
-    /**
-     * @inheritdoc ISMARTComplianceModule
-     */
-    function name() external pure override returns (string memory) {
+    /// @inheritdoc ISMARTComplianceModule
+    /// @notice Returns the human-readable name of this compliance module.
+    /// @return The string "Country BlockList Compliance Module".
+    function name() external pure virtual override returns (string memory) {
         return "Country BlockList Compliance Module";
     }
 }

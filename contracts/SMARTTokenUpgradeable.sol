@@ -11,28 +11,31 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 // Interface imports
-import { ISMART } from "./interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
 import { SMARTUpgradeable } from "./extensions/core/SMARTUpgradeable.sol";
-import { SMARTExtensionUpgradeable } from "./extensions/common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
 
 // Feature extensions
 import { SMARTPausableUpgradeable } from "./extensions/pausable/SMARTPausableUpgradeable.sol";
-
 import { SMARTBurnableUpgradeable } from "./extensions/burnable/SMARTBurnableUpgradeable.sol";
-
 import { SMARTCustodianUpgradeable } from "./extensions/custodian/SMARTCustodianUpgradeable.sol";
-
 import { SMARTRedeemableUpgradeable } from "./extensions/redeemable/SMARTRedeemableUpgradeable.sol";
 import { SMARTCollateralUpgradeable } from "./extensions/collateral/SMARTCollateralUpgradeable.sol";
 import { SMARTHistoricalBalancesUpgradeable } from
     "./extensions/historical-balances/SMARTHistoricalBalancesUpgradeable.sol";
-/// @title SMARTTokenUpgradeable
-/// @notice An upgradeable implementation of a SMART token with all available extensions, using UUPS proxy pattern.
 
+/// @title SMARTTokenUpgradeable
+/// @author SettleMint
+/// @notice This contract is an upgradeable version of the SMARTToken, designed to be used with a UUPS (Universal
+/// Upgradeable Proxy Standard) proxy pattern.
+/// @dev It provides the same comprehensive functionalities as SMARTToken, including compliance, custodian features,
+/// collateralization, etc.,
+/// but allows the contract logic to be upgraded without losing state or changing the contract address. This is achieved
+/// by separating
+/// the logic contract (this implementation) from the proxy contract that users interact with.
+/// All initial setup is performed via the `initialize` function rather than a constructor.
 contract SMARTTokenUpgradeable is
     Initializable,
     SMARTUpgradeable,
@@ -45,43 +48,64 @@ contract SMARTTokenUpgradeable is
     AccessControlUpgradeable
 {
     // Role constants
-    /// @notice Role required to update general token settings (name, symbol, onchainID).
+    /// @notice Role identifier for administrators who can update general token settings like name, symbol, and the
+    /// OnchainID contract address.
+    /// @dev In an upgradeable contract, these settings are part of the persistent storage managed by the proxy.
     bytes32 public constant TOKEN_ADMIN_ROLE = keccak256("TOKEN_ADMIN_ROLE");
-    /// @notice Role required to update compliance settings (compliance contract, modules, parameters).
+    /// @notice Role identifier for administrators who manage compliance-related settings.
+    /// @dev This includes setting the main compliance contract, adding/removing compliance modules, and their
+    /// parameters.
     bytes32 public constant COMPLIANCE_ADMIN_ROLE = keccak256("COMPLIANCE_ADMIN_ROLE");
-    /// @notice Role required to update verification settings (identity registry, required claim topics).
+    /// @notice Role identifier for administrators who manage investor verification settings.
+    /// @dev This involves setting the identity registry and specifying required claim topics for KYC/AML.
     bytes32 public constant VERIFICATION_ADMIN_ROLE = keccak256("VERIFICATION_ADMIN_ROLE");
-    /// @notice Role required to mint new tokens.
+    /// @notice Role identifier for entities authorized to mint new tokens.
+    /// @dev Minting increases the total supply and should be strictly controlled.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    /// @notice Role required to execute burn operations.
+    /// @notice Role identifier for entities authorized to burn (destroy) tokens.
+    /// @dev Burning tokens decreases total supply, used for redemptions or supply management.
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    /// @notice Role required to freeze/unfreeze addresses and partial token amounts.
+    /// @notice Role identifier for entities authorized to freeze or unfreeze token balances for specific addresses.
+    /// @dev Used for legal compliance or account management, including partial freezes.
     bytes32 public constant FREEZER_ROLE = keccak256("FREEZER_ROLE");
-    /// @notice Role required to execute forced transfers.
+    /// @notice Role identifier for entities authorized to execute forced transfers of tokens.
+    /// @dev A powerful role for exceptional circumstances like asset recovery under strict governance.
     bytes32 public constant FORCED_TRANSFER_ROLE = keccak256("FORCED_TRANSFER_ROLE");
-    /// @notice Role required to perform address recovery.
+    /// @notice Role identifier for entities authorized to perform address recovery for investors.
+    /// @dev Allows transferring tokens from a lost wallet to a new one, subject to identity verification.
     bytes32 public constant RECOVERY_ROLE = keccak256("RECOVERY_ROLE");
 
-    /// @notice Role required to pause or unpause the contract.
+    /// @notice Role identifier for entities authorized to pause or unpause the entire contract.
+    /// @dev An emergency safety feature that blocks most token operations.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() payable {
+    /// @dev This empty constructor is required for upgradeable contracts following the UUPS pattern.
+    /// It calls `_disableInitializers()` to prevent the `initialize` function from being called multiple times
+    /// implicitly.
+    /// The actual initialization is done via the `initialize` function, which must be called explicitly after
+    /// deployment through the proxy.
+    constructor() {
         _disableInitializers();
     }
 
-    /// @notice Initializes the SMART token contract and its extensions.
-    /// @param name_ The name of the token.
-    /// @param symbol_ The symbol of the token.
-    /// @param decimals_ The number of decimals the token uses.
-    /// @param onchainID_ The address of the OnchainID contract.
+    /// @notice Initializes the SMART token contract and all its inherited extensions.
+    /// @dev This function replaces the constructor in an upgradeable contract setup. It should only be called once,
+    /// typically by the deployer of the proxy contract.
+    /// It sets up the token name, symbol, decimals, identity and compliance systems, collateral proof, and initial
+    /// ownership.
+    /// @param name_ The name of the token (e.g., "My Upgradeable SMART Token").
+    /// @param symbol_ The symbol of the token (e.g., "MUST").
+    /// @param decimals_ The number of decimal places the token uses (e.g., 18).
+    /// @param onchainID_ The address of the OnchainID contract for identity verification.
     /// @param identityRegistry_ The address of the Identity Registry contract.
     /// @param compliance_ The address of the main compliance contract.
-    /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
+    /// @param requiredClaimTopics_ Array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
-    /// @param initialOwner_ The initial owner of the contract.
+    /// @param collateralProofTopic_ A `uint256` topic identifier for claims related to collateral proof.
+    /// @param initialOwner_ The address that will be granted the `DEFAULT_ADMIN_ROLE` and can manage other roles.
     function initialize(
         string memory name_,
         string memory symbol_,
@@ -95,10 +119,10 @@ contract SMARTTokenUpgradeable is
         address initialOwner_
     )
         public
-        initializer
+        initializer // OpenZeppelin modifier to ensure this function is called only once
     {
-        __ERC20_init(name_, symbol_);
-        __SMART_init(
+        __ERC20_init(name_, symbol_); // Initializes ERC20 basic properties (name, symbol)
+        __SMART_init( // Initializes core SMART logic (decimals, identity, compliance)
             name_,
             symbol_,
             decimals_,
@@ -108,30 +132,43 @@ contract SMARTTokenUpgradeable is
             requiredClaimTopics_,
             initialModulePairs_
         );
-        __SMARTCustodian_init();
-        __SMARTBurnable_init();
-        __SMARTRedeemable_init();
-        __SMARTPausable_init();
-        __AccessControl_init();
-        __SMARTCollateral_init(collateralProofTopic_);
-        __SMARTHistoricalBalances_init();
-        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_);
+        __SMARTCustodian_init(); // Initializes custodian features
+        __SMARTBurnable_init(); // Initializes burnable token features
+        __SMARTRedeemable_init(); // Initializes redeemable token features
+        __SMARTPausable_init(); // Initializes pausable contract features
+        __AccessControl_init(); // Initializes role-based access control
+        __SMARTCollateral_init(collateralProofTopic_); // Initializes collateral features
+        __SMARTHistoricalBalances_init(); // Initializes historical balance tracking
+        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner_); // Grants admin role to the initial owner
     }
 
     // --- ISMART Implementation ---
 
+    /// @notice Updates the OnchainID contract address.
+    /// @dev Only callable by `TOKEN_ADMIN_ROLE`. Modifies state stored in the proxy.
+    /// @param _onchainID The new address of the OnchainID contract.
     function setOnchainID(address _onchainID) external override onlyRole(TOKEN_ADMIN_ROLE) {
         _smart_setOnchainID(_onchainID);
     }
 
+    /// @notice Updates the Identity Registry contract address.
+    /// @dev Only callable by `TOKEN_ADMIN_ROLE`.
+    /// @param _identityRegistry The new address of the Identity Registry contract.
     function setIdentityRegistry(address _identityRegistry) external override onlyRole(TOKEN_ADMIN_ROLE) {
         _smart_setIdentityRegistry(_identityRegistry);
     }
 
+    /// @notice Updates the main compliance contract address.
+    /// @dev Only callable by `COMPLIANCE_ADMIN_ROLE`.
+    /// @param _compliance The new address of the compliance contract.
     function setCompliance(address _compliance) external override onlyRole(COMPLIANCE_ADMIN_ROLE) {
         _smart_setCompliance(_compliance);
     }
 
+    /// @notice Sets or updates parameters for a specific compliance module.
+    /// @dev Only callable by `COMPLIANCE_ADMIN_ROLE`.
+    /// @param _module The address of the compliance module.
+    /// @param _params The new parameters for the module (encoded bytes).
     function setParametersForComplianceModule(
         address _module,
         bytes calldata _params
@@ -143,6 +180,9 @@ contract SMARTTokenUpgradeable is
         _smart_setParametersForComplianceModule(_module, _params);
     }
 
+    /// @notice Updates the list of required claim topics.
+    /// @dev Only callable by `VERIFICATION_ADMIN_ROLE`.
+    /// @param _requiredClaimTopics An array of new required claim topics.
     function setRequiredClaimTopics(uint256[] calldata _requiredClaimTopics)
         external
         override
@@ -151,10 +191,18 @@ contract SMARTTokenUpgradeable is
         _smart_setRequiredClaimTopics(_requiredClaimTopics);
     }
 
+    /// @notice Mints new tokens to a specified address.
+    /// @dev Increases total supply. Only callable by `MINTER_ROLE`. Subject to compliance checks.
+    /// @param _to The recipient address.
+    /// @param _amount The quantity of tokens to mint.
     function mint(address _to, uint256 _amount) external override onlyRole(MINTER_ROLE) {
         _smart_mint(_to, _amount);
     }
 
+    /// @notice Mints tokens for multiple addresses in a batch.
+    /// @dev Only callable by `MINTER_ROLE`. Subject to compliance checks for each recipient.
+    /// @param _toList Array of recipient addresses.
+    /// @param _amounts Array of token quantities to mint.
     function batchMint(
         address[] calldata _toList,
         uint256[] calldata _amounts
@@ -166,6 +214,12 @@ contract SMARTTokenUpgradeable is
         _smart_batchMint(_toList, _amounts);
     }
 
+    /// @notice Transfers tokens from the caller to a recipient.
+    /// @dev Overrides ERC20 `transfer` to include SMART compliance and hooks. This is the standard user-facing transfer
+    /// function.
+    /// @param _to The recipient address.
+    /// @param _amount The quantity of tokens to transfer.
+    /// @return `true` if successful.
     function transfer(
         address _to,
         uint256 _amount
@@ -177,10 +231,20 @@ contract SMARTTokenUpgradeable is
         return _smart_transfer(_to, _amount);
     }
 
+    /// @notice Recovers ERC20 tokens accidentally sent to this contract.
+    /// @dev Only callable by `TOKEN_ADMIN_ROLE`. Useful for retrieving other tokens mistakenly transferred to the
+    /// SMARTToken contract address.
+    /// @param token The address of the ERC20 token to recover.
+    /// @param to The address to send the recovered tokens to.
+    /// @param amount The quantity of tokens to recover.
     function recoverERC20(address token, address to, uint256 amount) external override onlyRole(TOKEN_ADMIN_ROLE) {
         _smart_recoverERC20(token, to, amount);
     }
 
+    /// @notice Adds a new compliance module.
+    /// @dev Only callable by `COMPLIANCE_ADMIN_ROLE`.
+    /// @param _module The address of the compliance module to add.
+    /// @param _params Initial parameters for the module (encoded bytes).
     function addComplianceModule(
         address _module,
         bytes calldata _params
@@ -192,16 +256,27 @@ contract SMARTTokenUpgradeable is
         _smart_addComplianceModule(_module, _params);
     }
 
+    /// @notice Removes an existing compliance module.
+    /// @dev Only callable by `COMPLIANCE_ADMIN_ROLE`.
+    /// @param _module The address of the compliance module to remove.
     function removeComplianceModule(address _module) external override onlyRole(COMPLIANCE_ADMIN_ROLE) {
         _smart_removeComplianceModule(_module);
     }
 
     // --- ISMARTBurnable Implementation ---
 
+    /// @notice Burns a specified amount of tokens from a user's address.
+    /// @dev Reduces total supply. Only callable by `BURNER_ROLE`.
+    /// @param userAddress The address from which tokens will be burned.
+    /// @param amount The quantity of tokens to burn.
     function burn(address userAddress, uint256 amount) external override onlyRole(BURNER_ROLE) {
         _smart_burn(userAddress, amount);
     }
 
+    /// @notice Burns tokens from multiple user addresses in a batch.
+    /// @dev Only callable by `BURNER_ROLE`.
+    /// @param userAddresses Array of addresses from which tokens will be burned.
+    /// @param amounts Array of token quantities to burn.
     function batchBurn(
         address[] calldata userAddresses,
         uint256[] calldata amounts
@@ -215,18 +290,34 @@ contract SMARTTokenUpgradeable is
 
     // --- ISMARTCustodian Implementation ---
 
+    /// @notice Freezes or unfreezes an address, preventing/allowing token transfers.
+    /// @dev Only callable by `FREEZER_ROLE`.
+    /// @param userAddress The address to freeze or unfreeze.
+    /// @param freeze `true` to freeze, `false` to unfreeze.
     function setAddressFrozen(address userAddress, bool freeze) external override onlyRole(FREEZER_ROLE) {
         _smart_setAddressFrozen(userAddress, freeze);
     }
 
+    /// @notice Freezes a specific amount of tokens for a user.
+    /// @dev Only callable by `FREEZER_ROLE`.
+    /// @param userAddress The address whose tokens are to be partially frozen.
+    /// @param amount The quantity of tokens to freeze.
     function freezePartialTokens(address userAddress, uint256 amount) external override onlyRole(FREEZER_ROLE) {
         _smart_freezePartialTokens(userAddress, amount);
     }
 
+    /// @notice Unfreezes a specific amount of tokens for a user.
+    /// @dev Only callable by `FREEZER_ROLE`.
+    /// @param userAddress The address whose tokens are to be partially unfrozen.
+    /// @param amount The quantity of tokens to unfreeze.
     function unfreezePartialTokens(address userAddress, uint256 amount) external override onlyRole(FREEZER_ROLE) {
         _smart_unfreezePartialTokens(userAddress, amount);
     }
 
+    /// @notice Freezes or unfreezes multiple addresses in a batch.
+    /// @dev Only callable by `FREEZER_ROLE`.
+    /// @param userAddresses Array of addresses to freeze/unfreeze.
+    /// @param freeze Array of booleans indicating freeze/unfreeze status.
     function batchSetAddressFrozen(
         address[] calldata userAddresses,
         bool[] calldata freeze
@@ -238,6 +329,10 @@ contract SMARTTokenUpgradeable is
         _smart_batchSetAddressFrozen(userAddresses, freeze);
     }
 
+    /// @notice Freezes specific amounts of tokens for multiple users in a batch.
+    /// @dev Only callable by `FREEZER_ROLE`.
+    /// @param userAddresses Array of addresses for partial freeze.
+    /// @param amounts Array of token quantities to freeze.
     function batchFreezePartialTokens(
         address[] calldata userAddresses,
         uint256[] calldata amounts
@@ -249,6 +344,10 @@ contract SMARTTokenUpgradeable is
         _smart_batchFreezePartialTokens(userAddresses, amounts);
     }
 
+    /// @notice Unfreezes specific amounts of tokens for multiple users in a batch.
+    /// @dev Only callable by `FREEZER_ROLE`.
+    /// @param userAddresses Array of addresses for partial unfreeze.
+    /// @param amounts Array of token quantities to unfreeze.
     function batchUnfreezePartialTokens(
         address[] calldata userAddresses,
         uint256[] calldata amounts
@@ -260,6 +359,12 @@ contract SMARTTokenUpgradeable is
         _smart_batchUnfreezePartialTokens(userAddresses, amounts);
     }
 
+    /// @notice Performs a forced transfer of tokens between two addresses.
+    /// @dev Bypasses sender authorization. Only callable by `FORCED_TRANSFER_ROLE`.
+    /// @param from The address to transfer tokens from.
+    /// @param to The address to transfer tokens to.
+    /// @param amount The quantity of tokens to transfer.
+    /// @return `true` if successful.
     function forcedTransfer(
         address from,
         address to,
@@ -273,6 +378,11 @@ contract SMARTTokenUpgradeable is
         return _smart_forcedTransfer(from, to, amount);
     }
 
+    /// @notice Performs forced transfers for multiple address pairs in a batch.
+    /// @dev Only callable by `FORCED_TRANSFER_ROLE`.
+    /// @param fromList Array of sender addresses.
+    /// @param toList Array of recipient addresses.
+    /// @param amounts Array of token quantities to transfer.
     function batchForcedTransfer(
         address[] calldata fromList,
         address[] calldata toList,
@@ -285,6 +395,12 @@ contract SMARTTokenUpgradeable is
         _smart_batchForcedTransfer(fromList, toList, amounts);
     }
 
+    /// @notice Recovers tokens from a lost wallet to a new wallet for an investor.
+    /// @dev Requires OnchainID verification. Only callable by `RECOVERY_ROLE`.
+    /// @param lostWallet The address of the lost wallet.
+    /// @param newWallet The address of the new wallet.
+    /// @param investorOnchainID The investor's OnchainID for verification.
+    /// @return `true` if successful.
     function recoveryAddress(
         address lostWallet,
         address newWallet,
@@ -300,30 +416,41 @@ contract SMARTTokenUpgradeable is
 
     // --- ISMARTPausable Implementation ---
 
+    /// @notice Pauses all major token operations.
+    /// @dev Emergency stop mechanism. Only callable by `PAUSER_ROLE`.
     function pause() external override onlyRole(PAUSER_ROLE) {
         _smart_pause();
     }
 
+    /// @notice Unpauses the contract, resuming normal operations.
+    /// @dev Only callable by `PAUSER_ROLE`.
     function unpause() external override onlyRole(PAUSER_ROLE) {
         _smart_unpause();
     }
 
     // --- View Functions (Overrides) ---
-    /// @inheritdoc ERC20Upgradeable
+
+    /// @notice Returns the name of the token.
+    /// @dev Overrides ERC20Upgradeable and IERC20Metadata. The name is set during initialization and stored in the
+    /// SMART logic layer.
+    /// @return The token's name.
     function name() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
         // Delegation to SMARTUpgradeable -> _SMARTLogic ensures correct value is returned
         return super.name();
     }
 
-    /// @inheritdoc ERC20Upgradeable
+    /// @notice Returns the symbol of the token.
+    /// @dev Overrides ERC20Upgradeable and IERC20Metadata. The symbol is set during initialization.
+    /// @return The token's symbol.
     function symbol() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (string memory) {
         // Delegation to SMARTUpgradeable -> _SMARTLogic ensures correct value is returned
         return super.symbol();
     }
 
-    /// @inheritdoc SMARTUpgradeable
-    /// @dev Need to explicitly override because ERC20Upgradeable also defines decimals().
-    /// Ensures we read the value set by __SMART_init_unchained via _SMARTLogic.
+    /// @notice Returns the number of decimals used by the token.
+    /// @dev Overrides SMARTUpgradeable, ERC20Upgradeable, and IERC20Metadata to ensure consistency.
+    /// The decimals are set during initialization via `__SMART_init_unchained`.
+    /// @return The number of decimals.
     function decimals()
         public
         view
@@ -335,7 +462,11 @@ contract SMARTTokenUpgradeable is
         return super.decimals();
     }
 
-    /// @dev Overrides ERC165 to ensure that the SMART implementation is used.
+    /// @notice Checks if the contract supports a given interface ID (ERC165).
+    /// @dev Overrides SMARTUpgradeable and AccessControlUpgradeable to combine supported interfaces.
+    /// This is important for interoperability, allowing other contracts to discover the features of this token.
+    /// @param interfaceId The interface ID to check.
+    /// @return `true` if the interface is supported, `false` otherwise.
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -347,8 +478,14 @@ contract SMARTTokenUpgradeable is
     }
 
     /**
-     * @dev Overrides required due to diamond inheritance involving ERC20Pausable and SMARTExtension/ERC20.
-     * We explicitly call the Pausable implementation which includes the `whenNotPaused` check.
+     * @notice Internal function to update token balances, overridden to include pausable functionality.
+     * @dev This core function is hit by transfers, mints, and burns. This override ensures that all such operations
+     * respect the pausable state of the contract by implicitly using the `whenNotPaused` modifier from
+     * `SMARTPausableUpgradeable`.
+     * It correctly chains up to `SMARTPausableUpgradeable` which then calls `ERC20Upgradeable._update`.
+     * @param from Sender's address (or zero address for mints).
+     * @param to Recipient's address (or zero address for burns).
+     * @param value Amount of tokens to transfer.
      */
     function _update(
         address from,
@@ -365,9 +502,16 @@ contract SMARTTokenUpgradeable is
     }
 
     // --- Overrides for Hook Functions ---
-    // These overrides ensure that hooks from all relevant extensions are called in a defined order.
+    // These overrides ensure that hooks from all relevant inherited extensions are correctly called in sequence,
+    // maintaining the order of operations for features like collateral checks, custodian actions, and historical
+    // balance updates.
 
-    /// @inheritdoc SMARTHooks
+    /// @notice Internal hook called before any token minting operation.
+    /// @dev Chains up to implementations in `SMARTUpgradeable`, `SMARTCollateralUpgradeable`,
+    /// `SMARTCustodianUpgradeable` and `SMARTHooks`.
+    /// Allows for pre-mint checks like collateral sufficiency or custodian approvals.
+    /// @param to The address receiving minted tokens.
+    /// @param amount The amount of tokens to be minted.
     function _beforeMint(
         address to,
         uint256 amount
@@ -379,7 +523,12 @@ contract SMARTTokenUpgradeable is
         super._beforeMint(to, amount);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @notice Internal hook called before any token transfer operation.
+    /// @dev Chains up to `SMARTUpgradeable`, `SMARTCustodianUpgradeable`, and `SMARTHooks`.
+    /// Enables pre-transfer checks such as compliance or account freeze status.
+    /// @param from The address sending tokens.
+    /// @param to The address receiving tokens.
+    /// @param amount The amount of tokens being transferred.
     function _beforeTransfer(
         address from,
         address to,
@@ -392,7 +541,12 @@ contract SMARTTokenUpgradeable is
         super._beforeTransfer(from, to, amount);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @notice Internal hook called before any token burning operation.
+    /// @dev Chains up to `SMARTCustodianUpgradeable` and `SMARTHooks`.
+    /// (Note: `SMARTUpgradeable` itself does not directly implement `_beforeBurn`).
+    /// Used for pre-burn custodian checks or other logic.
+    /// @param from The address whose tokens are being burned.
+    /// @param amount The amount of tokens to be burned.
     function _beforeBurn(
         address from,
         uint256 amount
@@ -405,7 +559,11 @@ contract SMARTTokenUpgradeable is
         super._beforeBurn(from, amount);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @notice Internal hook called before any token redemption operation.
+    /// @dev Chains up to `SMARTCustodianUpgradeable` and `SMARTHooks`.
+    /// For pre-redemption checks, often related to custodian actions.
+    /// @param owner The address redeeming tokens.
+    /// @param amount The amount of tokens being redeemed.
     function _beforeRedeem(
         address owner,
         uint256 amount
@@ -417,7 +575,11 @@ contract SMARTTokenUpgradeable is
         super._beforeRedeem(owner, amount);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @notice Internal hook called after any token minting operation.
+    /// @dev Chains up to `SMARTUpgradeable`, `SMARTHistoricalBalancesUpgradeable`, and `SMARTHooks`.
+    /// Used for post-mint actions like updating historical balance snapshots.
+    /// @param to The address that received the minted tokens.
+    /// @param amount The amount of tokens that were minted.
     function _afterMint(
         address to,
         uint256 amount
@@ -430,7 +592,12 @@ contract SMARTTokenUpgradeable is
         super._afterMint(to, amount);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @notice Internal hook called after any token transfer operation.
+    /// @dev Chains up to `SMARTUpgradeable`, `SMARTHistoricalBalancesUpgradeable`, and `SMARTHooks`.
+    /// For post-transfer actions like updating balance snapshots.
+    /// @param from The address that sent tokens.
+    /// @param to The address that received tokens.
+    /// @param amount The amount of tokens that were transferred.
     function _afterTransfer(
         address from,
         address to,
@@ -444,7 +611,11 @@ contract SMARTTokenUpgradeable is
         super._afterTransfer(from, to, amount);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @notice Internal hook called after any token burning operation.
+    /// @dev Chains up to `SMARTUpgradeable`, `SMARTHistoricalBalancesUpgradeable`, and `SMARTHooks`.
+    /// For post-burn actions like updating balance snapshots.
+    /// @param from The address whose tokens were burned.
+    /// @param amount The amount of tokens that were burned.
     function _afterBurn(
         address from,
         uint256 amount
@@ -457,12 +628,19 @@ contract SMARTTokenUpgradeable is
         super._afterBurn(from, amount);
     }
 
-    /// @inheritdoc SMARTHooks
+    /// @notice Internal hook called after any token redemption operation.
+    /// @dev Chains up to `SMARTHooks`. This hook can be used for custom logic after redemption.
+    /// @param owner The address that redeemed tokens.
+    /// @param amount The amount of tokens that were redeemed.
     function _afterRedeem(address owner, uint256 amount) internal virtual override(SMARTHooks) {
         super._afterRedeem(owner, amount);
     }
 
-    /// @dev Overrides required due to conflict with ContextUpgradeable inherited via multiple paths.
+    /// @notice Returns the address of the current transaction's sender, accounting for meta-transactions (ERC2771).
+    /// @dev Overrides `ContextUpgradeable._msgSender()` to support gasless transactions if a trusted forwarder is
+    /// configured for the contract.
+    /// This is crucial in an upgradeable context to maintain consistent sender identification across upgrades.
+    /// @return The authenticated sender address.
     function _msgSender() internal view virtual override(ContextUpgradeable) returns (address) {
         return super._msgSender();
     }

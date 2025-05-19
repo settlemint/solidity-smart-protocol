@@ -14,8 +14,8 @@ Each module interacts with the `SMARTCompliance` contract via the `ISMARTComplia
 
 **Features**:
 
-* Global Allowlist (Module Instance)
-* Token-Specific Additional Allowed Countries
+- Global Allowlist (Module Instance)
+- Token-Specific Additional Allowed Countries
 
 **Parameters Format**: The parameters should be ABI-encoded as a dynamic array of uint16 country codes: `abi.encode(uint16[] memory additionalAllowedCountries)`.
 
@@ -35,8 +35,8 @@ bytes memory params = abi.encode(tokenSpecificAllowed);
 
 **Features**:
 
-* Global Blocklist (Module Instance)
-* Token-Specific Additional Blocked Countries
+- Global Blocklist (Module Instance)
+- Token-Specific Additional Blocked Countries
 
 **Parameters Format**: The parameters should be ABI-encoded as a dynamic array of uint16 country codes: `abi.encode(uint16[] memory additionalBlockedCountries)`.
 

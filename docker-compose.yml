@@ -1,0 +1,52 @@
+services:
+  anvil:
+    image: ghcr.io/settlemint/btp-anvil-test-node:v7.7.4
+    restart: always
+    ports:
+      - "8545:8545" # Ethereum JSON-RPC
+
+  postgres:
+    image: postgres:17.5-bookworm
+    user: postgres
+    command:
+      [
+        "postgres",
+        "-cshared_preload_libraries=pg_stat_statements",
+        "-cmax_connections=200",
+      ]
+    environment:
+      POSTGRES_USER: graph-node
+      POSTGRES_PASSWORD: let-me-in
+      POSTGRES_DB: graph-node
+      PGDATA: "/var/lib/postgresql/data"
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graph-node"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  graph-node:
+    image: graphprotocol/graph-node:v0.38.0
+    platform: linux/amd64
+    ports:
+      - "8000:8000" # GraphQL HTTP
+      - "8001:8001" # Admin
+      - "8020:8020" # Index Node
+      - "8030:8030" # Query Node
+      - "8040:8040" # Subgraph
+    depends_on:
+      - anvil
+      - postgres
+    environment:
+      postgres_host: postgres
+      postgres_user: graph-node
+      postgres_pass: let-me-in
+      postgres_db: graph-node
+      ipfs: "https://ipfs.console.settlemint.com"
+      ethereum: "settlemint:http://anvil:8545"
+      GRAPH_ETHEREUM_REQUEST_RETRIES: 10
+      ETHEREUM_POLLING_INTERVAL: 1000
+      GRAPH_IPFS_TIMEOUT: 60
+      GRAPH_MAX_IPFS_FILE_BYTES: 52428800
+      GRAPH_IPFS_REQUEST_RETRIES: 10

@@ -8,7 +8,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 // Interface imports
-import { ISMART } from "../../interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 // Base contract imports
 import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
@@ -18,32 +17,48 @@ import { SMARTHooks } from "../common/SMARTHooks.sol";
 import { _SMARTLogic } from "./internal/_SMARTLogic.sol";
 
 // Error imports
-import { LengthMismatch } from "../common/CommonErrors.sol";
 
-/// @title Upgradeable SMART Token Implementation (UUPS)
-/// @notice Upgradeable implementation of the core SMART token functionality using the UUPS proxy pattern.
-///         Includes ERC20 compliance, identity verification, and compliance checks.
-/// @dev Inherits core logic from `_SMARTLogic`, authorization hooks from the chosen authorization contract,
-///      and upgradeable OpenZeppelin contracts (`ERC20Upgradeable`, `UUPSUpgradeable`).
-///      Requires an accompanying authorization contract (e.g., `SMARTAccessControlAuthorization`) and an
-/// ownership/access control
-///      contract (e.g., `OwnableUpgradeable` or `AccessControlUpgradeable`) to be inherited by the final contract for
-/// initialization and upgrades.
+/// @title Upgradeable SMART Token Implementation (UUPS Pattern)
+/// @notice This abstract contract provides an upgradeable version of a SMART token, utilizing OpenZeppelin's
+///         UUPS (Universal Upgradeable Proxy Standard) proxy pattern. It integrates ERC20 functionality,
+///         identity verification, and compliance checks from the `_SMARTLogic` base.
+/// @dev This contract is 'abstract' because it needs to be combined with:
+///      1. A UUPS-compatible access control contract (e.g., `OwnableUpgradeable` or `AccessControlUpgradeable`
+///         from OpenZeppelin) by the final, deployable token contract to manage the `_authorizeUpgrade` function.
+///      2. An authorization contract (e.g., one implementing role-based access for permissioned SMART functions)
+///         if such functions are exposed publicly in the final contract.
+///      It inherits from:
+///      - `Initializable`: Manages initialization for upgradeable contracts.
+///      - `SMARTExtensionUpgradeable`: Provides base upgradeable SMART functionalities and context.
+///      - `ERC165Upgradeable`: OpenZeppelin's upgradeable ERC165 interface detection.
+///      - `_SMARTLogic`: Contains the core state and internal logic for SMART features.
+///      The `__SMART_init` function serves as the initializer, called once when the proxy contract is linked to this
+///      implementation. It initializes the ERC20 parts and then the core SMART logic via `__SMART_init_unchained`.
+///      Like `SMART.sol`, it overrides key ERC20 functions and hooks to weave in SMART logic.
+///      The final contract inheriting this MUST also inherit `UUPSUpgradeable` and implement `_authorizeUpgrade`.
 abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, ERC165Upgradeable, _SMARTLogic {
     // -- Initializer --
-    /// @notice Internal initializer for the core SMART upgradeable state.
-    /// @dev Calls the internal `__SMART_init_unchained` function from `_SMARTLogic` to set up core state.
-    ///      Uses `onlyInitializing` modifier to ensure it's called only once during deployment/upgrade initialization.
-    ///      This function should be called by the final concrete contract's `initialize` function AFTER initializing
-    ///      ERC20, UUPS, and the chosen Access Control/Ownership pattern.
-    /// @param name_ Token name.
-    /// @param symbol_ Token symbol.
-    /// @param decimals_ Token decimals.
+    /// @notice Internal initializer function for the upgradeable SMART token's core state.
+    /// @dev This function MUST be called by the `initialize` function of the final concrete (deployable) contract.
+    ///      It uses the `onlyInitializing` modifier from `Initializable` to ensure it can only be executed once
+    ///      during the proxy's initialization (or an upgrade that reinitializes specific parts, if designed so).
+    ///      Order of initialization in the final contract is crucial:
+    ///      1. Call initializers for `UUPSUpgradeable` (if managing upgrades here) and chosen access control
+    ///         (e.g., `__Ownable_init`).
+    ///      2. Call `__ERC20_init(name_, symbol_)` from `ERC20Upgradeable`.
+    ///      3. Call this `__SMART_init(...)` function.
+    ///      4. Call initializers for any other inherited extensions.
+    ///      This function first calls `__ERC20_init` to set the token's `name_` and `symbol_` (decimals are handled by
+    /// `__SMART_init_unchained`).
+    ///      Then, it invokes `__SMART_init_unchained` from `_SMARTLogic` to set up all core SMART functionalities.
+    /// @param name_ The name of the token (e.g., "My Upgradeable SMART Token").
+    /// @param symbol_ The symbol of the token (e.g., "MUST").
+    /// @param decimals_ The number of decimal places for the token (e.g., 18).
     /// @param onchainID_ Optional on-chain identifier address.
-    /// @param identityRegistry_ Address of the identity registry contract.
-    /// @param compliance_ Address of the compliance contract.
-    /// @param requiredClaimTopics_ Initial list of required claim topics for verification.
-    /// @param initialModulePairs_ List of initial compliance modules and their parameters.
+    /// @param identityRegistry_ Address of the `ISMARTIdentityRegistry` contract.
+    /// @param compliance_ Address of the `ISMARTCompliance` contract.
+    /// @param requiredClaimTopics_ Initial list of `uint256` claim topic IDs for identity verification.
+    /// @param initialModulePairs_ Initial list of `SMARTComplianceModuleParamPair` structs for compliance modules.
     function __SMART_init(
         string memory name_,
         string memory symbol_,
@@ -55,109 +70,148 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         internal
-        onlyInitializing // Ensures this logic runs only during the initialization phase
+        onlyInitializing // Ensures this logic runs only once during the proxy initialization process.
     {
+        // Initialize the ERC20 part (name and symbol).
+        // Decimals are handled by __SMART_init_unchained as it's part of _SMARTLogic's state.
         __ERC20_init(name_, symbol_);
-        // Initialize the core SMART logic state via the base logic contract
+
+        // Initialize the core SMART logic state using the unchained initializer from _SMARTLogic.
         __SMART_init_unchained(
             decimals_, onchainID_, identityRegistry_, compliance_, requiredClaimTopics_, initialModulePairs_
         );
-        // Note: ERC20Upgradeable, UUPSUpgradeable, and AccessControl/Ownable initializers
-        // must be called BEFORE this function in the final contract's initialize method.
+        // Developer Note: In the final contract's `initialize` function, ensure that initializers for
+        // UUPSUpgradeable, ERC20Upgradeable (done above), AccessControl/Ownable patterns are called
+        // *before* this `__SMART_init` function if they set up state this depends on or if order matters for them.
     }
 
+    /// @notice Transfers `amount` tokens from the effective sender to address `to`.
+    /// @dev Overrides `ERC20Upgradeable.transfer` and `IERC20.transfer`.
+    ///      Delegates to `_smart_transfer` from `_SMARTLogic`, which integrates SMART compliance/verification.
+    ///      The effective sender is determined by `_smartSender()` (from `SMARTContext` via
+    /// `SMARTExtensionUpgradeable`), which supports meta-transactions if `ERC2771ContextUpgradeable` is used.
+    /// @param to The recipient address.
+    /// @param amount The amount of tokens to transfer.
+    /// @return bool Returns `true` on success (reverts on failure).
     function transfer(address to, uint256 amount) public virtual override(ERC20Upgradeable, IERC20) returns (bool) {
         return _smart_transfer(to, amount);
     }
 
+    /// @notice Transfers tokens to multiple recipients in a batch from the effective sender.
+    /// @dev Implements `ISMART.batchTransfer` (via `_SMARTExtension`). Delegates to `_smart_batchTransfer`.
+    /// @param toList An array of recipient addresses.
+    /// @param amounts An array of corresponding token amounts.
     function batchTransfer(address[] calldata toList, uint256[] calldata amounts) external virtual override {
         _smart_batchTransfer(toList, amounts);
     }
 
-    // -- Internal Hook Implementations (Dependencies) --
+    // -- Internal Hook Implementations (Dependencies for _SMARTLogic) --
 
     /// @inheritdoc _SMARTLogic
-    function __smart_executeMint(address from, uint256 amount) internal virtual override {
-        _mint(from, amount);
+    /// @notice Implements `__smart_executeMint` from `_SMARTLogic` for upgradeable contracts.
+    /// @dev Calls `ERC20Upgradeable._mint` to perform the actual minting.
+    /// @param to The address to mint tokens to.
+    /// @param amount The amount of tokens to mint.
+    function __smart_executeMint(address to, uint256 amount) internal virtual override {
+        _mint(to, amount); // Calls OZ ERC20Upgradeable._mint
     }
 
     /// @inheritdoc _SMARTLogic
+    /// @notice Implements `__smart_executeTransfer` from `_SMARTLogic` for upgradeable contracts.
+    /// @dev Calls `ERC20Upgradeable._transfer` to perform the actual transfer.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount of tokens to transfer.
     function __smart_executeTransfer(address from, address to, uint256 amount) internal virtual override {
-        _transfer(from, to, amount);
+        _transfer(from, to, amount); // Calls OZ ERC20Upgradeable._transfer
     }
 
     // -- View Functions (ERC20 Overrides) --
 
     /// @inheritdoc ERC20Upgradeable
+    /// @notice Returns the number of decimals for the token.
+    /// @dev Overrides `ERC20Upgradeable.decimals` and `IERC20Metadata.decimals`.
+    ///      Retrieves `__decimals` from `_SMARTLogic`'s state.
+    /// @return uint8 The number of decimals.
     function decimals() public view virtual override(ERC20Upgradeable, IERC20Metadata) returns (uint8) {
-        return __decimals; // Return decimals from _SMARTLogic state
+        return __decimals; // Fetches decimals stored in _SMARTLogic state.
     }
 
     // -- Internal Hooks & Overrides --
 
     /**
-     * @dev Overrides ERC20Upgradeable._update to centralize calls to SMART-specific hooks based on the operation type.
-     * Detects mints (from == address(0)), burns (to == address(0)), and transfers.
-     * Calls the corresponding `_before<Action>` and `_after<Action>` hooks defined in `SMARTHooks`,
-     * which in turn call the `_smart_<action>Logic` helpers in `_SMARTLogic`.
-     * Skips hooks if `__isForcedUpdate` (from `SMARTExtensionUpgradeable`) is true.
-     * @param from The sender address (address(0) for mints).
-     * @param to The recipient address (address(0) for burns).
-     * @param value The amount being transferred/minted/burned.
+     * @notice Overrides `ERC20Upgradeable._update` to integrate SMART hooks in an upgradeable context.
+     * @dev This function is central to ERC20 operations. The override injects SMART logic:
+     *      1. `__smart_beforeUpdateLogic`: SMART pre-operation checks (identity, compliance).
+     *      2. `super._update`: Original OpenZeppelin `ERC20Upgradeable._update` (balance changes, `Transfer` event).
+     *      3. `__smart_afterUpdateLogic`: SMART post-operation actions (notifications).
+     *      These steps mirror the non-upgradeable `SMART` contract but use the upgradeable versions of functions.
+     *      Checks are skipped if `__isForcedUpdate` (from `SMARTExtensionUpgradeable`) is true.
+     * @param from Sender address (`address(0)` for mints).
+     * @param to Recipient address (`address(0)` for burns).
+     * @param value Amount of tokens.
      */
     function _update(address from, address to, uint256 value) internal virtual override(ERC20Upgradeable) {
-        __smart_beforeUpdateLogic(from, to, value);
-        super._update(from, to, value); // Perform ERC20 update
-        __smart_afterUpdateLogic(from, to, value);
+        __smart_beforeUpdateLogic(from, to, value); // SMART pre-update (verification, compliance)
+        super._update(from, to, value); // OZ ERC20Upgradeable core update (balances, event)
+        __smart_afterUpdateLogic(from, to, value); // SMART post-update (notifications)
     }
 
+    // --- Hooks (Overrides from SMARTHooks, called by _SMARTLogic dispatchers) ---
+    // These hooks ensure that SMART-specific logic is executed alongside any other
+    // extension logic by always calling the __smart_<action>Logic and then super.<hook>.
+
     /// @inheritdoc SMARTHooks
-    /// @dev Calls the core SMART minting logic check before proceeding.
+    /// @dev Integrates SMART core pre-mint logic into the `_beforeMint` hook chain.
     function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
         __smart_beforeMintLogic(to, amount);
-        super._beforeMint(to, amount); // Allow further extension hooks
+        super._beforeMint(to, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    /// @dev Calls the core SMART minting logic notification after completion.
+    /// @dev Integrates SMART core post-mint logic into the `_afterMint` hook chain.
     function _afterMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
         __smart_afterMintLogic(to, amount);
-        super._afterMint(to, amount); // Allow further extension hooks
+        super._afterMint(to, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    /// @dev Calls the core SMART transfer logic check before proceeding.
+    /// @dev Integrates SMART core pre-transfer logic into the `_beforeTransfer` hook chain.
     function _beforeTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         __smart_beforeTransferLogic(from, to, amount);
-        super._beforeTransfer(from, to, amount); // Allow further extension hooks
+        super._beforeTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    /// @dev Calls the core SMART transfer logic notification after completion.
+    /// @dev Integrates SMART core post-transfer logic into the `_afterTransfer` hook chain.
     function _afterTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         __smart_afterTransferLogic(from, to, amount);
-        super._afterTransfer(from, to, amount); // Allow further extension hooks
+        super._afterTransfer(from, to, amount);
     }
 
     /// @inheritdoc SMARTHooks
-    /// @dev Calls the core SMART burn logic notification after completion.
+    /// @dev Integrates SMART core post-burn logic into the `_afterBurn` hook chain.
     function _afterBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         __smart_afterBurnLogic(from, amount);
-        super._afterBurn(from, amount); // Allow further extension hooks
+        super._afterBurn(from, amount);
     }
 
     /**
-     * @notice Standard ERC165 function to check if the contract supports an interface.
-     * @dev This implementation checks against the internally registered interfaces.
-     * Derived contracts may want to override this to include statically supported interfaces
-     * (e.g., `type(IERC165).interfaceId`) or combine with this base logic.
-     * It's recommended that derived contracts call `_registerInterface(type(IERC165).interfaceId)`
-     * in their constructor if they intend to support ERC165 introspection for themselves.
-     *
-     * @param interfaceId The interface identifier, as specified in ERC-165.
-     * @return `true` if the contract implements `interfaceId` and `interfaceId` is not 0xffffffff, `false` otherwise.
+     * @notice Standard ERC165 function to check interface support in an upgradeable context.
+     * @dev Combines SMART-specific interface checks (via `__smart_supportsInterface` from `_SMARTLogic`)
+     *      with OpenZeppelin's `ERC165Upgradeable.supportsInterface`.
+     *      This ensures that interfaces registered by SMART extensions, the core `ISMART` interface, and
+     *      standard interfaces like `IERC165Upgradeable` are correctly reported.
+     * @param interfaceId The `bytes4` interface identifier.
+     * @return bool `true` if the interface is supported, `false` otherwise.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
         return __smart_supportsInterface(interfaceId) || super.supportsInterface(interfaceId);
     }
+
+    // Note: The final contract inheriting SMARTUpgradeable MUST also inherit UUPSUpgradeable
+    // and implement the `_authorizeUpgrade(address newImplementation)` function to control
+    // who can upgrade the contract.
+    // Example: `function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}`
+    // if using OwnableUpgradeable.
 }

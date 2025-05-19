@@ -13,66 +13,119 @@ import { SMARTHooks } from "./../common/SMARTHooks.sol";
 import { _SMARTCustodianLogic } from "./internal/_SMARTCustodianLogic.sol";
 
 // Error imports
-import { LengthMismatch } from "./../common/CommonErrors.sol";
 
 /// @title Upgradeable SMART Custodian Extension
-/// @notice Upgradeable extension that adds custodian features (freezing, forced transfer, recovery) to a SMART token.
-/// @dev Inherits core custodian logic from `_SMARTCustodianLogic`, `SMARTExtensionUpgradeable`, and `Initializable`.
-///      Expects the final contract to inherit an upgradeable `ERC20Upgradeable` implementation and core
-/// `SMARTUpgradeable` logic.
-///      Requires an accompanying authorization contract (e.g., `SMARTCustodianAccessControlAuthorization`).
+/// @notice This abstract contract provides the upgradeable (UUPS proxy pattern) implementation of custodian
+///         features (like freezing, forced transfers, recovery) for a SMART token.
+/// @dev It integrates the core logic from `_SMARTCustodianLogic` with an `ERC20Upgradeable` token.
+///      This contract is 'abstract' because the final, deployable (and upgradeable) token contract must:
+///      1. Inherit `UUPSUpgradeable` (from OpenZeppelin) and implement `_authorizeUpgrade` to control upgrades.
+///      2. Inherit a full `ERC20Upgradeable` implementation.
+///      3. Inherit the main `SMARTUpgradeable` token contract.
+///      4. Inherit an authorization mechanism (e.g., an upgradeable version of
+///         `SMARTCustodianAccessControlAuthorization`) to control access to custodian functions.
+///      It uses `Initializable` for managing the initialization process suitable for proxies.
+///      The `__SMARTCustodian_init` function serves as its initializer, calling `__SMARTCustodian_init_unchained`.
+///      It implements `__custodian_getBalance` and `__custodian_executeTransferUpdate` using
+///      `ERC20Upgradeable.balanceOf` and `ERC20Upgradeable._update` respectively.
+///      It overrides `SMARTHooks` to inject custodian checks, similar to its non-upgradeable counterpart.
 abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgradeable, _SMARTCustodianLogic {
-    // Note: Assumes the final contract inherits ERC20Upgradeable and SMARTUpgradeable
+    // Developer Note: The final concrete contract inheriting this `SMARTCustodianUpgradeable` must also inherit:
+    // 1. `UUPSUpgradeable` and implement `_authorizeUpgrade`.
+    // 2. An `ERC20Upgradeable` implementation (e.g., OpenZeppelin's or the project's `SMARTUpgradeable` which
+    //    inherits it).
+    // 3. An upgradeable authorization contract for custodian functions.
+    // 4. The core `SMARTUpgradeable.sol` if not already covered.
+    // In the final contract's `initialize` function, ensure `__SMARTCustodian_init()` is called after other
+    // essential initializers like `__ERC20_init`, `__Ownable_init` (or `__AccessControl_init`), and `__SMART_init`.
 
     // -- Initializer --
-    /// @notice Initializes the custodian extension specific state (currently none).
-    /// @dev Should be called within the main contract's `initialize` function.
-    ///      Uses the `onlyInitializing` modifier.
+
+    /// @notice Initializer for the upgradeable SMART Custodian extension.
+    /// @dev This function should be called once by the `initialize` function of the final concrete (and proxy-deployed)
+    ///      contract. It uses the `onlyInitializing` modifier from `Initializable` to ensure it's run only during
+    ///      the proxy setup or a reinitialization phase if the upgrade pattern allows.
+    ///      It calls `__SMARTCustodian_init_unchained` from `_SMARTCustodianLogic` to perform essential setup,
+    ///      such as registering the `ISMARTCustodian` interface ID for ERC165.
     function __SMARTCustodian_init() internal onlyInitializing {
+        // Call the unchained initializer from the base logic contract.
         __SMARTCustodian_init_unchained();
     }
 
-    // -- Internal Hook Implementations (Dependencies) --
+    // -- Internal Hook Implementations (Dependencies for _SMARTCustodianLogic) --
 
-    /// @notice Implementation of the abstract balance getter using ERC20Upgradeable.balanceOf.
+    /// @notice Provides the concrete implementation for `_SMARTCustodianLogic`'s balance getter in an upgradeable
+    /// context.
+    /// @dev Called by `_SMARTCustodianLogic` to get an account's token balance.
+    ///      Assumes the final contract inherits `ERC20Upgradeable` which provides `balanceOf`.
     /// @inheritdoc _SMARTCustodianLogic
+    /// @param account The address whose balance is queried.
+    /// @return uint256 The token balance.
     function __custodian_getBalance(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account); // Assumes ERC20Upgradeable.balanceOf is available
+        // Delegates to `balanceOf` from the inherited `ERC20Upgradeable` contract.
+        return balanceOf(account);
     }
 
-    /// @notice Implementation of the abstract transfer executor using ERC20Upgradeable._update.
+    /// @notice Provides the concrete implementation for `_SMARTCustodianLogic`'s transfer executor in an upgradeable
+    /// context.
+    /// @dev Called by `_SMARTCustodianLogic` to perform token ledger updates.
+    ///      Assumes the final contract inherits `ERC20Upgradeable` (and `SMARTUpgradeable`) which provides an
+    ///      `_update` function that correctly integrates the `SMARTHooks` system.
     /// @inheritdoc _SMARTCustodianLogic
+    /// @param from Sender address (or `address(0)` for mints).
+    /// @param to Recipient address (or `address(0)` for burns).
+    /// @param amount Amount of tokens.
     function __custodian_executeTransferUpdate(address from, address to, uint256 amount) internal virtual override {
-        _update(from, to, amount); // Assumes ERC20Upgradeable._update is available and overridden by SMARTUpgradeable
+        // Delegates to `_update` from the inherited `ERC20Upgradeable` (via `SMARTUpgradeable`).
+        // This `_update` is expected to handle the full hook lifecycle.
+        _update(from, to, amount);
     }
 
-    // -- Hooks (Overrides) --
+    // -- Hooks (Overrides of SMARTHooks) --
+    // These overrides integrate custodian checks into the standard token operation lifecycle for the upgradeable
+    // version.
 
     /// @inheritdoc SMARTHooks
-    /// @dev Adds check to prevent minting to a frozen address.
+    /// @dev Overrides `_beforeMint` for upgradeable custodian checks (e.g., recipient not frozen).
     function _beforeMint(address to, uint256 amount) internal virtual override(SMARTHooks) {
         __custodian_beforeMintLogic(to);
-        super._beforeMint(to, amount); // Call next hook in the chain
+        super._beforeMint(to, amount); // Maintain hook chain.
     }
 
     /// @inheritdoc SMARTHooks
-    /// @dev Adds checks for frozen sender/recipient and sufficient unfrozen balance.
+    /// @dev Overrides `_beforeTransfer` for upgradeable custodian checks (frozen accounts, unfrozen balance).
     function _beforeTransfer(address from, address to, uint256 amount) internal virtual override(SMARTHooks) {
         __custodian_beforeTransferLogic(from, to, amount);
-        super._beforeTransfer(from, to, amount); // Call next hook in the chain
+        super._beforeTransfer(from, to, amount); // Maintain hook chain.
     }
 
     /// @inheritdoc SMARTHooks
-    /// @dev Adds logic to automatically unfreeze tokens if a burn requires them (for admin burns).
+    /// @dev Overrides `_beforeBurn` for upgradeable custodian logic (e.g., admin burn consuming frozen tokens).
     function _beforeBurn(address from, uint256 amount) internal virtual override(SMARTHooks) {
         __custodian_beforeBurnLogic(from, amount);
-        super._beforeBurn(from, amount); // Call next hook in the chain
+        super._beforeBurn(from, amount); // Maintain hook chain.
     }
 
     /// @inheritdoc SMARTHooks
-    /// @dev Adds checks for frozen sender and sufficient unfrozen balance (for user-initiated redeems).
+    /// @dev Overrides `_beforeRedeem` for upgradeable custodian checks (user redeem, frozen status, balance).
     function _beforeRedeem(address from, uint256 amount) internal virtual override(SMARTHooks) {
         __custodian_beforeRedeemLogic(from, amount);
-        super._beforeRedeem(from, amount); // Call next hook in the chain
+        super._beforeRedeem(from, amount); // Maintain hook chain.
     }
+
+    // Developer Note: The UUPS upgrade mechanism requires the final contract to also inherit
+    // `UUPSUpgradeable` from OpenZeppelin and override `_authorizeUpgrade`.
+    // Example for an Ownable setup:
+    // import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+    // import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+    // contract MyFinalToken is SMARTCustodianUpgradeable, UUPSUpgradeable, OwnableUpgradeable, ... {
+    //     function initialize(...) public initializer {
+    //         ...
+    //         __Ownable_init(initialOwner);
+    //         __UUPSUpgradeable_init();
+    //         __SMARTCustodian_init();
+    //         ...
+    //     }
+    //     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    // }
 }

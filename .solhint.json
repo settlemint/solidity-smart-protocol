@@ -3,6 +3,7 @@
   "rules": {
     "immutable-vars-naming": "off",
     "no-empty-blocks": "off",
-    "func-name-mixedcase": "off"
+    "func-name-mixedcase": "off",
+    "func-visibility": ["warn", { "ignoreConstructors": true }]
   }
 }

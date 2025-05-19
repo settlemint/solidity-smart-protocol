@@ -10,94 +10,137 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 import { ISMARTFixedYieldSchedule } from "./ISMARTFixedYieldSchedule.sol";
 import { ISMARTYield } from "./../../ISMARTYield.sol";
 
-/// @title FixedYield - A contract for managing token yield distributions
-/// @notice This contract implements a fixed yield schedule for ERC20 tokens, allowing for periodic
-/// yield distributions based on token balances. It supports features like historical balance tracking,
-/// period-based distributions, and pro-rated yield calculations.
-/// @dev Inherits from AccessControl for role-based permissions and ERC2771Context for meta-transaction
-/// support. Works with ERC20Yield-compatible tokens to manage yield distributions. Uses timestamps for
-/// period calculations and maintains a history of distributions.
-/// @custom:security-contact support@settlemint.com
+/// @title SMART Fixed Yield Schedule Contract
+/// @notice This contract implements a fixed yield schedule for an associated SMART token (which must implement
+/// `ISMARTYield`).
+/// It allows token holders to accrue yield at a predetermined fixed `rate` over specified `interval`s between a
+/// `startDate` and `endDate`.
+/// Yield is paid out in an `underlyingAsset` (which can be the token itself or another ERC20 token).
+/// @dev This contract manages the entire lifecycle of a fixed yield distribution:
+/// - **Configuration**: `startDate`, `endDate`, `rate`, `interval`, and the `token` it serves.
+/// - **Period Management**: Calculates and uses period end timestamps for yield accrual.
+/// - **Yield Calculation**: Leverages `balanceOfAt` and `yieldBasisPerUnit` from the `ISMARTYield` token to determine
+/// yield per period for each holder.
+/// - **Claiming**: Token holders can call `claimYield()` to receive their accrued yield.
+/// - **Funding**: The contract can be topped up with the `underlyingAsset` via `topUpUnderlyingAsset()` to ensure
+/// payouts can be made.
+/// - **Administration**: Includes `AccessControl` for owner-restricted functions like `withdrawUnderlyingAsset` and
+/// `pause()`/`unpause()`.
+/// - **Meta-transactions**: Inherits `ERC2771Context` to support gasless transactions if a trusted forwarder is
+/// configured.
+/// - **Security**: Uses `ReentrancyGuard` to protect against reentrancy attacks on state-changing functions like
+/// `claimYield`.
+/// It implements the `ISMARTFixedYieldSchedule` interface.
+/// @custom:security-contact support@settlemint.com Ensure to review security practices for deploying and managing this
+/// contract.
 contract SMARTFixedYieldSchedule is
-    AccessControl,
-    Pausable,
-    ERC2771Context,
-    ISMARTFixedYieldSchedule,
-    ReentrancyGuard
+    AccessControl, // For managing roles, e.g., who can pause or withdraw funds.
+    Pausable, // To allow pausing critical functions in emergencies.
+    ERC2771Context, // For meta-transaction support (gasless transactions via a forwarder).
+    ISMARTFixedYieldSchedule, // The interface this contract implements.
+    ReentrancyGuard // To prevent reentrancy attacks.
 {
-    /// @notice Custom errors for the FixedYieldSchedule contract
-    /// @dev These errors provide more gas-efficient and descriptive error handling
+    /// @notice Defines custom error types for more gas-efficient and descriptive error handling.
+    /// @dev Using custom errors (Solidity 0.8.4+) saves gas compared to `require` with string messages.
+
+    /// @dev Reverted if the `tokenAddress` provided in the constructor is the zero address.
     error InvalidToken();
+    /// @dev Reverted if the `startDate_` provided in the constructor is not in the future (i.e., less than or equal to
+    /// `block.timestamp`).
     error InvalidStartDate();
+    /// @dev Reverted if the `endDate_` provided in the constructor is not after the `startDate_`.
     error InvalidEndDate();
+    /// @dev Reverted if the `rate_` (yield rate in basis points) provided in the constructor is zero.
     error InvalidRate();
+    /// @dev Reverted if the `interval_` (distribution interval in seconds) provided in the constructor is zero.
     error InvalidInterval();
+    /// @dev Reverted by `claimYield` if there is no accumulated yield for the caller to claim for completed periods.
     error NoYieldAvailable();
-    error YieldDistributionFailed();
+    /// @dev Reverted by `calculateAccruedYield` if the schedule has not yet started (i.e., `block.timestamp <
+    /// _startDate`).
     error ScheduleNotActive();
-    error ScheduleExpired();
-    error TokenNotYieldEnabled();
-    error InsufficientUnderlyingBalance();
+    /// @dev Reverted by `topUpUnderlyingAsset` or `withdrawUnderlyingAsset` if the underlying asset transfer fails or
+    /// if there's not enough balance.
+    error InsufficientUnderlyingBalance(); // Could also be used if a transferFrom fails.
+    /// @dev Reverted if the `_underlyingAsset` (derived from `_token.yieldToken()`) is the zero address, or if `to`
+    /// address in withdrawal is zero.
     error InvalidUnderlyingAsset();
-    error PeriodAlreadyClaimed();
+    /// @dev Reverted by `withdrawUnderlyingAsset` if the withdrawal `amount` is zero.
     error InvalidAmount();
+    /// @dev Reverted by `claimYield` if the transfer of `_underlyingAsset` to the claimant fails.
     error YieldTransferFailed();
+    /// @dev Reverted by `periodEnd` if an invalid period number (0 or out of bounds) is requested.
     error InvalidPeriod();
 
-    /// @notice The basis points denominator used for rate calculations (10,000 = 100%)
-    /// @dev Used to convert basis points to percentages (e.g., 500 basis points = 5%)
+    /// @notice The denominator used for rate calculations. `10_000` represents 100% (since rate is in basis points).
+    /// @dev For example, a `_rate` of 500 means 500 / 10,000 = 0.05 or 5%.
     uint256 public constant RATE_BASIS_POINTS = 10_000;
 
-    /// @notice The token this schedule is for
-    /// @dev Must implement the ERC20Yield interface
+    /// @notice The SMART token contract (implementing `ISMARTYield`) for which this schedule distributes yield.
+    /// @dev This is immutable, meaning it's set in the constructor and cannot be changed later.
+    /// The schedule contract will call functions on this token (e.g., `balanceOfAt`, `yieldBasisPerUnit`).
     ISMARTYield private immutable _token;
 
-    /// @notice The underlying asset used for yield payments
-    /// @dev Must be a valid ERC20 token contract
+    /// @notice The ERC20 token used for making yield payments.
+    /// @dev This is also immutable and is determined by calling `_token.yieldToken()` in the constructor.
+    /// This is the token that will be transferred to holders when they claim yield.
     IERC20 private immutable _underlyingAsset;
 
-    /// @notice The start date of the yield schedule
-    /// @dev Must be in the future when the contract is deployed
+    /// @notice The Unix timestamp (seconds since epoch) when the yield schedule starts.
+    /// @dev Immutable. Yield calculations and distributions begin from this point.
     uint256 private immutable _startDate;
 
-    /// @notice The end date of the yield schedule
-    /// @dev Must be after the start date
+    /// @notice The Unix timestamp when the yield schedule ends.
+    /// @dev Immutable. No yield will accrue or be distributed by this schedule after this time.
     uint256 private immutable _endDate;
 
-    /// @notice The yield rate in basis points
-    /// @dev 1 basis point = 0.01%, must be greater than 0
+    /// @notice The yield rate in basis points (1 basis point = 0.01%).
+    /// @dev Immutable. For example, a rate of 500 means 5% yield per `_interval` based on `_token.yieldBasisPerUnit()`.
     uint256 private immutable _rate;
 
-    /// @notice The interval between distributions in seconds
-    /// @dev Must be greater than 0
+    /// @notice The duration of each yield distribution interval in seconds (e.g., 86400 for daily).
+    /// @dev Immutable. This defines the frequency of yield periods.
     uint256 private immutable _interval;
 
-    /// @notice Array of timestamps when each period ends
-    /// @dev Calculated and stored at deployment for gas-efficient period lookups
+    /// @notice An array storing the Unix timestamps for the end of each yield distribution period.
+    /// @dev This is calculated and cached in the constructor to save gas on repeated period lookups.
+    /// `_periodEndTimestamps[0]` is the end of period 1, `_periodEndTimestamps[i]` is end of period `i+1`.
     uint256[] private _periodEndTimestamps;
 
-    /// @notice Mapping of holder address to last claimed period
-    /// @dev Used to track which periods each holder has claimed
+    /// @notice Maps a token holder's address to the last period number (1-indexed) for which they have successfully
+    /// claimed yield.
+    /// @dev If a holder has address `A` and `_lastClaimedPeriod[A]` is `X`, they have claimed up to and including
+    /// period `X`.
+    /// Defaults to 0 if no claims have been made.
     mapping(address holder => uint256 lastClaimedPeriod) private _lastClaimedPeriod;
 
-    /// @notice The total amount of yield claimed across all holders
-    /// @dev Used to track total distributions and calculate remaining yield
+    /// @notice The total cumulative amount of `_underlyingAsset` that has been successfully claimed by all token
+    /// holders.
+    /// @dev This helps in tracking the overall distribution progress and can be used with `totalUnclaimedYield`.
     uint256 private _totalClaimed;
 
-    /// @notice Event emitted when underlying assets are topped up
+    /// @notice Emitted when an administrator or funder successfully deposits `_underlyingAsset` into the contract to
+    /// fund yield payments.
+    /// @param from The address that sent the `_underlyingAsset` tokens (the funder).
+    /// @param amount The quantity of `_underlyingAsset` tokens deposited.
     event UnderlyingAssetTopUp(address indexed from, uint256 amount);
 
-    /// @notice Event emitted when underlying assets are withdrawn by admin
+    /// @notice Emitted when an administrator successfully withdraws `_underlyingAsset` from the contract.
+    /// @param to The address that received the withdrawn `_underlyingAsset` tokens.
+    /// @param amount The quantity of `_underlyingAsset` tokens withdrawn.
     event UnderlyingAssetWithdrawn(address indexed to, uint256 amount);
 
-    /// @notice Event emitted when yield is claimed
-    /// @param holder The address claiming the yield
-    /// @param totalAmount The total amount of yield claimed
-    /// @param fromPeriod The first period being claimed
-    /// @param toPeriod The last period being claimed
-    /// @param periodAmounts Array of amounts claimed for each period
-    /// @param unclaimedYield Total amount of unclaimed yield after this claim
-    event YieldClaimed(
+    /// @notice Emitted when a token holder successfully claims their accrued yield.
+    /// @param holder The address of the token holder who claimed the yield.
+    /// @param totalAmount The total quantity of `_underlyingAsset` transferred to the holder in this claim.
+    /// @param fromPeriod The first period number (1-indexed) included in this claim.
+    /// @param toPeriod The last period number (1-indexed) included in this claim.
+    /// @param periodAmounts An array containing the amount of yield claimed for each specific period within the
+    /// `fromPeriod` to `toPeriod` range.
+    /// The length of this array is `toPeriod - fromPeriod + 1`.
+    /// @param unclaimedYield The total amount of unclaimed yield remaining in the contract across all holders after
+    /// this claim.
+    event YieldClaimed( // Amounts per period, matches the range fromPeriod to toPeriod
         address indexed holder,
         uint256 totalAmount,
         uint256 fromPeriod,
@@ -106,13 +149,18 @@ contract SMARTFixedYieldSchedule is
         uint256 unclaimedYield
     );
 
-    /// @notice Deploys a new FixedYield contract
-    /// @param tokenAddress The address of the token this schedule is for
-    /// @param initialOwner The address that will receive admin rights
-    /// @param startDate_ The timestamp when the schedule starts
-    /// @param endDate_ The timestamp when the schedule ends
-    /// @param rate_ The yield rate in basis points (1 basis point = 0.01%, e.g., 500 = 5%)
-    /// @param interval_ The interval between distributions in seconds
+    /// @notice Constructor to deploy a new `SMARTFixedYieldSchedule` contract.
+    /// @dev Initializes all immutable parameters of the yield schedule and sets up administrative roles.
+    /// It calculates and caches all period end timestamps for gas efficiency.
+    /// @param tokenAddress The address of the `ISMARTYield`-compliant token this schedule is for.
+    /// @param initialOwner The address that will be granted `DEFAULT_ADMIN_ROLE`, giving control over pausable
+    /// functions and withdrawals.
+    /// @param startDate_ The Unix timestamp for when the yield schedule should start. Must be in the future.
+    /// @param endDate_ The Unix timestamp for when the yield schedule should end. Must be after `startDate_`.
+    /// @param rate_ The yield rate in basis points (e.g., 500 for 5%). Must be greater than 0.
+    /// @param interval_ The duration of each yield distribution interval in seconds. Must be greater than 0.
+    /// @param forwarder The address of the trusted forwarder for ERC2771 meta-transactions. Can be `address(0)` if not
+    /// used.
     constructor(
         address tokenAddress,
         address initialOwner,
@@ -124,341 +172,398 @@ contract SMARTFixedYieldSchedule is
     )
         ERC2771Context(forwarder)
     {
+        // Initialize ERC2771Context with the trusted forwarder address.
+        // Input validations
         if (tokenAddress == address(0)) revert InvalidToken();
-        if (startDate_ <= block.timestamp) revert InvalidStartDate();
-        if (endDate_ <= startDate_) revert InvalidEndDate();
-        if (rate_ == 0) revert InvalidRate();
-        if (interval_ == 0) revert InvalidInterval();
+        if (startDate_ <= block.timestamp) revert InvalidStartDate(); // Start date must be in the future.
+        if (endDate_ <= startDate_) revert InvalidEndDate(); // End date must be after start date.
+        if (rate_ == 0) revert InvalidRate(); // Rate must be positive.
+        if (interval_ == 0) revert InvalidInterval(); // Interval must be positive.
 
-        _token = ISMARTYield(tokenAddress);
-        _underlyingAsset = _token.yieldToken();
-        if (address(_underlyingAsset) == address(0)) revert InvalidUnderlyingAsset();
+        _token = ISMARTYield(tokenAddress); // Store the associated SMART token contract.
+        _underlyingAsset = _token.yieldToken(); // Determine the payment token from the SMART token.
+        if (address(_underlyingAsset) == address(0)) revert InvalidUnderlyingAsset(); // Payment token cannot be zero
+            // address.
 
+        // Set immutable state variables.
         _startDate = startDate_;
         _endDate = endDate_;
         _rate = rate_;
         _interval = interval_;
 
-        // Calculate and cache period end timestamps
-        uint256 totalPeriods = ((endDate_ - startDate_) / interval_) + 1;
+        // Calculate and cache all period end timestamps.
+        // This improves gas efficiency for functions that need to determine period boundaries.
+        uint256 totalPeriods = ((endDate_ - startDate_) / interval_) + 1; // Calculate total number of periods.
+        _periodEndTimestamps = new uint256[](totalPeriods); // Allocate memory for the array.
         for (uint256 i = 0; i < totalPeriods; ++i) {
-            uint256 timestamp = startDate_ + ((i + 1) * interval_);
-            // If this period would end after schedule end date, cap it
+            uint256 timestamp = startDate_ + ((i + 1) * interval_); // Calculate end of current period `i+1`.
+            // If the calculated timestamp exceeds the schedule's `_endDate`,
+            // cap it at `_endDate` to ensure the last period doesn't overshoot.
             if (timestamp > endDate_) {
                 timestamp = endDate_;
             }
-            _periodEndTimestamps.push(timestamp);
+            _periodEndTimestamps[i] = timestamp; // Store the period end timestamp.
         }
 
+        // Grant the `DEFAULT_ADMIN_ROLE` to the `initialOwner`.
+        // This role typically controls pausing, unpausing, and withdrawing funds.
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner);
     }
 
+    /// @dev Overridden from `Context` and `ERC2771Context` to correctly identify the transaction sender,
+    /// accounting for meta-transactions if a trusted forwarder is used.
+    /// @return The actual sender of the transaction (`msg.sender` or the relayed sender).
     function _msgSender() internal view override(Context, ERC2771Context) returns (address) {
         return super._msgSender();
     }
 
+    /// @dev Overridden from `Context` and `ERC2771Context` to correctly retrieve the transaction data,
+    /// accounting for meta-transactions.
+    /// @return The actual transaction data (`msg.data` or the relayed data).
     function _msgData() internal view override(Context, ERC2771Context) returns (bytes calldata) {
         return super._msgData();
     }
 
+    /// @dev Overridden from `ERC2771Context` to define the length of the suffix appended to `msg.data` for relayed
+    /// calls.
+    /// @return The length of the context suffix (typically 20 bytes for the sender's address).
     function _contextSuffixLength() internal view override(Context, ERC2771Context) returns (uint256) {
         return super._contextSuffixLength();
     }
 
-    /// @notice Returns all period end timestamps for this yield schedule
-    /// @return Array of timestamps when each period ends
-    function allPeriods() public view returns (uint256[] memory) {
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    function allPeriods() public view override returns (uint256[] memory) {
         return _periodEndTimestamps;
     }
 
-    /// @notice Returns the period end timestamp for a specific period
-    /// @param period The period number (1-based)
-    /// @return The timestamp when the period ends
-    function periodEnd(uint256 period) public view returns (uint256) {
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    /// @dev Periods are 1-indexed. Accessing `_periodEndTimestamps` requires 0-indexed access (`period - 1`).
+    function periodEnd(uint256 period) public view override returns (uint256) {
+        // Validate that the requested period number is within the valid range.
         if (period == 0 || period > _periodEndTimestamps.length) revert InvalidPeriod();
-        return _periodEndTimestamps[period - 1];
+        return _periodEndTimestamps[period - 1]; // Adjust to 0-based index for array access.
     }
 
-    /// @notice Returns the current ongoing period number
-    /// @return The current period number (0 if schedule hasn't started)
-    function currentPeriod() public view returns (uint256) {
-        if (block.timestamp < _startDate) return 0;
-        if (block.timestamp >= _endDate) return _periodEndTimestamps.length;
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    function currentPeriod() public view override returns (uint256) {
+        if (block.timestamp < _startDate) return 0; // Schedule hasn't started.
+        if (block.timestamp >= _endDate) return _periodEndTimestamps.length; // Schedule has ended, return total number
+            // of periods.
+        // Calculate current period number (1-indexed).
         return ((block.timestamp - _startDate) / _interval) + 1;
     }
 
-    /// @notice Returns the last completed period number that can be claimed
-    /// @return The last completed period number (0 if no periods completed)
-    function lastCompletedPeriod() public view returns (uint256) {
-        if (block.timestamp <= _startDate) return 0;
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    function lastCompletedPeriod() public view override returns (uint256) {
+        if (block.timestamp <= _startDate) return 0; // Schedule hasn't started or is exactly at start time, no periods
+            // completed.
 
-        // If we're past the end date, return the total number of periods
+        // If current time is at or after the schedule's end date, all periods are completed.
         if (block.timestamp >= _endDate) {
             return _periodEndTimestamps.length;
         }
 
-        // Calculate how many complete intervals have passed
+        // Calculate how many full intervals have passed since the start date.
         uint256 elapsedTime = block.timestamp - _startDate;
         uint256 completeIntervals = elapsedTime / _interval;
 
-        // Cap at total number of periods
+        // The number of completed periods cannot exceed the total number of periods in the schedule.
+        // This check is mostly redundant if block.timestamp < _endDate check is done above, but kept for safety.
         return completeIntervals < _periodEndTimestamps.length ? completeIntervals : _periodEndTimestamps.length;
     }
 
-    /// @notice Returns time until next period starts in seconds
-    /// @return Time remaining in current period
-    function timeUntilNextPeriod() public view returns (uint256) {
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    function timeUntilNextPeriod() public view override returns (uint256) {
+        // If the schedule hasn't started yet, return time until the start date.
         if (block.timestamp < _startDate) {
             return _startDate - block.timestamp;
         }
 
+        // If the schedule has already ended, there's no next period.
         if (block.timestamp >= _endDate) {
             return 0;
         }
 
+        // Calculate elapsed time since the schedule started.
         uint256 elapsedTime = block.timestamp - _startDate;
-        // slither-disable-next-line weak-prng
+        // Calculate how much time has passed within the current interval.
+        // slither-disable-next-line weak-prng (block.timestamp is not used for randomness here but for time
+        // calculation)
         uint256 currentPeriodElapsed = elapsedTime % _interval;
+        // Time until next period is the total interval duration minus the elapsed time in the current interval.
         return _interval - currentPeriodElapsed;
     }
 
-    /// @notice Returns the last claimed period for a holder
-    /// @param holder The address to check
-    /// @return The last period number claimed by the holder
-    function lastClaimedPeriod(address holder) public view returns (uint256) {
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    function lastClaimedPeriod(address holder) public view override returns (uint256) {
         return _lastClaimedPeriod[holder];
     }
 
-    /// @notice Returns the last claimed period for the caller
-    /// @return The last period number claimed by the caller
+    /// @notice Returns the last claimed period for the message sender (`_msgSender()`).
+    /// @dev Convenience function so callers don't have to pass their own address.
+    /// @return The last period number (1-indexed) claimed by the caller.
     function lastClaimedPeriod() public view returns (uint256) {
         return lastClaimedPeriod(_msgSender());
     }
 
-    /// @notice Calculates the total unclaimed yield across all holders
-    /// @dev This includes all completed periods that haven't been claimed yet. It iterates through
-    /// each completed period, using the historical total supply at the end of that period
-    /// for accurate calculation. This approach is more gas-intensive than using the current
-    /// total supply but provides correct results if total supply changes over time.
-    /// @return The total amount of unclaimed yield
-    function totalUnclaimedYield() public view returns (uint256) {
-        uint256 lastPeriod = lastCompletedPeriod();
-        if (lastPeriod == 0) return 0;
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    /// @dev This calculation can be gas-intensive as it iterates through all completed periods and queries historical
+    /// total supply for each.
+    /// It assumes `_token.yieldBasisPerUnit(address(0))` provides a generic or representative basis if it varies by
+    /// holder.
+    function totalUnclaimedYield() public view override returns (uint256) {
+        uint256 lastPeriod = lastCompletedPeriod(); // Get the latest fully completed period.
+        if (lastPeriod < 1) return 0; // No periods completed, so no unclaimed yield.
 
         uint256 totalYieldAccrued = 0;
-        // Note: Basis per unit might vary per holder, but for total unclaimed,
-        // we use the generic basis for address(0). Assume this basis is constant over time.
-        uint256 basis = ISMARTYield(_token).yieldBasisPerUnit(address(0));
+        // For calculating total system-wide unclaimed yield, a generic basis is typically used.
+        // Here, address(0) is passed, assuming the token implements a default or global basis, or this is a convention.
+        uint256 basis = _token.yieldBasisPerUnit(address(0));
 
-        // Iterate through each completed period to calculate yield based on historical total supply
-        for (uint256 period = 1; period <= lastPeriod; period++) {
-            uint256 periodEndTimestamp = _periodEndTimestamps[period - 1];
-            // Fetch the total supply as it was at the end of the specific period
-            uint256 historicalTotalSupply = ISMARTYield(_token).totalSupplyAt(periodEndTimestamp);
+        // Iterate through each completed period to calculate the yield that should have been generated in that period.
+        for (uint256 period = 1; period <= lastPeriod; ++period) {
+            uint256 periodEndTimestamp = _periodEndTimestamps[period - 1]; // Get end time of the current iterated
+                // period.
+            // Fetch the total supply of the token as it was at the end of this specific period.
+            // This is crucial for accuracy if the total supply changes over time.
+            uint256 historicalTotalSupply = _token.totalSupplyAt(periodEndTimestamp);
             if (historicalTotalSupply > 0) {
-                // Calculate yield for this specific period using its historical supply
+                // Calculate yield for this period: (Supply * Basis per Token * Rate) / Denominator
                 totalYieldAccrued += (historicalTotalSupply * basis * _rate) / RATE_BASIS_POINTS;
             }
         }
 
-        // Subtract amounts already claimed by holders
-        // Ensure no underflow if _totalClaimed somehow exceeds calculated accrued yield
+        // The total unclaimed yield is the total accrued minus what has already been claimed by all users.
+        // Ensure no underflow if `_totalClaimed` were to somehow exceed `totalYieldAccrued` (should not happen in
+        // normal operation).
         if (totalYieldAccrued <= _totalClaimed) {
             return 0;
         }
-
         return totalYieldAccrued - _totalClaimed;
     }
 
-    /// @notice Calculates the total yield that will be needed for the next period
-    /// @dev This is useful for ensuring sufficient funds are available for the next distribution
-    /// @return The total amount of yield needed for the next period
-    function totalYieldForNextPeriod() public view returns (uint256) {
-        if (block.timestamp >= _endDate) return 0; // No more periods
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    /// @dev This calculation uses the current total supply. For a more precise estimate if supply changes rapidly,
+    /// one might need a more complex projection. Assumes a generic basis from `_token.yieldBasisPerUnit(address(0))`.
+    function totalYieldForNextPeriod() public view override returns (uint256) {
+        if (block.timestamp >= _endDate) return 0; // Schedule ended, no next period.
 
-        // Get total supply and basis for yield calculation
+        // Get the current total supply of the associated token.
         uint256 totalSupply = IERC20(address(_token)).totalSupply();
-        uint256 basis = ISMARTYield(_token).yieldBasisPerUnit(address(0));
+        // Get the yield basis per unit (using address(0) for a general/global basis).
+        uint256 basis = _token.yieldBasisPerUnit(address(0));
 
-        // Calculate yield for one period
+        // Calculate yield for one full period based on current supply and rate.
         return (totalSupply * basis * _rate) / RATE_BASIS_POINTS;
     }
 
-    /// @notice Calculates the total accrued yield including pro-rated current period
-    /// @param holder The address to calculate yield for
-    /// @return The total accrued yield amount
-    function calculateAccruedYield(address holder) public view returns (uint256) {
-        uint256 currentPeriod_ = currentPeriod();
-        if (currentPeriod_ == 0) revert ScheduleNotActive();
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    /// @dev Calculates yield for completed, unclaimed periods using historical balances (`balanceOfAt`).
+    /// For the current, ongoing period, it calculates a pro-rata share based on the holder's current balance and time
+    /// elapsed in the period.
+    function calculateAccruedYield(address holder) public view override returns (uint256) {
+        uint256 currentPeriod_ = currentPeriod(); // Determine the current period number.
+        if (currentPeriod_ < 1 && block.timestamp < _startDate) revert ScheduleNotActive(); // If before start date and
+            // not even in period 0 (edge case for exactly startDate)
 
+        // Get the holder-specific yield basis.
         uint256 basis = _token.yieldBasisPerUnit(holder);
+        // Determine the first period for which yield needs to be calculated (last claimed + 1).
         uint256 fromPeriod = _lastClaimedPeriod[holder] + 1;
+        // Get the latest fully completed period.
         uint256 lastCompleted = lastCompletedPeriod();
 
-        // Calculate yield for complete unclaimed periods
         uint256 completePeriodAmount = 0;
-        for (uint256 period = fromPeriod; period <= lastCompleted; period++) {
-            uint256 balance = _token.balanceOfAt(holder, _periodEndTimestamps[period - 1]);
-            if (balance > 0) {
-                completePeriodAmount += (balance * basis * _rate) / RATE_BASIS_POINTS;
+        // Calculate yield for all fully completed periods that haven't been claimed by this holder.
+        if (fromPeriod <= lastCompleted) {
+            // Check if there are any completed periods to sum up.
+            for (uint256 period = fromPeriod; period <= lastCompleted; ++period) {
+                // Fetch the holder's balance as it was at the end of that specific period.
+                uint256 balance = _token.balanceOfAt(holder, _periodEndTimestamps[period - 1]);
+                if (balance > 0) {
+                    completePeriodAmount += (balance * basis * _rate) / RATE_BASIS_POINTS;
+                }
             }
         }
 
-        // Calculate pro-rated yield for current period if we're in one
-        uint256 tokenBalance = IERC20(address(_token)).balanceOf(holder);
         uint256 currentPeriodAmount = 0;
+        // If the schedule is currently active and there's an ongoing period that isn't yet completed.
+        if (currentPeriod_ > 0 && block.timestamp < _endDate) {
+            // Get the holder's current token balance for pro-rata calculation.
+            uint256 tokenBalance = IERC20(address(_token)).balanceOf(holder);
+            if (tokenBalance > 0) {
+                // Determine the start time of the current, ongoing period.
+                uint256 periodStart;
+                if (currentPeriod_ == 1) {
+                    periodStart = _startDate;
+                } else {
+                    // Start of current period is end of previous period. (Note: _periodEndTimestamps is 0-indexed for
+                    // period-1)
+                    periodStart = _periodEndTimestamps[currentPeriod_ - 2]; // -2 because currentPeriod_ is 1-indexed
+                }
+                // Time elapsed within the current, ongoing period.
+                uint256 timeInPeriod = block.timestamp - periodStart;
 
-        if (tokenBalance > 0) {
-            uint256 periodStart = _startDate + ((currentPeriod_ - 1) * _interval);
-            uint256 timeInPeriod = block.timestamp - periodStart;
-            currentPeriodAmount = (tokenBalance * basis * _rate * timeInPeriod) / (_interval * RATE_BASIS_POINTS);
+                // Pro-rata yield for the current period: (Balance * Basis * Rate * TimeInPeriod) / (TotalIntervalTime *
+                // Denominator)
+                currentPeriodAmount = (tokenBalance * basis * _rate * timeInPeriod) / (_interval * RATE_BASIS_POINTS);
+            }
         }
-
         return completePeriodAmount + currentPeriodAmount;
     }
 
-    /// @notice Calculates the total accrued yield for the caller including pro-rated current period
-    /// @return The total accrued yield amount
+    /// @notice Calculates the total accrued yield for the message sender (`_msgSender()`), including any pro-rata share
+    /// for the current period.
+    /// @dev Convenience function so callers don't have to pass their own address.
+    /// @return The total accrued yield amount for the caller.
     function calculateAccruedYield() public view returns (uint256) {
         return calculateAccruedYield(_msgSender());
     }
 
-    /// @notice Claims all available yield for the caller
-    /// @dev Calculates and transfers all unclaimed yield for completed periods
-    function claimYield() external nonReentrant whenNotPaused {
-        uint256 lastPeriod = lastCompletedPeriod();
-        if (lastPeriod == 0) revert NoYieldAvailable();
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    /// @dev Uses `nonReentrant` modifier to prevent reentrancy attacks.
+    /// Claims yield only for fully completed periods. Pro-rata for current period is not claimable here (typically
+    /// claimed after period completion or via `calculateAccruedYield` for view).
+    function claimYield() external override nonReentrant whenNotPaused {
+        uint256 lastPeriod = lastCompletedPeriod(); // Last period fully completed.
+        if (lastPeriod < 1) revert NoYieldAvailable(); // No completed periods.
 
-        uint256 fromPeriod = _lastClaimedPeriod[_msgSender()] + 1;
-        if (fromPeriod > lastPeriod) revert NoYieldAvailable();
+        address sender = _msgSender(); // Cache sender.
+        uint256 fromPeriod = _lastClaimedPeriod[sender] + 1; // First period to claim for this user.
+        if (fromPeriod > lastPeriod) revert NoYieldAvailable(); // All completed periods already claimed.
 
-        uint256 basis = _token.yieldBasisPerUnit(_msgSender());
-        uint256 totalAmount = 0;
+        uint256 basis = _token.yieldBasisPerUnit(sender); // Holder-specific basis.
+        uint256 totalAmountToClaim = 0;
 
-        // Create array for all periods in range (including zero amounts)
+        // Array to store yield amounts for each period being claimed. Useful for event emission.
         uint256[] memory periodAmounts = new uint256[](lastPeriod - fromPeriod + 1);
 
-        // Calculate yield for each unclaimed period using historical balances
-        for (uint256 period = fromPeriod; period <= lastPeriod; period++) {
-            uint256 balance = _token.balanceOfAt(_msgSender(), _periodEndTimestamps[period - 1]);
+        // Calculate yield for each unclaimed, completed period.
+        for (uint256 period = fromPeriod; period <= lastPeriod; ++period) {
+            // Fetch holder's balance at the end of the specific period.
+            uint256 balance = _token.balanceOfAt(sender, _periodEndTimestamps[period - 1]);
             if (balance > 0) {
                 uint256 periodYield = (balance * basis * _rate) / RATE_BASIS_POINTS;
-                totalAmount += periodYield;
-                periodAmounts[period - fromPeriod] = periodYield;
+                totalAmountToClaim += periodYield;
+                periodAmounts[period - fromPeriod] = periodYield; // Store amount for this specific period.
             }
-            // If balance is 0, the array element remains 0
+            // If balance is 0 for a period, its corresponding entry in periodAmounts remains 0.
         }
 
-        if (totalAmount == 0) revert NoYieldAvailable();
+        if (totalAmountToClaim == 0) revert NoYieldAvailable(); // No yield accrued in the claimable periods.
 
-        // Update claimed periods before transfer
-        _lastClaimedPeriod[_msgSender()] = lastPeriod;
-        _totalClaimed += totalAmount;
+        // State updates *before* external call (transfer).
+        _lastClaimedPeriod[sender] = lastPeriod; // Update the last period claimed by the user.
+        _totalClaimed += totalAmountToClaim; // Increment total yield claimed in the contract.
 
-        // Transfer the yield
-        bool success = _underlyingAsset.transfer(_msgSender(), totalAmount);
-        if (!success) revert YieldTransferFailed();
+        // Perform the transfer of the underlying asset to the claimant.
+        bool success = _underlyingAsset.transfer(sender, totalAmountToClaim);
+        if (!success) revert YieldTransferFailed(); // Revert if transfer fails.
 
-        // Calculate remaining unclaimed yield across all holders
+        // Calculate the remaining total unclaimed yield in the contract for the event.
         uint256 remainingUnclaimed = totalUnclaimedYield();
 
-        emit YieldClaimed(_msgSender(), totalAmount, fromPeriod, lastPeriod, periodAmounts, remainingUnclaimed);
+        emit YieldClaimed(sender, totalAmountToClaim, fromPeriod, lastPeriod, periodAmounts, remainingUnclaimed);
     }
 
-    /// @notice Allows topping up the contract with underlying assets for yield payments
-    /// @param amount The amount of underlying assets to add
-    function topUpUnderlyingAsset(uint256 amount) external nonReentrant whenNotPaused {
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    /// @dev The caller (`_msgSender()`) must have pre-approved this contract to spend at least `amount` of their
+    /// `_underlyingAsset` tokens.
+    function topUpUnderlyingAsset(uint256 amount) external override nonReentrant whenNotPaused {
+        // Transfer `_underlyingAsset` from the caller to this contract.
         bool success = _underlyingAsset.transferFrom(_msgSender(), address(this), amount);
-        if (!success) revert InsufficientUnderlyingBalance();
+        if (!success) revert InsufficientUnderlyingBalance(); // Or generic transfer failed error.
 
         emit UnderlyingAssetTopUp(_msgSender(), amount);
     }
 
-    /// @notice Withdraws underlying assets
-    /// @dev Only callable by admin
-    /// @param to The address to send the underlying assets to
-    /// @param amount The amount of underlying assets to withdraw
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    /// @dev Requires `DEFAULT_ADMIN_ROLE` for the caller.
     function withdrawUnderlyingAsset(
         address to,
         uint256 amount
     )
         external
+        override
         nonReentrant
         onlyRole(DEFAULT_ADMIN_ROLE)
         whenNotPaused
     {
-        if (to == address(0)) revert InvalidUnderlyingAsset();
-        if (amount == 0) revert InvalidAmount();
+        if (to == address(0)) revert InvalidUnderlyingAsset(); // Cannot withdraw to zero address.
+        if (amount == 0) revert InvalidAmount(); // Cannot withdraw zero amount.
 
         uint256 balance = _underlyingAsset.balanceOf(address(this));
-        if (amount > balance) revert InsufficientUnderlyingBalance();
+        if (amount > balance) revert InsufficientUnderlyingBalance(); // Not enough funds in contract.
 
         bool success = _underlyingAsset.transfer(to, amount);
-        if (!success) revert InsufficientUnderlyingBalance();
+        if (!success) revert InsufficientUnderlyingBalance(); // Or generic transfer failed. Consider a more specific
+            // error if OZ SafeERC20 were used for `transfer`.
 
         emit UnderlyingAssetWithdrawn(to, amount);
     }
 
-    /// @notice Withdraws all underlying assets
-    /// @dev Only callable by admin
-    /// @param to The address to send the underlying assets to
-    function withdrawAllUnderlyingAsset(address to) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
-        if (to == address(0)) revert InvalidUnderlyingAsset();
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    /// @dev Requires `DEFAULT_ADMIN_ROLE` for the caller.
+    function withdrawAllUnderlyingAsset(address to)
+        external
+        override
+        nonReentrant
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        whenNotPaused
+    {
+        if (to == address(0)) revert InvalidUnderlyingAsset(); // Cannot withdraw to zero address.
 
         uint256 balance = _underlyingAsset.balanceOf(address(this));
-        if (balance == 0) revert InsufficientUnderlyingBalance();
+        if (balance == 0) revert InsufficientUnderlyingBalance(); // No funds to withdraw.
 
         bool success = _underlyingAsset.transfer(to, balance);
-        if (!success) revert InsufficientUnderlyingBalance();
+        if (!success) revert InsufficientUnderlyingBalance(); // Or generic transfer failed.
 
         emit UnderlyingAssetWithdrawn(to, balance);
     }
 
-    /// @notice Returns the token this schedule is for
-    /// @return The ERC20 token address
-    function token() external view returns (ISMARTYield) {
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    function token() external view override returns (ISMARTYield) {
         return _token;
     }
 
-    /// @notice Returns the underlying asset used for yield payments
-    /// @return The underlying asset token address
-    function underlyingAsset() external view returns (IERC20) {
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    function underlyingAsset() external view override returns (IERC20) {
         return _underlyingAsset;
     }
 
-    /// @notice Returns the start date of the yield schedule
-    /// @return The timestamp when the schedule starts
-    function startDate() external view returns (uint256) {
+    /// @notice Returns the Unix timestamp (seconds since epoch) when the yield schedule starts.
+    /// @dev This is an immutable value set in the constructor. It defines the beginning of the yield accrual period.
+    /// This function fulfills the `startDate()` requirement from the `ISMARTFixedYieldSchedule` interface (which itself
+    /// inherits it from `ISMARTYieldSchedule`).
+    function startDate() external view override returns (uint256) {
         return _startDate;
     }
 
-    /// @notice Returns the end date of the yield schedule
-    /// @return The timestamp when the schedule ends
-    function endDate() external view returns (uint256) {
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    function endDate() external view override returns (uint256) {
         return _endDate;
     }
 
-    /// @notice Returns the yield rate
-    /// @return The yield rate in basis points (1 basis point = 0.01%)
-    function rate() external view returns (uint256) {
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    function rate() external view override returns (uint256) {
         return _rate;
     }
 
-    /// @notice Returns the distribution interval
-    /// @return The interval between distributions in seconds
-    function interval() external view returns (uint256) {
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    function interval() external view override returns (uint256) {
         return _interval;
     }
 
-    /// @notice Pauses the contract
-    /// @dev Only callable by admin
-    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _pause();
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    /// @dev Requires `DEFAULT_ADMIN_ROLE` for the caller.
+    function pause() external override onlyRole(DEFAULT_ADMIN_ROLE) {
+        _pause(); // Internal OpenZeppelin Pausable function.
     }
 
-    /// @notice Unpauses the contract
-    /// @dev Only callable by admin
-    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _unpause();
+    /// @inheritdoc ISMARTFixedYieldSchedule
+    /// @dev Requires `DEFAULT_ADMIN_ROLE` for the caller.
+    function unpause() external override onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause(); // Internal OpenZeppelin Pausable function.
     }
 }

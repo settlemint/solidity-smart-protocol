@@ -56,11 +56,11 @@ event TokensUnfrozen(address indexed _userAddress, uint256 _amount);
 
 /// @dev This event is emitted when the token is paused.
 /// @param _userAddress is the address of the wallet that called the pause function
-event Paused(address _userAddress);
+event Paused(address indexed _userAddress);
 
 /// @dev This event is emitted when the token is unpaused.
 /// @param _userAddress is the address of the wallet that called the unpause function.
-event Unpaused(address _userAddress);
+event Unpaused(address indexed _userAddress);
 
 interface IERC3643 is IERC20, IERC20Metadata {
     /// Functions

@@ -5,11 +5,11 @@ pragma solidity ^0.8.28;
 
 /// @dev This event is emitted when a token has been bound to the compliance contract.
 /// @param _token is the address of the token to bind.
-event TokenBound(address _token);
+event TokenBound(address indexed _token);
 
 /// @dev This event is emitted when a token has been unbound from the compliance contract.
 /// @param _token is the address of the token to unbind.
-event TokenUnbound(address _token);
+event TokenUnbound(address indexed _token);
 
 interface IERC3643Compliance {
     /// Functions

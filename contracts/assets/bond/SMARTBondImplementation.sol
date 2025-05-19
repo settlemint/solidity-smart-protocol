@@ -83,7 +83,7 @@ contract SMARTBondImplementation is
 
     /// @notice Emitted when the bond reaches maturity and is closed
     /// @param timestamp The block timestamp when the bond matured
-    event BondMatured(uint256 timestamp);
+    event BondMatured(uint256 indexed timestamp);
 
     /// @notice Emitted when a bond is redeemed for underlying assets
     /// @param sender The address that initiated the redemption
@@ -94,7 +94,7 @@ contract SMARTBondImplementation is
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     /// @param forwarder_ The address of the forwarder contract.
-    constructor(address forwarder_) payable ERC2771ContextUpgradeable(forwarder_) {
+    constructor(address forwarder_) ERC2771ContextUpgradeable(forwarder_) {
         _disableInitializers();
     }
 
@@ -529,11 +529,12 @@ contract SMARTBondImplementation is
     // --- Internal Functions ---
 
     /// @notice Calculates the underlying asset amount for a given bond amount
-    /// @dev Divides by decimals first to prevent overflow when multiplying large numbers
+    /// @dev Multiplies the bond amount with the face value before dividing by decimals
+    ///      to maintain precision
     /// @param bondAmount The amount of bonds to calculate for
     /// @return The amount of underlying assets
     function _calculateUnderlyingAmount(uint256 bondAmount) private view returns (uint256) {
-        return (bondAmount / (10 ** decimals())) * _faceValue;
+        return (bondAmount * _faceValue) / (10 ** decimals());
     }
 
     // --- Hooks (Overrides for Chaining) ---
