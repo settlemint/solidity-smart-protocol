@@ -68,10 +68,9 @@ contract SMARTSystemFactory is ERC2771Context {
     // --- Events ---
 
     /// @notice Emitted when a new `SMARTSystem` instance is successfully created and deployed by this factory.
+    /// @param sender The address that called the `createSystem` function.
     /// @param systemAddress The blockchain address of the newly deployed `SMARTSystem` contract.
-    /// @param initialAdmin The address that was set as the initial administrator (holding `DEFAULT_ADMIN_ROLE`)
-    /// for the new `SMARTSystem` instance. This is typically the address that called the `createSystem` function.
-    event SMARTSystemCreated(address indexed systemAddress, address indexed initialAdmin);
+    event SMARTSystemCreated(address indexed sender, address indexed systemAddress);
 
     // --- Constructor ---
 
@@ -149,13 +148,13 @@ contract SMARTSystemFactory is ERC2771Context {
     function createSystem() public returns (address systemAddress) {
         // Determine the initial admin for the new SMARTSystem.
         // _msgSender() correctly identifies the original user even if called via a trusted forwarder (ERC2771).
-        address initialAdmin = _msgSender();
+        address sender = _msgSender();
 
         // Deploy a new SMARTSystem contract instance.
         // It passes all the default implementation addresses stored in this factory, plus the factory's forwarder
         // address.
         SMARTSystem newSystem = new SMARTSystem(
-            initialAdmin,
+            sender,
             defaultComplianceImplementation,
             defaultIdentityRegistryImplementation,
             defaultIdentityRegistryStorageImplementation,
@@ -172,7 +171,7 @@ contract SMARTSystemFactory is ERC2771Context {
         smartSystems.push(systemAddress);
 
         // Emit an event to log the creation, including the new system's address and its initial admin.
-        emit SMARTSystemCreated(systemAddress, initialAdmin);
+        emit SMARTSystemCreated(sender, systemAddress);
 
         // Return the address of the newly created system.
         return systemAddress;

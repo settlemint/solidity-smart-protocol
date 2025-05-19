@@ -51,6 +51,7 @@ import { SMARTTokenFactoryProxy } from "./token-factory/SMARTTokenFactoryProxy.s
 /// trusted forwarder is used) and AccessControl for role-based permissions (restricting sensitive functions to
 /// authorized
 /// administrators). It also inherits ReentrancyGuard to protect against reentrancy attacks on certain functions.
+
 contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, ReentrancyGuard {
     // Expected interface IDs used for validating implementation contracts.
     // These are unique identifiers for Solidity interfaces, ensuring that a contract claiming to be, for example,
@@ -66,40 +67,49 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     // They are a way to log important state changes or actions.
 
     /// @notice Emitted when the implementation (logic contract) for the compliance module is updated.
+    /// @param sender The address that called the `updateComplianceImplementation` function.
     /// @param newImplementation The address of the new compliance module implementation contract.
-    event ComplianceImplementationUpdated(address indexed newImplementation);
+    event ComplianceImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the implementation (logic contract) for the identity registry module is updated.
+    /// @param sender The address that called the `updateIdentityRegistryImplementation` function.
     /// @param newImplementation The address of the new identity registry module implementation contract.
-    event IdentityRegistryImplementationUpdated(address indexed newImplementation);
+    event IdentityRegistryImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the implementation (logic contract) for the identity registry storage module is updated.
+    /// @param sender The address that called the `updateIdentityRegistryStorageImplementation` function.
     /// @param newImplementation The address of the new identity registry storage module implementation contract.
-    event IdentityRegistryStorageImplementationUpdated(address indexed newImplementation);
+    event IdentityRegistryStorageImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the implementation (logic contract) for the trusted issuers registry module is updated.
+    /// @param sender The address that called the `updateTrustedIssuersRegistryImplementation` function.
     /// @param newImplementation The address of the new trusted issuers registry module implementation contract.
-    event TrustedIssuersRegistryImplementationUpdated(address indexed newImplementation);
+    event TrustedIssuersRegistryImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the implementation (logic contract) for the identity factory module is updated.
+    /// @param sender The address that called the `updateIdentityFactoryImplementation` function.
     /// @param newImplementation The address of the new identity factory module implementation contract.
-    event IdentityFactoryImplementationUpdated(address indexed newImplementation);
+    event IdentityFactoryImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the implementation (logic contract) for the standard identity module is updated.
     /// @dev Standard identity contracts are typically used to represent users or general entities.
+    /// @param sender The address that called the `updateIdentityImplementation` function.
     /// @param newImplementation The address of the new standard identity module implementation contract.
-    event IdentityImplementationUpdated(address indexed newImplementation);
+    event IdentityImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the implementation (logic contract) for the token identity module is updated.
     /// @dev Token identity contracts might be specialized identities associated with specific tokens.
+    /// @param sender The address that called the `updateTokenIdentityImplementation` function.
     /// @param newImplementation The address of the new token identity module implementation contract.
-    event TokenIdentityImplementationUpdated(address indexed newImplementation);
+    event TokenIdentityImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the `bootstrap` function has been successfully executed, creating and linking proxy
     /// contracts
     /// for all core modules of the SMARTSystem.
+    /// @param sender The address that called the `bootstrap` function.
     /// @param complianceProxy The address of the deployed SMARTComplianceProxy contract.
     /// @param identityRegistryProxy The address of the deployed SMARTIdentityRegistryProxy contract.
     /// @param identityRegistryStorageProxy The address of the deployed SMARTIdentityRegistryStorageProxy contract.
     /// @param trustedIssuersRegistryProxy The address of the deployed SMARTTrustedIssuersRegistryProxy contract.
     /// @param identityFactoryProxy The address of the deployed SMARTIdentityFactoryProxy contract.
     event Bootstrapped(
+        address indexed sender,
         address indexed complianceProxy,
         address indexed identityRegistryProxy,
-        address indexed identityRegistryStorageProxy,
+        address identityRegistryStorageProxy,
         address trustedIssuersRegistryProxy,
         address identityFactoryProxy
     );
@@ -555,6 +565,13 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// @return The address of the identity factory proxy contract.
     function identityFactoryProxy() public view override returns (address) {
         return _identityFactoryProxy;
+    }
+
+    /// @notice Gets the address of the token factory proxy contract for a given factory type hash.
+    /// @param factoryTypeHash The hash of the factory type.
+    /// @return The address of the token factory proxy contract.
+    function tokenFactoryProxy(bytes32 factoryTypeHash) public view override returns (address) {
+        return tokenFactoryProxiesByType[factoryTypeHash];
     }
 
     /// @notice Allows an admin (`DEFAULT_ADMIN_ROLE`) to withdraw any Ether (native currency) held by this contract.

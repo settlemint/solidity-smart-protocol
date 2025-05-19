@@ -22,7 +22,6 @@ interface ISMARTSystem {
     /// in the protocol's operation.
     function bootstrap() external;
 
-
     /// @notice Creates a new token factory implementation and proxy.
     /// @param _typeName The human-readable type name of the token factory.
     /// @param _factoryImplementation The address of the token factory implementation contract.
