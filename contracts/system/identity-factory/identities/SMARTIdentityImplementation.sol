@@ -12,6 +12,7 @@ import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/m
 // Import local extensions
 import { ERC734 } from "./extensions/ERC734.sol";
 import { ERC735 } from "./extensions/ERC735.sol";
+import { OnChainIdentity } from "./extensions/OnChainIdentity.sol";
 
 // --- Custom Errors for SMARTIdentityImplementation ---
 error AlreadyInitialized();
@@ -30,10 +31,16 @@ error ReplicatedExecutionAlreadyPerformed(uint256 executionId);
 /// @dev This contract is intended to be deployed once and then used as the logic implementation target for multiple
 ///      `SMARTIdentityProxy` contracts. It inherits `ERC734` for key management, `ERC735` for claim management,
 ///      `ERC165Upgradeable` for interface detection, and `ERC2771ContextUpgradeable` for meta-transactions.
-contract SMARTIdentityImplementation is ISMARTIdentity, ERC734, ERC735, ERC165Upgradeable, ERC2771ContextUpgradeable {
+contract SMARTIdentityImplementation is
+    ISMARTIdentity,
+    ERC734,
+    ERC735,
+    OnChainIdentity,
+    ERC165Upgradeable,
+    ERC2771ContextUpgradeable
+{
     // --- State Variables ---
     bool private _smartIdentityInitialized;
-
     // --- Constants for Key Purposes ---
     uint256 public constant MANAGEMENT_KEY_PURPOSE = 1;
     uint256 public constant ACTION_KEY_PURPOSE = 2;
@@ -189,11 +196,18 @@ contract SMARTIdentityImplementation is ISMARTIdentity, ERC734, ERC735, ERC165Up
         return executionId;
     }
 
-    // Inherited view functions from ERC734:
-    // getKey(bytes32) external view returns (uint256[] memory purposes, uint256 keyType, bytes32 key)
-    // getKeyPurposes(bytes32) external view returns (uint256[] memory purposes)
-    // getKeysByPurpose(uint256) external view returns (bytes32[] memory keys)
-    // keyHasPurpose(bytes32, uint256) external view returns (bool exists)
+    function keyHasPurpose(
+        bytes32 _key,
+        uint256 _purpose
+    )
+        public
+        view
+        virtual
+        override(ERC734, OnChainIdentity, IERC734)
+        returns (bool exists)
+    {
+        return super.keyHasPurpose(_key, _purpose);
+    }
 
     // --- ERC735 (Claim Holder) Functions - Overridden for Access Control ---
 
@@ -226,75 +240,6 @@ contract SMARTIdentityImplementation is ISMARTIdentity, ERC734, ERC735, ERC165Up
         returns (bool success)
     {
         return super.removeClaim(_claimId);
-    }
-
-    // Inherited view functions from ERC735:
-    // getClaim(bytes32) external view returns (uint256 topic, uint256 scheme, address issuer, bytes memory signature,
-    // bytes memory data, string memory uri)
-    // getClaimIdsByTopic(uint256) external view returns (bytes32[] memory claimIds)
-
-    // --- IIdentity Specific Functions ---
-
-    /// @inheritdoc IIdentity
-    /// @dev Checks if a claim is valid. For self-issued claims (issuer is this identity),
-    ///      it verifies the signature against a CLAIM_SIGNER_KEY registered on this identity.
-    ///      This implementation is adapted from OnchainID's Identity.sol.
-    function isClaimValid(
-        IIdentity _identity, // The identity holder contract related to the claim
-        uint256 claimTopic,
-        bytes calldata sig,
-        bytes calldata data
-    )
-        external // As per IIdentity interface
-        view
-        virtual
-        override // Implements IIdentity.isClaimValid (no other base contract to specify here)
-        returns (bool claimValid)
-    {
-        bytes32 dataHash = keccak256(abi.encode(_identity, claimTopic, data));
-        bytes32 prefixedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", dataHash));
-        address recoveredSigner = getRecoveredAddress(sig, prefixedHash);
-        if (recoveredSigner == address(0)) {
-            return false; // Invalid signature or recovery failed
-        }
-        bytes32 hashedSignerAddress = keccak256(abi.encode(recoveredSigner));
-        return keyHasPurpose(hashedSignerAddress, CLAIM_SIGNER_KEY_PURPOSE);
-    }
-
-    /// @dev Recovers the address that signed the given data hash.
-    ///      Copied from OnchainID's Identity.sol for use in `isClaimValid`.
-    /// @param sig The signature bytes (65 bytes: r, s, v).
-    /// @param dataHash The keccak256 hash of the data that was signed (usually a prefixed hash).
-    /// @return addr The recovered Ethereum address, or address(0) if recovery fails.
-    function getRecoveredAddress(bytes memory sig, bytes32 dataHash) public pure returns (address addr) {
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-
-        // Check the signature length
-        if (sig.length != 65) {
-            return address(0);
-        }
-
-        // Divide the signature in r, s and v variables
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            r := mload(add(sig, 32))
-            s := mload(add(sig, 64))
-            v := byte(0, mload(add(sig, 96)))
-        }
-
-        // Adjust v if it's 0 or 1 (legacy EIP-155 handling not strictly needed for >=27)
-        if (v < 27) {
-            v += 27;
-        }
-
-        // Ensure v is either 27 or 28
-        if (v != 27 && v != 28) {
-            return address(0);
-        }
-
-        return ecrecover(dataHash, v, r, s);
     }
 
     // --- ERC165 Support ---
