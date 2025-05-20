@@ -67,8 +67,9 @@ contract SMARTTokenFactoryProxy is Proxy {
         address implementation = system_.tokenFactoryImplementation(factoryTypeHash);
         if (implementation == address(0)) revert TokenFactoryImplementationNotSet(factoryTypeHash);
 
-        bytes memory data =
-            abi.encodeWithSelector(ISMARTTokenFactory.initialize.selector, initialAdmin, tokenImplementation);
+        bytes memory data = abi.encodeWithSelector(
+            ISMARTTokenFactory.initialize.selector, systemAddress, tokenImplementation, initialAdmin
+        );
 
         // slither-disable-next-line low-level-calls
         (bool success,) = implementation.delegatecall(data);

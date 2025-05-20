@@ -411,10 +411,11 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
             revert TokenFactoryTypeAlreadyRegistered(factoryTypeHash);
         }
 
+        tokenFactoryImplementationsByType[factoryTypeHash] = _factoryImplementation;
+
         address _tokenFactoryProxy =
             address(new SMARTTokenFactoryProxy(address(this), _msgSender(), factoryTypeHash, _tokenImplementation));
 
-        tokenFactoryImplementationsByType[factoryTypeHash] = _factoryImplementation;
         tokenFactoryProxiesByType[factoryTypeHash] = _tokenFactoryProxy;
 
         emit TokenFactoryCreated(_msgSender(), _typeName, _tokenFactoryProxy, _factoryImplementation, block.timestamp);

@@ -93,8 +93,8 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
             revert InvalidTokenAddress(); // Re-using for admin address, consider a more specific error if needed
         }
         if (
-            _tokenImplementation == address(0)
-                && IERC165(_tokenImplementation).supportsInterface(type(ISMART).interfaceId)
+            tokenImplementation_ == address(0)
+                && IERC165(tokenImplementation_).supportsInterface(type(ISMART).interfaceId)
         ) {
             revert InvalidImplementationAddress();
         }
