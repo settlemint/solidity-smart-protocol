@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import { ERC2771Context, Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -25,6 +26,9 @@ import {
     InvalidTokenImplementationInterface,
     TokenAccessManagerImplementationNotSet
 } from "./SMARTSystemErrors.sol";
+
+// Constants
+import { SMARTRoles } from "./../SMARTRoles.sol";
 
 // Interface imports
 import { ISMARTTokenFactory } from "./token-factory/ISMARTTokenFactory.sol";
@@ -417,6 +421,9 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
             address(new SMARTTokenFactoryProxy(address(this), _msgSender(), factoryTypeHash, _tokenImplementation));
 
         tokenFactoryProxiesByType[factoryTypeHash] = _tokenFactoryProxy;
+
+        // Make it possible that the token factory proxy can register token identities.
+        IAccessControl(address(identityFactoryProxy())).grantRole(SMARTRoles.TOKEN_REGISTRAR_ROLE, _tokenFactoryProxy);
 
         emit TokenFactoryCreated(_msgSender(), _typeName, _tokenFactoryProxy, _factoryImplementation, block.timestamp);
 

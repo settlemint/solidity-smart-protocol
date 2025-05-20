@@ -118,6 +118,14 @@ contract SMARTIdentityFactoryImplementation is
     /// @param identity The address of the newly deployed `SMARTTokenIdentityProxy` contract.
     /// @param token The address of the token contract for which the identity was created.
     event TokenIdentityCreated(address indexed sender, address indexed identity, address indexed token);
+    /// @notice Emitted when the TOKEN_REGISTRAR_ROLE is granted to an account.
+    /// @param account The account that was granted the role.
+    /// @param sender The account that granted the role.
+    event TokenRegistrarRoleGranted(address indexed account, address indexed sender);
+    /// @notice Emitted when the TOKEN_REGISTRAR_ROLE is revoked from an account.
+    /// @param account The account that had the role revoked.
+    /// @param sender The account that revoked the role.
+    event TokenRegistrarRoleRevoked(address indexed account, address indexed sender);
 
     // --- Constructor ---
     /// @notice Constructor for the identity factory implementation.
@@ -171,6 +179,9 @@ contract SMARTIdentityFactoryImplementation is
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
         _grantRole(SMARTRoles.REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTRoles.TOKEN_REGISTRAR_MANAGER_ROLE, initialAdmin);
+        _grantRole(SMARTRoles.TOKEN_REGISTRAR_MANAGER_ROLE, systemAddress);
+        _setRoleAdmin(SMARTRoles.TOKEN_REGISTRAR_ROLE, SMARTRoles.TOKEN_REGISTRAR_MANAGER_ROLE);
 
         _system = systemAddress;
     }
@@ -255,7 +266,7 @@ contract SMARTIdentityFactoryImplementation is
         external
         virtual
         override
-        onlyRole(SMARTRoles.REGISTRAR_ROLE)
+        onlyRole(SMARTRoles.TOKEN_REGISTRAR_ROLE)
         returns (address)
     {
         if (_token == address(0)) revert ZeroAddressNotAllowed();
