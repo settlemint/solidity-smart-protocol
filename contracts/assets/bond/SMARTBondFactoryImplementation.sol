@@ -15,7 +15,7 @@ import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTCom
 import { SMARTBondProxy } from "./SMARTBondProxy.sol";
 
 contract SMARTBondFactoryImplementation is AbstractSMARTTokenFactoryImplementation {
-    constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
+    constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
     function createBond(
         string memory name_,
