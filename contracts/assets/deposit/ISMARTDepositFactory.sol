@@ -5,17 +5,13 @@ import { ISMARTTokenFactory } from "../../system/token-factory/ISMARTTokenFactor
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 interface ISMARTBondFactory is ISMARTTokenFactory {
-    function createBond(
+    function createDeposit(
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
-        uint256 cap_,
-        uint256 maturityDate_,
-        uint256 faceValue_,
-        address underlyingAsset_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         external
-        returns (address deployedBondAddress);
+        returns (address deployedDepositAddress);
 }

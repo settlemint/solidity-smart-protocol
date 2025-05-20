@@ -11,6 +11,8 @@ import { ISMARTTokenFactory } from "./ISMARTTokenFactory.sol";
 import { ISMART } from "../../interface/ISMART.sol";
 import { SMARTTokenAccessManagerProxy } from "../access-manager/SMARTTokenAccessManagerProxy.sol";
 import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
+import { ISMARTCompliance } from "../../interface/ISMARTCompliance.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { ISMARTIdentityFactory } from "../identity-factory/ISMARTIdentityFactory.sol";
 import { SMARTRoles } from "../../SMARTRoles.sol";
@@ -131,6 +133,14 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     }
 
     // --- Internal Functions ---
+    function _identityRegistry() internal view returns (ISMARTIdentityRegistry) {
+        return ISMARTIdentityRegistry(ISMARTSystem(_systemAddress).identityRegistryProxy());
+    }
+
+    function _compliance() internal view returns (ISMARTCompliance) {
+        return ISMARTCompliance(ISMARTSystem(_systemAddress).complianceProxy());
+    }
+
     /// @notice Creates a new access manager for a token.
     /// @dev This function creates a new access manager for a token using the `SMARTTokenAccessManagerProxy`.
     /// @return accessManager The address of the new access manager.

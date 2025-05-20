@@ -16,6 +16,7 @@ import { SMARTRoles } from "../../SMARTRoles.sol";
 
 // Interface imports
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
+import { ISMARTDeposit } from "./ISMARTDeposit.sol";
 
 // Core extensions
 import { SMARTUpgradeable } from "../../extensions/core/SMARTUpgradeable.sol"; // Base SMART logic + ERC20
@@ -35,6 +36,7 @@ import { SMARTTokenAccessManagedUpgradeable } from
 /// @dev Combines core SMART features (compliance, verification) with extensions for pausing,
 ///      burning, custodian actions, and collateral tracking. Access control uses custom roles.
 contract SMARTDepositImplementation is
+    ISMARTDeposit,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,
     SMARTCollateralUpgradeable,

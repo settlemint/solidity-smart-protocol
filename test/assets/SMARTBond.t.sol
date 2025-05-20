@@ -143,9 +143,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
             faceValue_,
             underlyingAsset_,
             requiredClaimTopics_,
-            initialModulePairs_,
-            identityRegistry,
-            compliance
+            initialModulePairs_
         );
 
         result = ISMARTBond(bondAddress);
@@ -214,9 +212,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
             faceValue,
             address(underlyingAsset),
             new uint256[](0),
-            new SMARTComplianceModuleParamPair[](0),
-            identityRegistry,
-            compliance
+            new SMARTComplianceModuleParamPair[](0)
         );
 
         vm.stopPrank();

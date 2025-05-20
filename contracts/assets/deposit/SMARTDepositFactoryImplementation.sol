@@ -7,43 +7,35 @@ import { AbstractSMARTTokenFactoryImplementation } from
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // Interface imports
-import { ISMARTBond } from "./ISMARTBond.sol";
+import { ISMARTDeposit } from "./ISMARTDeposit.sol";
 import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Local imports
-import { SMARTBondProxy } from "./SMARTBondProxy.sol";
+import { SMARTDepositProxy } from "./SMARTDepositProxy.sol";
 
-contract SMARTBondFactoryImplementation is AbstractSMARTTokenFactoryImplementation {
+contract SMARTDepositFactoryImplementation is AbstractSMARTTokenFactoryImplementation {
     constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
-    function createBond(
+    function createDeposit(
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
-        uint256 cap_,
-        uint256 maturityDate_,
-        uint256 faceValue_,
-        address underlyingAsset_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         external
-        returns (address deployedBondAddress)
+        returns (address deployedDepositAddress)
     {
         // Create the access manager for the token
         ISMARTTokenAccessManager accessManager = _createAccessManager();
 
-        // ABI encode constructor arguments for SMARTBondProxy
+        // ABI encode constructor arguments for SMARTDepositProxy
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
             symbol_,
             decimals_,
-            cap_,
-            maturityDate_,
-            faceValue_,
-            underlyingAsset_,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),
@@ -51,16 +43,16 @@ contract SMARTBondFactoryImplementation is AbstractSMARTTokenFactoryImplementati
             address(accessManager)
         );
 
-        // Get the creation bytecode of SMARTBondProxy
-        bytes memory proxyBytecode = type(SMARTBondProxy).creationCode;
+        // Get the creation bytecode of SMARTDepositProxy
+        bytes memory proxyBytecode = type(SMARTDepositProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        deployedBondAddress = _deployToken(proxyBytecode, constructorArgs, address(accessManager), name_, symbol_);
+        deployedDepositAddress = _deployToken(proxyBytecode, constructorArgs, address(accessManager), name_, symbol_);
 
-        return deployedBondAddress;
+        return deployedDepositAddress;
     }
 
     function isValidTokenImplementation(address tokenImplementation_) public view returns (bool) {
-        return IERC165(tokenImplementation_).supportsInterface(type(ISMARTBond).interfaceId);
+        return IERC165(tokenImplementation_).supportsInterface(type(ISMARTDeposit).interfaceId);
     }
 }

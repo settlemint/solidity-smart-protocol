@@ -27,9 +27,6 @@ abstract contract AbstractSMARTAssetTest is Test {
     ClaimUtils internal claimUtils;
     IdentityUtils internal identityUtils;
 
-    address public identityRegistry;
-    address public compliance;
-
     SMARTForwarder public forwarder;
 
     function setUpSMART(address _owner) public virtual {
@@ -60,9 +57,6 @@ abstract contract AbstractSMARTAssetTest is Test {
             systemUtils.identityRegistry(),
             systemUtils.trustedIssuersRegistry()
         );
-
-        identityRegistry = address(systemUtils.identityRegistry());
-        compliance = address(systemUtils.compliance());
 
         // Initialize the claim issuer
         uint256[] memory claimTopics = new uint256[](2);
