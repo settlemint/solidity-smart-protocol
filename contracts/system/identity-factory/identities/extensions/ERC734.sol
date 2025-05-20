@@ -231,7 +231,9 @@ contract ERC734 is IERC734 {
         }
         uint256 purposesLength = k.purposes.length;
         for (uint256 i = 0; i < purposesLength; ++i) {
-            if (k.purposes[i] == _purpose) {
+            uint256 purpose = k.purposes[i];
+            // 1 is the MANAGEMENT purpose
+            if (purpose == 1 || purpose == _purpose) {
                 return true;
             }
         }

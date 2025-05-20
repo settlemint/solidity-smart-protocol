@@ -82,12 +82,17 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         IAccessControl(address(bondFactory)).grantRole(SMARTRoles.REGISTRAR_ROLE, owner);
         vm.stopPrank();
         // Initialize identities
+        string[] memory identityNames = new string[](4);
+        identityNames[0] = "Owner";
+        identityNames[1] = "User1";
+        identityNames[2] = "User2";
+        identityNames[3] = "Spender";
         address[] memory identities = new address[](4);
         identities[0] = owner;
         identities[1] = user1;
         identities[2] = user2;
         identities[3] = spender;
-        _setUpIdentities(identities);
+        _setUpIdentities(identityNames, identities);
 
         maturityDate = block.timestamp + 365 days;
 

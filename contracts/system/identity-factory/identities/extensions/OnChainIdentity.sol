@@ -6,16 +6,14 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 abstract contract OnChainIdentity is IIdentity {
     function keyHasPurpose(bytes32 _key, uint256 _purpose) public view virtual override returns (bool exists);
 
-    /**
-     * @dev Checks if a claim is valid. Claims issued by the identity are self-attested claims. They do not have a
-     * built-in revocation mechanism and are considered valid as long as their signature is valid and they are still
-     * stored by the identity contract.
-     * @param _identity the identity contract related to the claim
-     * @param claimTopic the claim topic of the claim
-     * @param sig the signature of the claim
-     * @param data the data field of the claim
-     * @return claimValid true if the claim is valid, false otherwise
-     */
+    /// @dev Checks if a claim is valid. Claims issued by the identity are self-attested claims. They do not have a
+    /// built-in revocation mechanism and are considered valid as long as their signature is valid and they are still
+    /// stored by the identity contract.
+    /// @param _identity the identity contract related to the claim
+    /// @param claimTopic the claim topic of the claim
+    /// @param sig the signature of the claim
+    /// @param data the data field of the claim
+    /// @return claimValid true if the claim is valid, false otherwise
     function isClaimValid(
         IIdentity _identity,
         uint256 claimTopic,
@@ -47,12 +45,10 @@ abstract contract OnChainIdentity is IIdentity {
         return false;
     }
 
-    /**
-     * @dev returns the address that signed the given data
-     * @param sig the signature of the data
-     * @param dataHash the data that was signed
-     * returns the address that signed dataHash and created the signature sig
-     */
+    /// @dev returns the address that signed the given data
+    /// @param sig the signature of the data
+    /// @param dataHash the data that was signed
+    /// returns the address that signed dataHash and created the signature sig
     function getRecoveredAddress(bytes memory sig, bytes32 dataHash) public pure returns (address addr) {
         bytes32 ra;
         bytes32 sa;

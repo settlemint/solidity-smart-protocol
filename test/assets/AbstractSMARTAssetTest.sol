@@ -80,15 +80,18 @@ abstract contract AbstractSMARTAssetTest is Test {
         vm.prank(_owner);
     }
 
-    function _setUpIdentity(address _wallet) internal {
-        identityUtils.createClientIdentity(_wallet, TestConstants.COUNTRY_CODE_BE);
+    function _setUpIdentity(address _wallet, string memory _label) internal {
+        vm.label(_wallet, _label);
+        address identity = identityUtils.createClientIdentity(_wallet, TestConstants.COUNTRY_CODE_BE);
+        vm.label(identity, string.concat(_label, " Identity"));
         claimUtils.issueInvestorClaim(_wallet, TestConstants.CLAIM_TOPIC_KYC, "Verified KYC by Issuer");
     }
 
-    function _setUpIdentities(address[] memory _wallets) internal {
+    function _setUpIdentities(string[] memory _labels, address[] memory _wallets) internal {
+        require(_labels.length == _wallets.length, "Labels and wallets arrays must have the same length");
         uint256 walletsLength = _wallets.length;
         for (uint256 i = 0; i < walletsLength; ++i) {
-            _setUpIdentity(_wallets[i]);
+            _setUpIdentity(_wallets[i], _labels[i]);
         }
     }
 
