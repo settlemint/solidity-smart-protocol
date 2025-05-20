@@ -94,3 +94,9 @@ error InvalidTokenImplementationAddress();
 
 /// @notice Error indicating that an invalid token implementation interface was provided.
 error InvalidTokenImplementationInterface();
+
+/// @notice Error indicating that an attempt was made to initialize a component with a zero address for its
+/// implementation.
+/// @dev This typically occurs in proxy constructors if the logic contract address fetched from the system is
+/// address(0).
+error InitializationWithZeroAddress();

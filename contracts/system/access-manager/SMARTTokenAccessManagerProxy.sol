@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
-import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
+import { SMARTSystemProxy } from "../SMARTSystemProxy.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { SMARTTokenAccessManagerImplementation } from "./SMARTTokenAccessManagerImplementation.sol";
-import {
-    TokenAccessManagerImplementationNotSet,
-    InvalidSystemAddress,
-    ETHTransfersNotAllowed
-} from "../SMARTSystemErrors.sol";
+import { TokenAccessManagerImplementationNotSet } from "../SMARTSystemErrors.sol";
 
 /// @title SMART Token Access Manager Proxy Contract
 /// @author SettleMint Tokenization Services
@@ -20,109 +14,40 @@ import {
 ///      is delegated to a separate implementation contract (`SMARTTokenAccessManagerImplementation`).
 ///      The address of the current implementation contract is retrieved dynamically from the `ISMARTSystem` contract.
 ///      This allows the underlying token access manager logic to be upgraded without changing the proxy's address or
-/// losing
-/// its state.
-///      Inherits from OpenZeppelin's `Proxy` contract, which handles the low-level `delegatecall`.
-contract SMARTTokenAccessManagerProxy is Proxy {
-    /// @dev Storage slot used to store the address of the `ISMARTSystem` contract, ensuring it doesn't collide with
-    /// other storage variables.
-    /// This specific slot `0xc5118e8d99fa8a7b8204faac3e1f1bd4b5fe7396094b4a872de7eacf9b26df00` is
-    /// `keccak256("org.smart.contracts.proxy.SMARTTokenAccessManagerProxy.system")`.
-    /// Using a constant, well-defined storage slot is a best practice for upgradeable contracts to prevent storage
-    /// layout clashes.
-    bytes32 private constant _SYSTEM_SLOT = 0xc5118e8d99fa8a7b8204faac3e1f1bd4b5fe7396094b4a872de7eacf9b26df00;
-
-    /// @notice Internal function to securely store the address of the `ISMARTSystem` contract in the designated storage
-    /// slot.
-    /// @dev This is typically called once during the proxy's construction.
-    /// @param system_ The instance of the `ISMARTSystem` contract to be stored.
-    function _setSystem(ISMARTSystem system_) internal {
-        StorageSlot.getAddressSlot(_SYSTEM_SLOT).value = address(system_);
-    }
-
-    /// @notice Internal function to securely retrieve the address of the `ISMARTSystem` contract from its storage slot.
-    /// @dev This is used by the proxy to find out which implementation contract to delegate calls to.
-    /// @return ISMARTSystem The instance of the `ISMARTSystem` contract currently configured for this proxy.
-    function _getSystem() internal view returns (ISMARTSystem) {
-        return ISMARTSystem(StorageSlot.getAddressSlot(_SYSTEM_SLOT).value);
-    }
-
+/// losing its state.
+///      Inherits from `SMARTSystemProxy`.
+contract SMARTTokenAccessManagerProxy is SMARTSystemProxy {
     /// @notice Constructor for the `SMARTTokenAccessManagerProxy`.
     /// @dev This function is called only once when the proxy contract is deployed.
     /// It performs critical setup steps:
-    /// 1. Validates the provided `systemAddress`: Ensures it's not the zero address and that it correctly implements
-    /// the `ISMARTSystem` interface (checked via ERC165 `supportsInterface`).
-    /// 2. Stores the `systemAddress` using `_setSystem` in a specific storage slot.
-    /// 3. Retrieves the initial `SMARTTokenAccessManagerImplementation` address from the stored `ISMARTSystem`
-    /// contract.
-    /// 4. Ensures this retrieved implementation address is not the zero address (i.e., it's configured in the system).
-    /// 5. Executes a `delegatecall` to the `initialize` function of the `SMARTTokenAccessManagerImplementation`
-    /// contract.
-    ///    This `initialize` call sets up the initial state of the token access manager logic *within the storage
-    /// context of this
-    /// proxy*.
-    ///    The `initialAdmins` are passed to this `initialize` function to set up initial ownership/roles for the token
-    /// access manager.
-    ///    If this initialization `delegatecall` fails, the proxy deployment will revert.
-    /// @param systemAddress The address of the `ISMARTSystem` contract. This system contract is responsible for
-    /// providing the address of the actual token access manager logic (implementation) contract.
-    /// @param initialAdmins The addresses that will be granted initial administrative privileges (e.g.,
-    /// `DEFAULT_ADMIN_ROLE`) in the `SMARTTokenAccessManagerImplementation` logic contract.
-    constructor(address systemAddress, address[] memory initialAdmins) {
-        // Validate that the provided systemAddress is a valid contract implementing ISMARTSystem
-        if (systemAddress == address(0) || !IERC165(systemAddress).supportsInterface(type(ISMARTSystem).interfaceId)) {
-            revert InvalidSystemAddress();
-        }
-        _setSystem(ISMARTSystem(systemAddress));
-
+    /// 1. Stores the `systemAddress` (handled by `SMARTSystemProxy` constructor).
+    /// 2. Retrieves the initial `SMARTTokenAccessManagerImplementation` address from the `ISMARTSystem` contract.
+    /// 3. Ensures this retrieved implementation address is not the zero address.
+    /// 4. Executes a `delegatecall` to the `initialize` function of the `SMARTTokenAccessManagerImplementation`
+    /// contract
+    ///    via `_performInitializationDelegatecall`.
+    /// @param systemAddress The address of the `ISMARTSystem` contract.
+    /// @param initialAdmins The addresses that will be granted initial administrative privileges.
+    constructor(address systemAddress, address[] memory initialAdmins) SMARTSystemProxy(systemAddress) {
         ISMARTSystem system_ = _getSystem();
-        address implementation = system_.tokenAccessManagerImplementation();
-        // Ensure the ISMARTSystem contract has a token access manager implementation configured.
-        if (implementation == address(0)) revert TokenAccessManagerImplementationNotSet();
 
-        // Prepare the call data for the delegatecall to the implementation's initialize function.
-        // This calls SMARTTokenAccessManagerImplementation.initialize(initialAdmins).
+        address implementation = _getSpecificImplementationAddress(system_);
         bytes memory data =
             abi.encodeWithSelector(SMARTTokenAccessManagerImplementation.initialize.selector, initialAdmins);
 
-        // Perform the delegatecall to initialize the identity logic in the context of this proxy's storage.
-        // slither-disable-next-line low-level-calls: Delegatecall is inherent and fundamental to proxy functionality.
-        (bool success, bytes memory returnData) = implementation.delegatecall(data);
-        if (!success) {
-            // Revert with the original error message from the implementation
-            assembly {
-                revert(add(returnData, 0x20), mload(returnData))
-            }
+        _performInitializationDelegatecall(implementation, data);
+    }
+
+    /// @dev Retrieves the implementation address for the Token Access Manager module from the `ISMARTSystem` contract.
+    /// @dev Reverts with `TokenAccessManagerImplementationNotSet` if the implementation address is zero.
+    /// @param system The `ISMARTSystem` contract instance.
+    /// @return The address of the `SMARTTokenAccessManagerImplementation` contract.
+    /// @inheritdoc SMARTSystemProxy
+    function _getSpecificImplementationAddress(ISMARTSystem system) internal view override returns (address) {
+        address implementation = system.tokenAccessManagerImplementation();
+        if (implementation == address(0)) {
+            revert TokenAccessManagerImplementationNotSet();
         }
-    }
-
-    /// @notice Determines the address of the current logic/implementation contract for the token access manager.
-    /// @dev This function is a core part of OpenZeppelin's `Proxy` contract functionality (specifically for EIP-1967
-    /// proxies).
-    ///      It is called internally by the `Proxy` base contract before every external function call made to this
-    /// proxy.
-    ///      The `Proxy` then uses the address returned by this function to `delegatecall` the user's request to the
-    /// correct logic contract.
-    ///      In this specific proxy, the implementation address is dynamically fetched from the `ISMARTSystem` contract
-    /// (via `_getSystem()`).
-    ///      This allows an administrator of the `ISMARTSystem` to upgrade the token access manager logic system-wide by
-    /// updating the
-    ///      address returned by `system_.tokenAccessManagerImplementation()`.
-    /// @return address The current address of the `SMARTTokenAccessManagerImplementation` contract that this proxy
-    /// should
-    /// delegate calls to.
-    function _implementation() internal view override returns (address) {
-        ISMARTSystem system_ = _getSystem();
-        return system_.tokenAccessManagerImplementation();
-    }
-
-    /// @notice Rejects any direct Ether (ETH) transfers to this proxy contract.
-    /// @dev Proxy contracts typically should not hold Ether themselves, as their purpose is to manage storage and
-    /// delegate calls.
-    ///      Any Ether intended for the functionality should be handled by the logic contract if needed.
-    ///      The `payable` keyword is required for `receive()` to be valid, but the `revert` ensures no ETH is accepted.
-    ///      This helps prevent accidental locking of funds in the proxy.
-    receive() external payable {
-        revert ETHTransfersNotAllowed();
+        return implementation;
     }
 }
