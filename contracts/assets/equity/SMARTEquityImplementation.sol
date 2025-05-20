@@ -2,6 +2,7 @@
 pragma solidity 0.8.28;
 
 // OpenZeppelin imports
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -30,6 +31,7 @@ import { SMARTTokenAccessManagedUpgradeable } from
     "../../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
 
 contract SMARTEquityImplementation is
+    Initializable,
     ISMARTEquity,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,

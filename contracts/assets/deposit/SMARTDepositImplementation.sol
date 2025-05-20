@@ -2,12 +2,11 @@
 pragma solidity 0.8.28;
 
 // OpenZeppelin imports
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-// import { ERC20PermitUpgradeable } from
-//     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 // Constants
@@ -36,6 +35,7 @@ import { SMARTTokenAccessManagedUpgradeable } from
 /// @dev Combines core SMART features (compliance, verification) with extensions for pausing,
 ///      burning, custodian actions, and collateral tracking. Access control uses custom roles.
 contract SMARTDepositImplementation is
+    Initializable,
     ISMARTDeposit,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,

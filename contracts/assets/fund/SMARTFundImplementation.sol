@@ -17,6 +17,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SMARTRoles } from "../../SMARTRoles.sol";
 
 // Interface imports
+import { ISMARTFund } from "./ISMARTFund.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
@@ -39,6 +40,7 @@ import { SMARTTokenAccessManagedUpgradeable } from
 /// @custom:security-contact support@settlemint.com
 contract SMARTFundImplementation is
     Initializable,
+    ISMARTFund,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,
     SMARTBurnableUpgradeable,
@@ -455,6 +457,11 @@ contract SMARTFundImplementation is
     {
         // Delegation to SMARTUpgradeable -> _SMARTLogic ensures correct value is returned
         return super.decimals();
+    }
+
+    /// @inheritdoc SMARTUpgradeable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(SMARTUpgradeable) returns (bool) {
+        return interfaceId == type(ISMARTFund).interfaceId || super.supportsInterface(interfaceId);
     }
 
     // --- Hooks (Overrides for Chaining) ---
