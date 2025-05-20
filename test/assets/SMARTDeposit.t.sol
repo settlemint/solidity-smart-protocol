@@ -18,6 +18,7 @@ import { console } from "forge-std/console.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
 
 contract SMARTDepositTest is AbstractSMARTAssetTest {
     ISMARTDepositFactory public depositFactory;
@@ -290,11 +291,8 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
     // Test for recoverERC20 function
     function test_RecoverERC20() public {
         // Create a mock token
-        ISMARTDeposit mockToken =
-            _createDeposit("Mock", "MCK", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0));
+        MockedERC20Token mockToken = new MockedERC20Token("Mock", "MCK", DECIMALS);
 
-        // Update collateral and mint some tokens to the deposit contract
-        _updateCollateral(address(mockToken), owner, 1000);
         vm.startPrank(owner);
         mockToken.mint(address(deposit), 1000);
         vm.stopPrank();
@@ -339,11 +337,8 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
     // Test recoverERC20 revert on insufficient balance
     function test_RecoverERC20RevertOnInsufficientBalance() public {
         // Create a mock token
-        ISMARTDeposit mockToken =
-            _createDeposit("Mock", "MCK", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0));
+        MockedERC20Token mockToken = new MockedERC20Token("Mock", "MCK", DECIMALS);
 
-        // Update collateral and mint some tokens to the deposit contract
-        _updateCollateral(address(mockToken), owner, 100);
         vm.startPrank(owner);
         mockToken.mint(address(deposit), 100);
         vm.stopPrank();
