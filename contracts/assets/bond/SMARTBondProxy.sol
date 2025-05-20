@@ -1,39 +1,21 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
-import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
-
+import { SMARTAssetProxy } from "../SMARTAssetProxy.sol";
 import { ISMARTBond } from "./ISMARTBond.sol";
 
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMARTTokenFactory } from "../../system/token-factory/ISMARTTokenFactory.sol";
 
-import {
-    InvalidTokenFactoryAddress,
-    TokenImplementationNotSet,
-    ETHTransfersNotAllowed
-} from "../../system/SMARTSystemErrors.sol";
+import { TokenImplementationNotSet } from "../../system/SMARTSystemErrors.sol";
 
-/// @title Proxy contract for SMART Bonds, retrieving implementation from Token Registry.
+/// @title Proxy contract for SMART Bonds, using SMARTAssetProxy.
 /// @notice This contract serves as a proxy, allowing for upgradeability of the underlying bond logic.
-/// It retrieves the implementation address from the ISMARTTokenRegistry contract.
-contract SMARTBondProxy is Proxy {
-    // keccak256("org.smart.contracts.proxy.SMARTBondProxy.tokenFactory")
-    bytes32 private constant _TOKEN_FACTORY_SLOT = 0x8154d1e41bb5a323fe0619b76db6fd0dfb7e53cd15405b6b1d93d4eafd078c22;
-
-    function _setTokenFactory(ISMARTTokenFactory tokenFactory_) internal {
-        StorageSlot.getAddressSlot(_TOKEN_FACTORY_SLOT).value = address(tokenFactory_);
-    }
-
-    function _getTokenFactory() internal view returns (ISMARTTokenFactory) {
-        return ISMARTTokenFactory(StorageSlot.getAddressSlot(_TOKEN_FACTORY_SLOT).value);
-    }
-
+/// It retrieves the implementation address from the ISMARTTokenFactory contract via SMARTAssetProxy.
+contract SMARTBondProxy is SMARTAssetProxy {
     /// @notice Constructs the SMARTBondProxy.
-    /// @dev Initializes the proxy by setting the token factory address and delegating a call
-    /// to the `initialize` function of the implementation provided by the token factory.
+    /// @dev Initializes the proxy by delegating a call to the `initialize` function
+    /// of the implementation provided by the token factory.
     /// @param tokenFactoryAddress The address of the token factory contract.
     /// @param name_ The name of the bond.
     /// @param symbol_ The symbol of the bond.
@@ -63,18 +45,10 @@ contract SMARTBondProxy is Proxy {
         address accessManager_
     )
         payable
+        SMARTAssetProxy(tokenFactoryAddress)
     {
-        if (
-            tokenFactoryAddress == address(0)
-                || !IERC165(tokenFactoryAddress).supportsInterface(type(ISMARTTokenFactory).interfaceId)
-        ) {
-            revert InvalidTokenFactoryAddress();
-        }
-        _setTokenFactory(ISMARTTokenFactory(tokenFactoryAddress));
-
         ISMARTTokenFactory tokenFactory_ = _getTokenFactory();
-        address implementation = tokenFactory_.tokenImplementation();
-        if (implementation == address(0)) revert TokenImplementationNotSet();
+        address implementation = _getSpecificImplementationAddress(tokenFactory_);
 
         bytes memory data = abi.encodeWithSelector(
             ISMARTBond.initialize.selector,
@@ -92,27 +66,24 @@ contract SMARTBondProxy is Proxy {
             accessManager_
         );
 
-        // Perform the delegatecall to initialize the identity logic in the context of this proxy's storage.
-        // slither-disable-next-line low-level-calls: Delegatecall is inherent and fundamental to proxy functionality.
-        (bool success, bytes memory returnData) = implementation.delegatecall(data);
-        if (!success) {
-            // Revert with the original error message from the implementation
-            assembly {
-                revert(add(returnData, 0x20), mload(returnData))
-            }
+        _performInitializationDelegatecall(implementation, data);
+    }
+
+    /// @notice Retrieves the specific implementation address for the bond proxy from the token factory.
+    /// @dev Implements the abstract function from `SMARTAssetProxy`.
+    /// Reverts with `TokenImplementationNotSet` if the token factory does not return a valid implementation.
+    /// @param tokenFactory The `ISMARTTokenFactory` instance to query.
+    /// @return implementationAddress The address of the bond's logic/implementation contract.
+    function _getSpecificImplementationAddress(ISMARTTokenFactory tokenFactory)
+        internal
+        view
+        override
+        returns (address implementationAddress)
+    {
+        implementationAddress = tokenFactory.tokenImplementation();
+        if (implementationAddress == address(0)) {
+            revert TokenImplementationNotSet();
         }
-    }
-
-    /// @notice Returns the address of the current implementation.
-    /// @dev This function is called by the EIP1967Proxy logic to determine where to delegate calls.
-    /// @return implementationAddress The address of the implementation contract provided by the token registry.
-    function _implementation() internal view override returns (address) {
-        ISMARTTokenFactory tokenFactory_ = _getTokenFactory();
-        return tokenFactory_.tokenImplementation();
-    }
-
-    /// @notice Rejects Ether transfers.
-    receive() external payable {
-        revert ETHTransfersNotAllowed();
+        return implementationAddress;
     }
 }
