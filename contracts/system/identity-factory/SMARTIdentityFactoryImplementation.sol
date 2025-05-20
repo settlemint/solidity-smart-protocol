@@ -21,9 +21,13 @@ import { ISMARTTokenIdentity } from "./identities/ISMARTTokenIdentity.sol";
 // System imports
 import { InvalidSystemAddress } from "../SMARTSystemErrors.sol"; // Assuming this is correctly placed
 import { ISMARTSystem } from "../ISMARTSystem.sol";
+
 // Implementation imports
 import { SMARTIdentityProxy } from "./identities/SMARTIdentityProxy.sol";
 import { SMARTTokenIdentityProxy } from "./identities/SMARTTokenIdentityProxy.sol";
+
+// Constants
+import { SMARTRoles } from "../../SMARTRoles.sol";
 
 // --- Errors ---
 /// @notice Indicates that an operation was attempted with the zero address (address(0))
@@ -82,12 +86,6 @@ contract SMARTIdentityFactoryImplementation is
     /// @dev For example, salt might be `keccak256(abi.encodePacked("OID", <walletAddressHex>))` (OID stands for
     /// OnchainID).
     string public constant WALLET_SALT_PREFIX = "OID";
-
-    // --- Roles ---
-    /// @notice Role identifier for accounts authorized to register new identities (both wallet and token identities).
-    /// @dev Only addresses granted this role can call `createIdentity` and `createTokenIdentity`.
-    /// The value is `keccak256("REGISTRAR_ROLE")`.
-    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
     // --- Storage Variables ---
     /// @notice The address of the `ISMARTSystem` contract.
@@ -172,7 +170,7 @@ contract SMARTIdentityFactoryImplementation is
         }
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
-        _grantRole(REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTRoles.REGISTRAR_ROLE, initialAdmin);
 
         _system = systemAddress;
     }
@@ -204,7 +202,7 @@ contract SMARTIdentityFactoryImplementation is
         external
         virtual
         override
-        onlyRole(REGISTRAR_ROLE)
+        onlyRole(SMARTRoles.REGISTRAR_ROLE)
         returns (
             address // Solidity style guide prefers no name for return in implementation if clear from Natspec
         )
@@ -257,7 +255,7 @@ contract SMARTIdentityFactoryImplementation is
         external
         virtual
         override
-        onlyRole(REGISTRAR_ROLE)
+        onlyRole(SMARTRoles.REGISTRAR_ROLE)
         returns (address)
     {
         if (_token == address(0)) revert ZeroAddressNotAllowed();

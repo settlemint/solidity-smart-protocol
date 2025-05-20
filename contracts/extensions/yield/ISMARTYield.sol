@@ -26,6 +26,10 @@ interface ISMARTYield is ISMARTHistoricalBalances {
     /// `ISMARTYieldSchedule`.
     function setYieldSchedule(address schedule) external;
 
+    /// @notice Returns the address of the yield schedule contract for this token.
+    /// @return schedule The address of the yield schedule contract.
+    function yieldSchedule() external view returns (address schedule);
+
     /// @notice Returns the basis amount used to calculate yield per single unit of the token (e.g., per 1 token with 18
     /// decimals).
     /// @dev The "yield basis" is a fundamental value upon which yield calculations are performed. For example:

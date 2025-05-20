@@ -16,6 +16,7 @@ import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.so
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { SMARTToken } from "../../contracts/SMARTToken.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
 
 abstract contract AbstractSMARTTest is Test {
     // --- State Variables ---
@@ -109,15 +110,16 @@ abstract contract AbstractSMARTTest is Test {
 
         // Grant REGISTRAR_ROLE to the token contract on the Identity Registry
         // Needed for custody address recovery
+        // TODO: this should be done in the token factory? how can we improve this?
         address registryAddress = address(systemUtils.identityRegistry());
         address tokenAddress = address(token);
 
         vm.prank(platformAdmin);
-        IAccessControl(payable(registryAddress)).grantRole(TestConstants.REGISTRAR_ROLE, tokenAddress);
+        IAccessControl(payable(registryAddress)).grantRole(SMARTRoles.REGISTRAR_ROLE, tokenAddress);
 
         // Verify the role was granted
         assertTrue(
-            IAccessControl(payable(registryAddress)).hasRole(TestConstants.REGISTRAR_ROLE, tokenAddress),
+            IAccessControl(payable(registryAddress)).hasRole(SMARTRoles.REGISTRAR_ROLE, tokenAddress),
             "Token was not granted REGISTRAR_ROLE"
         );
     }

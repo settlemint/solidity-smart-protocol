@@ -11,4 +11,6 @@ library SMARTRoles {
     bytes32 public constant CUSTODIAN_ROLE = keccak256("CUSTODIAN_ROLE"); // FREEZE, FORCED_TRANSFER, RECOVERY
 
     bytes32 public constant EMERGENCY_ROLE = keccak256("EMERGENCY_ROLE"); // PAUSE, ERC20_RECOVERY
+
+    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 }

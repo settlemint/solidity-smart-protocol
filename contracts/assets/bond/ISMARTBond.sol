@@ -15,6 +15,7 @@ import { ISMARTBurnable } from "../../extensions/burnable/ISMARTBurnable.sol";
 import { ISMARTRedeemable } from "../../extensions/redeemable/ISMARTRedeemable.sol";
 import { ISMARTHistoricalBalances } from "../../extensions/historical-balances/ISMARTHistoricalBalances.sol";
 import { ISMARTYield } from "../../extensions/yield/ISMARTYield.sol";
+import { ISMARTCapped } from "../../extensions/capped/ISMARTCapped.sol";
 
 interface ISMARTBond is
     ISMART,
@@ -24,8 +25,19 @@ interface ISMARTBond is
     ISMARTBurnable,
     ISMARTRedeemable,
     ISMARTHistoricalBalances,
+    ISMARTCapped,
     ISMARTYield
 {
+    // --- Custom Errors ---
+    error BondAlreadyMatured();
+    error BondNotYetMatured();
+    error BondInvalidMaturityDate();
+    error InvalidUnderlyingAsset();
+    error InvalidFaceValue();
+    error InsufficientUnderlyingBalance();
+    error InvalidRedemptionAmount();
+    error InsufficientRedeemableBalance();
+
     function initialize(
         string memory name_,
         string memory symbol_,
@@ -43,6 +55,9 @@ interface ISMARTBond is
         external;
 
     // --- View Functions ---
+
+    /// @notice Returns true if the bond has matured
+    function isMatured() external view returns (bool);
 
     /// @notice Returns the timestamp when the bond matures
     /// @return The maturity date timestamp

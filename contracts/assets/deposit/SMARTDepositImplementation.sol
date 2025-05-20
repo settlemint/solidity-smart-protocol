@@ -11,8 +11,8 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 // Constants
-import { SMARTConstants } from "../SMARTConstants.sol";
-import { SMARTRoles } from "../SMARTRoles.sol";
+import { SMARTConstants } from "../../SMARTConstants.sol";
+import { SMARTRoles } from "../../SMARTRoles.sol";
 
 // Interface imports
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";

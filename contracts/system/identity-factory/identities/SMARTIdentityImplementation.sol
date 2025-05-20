@@ -69,8 +69,7 @@ contract SMARTIdentityImplementation is ISMARTIdentity, ERC734, ERC735, ERC165Up
     /// @dev Initializes ERC2771 context with the provided forwarder.
     ///      The main identity initialization (setting the first management key) is done via `initializeSMARTIdentity`.
     constructor(address forwarder) ERC2771ContextUpgradeable(forwarder) {
-        // No call to a parent Identity constructor.
-        // ERC734 and ERC735 base contracts do not have constructors requiring arguments here.
+        _disableInitializers();
     }
 
     /**
@@ -80,7 +79,7 @@ contract SMARTIdentityImplementation is ISMARTIdentity, ERC734, ERC735, ERC165Up
      *      This replaces the old `__Identity_init` call.
      * @param initialManagementKey The address to be set as the initial management key for this identity.
      */
-    function initialize(address initialManagementKey) external {
+    function initialize(address initialManagementKey) external override initializer {
         if (_smartIdentityInitialized) revert AlreadyInitialized();
         _smartIdentityInitialized = true;
 

@@ -20,4 +20,8 @@ interface ISMARTTokenAccessManaged {
     /// @return A boolean value: `true` if the account has the specified role,
     ///         `false` otherwise.
     function hasRole(bytes32 role, address account) external view returns (bool);
+
+    /// @notice Returns the address of the access manager for the token.
+    /// @return The address of the access manager.
+    function accessManager() external view returns (address);
 }

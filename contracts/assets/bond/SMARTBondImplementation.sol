@@ -11,7 +11,7 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // Constants
-import { SMARTRoles } from "./../SMARTRoles.sol";
+import { SMARTRoles } from "./../../SMARTRoles.sol";
 
 // Interface imports
 import { ISMARTBond } from "./ISMARTBond.sol";
@@ -55,16 +55,6 @@ contract SMARTBondImplementation is
     ERC2771ContextUpgradeable,
     ReentrancyGuard
 {
-    // --- Custom Errors ---
-    error BondAlreadyMatured();
-    error BondNotYetMatured();
-    error BondInvalidMaturityDate();
-    error InvalidUnderlyingAsset();
-    error InvalidFaceValue();
-    error InsufficientUnderlyingBalance();
-    error InvalidRedemptionAmount();
-    error InsufficientRedeemableBalance();
-
     /// @notice Timestamp when the bond matures
     /// @dev Set at deployment and cannot be changed
     uint256 private _maturityDate;
@@ -129,7 +119,7 @@ contract SMARTBondImplementation is
         address compliance_,
         address accessManager_
     )
-        public
+        external
         override
         initializer
     {

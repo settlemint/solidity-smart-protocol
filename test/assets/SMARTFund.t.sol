@@ -9,8 +9,8 @@
 // import { SMARTFund } from "../../contracts/assets/SMARTFund.sol";
 // import { SMARTComplianceModuleParamPair } from
 // "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
-// import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
-// import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+// import { SMARTConstants } from "../../contracts/SMARTConstants.sol";
+// import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
 // import { TokenRecovered } from "../../contracts/extensions/core/SMARTEvents.sol";
 // import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 // import { TokenPaused } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";

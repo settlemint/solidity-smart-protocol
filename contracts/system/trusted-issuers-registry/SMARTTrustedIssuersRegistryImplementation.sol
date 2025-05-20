@@ -17,6 +17,9 @@ import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 // Interface imports
 import { IERC3643TrustedIssuersRegistry } from "./../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
+// Constants
+import { SMARTRoles } from "../../SMARTRoles.sol";
+
 // --- Errors ---
 /// @notice Error triggered if an attempt is made to add or interact with an issuer using a zero address.
 /// @dev The zero address is invalid for representing an issuer contract. This ensures all registered issuers
@@ -76,21 +79,12 @@ error AddressNotFoundInList(address addr);
 /// The contract stores `TrustedIssuer` structs, which link an issuer's address to an array of claim topics they are
 /// authorized for. It also maintains an array of all registered issuer addresses (`_issuerAddresses`) for enumeration.
 contract SMARTTrustedIssuersRegistryImplementation is
-    Initializable, // Enables the contract to have an `initialize` function for upgradeability.
-    ERC165Upgradeable, // Implements ERC165 for interface detection.
-    ERC2771ContextUpgradeable, // Enables support for meta-transactions via a trusted forwarder.
-    AccessControlEnumerableUpgradeable, // Provides role-based access control with enumerable roles.
-    IERC3643TrustedIssuersRegistry // Implements the standard interface for an ERC-3643 trusted issuers registry.
+    Initializable,
+    ERC165Upgradeable,
+    ERC2771ContextUpgradeable,
+    AccessControlEnumerableUpgradeable,
+    IERC3643TrustedIssuersRegistry
 {
-    // --- Roles ---
-    /// @notice A unique identifier (hash) for the role that grants permission to manage the list of trusted issuers
-    /// and their associated claim topics.
-    /// @dev Addresses holding this role can call `addTrustedIssuer`, `removeTrustedIssuer`, and
-    /// `updateIssuerClaimTopics`.
-    /// This role is crucial for controlling who can define the sources of trust within the system.
-    /// The value is calculated as `keccak256("REGISTRAR_ROLE")`.
-    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
-
     // --- Storage Variables ---
     /// @notice Defines a structure to hold the details for a trusted claim issuer.
     /// @param issuer The Ethereum address of the `IClaimIssuer` compliant contract. This contract is responsible for
@@ -201,7 +195,8 @@ contract SMARTTrustedIssuersRegistryImplementation is
         // ERC2771Context is initialized by the constructor ERC2771ContextUpgradeable(trustedForwarder)
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
-        _grantRole(REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar? // Addressed by comment: yes,
+        _grantRole(SMARTRoles.REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar? // Addressed by
+            // comment: yes,
             // for initial setup.
     }
 
@@ -233,7 +228,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
     )
         external
         override
-        onlyRole(REGISTRAR_ROLE)
+        onlyRole(SMARTRoles.REGISTRAR_ROLE)
     {
         address issuerAddress = address(_trustedIssuer);
         if (issuerAddress == address(0)) revert InvalidIssuerAddress();
@@ -272,7 +267,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
     /// 5.  Emits a `TrustedIssuerRemoved` event.
     /// @param _trustedIssuer The `IClaimIssuer` compliant contract address of the issuer to be removed.
     /// @dev Reverts with `IssuerDoesNotExist(issuerAddress)` if the issuer is not found in the registry.
-    function removeTrustedIssuer(IClaimIssuer _trustedIssuer) external override onlyRole(REGISTRAR_ROLE) {
+    function removeTrustedIssuer(IClaimIssuer _trustedIssuer) external override onlyRole(SMARTRoles.REGISTRAR_ROLE) {
         address issuerAddress = address(_trustedIssuer);
         if (!_trustedIssuers[issuerAddress].exists) revert IssuerDoesNotExist(issuerAddress);
 
@@ -322,7 +317,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
     )
         external
         override
-        onlyRole(REGISTRAR_ROLE)
+        onlyRole(SMARTRoles.REGISTRAR_ROLE)
     {
         address issuerAddress = address(_trustedIssuer);
         if (!_trustedIssuers[issuerAddress].exists) revert IssuerDoesNotExist(issuerAddress);

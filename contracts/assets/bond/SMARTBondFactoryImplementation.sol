@@ -57,7 +57,9 @@ contract SMARTBondFactoryImplementation is AbstractSMARTTokenFactoryImplementati
         bytes memory proxyBytecode = type(SMARTBondProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        return _deployToken(proxyBytecode, constructorArgs, address(accessManager), name_, symbol_);
+        deployedBondAddress = _deployToken(proxyBytecode, constructorArgs, address(accessManager), name_, symbol_);
+
+        return deployedBondAddress;
     }
 
     function isValidTokenImplementation(address tokenImplementation_) public view returns (bool) {

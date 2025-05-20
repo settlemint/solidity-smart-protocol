@@ -12,6 +12,8 @@ import { SMARTTokenAccessManagerProxy } from "../access-manager/SMARTTokenAccess
 import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { ISMARTIdentityFactory } from "../identity-factory/ISMARTIdentityFactory.sol";
+import { SMARTRoles } from "../../SMARTRoles.sol";
+import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 // -- Errors --
 /// @notice Custom errors for the factory contract
 /// @dev Defines custom error types used by the contract for various failure conditions.
@@ -32,12 +34,10 @@ error AddressAlreadyDeployed(address predictedAddress); // Added for CREATE2
 
 abstract contract AbstractSMARTTokenFactoryImplementation is
     ERC2771ContextUpgradeable,
+    ERC165Upgradeable,
     AccessControlEnumerableUpgradeable,
     ISMARTTokenFactory
 {
-    /// @notice Role identifier for accounts permitted to register and unregister tokens.
-    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
-
     /// @notice Error when a predicted CREATE2 address is already marked as deployed by this factory.
 
     /// @notice Mapping indicating whether a token address was deployed by this factory.
@@ -99,7 +99,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
             revert InvalidImplementationAddress();
         }
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
-        _grantRole(REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTRoles.REGISTRAR_ROLE, initialAdmin);
 
         _tokenImplementation = tokenImplementation_;
         _systemAddress = systemAddress;
@@ -236,6 +236,17 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         ISMART(tokenAddress).setOnchainID(tokenIdentity);
 
         emit TokenAssetCreated(_msgSender(), tokenAddress, tokenIdentity, accessManager);
+    }
+
+    // --- ERC165 Overrides ---
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable)
+        returns (bool)
+    {
+        return interfaceId == type(ISMARTTokenFactory).interfaceId || super.supportsInterface(interfaceId);
     }
 
     // --- ERC2771Context Overrides ---

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity 0.8.28;
 
+import { ISMARTBond } from "./ISMARTBond.sol";
 import { ISMARTTokenFactory } from "../../system/token-factory/ISMARTTokenFactory.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 

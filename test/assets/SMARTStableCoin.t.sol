@@ -4,8 +4,8 @@
 // import { Test } from "forge-std/Test.sol";
 // import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
 // import { SMARTStableCoin } from "../../contracts/assets/SMARTStableCoin.sol";
-// import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
-// import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+// import { SMARTConstants } from "../../contracts/SMARTConstants.sol";
+// import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
 // import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";
 // import { ClaimUtils } from "../../test/utils/ClaimUtils.sol";
 // import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";

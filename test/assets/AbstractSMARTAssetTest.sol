@@ -9,8 +9,8 @@ import { ClaimUtils } from "../utils/ClaimUtils.sol";
 import { IdentityUtils } from "../utils/IdentityUtils.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
-import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
-import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTConstants } from "../../contracts/SMARTConstants.sol";
+import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { SMARTForwarder } from "../../contracts/vendor/SMARTForwarder.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
@@ -29,8 +29,6 @@ abstract contract AbstractSMARTAssetTest is Test {
 
     address public identityRegistry;
     address public compliance;
-
-    ISMARTTokenAccessManager public accessManager;
 
     SMARTForwarder public forwarder;
 
@@ -125,12 +123,12 @@ abstract contract AbstractSMARTAssetTest is Test {
         );
     }
 
-    function _grantAllRoles(address wallet, address defaultAdmin) internal {
+    function _grantAllRoles(address accessManager, address wallet, address defaultAdmin) internal {
         vm.startPrank(defaultAdmin);
-        accessManager.grantRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, wallet);
-        accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, wallet);
-        accessManager.grantRole(SMARTRoles.CUSTODIAN_ROLE, wallet);
-        accessManager.grantRole(SMARTRoles.EMERGENCY_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.CUSTODIAN_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.EMERGENCY_ROLE, wallet);
         vm.stopPrank();
     }
 }

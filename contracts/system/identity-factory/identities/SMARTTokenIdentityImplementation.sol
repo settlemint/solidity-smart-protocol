@@ -70,7 +70,9 @@ contract SMARTTokenIdentityImplementation is
     ///      This constructor will only be called once when this logic contract is deployed.
     ///      For proxied identities, the state (including keys and claims) is managed in the proxy's storage,
     /// initialized via `delegatecall` to `Identity.initialize(initialManagementKey)`.
-    constructor(address trustedForwarder) ERC2771ContextUpgradeable(trustedForwarder) { }
+    constructor(address trustedForwarder) ERC2771ContextUpgradeable(trustedForwarder) {
+        _disableInitializers();
+    }
 
     /**
      * @notice Initializes the SMARTTokenIdentityImplementation.
@@ -79,7 +81,7 @@ contract SMARTTokenIdentityImplementation is
      *      function in the base `Identity` contract from OnchainID.
      * @param accessManagerAddress The address of the ISMARTTokenAccessManager contract.
      */
-    function initialize(address accessManagerAddress) external {
+    function initialize(address accessManagerAddress) external override initializer {
         if (accessManagerAddress == address(0)) revert InvalidAccessManager();
 
         __ERC165_init_unchained();
@@ -99,6 +101,12 @@ contract SMARTTokenIdentityImplementation is
     function hasRole(bytes32 role, address account) external view virtual override returns (bool) {
         if (_accessManager == address(0)) return false; // Not yet initialized or access manager not set
         return ISMARTTokenAccessManager(_accessManager).hasRole(role, account);
+    }
+
+    /// @notice Returns the address of the access manager for the token.
+    /// @return The address of the access manager.
+    function accessManager() external view returns (address) {
+        return _accessManager;
     }
 
     // --- ERC735 (Claim Holder) Functions - Overridden for Access Control ---
