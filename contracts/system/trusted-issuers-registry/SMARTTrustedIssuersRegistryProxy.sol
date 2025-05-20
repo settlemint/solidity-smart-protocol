@@ -7,7 +7,6 @@ import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { SMARTTrustedIssuersRegistryImplementation } from "./SMARTTrustedIssuersRegistryImplementation.sol";
 import {
-    InitializationFailed,
     TrustedIssuersRegistryImplementationNotSet,
     InvalidSystemAddress,
     ETHTransfersNotAllowed
@@ -91,10 +90,15 @@ contract SMARTTrustedIssuersRegistryProxy is Proxy {
         bytes memory data =
             abi.encodeWithSelector(SMARTTrustedIssuersRegistryImplementation.initialize.selector, initialAdmin);
 
-        // Perform the delegatecall to initialize the implementation contract in the context of this proxy.
-        // slither-disable-next-line low-level-calls: delegatecall is inherent to proxy functionality.
-        (bool success,) = implementation.delegatecall(data);
-        if (!success) revert InitializationFailed(); // Revert if initialization of the implementation failed.
+        // Perform the delegatecall to initialize the identity logic in the context of this proxy's storage.
+        // slither-disable-next-line low-level-calls: Delegatecall is inherent and fundamental to proxy functionality.
+        (bool success, bytes memory returnData) = implementation.delegatecall(data);
+        if (!success) {
+            // Revert with the original error message from the implementation
+            assembly {
+                revert(add(returnData, 0x20), mload(returnData))
+            }
+        }
     }
 
     /// @notice Returns the address of the current trusted issuers registry implementation contract to which this proxy

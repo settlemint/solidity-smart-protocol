@@ -7,7 +7,6 @@ import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { SMARTTokenAccessManagerImplementation } from "./SMARTTokenAccessManagerImplementation.sol";
 import {
-    InitializationFailed,
     TokenAccessManagerImplementationNotSet,
     InvalidSystemAddress,
     ETHTransfersNotAllowed
@@ -62,14 +61,14 @@ contract SMARTTokenAccessManagerProxy is Proxy {
     ///    This `initialize` call sets up the initial state of the token access manager logic *within the storage
     /// context of this
     /// proxy*.
-    ///    The `initialAdmin` is passed to this `initialize` function to set up initial ownership/roles for the token
+    ///    The `initialAdmins` are passed to this `initialize` function to set up initial ownership/roles for the token
     /// access manager.
     ///    If this initialization `delegatecall` fails, the proxy deployment will revert.
     /// @param systemAddress The address of the `ISMARTSystem` contract. This system contract is responsible for
     /// providing the address of the actual token access manager logic (implementation) contract.
-    /// @param initialAdmin The address that will be granted initial administrative privileges (e.g.,
+    /// @param initialAdmins The addresses that will be granted initial administrative privileges (e.g.,
     /// `DEFAULT_ADMIN_ROLE`) in the `SMARTTokenAccessManagerImplementation` logic contract.
-    constructor(address systemAddress, address initialAdmin) {
+    constructor(address systemAddress, address[] memory initialAdmins) {
         // Validate that the provided systemAddress is a valid contract implementing ISMARTSystem
         if (systemAddress == address(0) || !IERC165(systemAddress).supportsInterface(type(ISMARTSystem).interfaceId)) {
             revert InvalidSystemAddress();
@@ -82,16 +81,19 @@ contract SMARTTokenAccessManagerProxy is Proxy {
         if (implementation == address(0)) revert TokenAccessManagerImplementationNotSet();
 
         // Prepare the call data for the delegatecall to the implementation's initialize function.
-        // This calls SMARTTokenAccessManagerImplementation.initialize(initialAdmin).
+        // This calls SMARTTokenAccessManagerImplementation.initialize(initialAdmins).
         bytes memory data =
-            abi.encodeWithSelector(SMARTTokenAccessManagerImplementation.initialize.selector, initialAdmin);
+            abi.encodeWithSelector(SMARTTokenAccessManagerImplementation.initialize.selector, initialAdmins);
 
-        // Perform the delegatecall to initialize the implementation contract in the context of this proxy's storage.
+        // Perform the delegatecall to initialize the identity logic in the context of this proxy's storage.
         // slither-disable-next-line low-level-calls: Delegatecall is inherent and fundamental to proxy functionality.
-        (bool success,) = implementation.delegatecall(data);
-
-        // If the initialization call (via delegatecall) failed, revert the proxy deployment.
-        if (!success) revert InitializationFailed();
+        (bool success, bytes memory returnData) = implementation.delegatecall(data);
+        if (!success) {
+            // Revert with the original error message from the implementation
+            assembly {
+                revert(add(returnData, 0x20), mload(returnData))
+            }
+        }
     }
 
     /// @notice Determines the address of the current logic/implementation contract for the token access manager.

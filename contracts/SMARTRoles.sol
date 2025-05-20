@@ -2,7 +2,9 @@
 pragma solidity 0.8.28;
 
 library SMARTRoles {
-    // Role constants
+    // Matches the default admin role in OpenZeppelin's AccessControl.
+    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+
     bytes32 public constant TOKEN_GOVERNANCE_ROLE = keccak256("TOKEN_GOVERNANCE_ROLE"); // TOKEN_ADMIN, VERIFICATION,
         // COMPLIANCE
 

@@ -44,12 +44,14 @@ contract SMARTTokenAccessManagerImplementation is
     /// @notice Initializes the access manager.
     /// @dev This function replaces the constructor and should be called only once, typically by the deployer
     ///      or an upgrade mechanism.
-    ///      It grants the `DEFAULT_ADMIN_ROLE` to the `initialAdmin`.
-    /// @param initialAdmin Address of the initial admin for the token.
-    function initialize(address initialAdmin) public initializer {
+    ///      It grants the `DEFAULT_ADMIN_ROLE` to each address in `initialAdmins`.
+    /// @param initialAdmins Addresses of the initial admins for the token.
+    function initialize(address[] memory initialAdmins) public initializer {
         __AccessControlEnumerable_init();
-        // Grant standard admin role (can manage other roles)
-        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
+        // Grant standard admin role (can manage other roles) to each initial admin
+        for (uint256 i = 0; i < initialAdmins.length; ++i) {
+            _grantRole(DEFAULT_ADMIN_ROLE, initialAdmins[i]);
+        }
     }
 
     /// @notice Checks if a given account has a specific role.

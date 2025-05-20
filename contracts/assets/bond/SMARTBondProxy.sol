@@ -13,8 +13,7 @@ import { ISMARTTokenFactory } from "../../system/token-factory/ISMARTTokenFactor
 import {
     InvalidTokenFactoryAddress,
     TokenImplementationNotSet,
-    ETHTransfersNotAllowed,
-    InitializationFailed
+    ETHTransfersNotAllowed
 } from "../../system/SMARTSystemErrors.sol";
 
 /// @title Proxy contract for SMART Bonds, retrieving implementation from Token Registry.
@@ -93,9 +92,15 @@ contract SMARTBondProxy is Proxy {
             accessManager_
         );
 
-        // slither-disable-next-line low-level-calls
-        (bool success,) = implementation.delegatecall(data);
-        if (!success) revert InitializationFailed();
+        // Perform the delegatecall to initialize the identity logic in the context of this proxy's storage.
+        // slither-disable-next-line low-level-calls: Delegatecall is inherent and fundamental to proxy functionality.
+        (bool success, bytes memory returnData) = implementation.delegatecall(data);
+        if (!success) {
+            // Revert with the original error message from the implementation
+            assembly {
+                revert(add(returnData, 0x20), mload(returnData))
+            }
+        }
     }
 
     /// @notice Returns the address of the current implementation.

@@ -7,7 +7,6 @@ import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { SMARTIdentityRegistryImplementation } from "./SMARTIdentityRegistryImplementation.sol";
 import {
-    InitializationFailed,
     IdentityRegistryImplementationNotSet,
     InvalidSystemAddress,
     ETHTransfersNotAllowed
@@ -98,12 +97,15 @@ contract SMARTIdentityRegistryProxy is Proxy {
             trustedIssuersRegistry
         );
 
-        // Delegate the call to the implementation's initialize function.
-        // This executes the initialization logic in the context of this proxy.
-        // slither-disable-next-line low-level-calls (Delegatecall is inherent to proxy pattern)
-        (bool success,) = implementation.delegatecall(data);
-        // If initialization fails, revert the proxy deployment.
-        if (!success) revert InitializationFailed();
+        // Perform the delegatecall to initialize the identity logic in the context of this proxy's storage.
+        // slither-disable-next-line low-level-calls: Delegatecall is inherent and fundamental to proxy functionality.
+        (bool success, bytes memory returnData) = implementation.delegatecall(data);
+        if (!success) {
+            // Revert with the original error message from the implementation
+            assembly {
+                revert(add(returnData, 0x20), mload(returnData))
+            }
+        }
     }
 
     /// @notice Returns the address of the current identity registry logic contract (implementation).

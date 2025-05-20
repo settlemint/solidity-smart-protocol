@@ -4,6 +4,7 @@ pragma solidity 0.8.28;
 import { AccessControlEnumerableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ISMARTTokenFactory } from "./ISMARTTokenFactory.sol";
@@ -14,6 +15,7 @@ import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { ISMARTIdentityFactory } from "../identity-factory/ISMARTIdentityFactory.sol";
 import { SMARTRoles } from "../../SMARTRoles.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 // -- Errors --
 /// @notice Custom errors for the factory contract
 /// @dev Defines custom error types used by the contract for various failure conditions.
@@ -133,7 +135,10 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @dev This function creates a new access manager for a token using the `SMARTTokenAccessManagerProxy`.
     /// @return accessManager The address of the new access manager.
     function _createAccessManager() internal virtual returns (ISMARTTokenAccessManager) {
-        return ISMARTTokenAccessManager(address(new SMARTTokenAccessManagerProxy(_systemAddress, _msgSender())));
+        address[] memory admins = new address[](2);
+        admins[0] = _msgSender();
+        admins[1] = address(this); // Allow the factory to manage the access manager.
+        return ISMARTTokenAccessManager(address(new SMARTTokenAccessManagerProxy(_systemAddress, admins)));
     }
 
     /// @notice Calculates the salt for CREATE2 deployment.
@@ -173,9 +178,8 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     {
         bytes32 salt = _calculateSalt(nameForSalt, symbolForSalt);
         bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
-        bytes32 initCodeHash = keccak256(fullCreationCode);
-        bytes32 saltedHash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, initCodeHash));
-        predictedAddress = address(uint160(uint256(saltedHash)));
+        bytes32 bytecodeHash = keccak256(fullCreationCode);
+        predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
     }
 
     /// @notice Deploys a proxy contract using CREATE2.
@@ -206,18 +210,9 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         bytes32 salt = _calculateSalt(nameForSalt, symbolForSalt);
         bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
 
-        assembly {
-            deployedAddress := create2(0, add(fullCreationCode, 0x20), mload(fullCreationCode), salt)
-        }
+        deployedAddress = Create2.deploy(0, salt, fullCreationCode);
 
-        if (deployedAddress == address(0)) {
-            revert ProxyCreationFailed();
-        }
-
-        // Sanity check: deployed address must match predicted address
         if (deployedAddress != predictedAddress) {
-            // This should ideally not happen if calculations and salt are consistent.
-            // It might indicate an unexpected issue.
             revert ProxyCreationFailed();
         }
 
@@ -233,7 +228,12 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         ISMARTIdentityFactory identityFactory_ = ISMARTIdentityFactory(system_.identityFactoryProxy());
         address tokenIdentity = identityFactory_.createTokenIdentity(tokenAddress, accessManager);
 
+        // Grant the token factory the TOKEN_GOVERNANCE_ROLE to set the onchainID.
+        // TODO: is this ok?
+        IAccessControl(accessManager).grantRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, address(this));
         ISMART(tokenAddress).setOnchainID(tokenIdentity);
+        IAccessControl(accessManager).renounceRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, address(this));
+        IAccessControl(accessManager).renounceRole(SMARTRoles.DEFAULT_ADMIN_ROLE, address(this));
 
         emit TokenAssetCreated(_msgSender(), tokenAddress, tokenIdentity, accessManager);
     }

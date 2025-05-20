@@ -5,12 +5,7 @@ import { ISMARTSystem } from "../../ISMARTSystem.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol";
 import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
-import {
-    InitializationFailed,
-    IdentityImplementationNotSet,
-    InvalidSystemAddress,
-    ETHTransfersNotAllowed
-} from "../../SMARTSystemErrors.sol";
+import { IdentityImplementationNotSet, InvalidSystemAddress, ETHTransfersNotAllowed } from "../../SMARTSystemErrors.sol";
 import { ZeroAddressNotAllowed } from "../SMARTIdentityErrors.sol";
 import { Identity } from "@onchainid/contracts/Identity.sol";
 import { ISMARTTokenIdentity } from "./ISMARTTokenIdentity.sol";
@@ -90,10 +85,13 @@ contract SMARTTokenIdentityProxy is Proxy {
 
         // Perform the delegatecall to initialize the identity logic in the context of this proxy's storage.
         // slither-disable-next-line low-level-calls: Delegatecall is inherent and fundamental to proxy functionality.
-        (bool success,) = implementation.delegatecall(data);
-
-        // If the initialization (via delegatecall) failed, revert the proxy deployment.
-        if (!success) revert InitializationFailed();
+        (bool success, bytes memory returnData) = implementation.delegatecall(data);
+        if (!success) {
+            // Revert with the original error message from the implementation
+            assembly {
+                revert(add(returnData, 0x20), mload(returnData))
+            }
+        }
     }
 
     /// @notice Determines the address of the current logic/implementation contract for this token identity proxy.
