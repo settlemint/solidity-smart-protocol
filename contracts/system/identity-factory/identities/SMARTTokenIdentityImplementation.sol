@@ -14,6 +14,7 @@ import { ISMARTTokenAccessManaged } from "../../../extensions/access-managed/ISM
 import { ISMARTTokenAccessManager } from "../../../extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { AccessControlUnauthorizedAccount } from "../../../extensions/access-managed/SMARTTokenAccessManagedErrors.sol";
 import { ERC735 } from "./extensions/ERC735.sol";
+import { SMARTRoles } from "../../../SMARTRoles.sol";
 /// @title SMART Token Identity Implementation Contract
 /// @author SettleMint Tokenization Services
 /// @notice This contract provides the upgradeable logic for on-chain identities associated with tokens/assets
@@ -36,9 +37,6 @@ contract SMARTTokenIdentityImplementation is
     ///      This variable is declared `internal`, meaning it's accessible within this contract
     ///      and any contracts that inherit from it, but not externally.
     address internal _accessManager;
-
-    // --- Roles ---
-    bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
 
     // --- Errors ---
 
@@ -124,7 +122,7 @@ contract SMARTTokenIdentityImplementation is
         public
         virtual
         override(ERC735, IERC735) // Overrides ERC735's implementation and fulfills IERC735
-        onlyAccessManagerRole(CLAIM_MANAGER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CLAIM_MANAGER_ROLE)
         returns (bytes32 claimId)
     {
         return super.addClaim(_topic, _scheme, _issuer, _signature, _data, _uri);
@@ -136,7 +134,7 @@ contract SMARTTokenIdentityImplementation is
         public
         virtual
         override(ERC735, IERC735)
-        onlyAccessManagerRole(CLAIM_MANAGER_ROLE)
+        onlyAccessManagerRole(SMARTRoles.CLAIM_MANAGER_ROLE)
         returns (bool success)
     {
         return super.removeClaim(_claimId);

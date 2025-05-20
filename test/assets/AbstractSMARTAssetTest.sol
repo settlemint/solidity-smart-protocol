@@ -126,6 +126,7 @@ abstract contract AbstractSMARTAssetTest is Test {
         ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, wallet);
         ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.CUSTODIAN_ROLE, wallet);
         ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.EMERGENCY_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.CLAIM_MANAGER_ROLE, wallet);
         vm.stopPrank();
     }
 }

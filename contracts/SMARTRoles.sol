@@ -16,6 +16,8 @@ library SMARTRoles {
 
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
+    bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
+
     bytes32 public constant TOKEN_REGISTRAR_ROLE = keccak256("TOKEN_REGISTRAR_ROLE");
     bytes32 public constant TOKEN_REGISTRAR_MANAGER_ROLE = keccak256("TOKEN_REGISTRAR_MANAGER_ROLE");
 }

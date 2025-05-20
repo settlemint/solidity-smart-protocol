@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 import { ISMARTTokenFactory } from "../../system/token-factory/ISMARTTokenFactory.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
-interface ISMARTBondFactory is ISMARTTokenFactory {
+interface ISMARTDepositFactory is ISMARTTokenFactory {
     function createDeposit(
         string memory name_,
         string memory symbol_,
