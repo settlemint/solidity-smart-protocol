@@ -74,6 +74,7 @@ contract SMARTEquityImplementation is
         address accessManager_
     )
         public
+        override
         initializer
     {
         __SMART_init(

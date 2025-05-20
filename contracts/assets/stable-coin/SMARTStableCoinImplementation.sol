@@ -14,6 +14,7 @@ import { SMARTConstants } from "../../SMARTConstants.sol";
 import { SMARTRoles } from "../../SMARTRoles.sol";
 
 // Interface imports
+import { ISMARTStableCoin } from "./ISMARTStableCoin.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
@@ -35,6 +36,7 @@ import { SMARTTokenAccessManagedUpgradeable } from
 ///      burning, custodian actions, and collateral tracking. Access control uses custom roles.
 contract SMARTStableCoinImplementation is
     Initializable,
+    ISMARTStableCoin,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,
     SMARTCollateralUpgradeable,
@@ -69,6 +71,7 @@ contract SMARTStableCoinImplementation is
         address accessManager_
     )
         public
+        override
         initializer
     {
         __SMART_init(
@@ -362,6 +365,11 @@ contract SMARTStableCoinImplementation is
     {
         // Delegation to SMARTUpgradeable -> _SMARTLogic ensures correct value is returned
         return super.decimals();
+    }
+
+    /// @inheritdoc SMARTUpgradeable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(SMARTUpgradeable) returns (bool) {
+        return interfaceId == type(ISMARTStableCoin).interfaceId || super.supportsInterface(interfaceId);
     }
 
     // --- Hooks (Overrides for Chaining) ---
