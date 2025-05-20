@@ -16,6 +16,7 @@ import { SMARTRoles } from "../../SMARTRoles.sol";
 
 // Interface imports
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
+import { ISMARTEquity } from "./ISMARTEquity.sol";
 
 // Core extensions
 import { SMARTUpgradeable } from "../../extensions/core/SMARTUpgradeable.sol"; // Base SMART logic + ERC20
@@ -29,6 +30,7 @@ import { SMARTTokenAccessManagedUpgradeable } from
     "../../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
 
 contract SMARTEquityImplementation is
+    ISMARTEquity,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,
     SMARTCustodianUpgradeable,
@@ -381,8 +383,9 @@ contract SMARTEquityImplementation is
         return super.decimals();
     }
 
-    function nonces(address owner) public view virtual override(NoncesUpgradeable) returns (uint256) {
-        return super.nonces(owner);
+    /// @inheritdoc SMARTUpgradeable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(SMARTUpgradeable) returns (bool) {
+        return interfaceId == type(ISMARTEquity).interfaceId || super.supportsInterface(interfaceId);
     }
 
     // --- Hooks (Overrides for Chaining) ---

@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 // OpenZeppelin imports
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 // Interface imports
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
@@ -14,7 +14,7 @@ import { ISMARTPausable } from "../../extensions/pausable/ISMARTPausable.sol";
 import { ISMARTBurnable } from "../../extensions/burnable/ISMARTBurnable.sol";
 import { ISMARTCollateral } from "../../extensions/collateral/ISMARTCollateral.sol";
 
-interface ISMARTEquity is ISMART, ISMARTTokenAccessManaged, ISMARTCustodian, ISMARTPausable, ISMARTBurnable {
+interface ISMARTEquity is ISMART, ISMARTTokenAccessManaged, ISMARTCustodian, ISMARTPausable, ISMARTBurnable, IVotes {
     function initialize(
         string memory name_,
         string memory symbol_,
