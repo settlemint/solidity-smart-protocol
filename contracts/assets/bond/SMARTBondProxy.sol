@@ -47,8 +47,7 @@ contract SMARTBondProxy is SMARTAssetProxy {
         payable
         SMARTAssetProxy(tokenFactoryAddress)
     {
-        ISMARTTokenFactory tokenFactory_ = _getTokenFactory();
-        address implementation = _getSpecificImplementationAddress(tokenFactory_);
+        address implementation = _implementation();
 
         bytes memory data = abi.encodeWithSelector(
             ISMARTBond.initialize.selector,
@@ -67,23 +66,5 @@ contract SMARTBondProxy is SMARTAssetProxy {
         );
 
         _performInitializationDelegatecall(implementation, data);
-    }
-
-    /// @notice Retrieves the specific implementation address for the bond proxy from the token factory.
-    /// @dev Implements the abstract function from `SMARTAssetProxy`.
-    /// Reverts with `TokenImplementationNotSet` if the token factory does not return a valid implementation.
-    /// @param tokenFactory The `ISMARTTokenFactory` instance to query.
-    /// @return implementationAddress The address of the bond's logic/implementation contract.
-    function _getSpecificImplementationAddress(ISMARTTokenFactory tokenFactory)
-        internal
-        view
-        override
-        returns (address implementationAddress)
-    {
-        implementationAddress = tokenFactory.tokenImplementation();
-        if (implementationAddress == address(0)) {
-            revert TokenImplementationNotSet();
-        }
-        return implementationAddress;
     }
 }

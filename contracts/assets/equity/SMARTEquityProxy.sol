@@ -2,34 +2,38 @@
 pragma solidity ^0.8.28;
 
 import { SMARTAssetProxy } from "../SMARTAssetProxy.sol";
-import { ISMARTDeposit } from "./ISMARTDeposit.sol";
+import { ISMARTEquity } from "./ISMARTEquity.sol";
 
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMARTTokenFactory } from "../../system/token-factory/ISMARTTokenFactory.sol";
 
 import { TokenImplementationNotSet } from "../../system/SMARTSystemErrors.sol";
 
-/// @title Proxy contract for SMART Deposits, using SMARTAssetProxy.
-/// @notice This contract serves as a proxy, allowing for upgradeability of the underlying deposit logic.
+/// @title Proxy contract for SMART Equities, using SMARTAssetProxy.
+/// @notice This contract serves as a proxy, allowing for upgradeability of the underlying equity logic.
 /// It retrieves the implementation address from the ISMARTTokenFactory contract via SMARTAssetProxy.
-contract SMARTDepositProxy is SMARTAssetProxy {
-    /// @notice Constructs the SMARTDepositProxy.
+contract SMARTEquityProxy is SMARTAssetProxy {
+    /// @notice Constructs the SMARTEquityProxy.
     /// @dev Initializes the proxy by delegating a call to the `initialize` function
     /// of the implementation provided by the token factory.
     /// @param tokenFactoryAddress The address of the token factory contract.
-    /// @param name_ The name of the deposit.
-    /// @param symbol_ The symbol of the deposit.
-    /// @param decimals_ The number of decimals of the deposit.
-    /// @param requiredClaimTopics_ The required claim topics of the deposit.
-    /// @param initialModulePairs_ The initial module pairs of the deposit.
-    /// @param identityRegistry_ The identity registry of the deposit.
-    /// @param compliance_ The compliance of the deposit.
-    /// @param accessManager_ The access manager of the deposit.
+    /// @param name_ The name of the equity.
+    /// @param symbol_ The symbol of the equity.
+    /// @param decimals_ The number of decimals of the equity.
+    /// @param equityClass_ The class of the equity.
+    /// @param equityCategory_ The category of the equity.
+    /// @param requiredClaimTopics_ The required claim topics of the equity.
+    /// @param initialModulePairs_ The initial module pairs of the equity.
+    /// @param identityRegistry_ The identity registry of the equity.
+    /// @param compliance_ The compliance of the equity.
+    /// @param accessManager_ The access manager of the equity.
     constructor(
         address tokenFactoryAddress,
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
+        string memory equityClass_,
+        string memory equityCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -42,10 +46,12 @@ contract SMARTDepositProxy is SMARTAssetProxy {
         address implementation = _implementation();
 
         bytes memory data = abi.encodeWithSelector(
-            ISMARTDeposit.initialize.selector,
+            ISMARTEquity.initialize.selector,
             name_,
             symbol_,
             decimals_,
+            equityClass_,
+            equityCategory_,
             requiredClaimTopics_,
             initialModulePairs_,
             identityRegistry_,

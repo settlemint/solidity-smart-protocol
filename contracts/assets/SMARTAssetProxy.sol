@@ -9,7 +9,8 @@ import { ISMARTTokenFactory } from "../system/token-factory/ISMARTTokenFactory.s
 import {
     InvalidTokenFactoryAddress,
     ETHTransfersNotAllowed,
-    InitializationWithZeroAddress
+    InitializationWithZeroAddress,
+    TokenImplementationNotSet
 } from "../system/SMARTSystemErrors.sol";
 
 /// @title Abstract Base Proxy for SMART Assets
@@ -27,20 +28,6 @@ abstract contract SMARTAssetProxy is Proxy {
     /// Value: keccak256("org.smart.contracts.proxy.SMARTAssetProxy.tokenFactory")
     bytes32 private constant _ASSET_PROXY_TOKEN_FACTORY_SLOT =
         0xd73de9ad206fa68c94a3a5ea994a70f278fc314e7570582e8fcddf9fa0c5e21d;
-
-    /// @notice Child contracts MUST implement this function.
-    /// @dev It should retrieve the specific implementation address for the child proxy from the provided
-    /// `ISMARTTokenFactory` instance.
-    /// If the implementation address from the token factory is `address(0)` (or not found as per child's logic),
-    /// this function MUST revert with the child proxy's specific "ImplementationNotSet" error
-    /// (e.g., `BondImplementationNotSet`).
-    /// @param tokenFactory The `ISMARTTokenFactory` instance to query.
-    /// @return implementationAddress The address of the child's logic/implementation contract.
-    function _getSpecificImplementationAddress(ISMARTTokenFactory tokenFactory)
-        internal
-        view
-        virtual
-        returns (address implementationAddress);
 
     /// @notice Constructs the SMARTAssetProxy.
     /// @dev Validates and stores the `tokenFactoryAddress_`.
@@ -91,7 +78,11 @@ abstract contract SMARTAssetProxy is Proxy {
     /// @return The address of the current logic/implementation contract.
     function _implementation() internal view override returns (address) {
         ISMARTTokenFactory tokenFactory_ = _getTokenFactory();
-        return _getSpecificImplementationAddress(tokenFactory_);
+        address implementationAddress = tokenFactory_.tokenImplementation();
+        if (implementationAddress == address(0)) {
+            revert TokenImplementationNotSet();
+        }
+        return implementationAddress;
     }
 
     /// @notice Fallback function to reject any direct Ether transfers to this proxy contract.
