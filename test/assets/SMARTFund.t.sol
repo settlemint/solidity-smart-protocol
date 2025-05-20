@@ -1,220 +1,227 @@
-// // SPDX-License-Identifier: FSL-1.1-MIT
-// pragma solidity 0.8.28;
+// SPDX-License-Identifier: FSL-1.1-MIT
+pragma solidity 0.8.28;
 
-// import { Test } from "forge-std/Test.sol";
-// import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
+import { Test } from "forge-std/Test.sol";
+import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
 
-// import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// import { SMARTFund } from "../../contracts/assets/SMARTFund.sol";
-// import { SMARTComplianceModuleParamPair } from
-// "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
-// import { SMARTConstants } from "../../contracts/SMARTConstants.sol";
-// import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
-// import { TokenRecovered } from "../../contracts/extensions/core/SMARTEvents.sol";
-// import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-// import { TokenPaused } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
-// import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { ISMARTFund } from "../../contracts/assets/fund/ISMARTFund.sol";
+import { ISMARTFundFactory } from "../../contracts/assets/fund/ISMARTFundFactory.sol";
+import { SMARTFundFactoryImplementation } from "../../contracts/assets/fund/SMARTFundFactoryImplementation.sol";
+import { SMARTFundImplementation } from "../../contracts/assets/fund/SMARTFundImplementation.sol";
 
-// contract SMARTFundTest is AbstractSMARTAssetTest {
-//     SMARTFund public fund;
-//     address public owner;
-//     address public investor1;
-//     address public investor2;
+import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
+import { SMARTConstants } from "../../contracts/SMARTConstants.sol";
+import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
+import { TokenRecovered } from "../../contracts/extensions/core/SMARTEvents.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { TokenPaused } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
 
-//     // Constants for fund setup
-//     string constant NAME = "Test Fund";
-//     string constant SYMBOL = "TFUND";
-//     uint8 constant DECIMALS = 18;
-//     uint16 constant MANAGEMENT_FEE_BPS = 200; // 2%
-//     string constant FUND_CLASS = "Hedge Fund";
-//     string constant FUND_CATEGORY = "Long/Short Equity";
+contract SMARTFundTest is AbstractSMARTAssetTest {
+    ISMARTFundFactory public fundFactory;
+    ISMARTFund public fund;
 
-//     // Test constants
-//     uint256 constant INITIAL_SUPPLY = 1000 ether;
-//     uint256 constant INVESTMENT_AMOUNT = 100 ether;
+    address public owner;
+    address public investor1;
+    address public investor2;
 
-//     event ManagementFeeCollected(uint256 amount, uint256 timestamp);
-//     event PerformanceFeeCollected(uint256 amount, uint256 timestamp);
-//     event TokenWithdrawn(address indexed token, address indexed to, uint256 amount, address indexed sender);
+    // Constants for fund setup
+    string constant NAME = "Test Fund";
+    string constant SYMBOL = "TFUND";
+    uint8 constant DECIMALS = 18;
+    uint16 constant MANAGEMENT_FEE_BPS = 200; // 2%
+    string constant FUND_CLASS = "Hedge Fund";
+    string constant FUND_CATEGORY = "Long/Short Equity";
 
-//     function setUp() public {
-//         // Create identities
-//         owner = makeAddr("owner");
-//         investor1 = makeAddr("investor1");
-//         investor2 = makeAddr("investor2");
+    // Test constants
+    uint256 constant INITIAL_SUPPLY = 1000 ether;
+    uint256 constant INVESTMENT_AMOUNT = 100 ether;
 
-//         // Initialize SMART
-//         setUpSMART(owner);
+    event ManagementFeeCollected(uint256 amount, uint256 timestamp);
+    event PerformanceFeeCollected(uint256 amount, uint256 timestamp);
+    event TokenWithdrawn(address indexed token, address indexed to, uint256 amount, address indexed sender);
 
-//         // Initialize identities
-//         address[] memory identities = new address[](3);
-//         identities[0] = owner;
-//         identities[1] = investor1;
-//         identities[2] = investor2;
-//         _setUpIdentities(identities);
+    function setUp() public {
+        // Create identities
+        owner = makeAddr("owner");
+        investor1 = makeAddr("investor1");
+        investor2 = makeAddr("investor2");
 
-//         fund = _createFundAndMint(
-//             NAME,
-//             SYMBOL,
-//             DECIMALS,
-//             MANAGEMENT_FEE_BPS,
-//             FUND_CLASS,
-//             FUND_CATEGORY,
-//             new uint256[](0),
-//             new SMARTComplianceModuleParamPair[](0)
-//         );
-//         vm.label(address(fund), "Fund");
-//     }
+        // Initialize SMART
+        setUpSMART(owner);
 
-//     function _createFundAndMint(
-//         string memory name_,
-//         string memory symbol_,
-//         uint8 decimals_,
-//         uint16 managementFeeBps_,
-//         string memory fundClass_,
-//         string memory fundCategory_,
-//         uint256[] memory requiredClaimTopics_,
-//         SMARTComplianceModuleParamPair[] memory initialModulePairs_
-//     )
-//         internal
-//         returns (SMARTFund result)
-//     {
-//         vm.startPrank(owner);
-//         SMARTFund smartFundImplementation = new SMARTFund(address(forwarder));
-//         vm.label(address(smartFundImplementation), "Fund Implementation");
-//         bytes memory data = abi.encodeWithSelector(
-//             SMARTFund.initialize.selector,
-//             name_,
-//             symbol_,
-//             decimals_,
-//             managementFeeBps_,
-//             fundClass_,
-//             fundCategory_,
-//             requiredClaimTopics_,
-//             initialModulePairs_,
-//             identityRegistry,
-//             compliance,
-//             address(accessManager)
-//         );
+        // Set up the Fund Factory
+        SMARTFundFactoryImplementation fundFactoryImpl = new SMARTFundFactoryImplementation(address(forwarder));
+        SMARTFundImplementation fundImpl = new SMARTFundImplementation(address(forwarder));
 
-//         result = SMARTFund(address(new ERC1967Proxy(address(smartFundImplementation), data)));
-//         vm.label(address(result), "Fund");
-//         vm.stopPrank();
+        vm.startPrank(platformAdmin);
+        fundFactory = ISMARTFundFactory(
+            systemUtils.system().createTokenFactory("Fund", address(fundFactoryImpl), address(fundImpl))
+        );
 
-//         _grantAllRoles(owner, owner);
+        IAccessControl(address(fundFactory)).grantRole(SMARTRoles.REGISTRAR_ROLE, owner);
+        vm.stopPrank();
 
-//         _createAndSetTokenOnchainID(address(result), owner);
+        // Initialize identities
+        _setUpIdentity(owner, "Owner");
+        _setUpIdentity(investor1, "Investor 1");
+        _setUpIdentity(investor2, "Investor 2");
 
-//         vm.prank(owner);
-//         result.mint(owner, INITIAL_SUPPLY);
+        fund = _createFundAndMint(
+            NAME,
+            SYMBOL,
+            DECIMALS,
+            MANAGEMENT_FEE_BPS,
+            FUND_CLASS,
+            FUND_CATEGORY,
+            new uint256[](0),
+            new SMARTComplianceModuleParamPair[](0)
+        );
+        vm.label(address(fund), "Fund");
+    }
 
-//         return result;
-//     }
+    function _createFundAndMint(
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
+        uint16 managementFeeBps_,
+        string memory fundClass_,
+        string memory fundCategory_,
+        uint256[] memory requiredClaimTopics_,
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_
+    )
+        internal
+        returns (ISMARTFund result)
+    {
+        vm.startPrank(owner);
+        address fundAddress = fundFactory.createFund(
+            name_,
+            symbol_,
+            decimals_,
+            managementFeeBps_,
+            fundClass_,
+            fundCategory_,
+            requiredClaimTopics_,
+            initialModulePairs_
+        );
 
-//     function test_InitialState() public view {
-//         assertEq(fund.name(), NAME);
-//         assertEq(fund.symbol(), SYMBOL);
-//         assertEq(fund.decimals(), DECIMALS);
-//         assertEq(fund.fundClass(), FUND_CLASS);
-//         assertEq(fund.fundCategory(), FUND_CATEGORY);
-//         assertTrue(fund.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, owner));
-//         assertTrue(fund.hasRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, owner));
-//     }
+        result = ISMARTFund(fundAddress);
 
-//     function test_Mint() public {
-//         vm.startPrank(owner);
-//         fund.mint(investor1, INVESTMENT_AMOUNT);
-//         vm.stopPrank();
+        vm.label(fundAddress, "Fund");
+        vm.stopPrank();
 
-//         assertEq(fund.balanceOf(investor1), INVESTMENT_AMOUNT);
-//     }
+        _grantAllRoles(result.accessManager(), owner, owner);
 
-//     function test_CollectManagementFee() public {
-//         // Wait for one year
-//         vm.warp(block.timestamp + 365 days);
+        vm.prank(owner);
+        result.mint(owner, INITIAL_SUPPLY);
 
-//         uint256 initialOwnerBalance = fund.balanceOf(owner);
+        return result;
+    }
 
-//         vm.startPrank(owner);
-//         uint256 fee = fund.collectManagementFee();
-//         vm.stopPrank();
+    function test_InitialState() public view {
+        assertEq(fund.name(), NAME);
+        assertEq(fund.symbol(), SYMBOL);
+        assertEq(fund.decimals(), DECIMALS);
+        assertEq(fund.fundClass(), FUND_CLASS);
+        assertEq(fund.fundCategory(), FUND_CATEGORY);
+        assertTrue(fund.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, owner));
+        assertTrue(fund.hasRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, owner));
+    }
 
-//         // Expected fee = AUM * fee_rate * time_elapsed / (100% * 1 year)
-//         uint256 expectedFee = (INITIAL_SUPPLY * MANAGEMENT_FEE_BPS * 365 days) / (10_000 * 365 days);
-//         assertEq(fee, expectedFee);
-//         assertEq(fund.balanceOf(owner) - initialOwnerBalance, expectedFee);
-//     }
+    function test_Mint() public {
+        vm.startPrank(owner);
+        fund.mint(investor1, INVESTMENT_AMOUNT);
+        vm.stopPrank();
 
-//     function test_RecoverERC20() public {
-//         address mockToken = makeAddr("mockToken");
-//         uint256 withdrawAmount = 100 ether;
+        assertEq(fund.balanceOf(investor1), INVESTMENT_AMOUNT);
+    }
 
-//         // Setup mock token
-//         vm.mockCall(
-//             mockToken, abi.encodeWithSelector(IERC20.balanceOf.selector, address(fund)), abi.encode(withdrawAmount)
-//         );
-//         vm.mockCall(
-//             mockToken, abi.encodeWithSelector(IERC20.transfer.selector, investor1, withdrawAmount), abi.encode(true)
-//         );
+    function test_CollectManagementFee() public {
+        // Wait for one year
+        vm.warp(block.timestamp + 365 days);
 
-//         vm.startPrank(owner);
-//         vm.expectEmit(true, true, true, true);
-//         emit TokenRecovered(owner, mockToken, investor1, withdrawAmount);
-//         fund.recoverERC20(mockToken, investor1, withdrawAmount);
-//         vm.stopPrank();
-//     }
+        uint256 initialOwnerBalance = fund.balanceOf(owner);
 
-//     function test_PauseUnpause() public {
-//         vm.startPrank(owner);
+        vm.startPrank(owner);
+        uint256 fee = fund.collectManagementFee();
+        vm.stopPrank();
 
-//         // Mint some tokens first
-//         fund.mint(owner, INVESTMENT_AMOUNT);
+        // Expected fee = AUM * fee_rate * time_elapsed / (100% * 1 year)
+        uint256 expectedFee = (INITIAL_SUPPLY * MANAGEMENT_FEE_BPS * 365 days) / (10_000 * 365 days);
+        assertEq(fee, expectedFee);
+        assertEq(fund.balanceOf(owner) - initialOwnerBalance, expectedFee);
+    }
 
-//         // Pause the contract
-//         fund.pause();
-//         assertTrue(fund.paused());
+    function test_RecoverERC20() public {
+        address mockToken = makeAddr("mockToken");
+        uint256 withdrawAmount = 100 ether;
 
-//         // Try to transfer while paused - should revert with EnforcedPause error
-//         vm.expectRevert(abi.encodeWithSelector(TokenPaused.selector));
-//         fund.transfer(investor1, INVESTMENT_AMOUNT);
+        // Setup mock token
+        vm.mockCall(
+            mockToken, abi.encodeWithSelector(IERC20.balanceOf.selector, address(fund)), abi.encode(withdrawAmount)
+        );
+        vm.mockCall(
+            mockToken, abi.encodeWithSelector(IERC20.transfer.selector, investor1, withdrawAmount), abi.encode(true)
+        );
 
-//         // Unpause
-//         fund.unpause();
-//         assertFalse(fund.paused());
+        vm.startPrank(owner);
+        vm.expectEmit(true, true, true, true);
+        emit TokenRecovered(owner, mockToken, investor1, withdrawAmount);
+        fund.recoverERC20(mockToken, investor1, withdrawAmount);
+        vm.stopPrank();
+    }
 
-//         // Transfer should now succeed
-//         fund.transfer(investor1, INVESTMENT_AMOUNT);
-//         assertEq(fund.balanceOf(investor1), INVESTMENT_AMOUNT);
+    function test_PauseUnpause() public {
+        vm.startPrank(owner);
 
-//         vm.stopPrank();
-//     }
+        // Mint some tokens first
+        fund.mint(owner, INVESTMENT_AMOUNT);
 
-//     function test_FundForceTransfer() public {
-//         vm.startPrank(owner);
-//         fund.mint(investor1, INVESTMENT_AMOUNT);
-//         vm.stopPrank();
+        // Pause the contract
+        fund.pause();
+        assertTrue(fund.paused());
 
-//         vm.startPrank(owner);
-//         fund.forcedTransfer(investor1, investor2, INVESTMENT_AMOUNT);
-//         vm.stopPrank();
+        // Try to transfer while paused - should revert with EnforcedPause error
+        vm.expectRevert(abi.encodeWithSelector(TokenPaused.selector));
+        fund.transfer(investor1, INVESTMENT_AMOUNT);
 
-//         assertEq(fund.balanceOf(investor1), 0);
-//         assertEq(fund.balanceOf(investor2), INVESTMENT_AMOUNT);
-//     }
+        // Unpause
+        fund.unpause();
+        assertFalse(fund.paused());
 
-//     function test_onlySupplyManagementCanForceTransfer() public {
-//         vm.startPrank(owner);
-//         fund.mint(investor1, INVESTMENT_AMOUNT);
-//         vm.stopPrank();
+        // Transfer should now succeed
+        fund.transfer(investor1, INVESTMENT_AMOUNT);
+        assertEq(fund.balanceOf(investor1), INVESTMENT_AMOUNT);
 
-//         vm.startPrank(investor2);
-//         vm.expectRevert(
-//             abi.encodeWithSelector(
-//                 IAccessControl.AccessControlUnauthorizedAccount.selector, investor2, SMARTRoles.CUSTODIAN_ROLE
-//             )
-//         );
-//         fund.forcedTransfer(investor1, investor2, INVESTMENT_AMOUNT);
-//         vm.stopPrank();
-//     }
-// }
+        vm.stopPrank();
+    }
+
+    function test_FundForceTransfer() public {
+        vm.startPrank(owner);
+        fund.mint(investor1, INVESTMENT_AMOUNT);
+        vm.stopPrank();
+
+        vm.startPrank(owner);
+        fund.forcedTransfer(investor1, investor2, INVESTMENT_AMOUNT);
+        vm.stopPrank();
+
+        assertEq(fund.balanceOf(investor1), 0);
+        assertEq(fund.balanceOf(investor2), INVESTMENT_AMOUNT);
+    }
+
+    function test_onlySupplyManagementCanForceTransfer() public {
+        vm.startPrank(owner);
+        fund.mint(investor1, INVESTMENT_AMOUNT);
+        vm.stopPrank();
+
+        vm.startPrank(investor2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, investor2, SMARTRoles.CUSTODIAN_ROLE
+            )
+        );
+        fund.forcedTransfer(investor1, investor2, INVESTMENT_AMOUNT);
+        vm.stopPrank();
+    }
+}

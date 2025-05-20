@@ -29,4 +29,12 @@ interface ISMARTFund is ISMART, ISMARTTokenAccessManaged, ISMARTCustodian, ISMAR
         address accessManager_
     )
         external;
+
+    function fundClass() external view returns (string memory);
+
+    function fundCategory() external view returns (string memory);
+
+    function managementFeeBps() external view returns (uint16);
+
+    function collectManagementFee() external returns (uint256);
 }
