@@ -1,5 +1,10 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import SMARTModule from "./main";
+import SMARTOnboardingBondModule from "./onboarding/assets/bond";
+import SMARTOnboardingDepositModule from "./onboarding/assets/deposit";
+import SMARTOnboardingEquityModule from "./onboarding/assets/equity";
+import SMARTOnboardingFundModule from "./onboarding/assets/fund";
+import SMARTOnboardingStableCoinModule from "./onboarding/assets/stablecoin";
+import SMARTOnboardingSystemModule from "./onboarding/system";
 
 /**
  * This module is used to deploy the SMART contracts, this should be used to
@@ -7,21 +12,22 @@ import SMARTModule from "./main";
  * by predeploying in the genesis file.
  */
 const SMARTOnboardingModule = buildModule("SMARTOnboardingModule", (m) => {
-  const { systemFactory } = m.useModule(SMARTModule);
+  const { system } = m.useModule(SMARTOnboardingSystemModule);
 
-  const createSystem = m.call(systemFactory, "createSystem");
-  const systemAddress = m.readEventArgument(
-    createSystem,
-    "SMARTSystemCreated",
-    "systemAddress",
-    { id: "systemAddress" }
-  );
-  const system = m.contractAt("SMARTSystem", systemAddress, {
-    id: "system",
-  });
+  // This can be setup based out of configuration in the onboarding wizard at some point
+  const { bondFactory } = m.useModule(SMARTOnboardingBondModule);
+  const { depositFactory } = m.useModule(SMARTOnboardingDepositModule);
+  const { equityFactory } = m.useModule(SMARTOnboardingEquityModule);
+  const { fundFactory } = m.useModule(SMARTOnboardingFundModule);
+  const { stablecoinFactory } = m.useModule(SMARTOnboardingStableCoinModule);
 
   return {
     system,
+    bondFactory,
+    depositFactory,
+    equityFactory,
+    fundFactory,
+    stablecoinFactory,
   };
 });
 
