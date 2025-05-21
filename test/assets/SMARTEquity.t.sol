@@ -7,8 +7,9 @@ import { ISMARTEquityFactory } from "../../contracts/assets/equity/ISMARTEquityF
 import { SMARTEquityFactoryImplementation } from "../../contracts/assets/equity/SMARTEquityFactoryImplementation.sol";
 import { ISMARTEquity } from "../../contracts/assets/equity/ISMARTEquity.sol";
 import { SMARTEquityImplementation } from "../../contracts/assets/equity/SMARTEquityImplementation.sol";
-import { SMARTConstants } from "../../contracts/SMARTConstants.sol";
-import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
+import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { ClaimUtils } from "../../test/utils/ClaimUtils.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
@@ -58,7 +59,7 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         );
 
         // Grant registrar role to owner so that he can create the equity
-        IAccessControl(address(equityFactory)).grantRole(SMARTRoles.REGISTRAR_ROLE, owner);
+        IAccessControl(address(equityFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
         vm.stopPrank();
 
         // Initialize identities

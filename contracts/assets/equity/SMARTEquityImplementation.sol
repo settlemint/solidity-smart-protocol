@@ -13,7 +13,7 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
 
 // Constants
-import { SMARTRoles } from "../../SMARTRoles.sol";
+import { SMARTRoles } from "../SMARTRoles.sol";
 
 // Interface imports
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";

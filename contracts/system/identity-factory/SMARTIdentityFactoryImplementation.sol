@@ -27,7 +27,7 @@ import { SMARTIdentityProxy } from "./identities/SMARTIdentityProxy.sol";
 import { SMARTTokenIdentityProxy } from "./identities/SMARTTokenIdentityProxy.sol";
 
 // Constants
-import { SMARTRoles } from "../../SMARTRoles.sol";
+import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 
 // --- Errors ---
 /// @notice Indicates that an operation was attempted with the zero address (address(0))
@@ -178,12 +178,12 @@ contract SMARTIdentityFactoryImplementation is
         }
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
-        _grantRole(SMARTRoles.REGISTRAR_ROLE, initialAdmin);
-        _grantRole(SMARTRoles.TOKEN_REGISTRAR_MANAGER_ROLE, initialAdmin);
-        _grantRole(SMARTRoles.TOKEN_REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.TOKEN_REGISTRAR_MANAGER_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.TOKEN_REGISTRAR_ROLE, initialAdmin);
 
-        _grantRole(SMARTRoles.TOKEN_REGISTRAR_MANAGER_ROLE, systemAddress);
-        _setRoleAdmin(SMARTRoles.TOKEN_REGISTRAR_ROLE, SMARTRoles.TOKEN_REGISTRAR_MANAGER_ROLE);
+        _grantRole(SMARTSystemRoles.TOKEN_REGISTRAR_MANAGER_ROLE, systemAddress);
+        _setRoleAdmin(SMARTSystemRoles.TOKEN_REGISTRAR_ROLE, SMARTSystemRoles.TOKEN_REGISTRAR_MANAGER_ROLE);
 
         _system = systemAddress;
     }
@@ -215,7 +215,7 @@ contract SMARTIdentityFactoryImplementation is
         external
         virtual
         override
-        onlyRole(SMARTRoles.REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
         returns (
             address // Solidity style guide prefers no name for return in implementation if clear from Natspec
         )
@@ -268,7 +268,7 @@ contract SMARTIdentityFactoryImplementation is
         external
         virtual
         override
-        onlyRole(SMARTRoles.TOKEN_REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.TOKEN_REGISTRAR_ROLE)
         returns (address)
     {
         if (_token == address(0)) revert ZeroAddressNotAllowed();

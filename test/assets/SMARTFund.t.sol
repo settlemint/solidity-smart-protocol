@@ -12,8 +12,9 @@ import { SMARTFundFactoryImplementation } from "../../contracts/assets/fund/SMAR
 import { SMARTFundImplementation } from "../../contracts/assets/fund/SMARTFundImplementation.sol";
 
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
-import { SMARTConstants } from "../../contracts/SMARTConstants.sol";
-import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
+import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { TokenRecovered } from "../../contracts/extensions/core/SMARTEvents.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { TokenPaused } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
@@ -61,7 +62,7 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         );
 
         // Grant registrar role to owner so that he can create the fund
-        IAccessControl(address(fundFactory)).grantRole(SMARTRoles.REGISTRAR_ROLE, owner);
+        IAccessControl(address(fundFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
         vm.stopPrank();
 
         // Initialize identities

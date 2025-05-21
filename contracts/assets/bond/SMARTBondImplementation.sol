@@ -11,7 +11,7 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // Constants
-import { SMARTRoles } from "./../../SMARTRoles.sol";
+import { SMARTRoles } from "./../SMARTRoles.sol";
 
 // Interface imports
 import { ISMARTBond } from "./ISMARTBond.sol";

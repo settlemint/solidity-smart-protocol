@@ -7,8 +7,9 @@ import { ISMARTYield } from "../../contracts/extensions/yield/ISMARTYield.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMARTBond } from "../../contracts/assets/bond/ISMARTBond.sol";
 import { ISMARTBondFactory } from "../../contracts/assets/bond/ISMARTBondFactory.sol";
-import { SMARTConstants } from "../../contracts/SMARTConstants.sol";
-import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
+import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -80,7 +81,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         );
 
         // Grant registrar role to owner so that he can create the bond
-        IAccessControl(address(bondFactory)).grantRole(SMARTRoles.REGISTRAR_ROLE, owner);
+        IAccessControl(address(bondFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
         vm.stopPrank();
 
         // Initialize identities

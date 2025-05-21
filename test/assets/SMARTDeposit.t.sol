@@ -9,8 +9,9 @@ import { ISMARTDeposit } from "../../contracts/assets/deposit/ISMARTDeposit.sol"
 import { ISMARTDepositFactory } from "../../contracts/assets/deposit/ISMARTDepositFactory.sol";
 import { SMARTDepositFactoryImplementation } from "../../contracts/assets/deposit/SMARTDepositFactoryImplementation.sol";
 import { SMARTDepositImplementation } from "../../contracts/assets/deposit/SMARTDepositImplementation.sol";
-import { SMARTConstants } from "../../contracts/SMARTConstants.sol";
-import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
+import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { InsufficientCollateral } from "../../contracts/extensions/collateral/SMARTCollateralErrors.sol";
@@ -53,7 +54,7 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         );
 
         // Grant registrar role to owner so that he can create the deposit
-        IAccessControl(address(depositFactory)).grantRole(SMARTRoles.REGISTRAR_ROLE, owner);
+        IAccessControl(address(depositFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
         vm.stopPrank();
 
         // Initialize identities

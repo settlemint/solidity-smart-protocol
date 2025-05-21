@@ -17,7 +17,7 @@ import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.so
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { SMARTToken } from "../../contracts/SMARTToken.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 
 abstract contract AbstractSMARTTest is Test {
     // --- State Variables ---
@@ -122,11 +122,11 @@ abstract contract AbstractSMARTTest is Test {
         address tokenAddress = address(token);
 
         vm.prank(platformAdmin);
-        IAccessControl(payable(registryAddress)).grantRole(SMARTRoles.REGISTRAR_ROLE, tokenAddress);
+        IAccessControl(payable(registryAddress)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, tokenAddress);
 
         // Verify the role was granted
         assertTrue(
-            IAccessControl(payable(registryAddress)).hasRole(SMARTRoles.REGISTRAR_ROLE, tokenAddress),
+            IAccessControl(payable(registryAddress)).hasRole(SMARTSystemRoles.REGISTRAR_ROLE, tokenAddress),
             "Token was not granted REGISTRAR_ROLE"
         );
     }
@@ -207,6 +207,7 @@ abstract contract AbstractSMARTTest is Test {
         IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).FORCED_TRANSFER_ROLE(), tokenIssuer_);
         IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).RECOVERY_ROLE(), tokenIssuer_);
         IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).PAUSER_ROLE(), tokenIssuer_);
+        IAccessControl(accessManager).grantRole(SMARTSystemRoles.CLAIM_MANAGER_ROLE, tokenIssuer_);
         vm.stopPrank();
     }
 

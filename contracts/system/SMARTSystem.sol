@@ -28,7 +28,7 @@ import {
 } from "./SMARTSystemErrors.sol";
 
 // Constants
-import { SMARTRoles } from "./../SMARTRoles.sol";
+import { SMARTSystemRoles } from "./SMARTSystemRoles.sol";
 
 // Interface imports
 import { ISMARTTokenFactory } from "./token-factory/ISMARTTokenFactory.sol";
@@ -423,7 +423,9 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         tokenFactoryProxiesByType[factoryTypeHash] = _tokenFactoryProxy;
 
         // Make it possible that the token factory proxy can register token identities.
-        IAccessControl(address(identityFactoryProxy())).grantRole(SMARTRoles.TOKEN_REGISTRAR_ROLE, _tokenFactoryProxy);
+        IAccessControl(address(identityFactoryProxy())).grantRole(
+            SMARTSystemRoles.TOKEN_REGISTRAR_ROLE, _tokenFactoryProxy
+        );
 
         emit TokenFactoryCreated(_msgSender(), _typeName, _tokenFactoryProxy, _factoryImplementation, block.timestamp);
 

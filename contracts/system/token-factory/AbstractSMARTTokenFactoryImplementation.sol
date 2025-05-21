@@ -15,7 +15,8 @@ import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.s
 import { ISMARTCompliance } from "../../interface/ISMARTCompliance.sol";
 import { ISMARTSystem } from "../ISMARTSystem.sol";
 import { ISMARTIdentityFactory } from "../identity-factory/ISMARTIdentityFactory.sol";
-import { SMARTRoles } from "../../SMARTRoles.sol";
+import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
+import { SMARTRoles } from "../../assets/SMARTRoles.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 // -- Errors --
@@ -103,7 +104,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
             revert InvalidImplementationAddress();
         }
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
-        _grantRole(SMARTRoles.REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
 
         _tokenImplementation = tokenImplementation_;
         _systemAddress = systemAddress;
@@ -243,7 +244,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         IAccessControl(accessManager).grantRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, address(this));
         ISMART(tokenAddress).setOnchainID(tokenIdentity);
         IAccessControl(accessManager).renounceRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, address(this));
-        IAccessControl(accessManager).renounceRole(SMARTRoles.DEFAULT_ADMIN_ROLE, address(this));
+        IAccessControl(accessManager).renounceRole(SMARTSystemRoles.DEFAULT_ADMIN_ROLE, address(this));
 
         emit TokenAssetCreated(_msgSender(), tokenAddress, tokenIdentity, accessManager);
     }

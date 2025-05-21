@@ -23,7 +23,7 @@ import { IERC3643IdentityRegistryStorage } from "./../../interface/ERC-3643/IERC
 import { IERC3643TrustedIssuersRegistry } from "./../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
 // Constants
-import { SMARTRoles } from "../../SMARTRoles.sol";
+import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 
 // --- Errors ---
 /// @notice Error triggered when an invalid storage address (e.g., address(0)) is provided.
@@ -154,7 +154,7 @@ contract SMARTIdentityRegistryImplementation is
         // Grant the initialAdmin the registrar role, allowing them to manage identities.
         // TODO: Consider if the initial admin should always be the first registrar, or if this should be a separate
         // step.
-        _grantRole(SMARTRoles.REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
     }
 
     // --- State-Changing Functions ---
@@ -205,7 +205,7 @@ contract SMARTIdentityRegistryImplementation is
     )
         external
         override
-        onlyRole(SMARTRoles.REGISTRAR_ROLE) // Ensures only authorized registrars can call this
+        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE) // Ensures only authorized registrars can call this
     {
         _registerIdentity(_userAddress, _identity, _country);
     }
@@ -219,7 +219,7 @@ contract SMARTIdentityRegistryImplementation is
     /// Emits an `IdentityRemoved` event upon successful deletion.
     /// @param _userAddress The blockchain address of the user whose identity is to be deleted.
     /// Reverts with `IdentityNotRegistered` if the address is not found.
-    function deleteIdentity(address _userAddress) external override onlyRole(SMARTRoles.REGISTRAR_ROLE) {
+    function deleteIdentity(address _userAddress) external override onlyRole(SMARTSystemRoles.REGISTRAR_ROLE) {
         // Ensure the identity exists before attempting to delete.
         // The `contains` function checks the storage contract.
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
@@ -249,7 +249,7 @@ contract SMARTIdentityRegistryImplementation is
     )
         external
         override
-        onlyRole(SMARTRoles.REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
     {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
 
@@ -274,7 +274,7 @@ contract SMARTIdentityRegistryImplementation is
     )
         external
         override
-        onlyRole(SMARTRoles.REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
     {
         if (!this.contains(_userAddress)) revert IdentityNotRegistered(_userAddress);
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
@@ -302,7 +302,7 @@ contract SMARTIdentityRegistryImplementation is
     )
         external
         override
-        onlyRole(SMARTRoles.REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
     {
         // Ensure all input arrays have the same number of elements.
         if (_userAddresses.length != _identities.length) {

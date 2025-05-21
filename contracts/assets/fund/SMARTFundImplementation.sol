@@ -14,7 +14,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Constants
-import { SMARTRoles } from "../../SMARTRoles.sol";
+import { SMARTRoles } from "../SMARTRoles.sol";
 
 // Interface imports
 import { ISMARTFund } from "./ISMARTFund.sol";

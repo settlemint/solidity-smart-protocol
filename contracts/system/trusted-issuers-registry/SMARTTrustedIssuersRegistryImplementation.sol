@@ -18,7 +18,7 @@ import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 import { IERC3643TrustedIssuersRegistry } from "./../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
 // Constants
-import { SMARTRoles } from "../../SMARTRoles.sol";
+import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 
 // --- Errors ---
 /// @notice Error triggered if an attempt is made to add or interact with an issuer using a zero address.
@@ -195,7 +195,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
         // ERC2771Context is initialized by the constructor ERC2771ContextUpgradeable(trustedForwarder)
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
-        _grantRole(SMARTRoles.REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar? // Addressed by
+        _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar? // Addressed by
             // comment: yes,
             // for initial setup.
     }
@@ -228,7 +228,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
     )
         external
         override
-        onlyRole(SMARTRoles.REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
     {
         address issuerAddress = address(_trustedIssuer);
         if (issuerAddress == address(0)) revert InvalidIssuerAddress();
@@ -267,7 +267,11 @@ contract SMARTTrustedIssuersRegistryImplementation is
     /// 5.  Emits a `TrustedIssuerRemoved` event.
     /// @param _trustedIssuer The `IClaimIssuer` compliant contract address of the issuer to be removed.
     /// @dev Reverts with `IssuerDoesNotExist(issuerAddress)` if the issuer is not found in the registry.
-    function removeTrustedIssuer(IClaimIssuer _trustedIssuer) external override onlyRole(SMARTRoles.REGISTRAR_ROLE) {
+    function removeTrustedIssuer(IClaimIssuer _trustedIssuer)
+        external
+        override
+        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
+    {
         address issuerAddress = address(_trustedIssuer);
         if (!_trustedIssuers[issuerAddress].exists) revert IssuerDoesNotExist(issuerAddress);
 
@@ -317,7 +321,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
     )
         external
         override
-        onlyRole(SMARTRoles.REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
     {
         address issuerAddress = address(_trustedIssuer);
         if (!_trustedIssuers[issuerAddress].exists) revert IssuerDoesNotExist(issuerAddress);

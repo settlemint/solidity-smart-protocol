@@ -9,8 +9,9 @@ import { ClaimUtils } from "../utils/ClaimUtils.sol";
 import { IdentityUtils } from "../utils/IdentityUtils.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
-import { SMARTConstants } from "../../contracts/SMARTConstants.sol";
-import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
+import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { SMARTForwarder } from "../../contracts/vendor/SMARTForwarder.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
@@ -47,7 +48,7 @@ abstract contract AbstractSMARTAssetTest is Test {
             claimIssuerPrivateKey,
             systemUtils.identityRegistry(),
             systemUtils.identityFactory(),
-            SMARTConstants.CLAIM_TOPIC_COLLATERAL,
+            SMARTTopics.CLAIM_TOPIC_COLLATERAL,
             TestConstants.CLAIM_TOPIC_KYC,
             TestConstants.CLAIM_TOPIC_AML
         );
@@ -61,7 +62,7 @@ abstract contract AbstractSMARTAssetTest is Test {
         // Initialize the claim issuer
         uint256[] memory claimTopics = new uint256[](2);
         claimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
-        claimTopics[1] = SMARTConstants.CLAIM_TOPIC_COLLATERAL;
+        claimTopics[1] = SMARTTopics.CLAIM_TOPIC_COLLATERAL;
         // Use claimIssuer address directly, createIssuerIdentity handles creating the on-chain identity
         vm.label(claimIssuer, "Claim Issuer");
         address claimIssuerIdentity = identityUtils.createIssuerIdentity(claimIssuer, claimTopics);
@@ -110,7 +111,7 @@ abstract contract AbstractSMARTAssetTest is Test {
             claimIssuerPrivateKey_,
             systemUtils.identityRegistry(),
             systemUtils.identityFactory(),
-            SMARTConstants.CLAIM_TOPIC_COLLATERAL,
+            SMARTTopics.CLAIM_TOPIC_COLLATERAL,
             TestConstants.CLAIM_TOPIC_KYC,
             TestConstants.CLAIM_TOPIC_AML
         );
@@ -122,7 +123,7 @@ abstract contract AbstractSMARTAssetTest is Test {
         ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, wallet);
         ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.CUSTODIAN_ROLE, wallet);
         ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.EMERGENCY_ROLE, wallet);
-        ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.CLAIM_MANAGER_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTSystemRoles.CLAIM_MANAGER_ROLE, wallet);
         vm.stopPrank();
     }
 }

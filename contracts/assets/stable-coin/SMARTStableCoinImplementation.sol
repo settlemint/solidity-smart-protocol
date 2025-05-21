@@ -10,8 +10,8 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 // Constants
-import { SMARTConstants } from "../../SMARTConstants.sol";
-import { SMARTRoles } from "../../SMARTRoles.sol";
+import { SMARTTopics } from "../SMARTTopics.sol";
+import { SMARTRoles } from "../SMARTRoles.sol";
 
 // Interface imports
 import { ISMARTStableCoin } from "./ISMARTStableCoin.sol";
@@ -88,7 +88,7 @@ contract SMARTStableCoinImplementation is
         __SMARTBurnable_init();
         __SMARTPausable_init();
         __SMARTTokenAccessManaged_init(accessManager_);
-        __SMARTCollateral_init(SMARTConstants.CLAIM_TOPIC_COLLATERAL);
+        __SMARTCollateral_init(SMARTTopics.CLAIM_TOPIC_COLLATERAL);
     }
 
     // --- ISMART Implementation ---
