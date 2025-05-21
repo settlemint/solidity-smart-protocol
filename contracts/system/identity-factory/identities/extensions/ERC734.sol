@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // --- Custom Errors ---
 error KeyCannotBeZero();
@@ -11,12 +12,13 @@ error ExecutionAlreadyPerformed(uint256 executionId);
 error KeyDoesNotExist(bytes32 key);
 error KeyDoesNotHaveThisPurpose(bytes32 key, uint256 purpose);
 error CannotExecuteToZeroAddress();
+error ReentrancyGuard();
 // Example: error MissingApprovalPermission(bytes32 key, uint256 requiredPurpose);
 
 /// @title ERC734 Key Holder Standard Implementation
 /// @dev Implementation of the IERC734 (Key Holder) standard.
 /// This contract manages keys with different purposes and allows for execution of operations based on key approvals.
-contract ERC734 is IERC734 {
+contract ERC734 is IERC734, ReentrancyGuard {
     struct Key {
         bytes32 key;
         uint256[] purposes;
@@ -72,7 +74,7 @@ contract ERC734 is IERC734 {
     /// - `_id` must correspond to an existing, non-executed execution request.
     /// - The caller must have the appropriate permissions to approve (typically checked in the inheriting contract or
     /// via keyHasPurpose).
-    function approve(uint256 _id, bool _approve) public virtual override returns (bool success) {
+    function approve(uint256 _id, bool _approve) public virtual override nonReentrant returns (bool success) {
         if (_id >= _executionNonce) revert ExecutionIdDoesNotExist({ executionId: _id });
         Execution storage execution = _executions[_id];
         if (execution.executed) revert ExecutionAlreadyPerformed({ executionId: _id });
@@ -88,11 +90,12 @@ contract ERC734 is IERC734 {
 
         if (_approve) {
             execution.approved = true;
+
             // Attempt execution
             // solhint-disable-next-line security/no-low-level-calls
             (bool callSuccess,) = execution.to.call{ value: execution.value }(execution.data);
             if (callSuccess) {
-                execution.executed = true;
+                execution.executed = true; // Only mark as executed if the call succeeded
                 emit Executed(_id, execution.to, execution.value, execution.data);
                 return true;
             } else {
@@ -173,6 +176,7 @@ contract ERC734 is IERC734 {
         payable
         virtual
         override
+        nonReentrant
         returns (uint256 executionId)
     {
         if (_to == address(0)) revert CannotExecuteToZeroAddress();
