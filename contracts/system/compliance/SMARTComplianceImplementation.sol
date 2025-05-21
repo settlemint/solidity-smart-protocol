@@ -15,12 +15,6 @@ import { ISMART } from "./../../interface/ISMART.sol";
 import { SMARTComplianceModuleParamPair } from "./../../interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ZeroAddressNotAllowed } from "./../../extensions/common/CommonErrors.sol";
 
-// --- Errors ---
-/// @notice Error indicating that a provided address is not a valid compliance module implementation.
-/// @dev This error is typically reverted when a contract address provided as a compliance module
-/// does not correctly implement the `ISMARTComplianceModule` interface, or if the interface check fails.
-error InvalidModuleImplementation();
-
 /// @title SMART Compliance Contract Implementation
 /// @author SettleMint Tokenization Services
 /// @notice This contract is the upgradeable logic implementation for the main compliance functionality within the SMART
@@ -245,10 +239,10 @@ contract SMARTComplianceImplementation is
         // (e.g., if _module is not a contract or runs out of gas)..
         try IERC165(_module).supportsInterface(type(ISMARTComplianceModule).interfaceId) returns (bool supported) {
             if (!supported) {
-                revert InvalidModuleImplementation(); // Revert if the interface is not supported by the module.
+                revert InvalidModule(); // Revert if the interface is not supported by the module.
             }
         } catch {
-            revert InvalidModuleImplementation(); // Revert if the supportsInterface call itself fails for any reason.
+            revert InvalidModule(); // Revert if the supportsInterface call itself fails for any reason.
         }
 
         // After confirming interface support, call the module's own parameter validation function.

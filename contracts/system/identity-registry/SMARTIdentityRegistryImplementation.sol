@@ -25,32 +25,6 @@ import { IERC3643TrustedIssuersRegistry } from "./../../interface/ERC-3643/IERC3
 // Constants
 import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 
-// --- Errors ---
-/// @notice Error triggered when an invalid storage address (e.g., address(0)) is provided.
-/// @dev This typically occurs during initialization or when updating storage contract addresses.
-error InvalidStorageAddress();
-/// @notice Error triggered when an invalid registry address (e.g., address(0)) is provided.
-/// @dev This usually happens when setting or updating the trusted issuers registry address.
-error InvalidRegistryAddress();
-/// @notice Error triggered when an operation is attempted on a user address that is not registered in the system.
-/// @param userAddress The address that was not found in the registry.
-error IdentityNotRegistered(address userAddress);
-/// @notice Error triggered when an invalid identity contract address (e.g., address(0)) is provided.
-/// @dev This can occur during identity registration or updates if the identity contract address is null.
-error InvalidIdentityAddress();
-/// @notice Error triggered when the lengths of arrays provided for a batch operation do not match.
-/// @dev For example, in `batchRegisterIdentity`, the `_userAddresses`, `_identities`, and `_countries` arrays must all
-/// have the same length.
-error ArrayLengthMismatch();
-/// @notice Error triggered when an invalid user address (e.g., address(0)) is provided.
-/// @dev This check is often performed during identity registration to ensure a valid user address is being associated
-/// with an identity.
-error InvalidUserAddress();
-/// @notice Error triggered when an attempt is made to register an identity for a user address that is already
-/// registered.
-/// @param userAddress The address that is already registered.
-error IdentityAlreadyRegistered(address userAddress);
-
 /// @title SMART Identity Registry Implementation
 /// @author SettleMint Tokenization Services
 /// @notice This contract is the upgradeable logic for the SMART Identity Registry. It manages on-chain investor
@@ -79,6 +53,34 @@ contract SMARTIdentityRegistryImplementation is
     /// to issue verifiable claims about identities (e.g., KYC/AML status).
     /// The `isVerified` function uses this registry to check the validity of claims.
     IERC3643TrustedIssuersRegistry private _trustedIssuersRegistry;
+
+    // --- Errors ---
+    /// @notice Error triggered when an invalid storage address (e.g., address(0)) is provided.
+    /// @dev This typically occurs during initialization or when updating storage contract addresses.
+    error InvalidStorageAddress();
+    /// @notice Error triggered when an invalid registry address (e.g., address(0)) is provided.
+    /// @dev This usually happens when setting or updating the trusted issuers registry address.
+    error InvalidRegistryAddress();
+    /// @notice Error triggered when an operation is attempted on a user address that is not registered in the system.
+    /// @param userAddress The address that was not found in the registry.
+    error IdentityNotRegistered(address userAddress);
+    /// @notice Error triggered when an invalid identity contract address (e.g., address(0)) is provided.
+    /// @dev This can occur during identity registration or updates if the identity contract address is null.
+    error InvalidIdentityAddress();
+    /// @notice Error triggered when the lengths of arrays provided for a batch operation do not match.
+    /// @dev For example, in `batchRegisterIdentity`, the `_userAddresses`, `_identities`, and `_countries` arrays must
+    /// all
+    /// have the same length.
+    error ArrayLengthMismatch();
+    /// @notice Error triggered when an invalid user address (e.g., address(0)) is provided.
+    /// @dev This check is often performed during identity registration to ensure a valid user address is being
+    /// associated
+    /// with an identity.
+    error InvalidUserAddress();
+    /// @notice Error triggered when an attempt is made to register an identity for a user address that is already
+    /// registered.
+    /// @param userAddress The address that is already registered.
+    error IdentityAlreadyRegistered(address userAddress);
 
     // --- Events ---
     // Events are defined in the ISMARTIdentityRegistry interface and are inherited.

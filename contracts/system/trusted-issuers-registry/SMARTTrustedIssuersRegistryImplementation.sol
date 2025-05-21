@@ -20,41 +20,6 @@ import { IERC3643TrustedIssuersRegistry } from "./../../interface/ERC-3643/IERC3
 // Constants
 import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 
-// --- Errors ---
-/// @notice Error triggered if an attempt is made to add or interact with an issuer using a zero address.
-/// @dev The zero address is invalid for representing an issuer contract. This ensures all registered issuers
-/// have a valid contract address.
-error InvalidIssuerAddress();
-
-/// @notice Error triggered if an attempt is made to add or update an issuer with an empty list of claim topics.
-/// @dev A trusted issuer must be associated with at least one claim topic they are authorized to issue claims for.
-/// This prevents registering issuers with no specified area of authority.
-error NoClaimTopicsProvided();
-
-/// @notice Error triggered when attempting to add an issuer that is already registered in the registry.
-/// @param issuerAddress The address of the issuer that already exists.
-/// @dev This prevents duplicate entries for the same issuer, maintaining data integrity.
-error IssuerAlreadyExists(address issuerAddress);
-
-/// @notice Error triggered when attempting to operate on an issuer (e.g., remove, update) that is not registered.
-/// @param issuerAddress The address of the issuer that was not found in the registry.
-/// @dev Ensures that operations are only performed on existing, registered issuers.
-error IssuerDoesNotExist(address issuerAddress);
-
-/// @notice Error triggered during an attempt to remove an issuer from a specific claim topic's list, but the issuer
-/// was not found in that list.
-/// @param issuerAddress The address of the issuer that was expected but not found.
-/// @param claimTopic The specific claim topic from which the issuer was being removed.
-/// @dev This typically indicates an inconsistency in state or an incorrect operation, as an issuer should only be
-/// removed from topics they are actually associated with.
-error IssuerNotFoundInTopicList(address issuerAddress, uint256 claimTopic);
-
-/// @notice Generic error triggered when an address is expected to be in a list (e.g., `_issuerAddresses`) but is not
-/// found during a removal operation.
-/// @param addr The address that was not found in the list.
-/// @dev This usually signals an internal state inconsistency, as removal operations generally assume the item exists.
-error AddressNotFoundInList(address addr);
-
 /// @title SMART Trusted Issuers Registry Implementation
 /// @author SettleMint Tokenization Services
 /// @notice This contract is the upgradeable logic for managing a registry of trusted claim issuers and the specific
@@ -132,6 +97,43 @@ contract SMARTTrustedIssuersRegistryImplementation is
     /// This structure allows for O(1) check for `hasClaimTopic` and O(1) removal from `_issuersByClaimTopic` using
     /// the swap-and-pop technique.
     mapping(uint256 claimTopic => mapping(address issuer => uint256 indexPlusOne)) private _claimTopicIssuerIndex;
+
+    // --- Errors ---
+    /// @notice Error triggered if an attempt is made to add or interact with an issuer using a zero address.
+    /// @dev The zero address is invalid for representing an issuer contract. This ensures all registered issuers
+    /// have a valid contract address.
+    error InvalidIssuerAddress();
+
+    /// @notice Error triggered if an attempt is made to add or update an issuer with an empty list of claim topics.
+    /// @dev A trusted issuer must be associated with at least one claim topic they are authorized to issue claims for.
+    /// This prevents registering issuers with no specified area of authority.
+    error NoClaimTopicsProvided();
+
+    /// @notice Error triggered when attempting to add an issuer that is already registered in the registry.
+    /// @param issuerAddress The address of the issuer that already exists.
+    /// @dev This prevents duplicate entries for the same issuer, maintaining data integrity.
+    error IssuerAlreadyExists(address issuerAddress);
+
+    /// @notice Error triggered when attempting to operate on an issuer (e.g., remove, update) that is not registered.
+    /// @param issuerAddress The address of the issuer that was not found in the registry.
+    /// @dev Ensures that operations are only performed on existing, registered issuers.
+    error IssuerDoesNotExist(address issuerAddress);
+
+    /// @notice Error triggered during an attempt to remove an issuer from a specific claim topic's list, but the issuer
+    /// was not found in that list.
+    /// @param issuerAddress The address of the issuer that was expected but not found.
+    /// @param claimTopic The specific claim topic from which the issuer was being removed.
+    /// @dev This typically indicates an inconsistency in state or an incorrect operation, as an issuer should only be
+    /// removed from topics they are actually associated with.
+    error IssuerNotFoundInTopicList(address issuerAddress, uint256 claimTopic);
+
+    /// @notice Generic error triggered when an address is expected to be in a list (e.g., `_issuerAddresses`) but is
+    /// not
+    /// found during a removal operation.
+    /// @param addr The address that was not found in the list.
+    /// @dev This usually signals an internal state inconsistency, as removal operations generally assume the item
+    /// exists.
+    error AddressNotFoundInList(address addr);
 
     // --- Events ---
     /// @notice Emitted when a new trusted issuer is successfully added to the registry.
