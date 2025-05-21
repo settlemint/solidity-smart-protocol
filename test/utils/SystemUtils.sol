@@ -27,6 +27,9 @@ import { SMARTTokenIdentityImplementation } from
 import { SMARTTokenAccessManagerImplementation } from
     "../../contracts/system/access-manager/SMARTTokenAccessManagerImplementation.sol";
 
+// Proxies
+import { SMARTTokenAccessManagerProxy } from "../../contracts/system/access-manager/SMARTTokenAccessManagerProxy.sol";
+
 // Interfaces
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
@@ -113,5 +116,9 @@ contract SystemUtils is Test {
         vm.label(address(countryBlockListComplianceModule), "Country Block List Compliance Module");
 
         vm.stopPrank();
+    }
+
+    function createTokenAccessManager(address[] memory initialAdmins) external returns (ISMARTTokenAccessManager) {
+        return ISMARTTokenAccessManager(address(new SMARTTokenAccessManagerProxy(address(system), initialAdmins)));
     }
 }

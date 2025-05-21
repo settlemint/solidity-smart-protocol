@@ -40,7 +40,7 @@ contract SMARTUpgradeableTest is
             requiredClaimTopics,
             modulePairs,
             TestConstants.CLAIM_TOPIC_COLLATERAL,
-            tokenIssuer // Initial owner
+            address(accessManager)
         );
 
         // 3. Deploy the ERC1967Proxy pointing to the implementation and initializing it
@@ -51,7 +51,7 @@ contract SMARTUpgradeableTest is
         _grantAllRoles(tokenProxyAddress, tokenIssuer);
 
         // 4. Create the token's on-chain identity (using platform admin)
-        tokenUtils.createAndSetTokenOnchainID(tokenProxyAddress, tokenIssuer);
+        tokenUtils.createAndSetTokenOnchainID(tokenProxyAddress, tokenIssuer, address(accessManager));
 
         token = ISMART(tokenProxyAddress);
     }

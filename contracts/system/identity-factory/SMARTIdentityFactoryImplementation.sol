@@ -180,6 +180,8 @@ contract SMARTIdentityFactoryImplementation is
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
         _grantRole(SMARTRoles.REGISTRAR_ROLE, initialAdmin);
         _grantRole(SMARTRoles.TOKEN_REGISTRAR_MANAGER_ROLE, initialAdmin);
+        _grantRole(SMARTRoles.TOKEN_REGISTRAR_ROLE, initialAdmin);
+
         _grantRole(SMARTRoles.TOKEN_REGISTRAR_MANAGER_ROLE, systemAddress);
         _setRoleAdmin(SMARTRoles.TOKEN_REGISTRAR_ROLE, SMARTRoles.TOKEN_REGISTRAR_MANAGER_ROLE);
 

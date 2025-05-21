@@ -5,6 +5,7 @@ pragma solidity ^0.8.28;
 import { Test } from "forge-std/Test.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
+import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { TestConstants } from "../Constants.sol";
@@ -21,6 +22,7 @@ import { SMARTRoles } from "../../contracts/SMARTRoles.sol";
 abstract contract AbstractSMARTTest is Test {
     // --- State Variables ---
     ISMART internal token; // Token instance to be tested (set in inheriting contracts)
+    ISMARTTokenAccessManager internal accessManager;
     MockedComplianceModule internal mockComplianceModule;
 
     // --- Test Actors ---
@@ -65,6 +67,11 @@ abstract contract AbstractSMARTTest is Test {
         clientUS = makeAddr("Client US");
         clientUnverified = makeAddr("Client Unverified");
         claimIssuer = vm.addr(claimIssuerPrivateKey);
+
+        // --- Setup access manager ---
+        address[] memory initialAdmins = new address[](1);
+        initialAdmins[0] = tokenIssuer;
+        accessManager = systemUtils.createTokenAccessManager(initialAdmins);
 
         // --- Setup utilities
         identityUtils = new IdentityUtils(
@@ -191,15 +198,15 @@ abstract contract AbstractSMARTTest is Test {
     function _grantAllRoles(address tokenAddress, address tokenIssuer_) internal {
         vm.startPrank(tokenIssuer_);
         // Grant all roles to the token issuer
-        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).TOKEN_ADMIN_ROLE(), tokenIssuer_);
-        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).COMPLIANCE_ADMIN_ROLE(), tokenIssuer_);
-        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).VERIFICATION_ADMIN_ROLE(), tokenIssuer_);
-        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).MINTER_ROLE(), tokenIssuer_);
-        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).BURNER_ROLE(), tokenIssuer_);
-        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).FREEZER_ROLE(), tokenIssuer_);
-        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).FORCED_TRANSFER_ROLE(), tokenIssuer_);
-        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).RECOVERY_ROLE(), tokenIssuer_);
-        IAccessControl(tokenAddress).grantRole(SMARTToken(tokenAddress).PAUSER_ROLE(), tokenIssuer_);
+        IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).TOKEN_ADMIN_ROLE(), tokenIssuer_);
+        IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).COMPLIANCE_ADMIN_ROLE(), tokenIssuer_);
+        IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).VERIFICATION_ADMIN_ROLE(), tokenIssuer_);
+        IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).MINTER_ROLE(), tokenIssuer_);
+        IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).BURNER_ROLE(), tokenIssuer_);
+        IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).FREEZER_ROLE(), tokenIssuer_);
+        IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).FORCED_TRANSFER_ROLE(), tokenIssuer_);
+        IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).RECOVERY_ROLE(), tokenIssuer_);
+        IAccessControl(accessManager).grantRole(SMARTToken(tokenAddress).PAUSER_ROLE(), tokenIssuer_);
         vm.stopPrank();
     }
 

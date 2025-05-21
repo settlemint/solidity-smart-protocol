@@ -38,15 +38,17 @@ contract SMARTStandardTest is
             requiredClaimTopics,
             modulePairs,
             TestConstants.CLAIM_TOPIC_COLLATERAL,
-            tokenIssuer
+            address(accessManager)
         );
         address tokenAddress = address(bond);
         vm.stopPrank();
 
         _grantAllRoles(tokenAddress, tokenIssuer);
 
+        // TODO createTokenIdentity --> needs AccessManager
+
         // 2. Create the token's on-chain identity
-        tokenUtils.createAndSetTokenOnchainID(tokenAddress, tokenIssuer);
+        tokenUtils.createAndSetTokenOnchainID(tokenAddress, tokenIssuer, address(accessManager));
 
         token = ISMART(tokenAddress);
     }

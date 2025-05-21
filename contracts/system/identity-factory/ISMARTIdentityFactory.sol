@@ -31,14 +31,14 @@ interface ISMARTIdentityFactory {
 
     /// @notice Creates a new on-chain identity specifically for a token contract.
     /// @dev This function is expected to deploy a new identity contract (e.g., a `SMARTTokenIdentityProxy`)
-    ///      and associate it with the `_token` contract address. An `_tokenOwner` is specified to manage this token
+    ///      and associate it with the `_token` contract address. An `_accessManager` is specified to manage this token
     /// identity.
     /// @param _token The address of the token contract for which the identity is being created.
-    /// @param _tokenOwner The address that will be designated as the owner or initial manager of the token's identity.
+    /// @param _accessManager The address of the access manager contract to be used for the token identity.
     /// @return tokenIdentityContract The address of the newly deployed token identity contract.
     function createTokenIdentity(
         address _token,
-        address _tokenOwner
+        address _accessManager
     )
         external
         returns (address tokenIdentityContract);

@@ -89,10 +89,6 @@ abstract contract AbstractSMARTAssetTest is Test {
         }
     }
 
-    function _createAndSetTokenOnchainID(address _token, address _issuer) internal {
-        tokenUtils.createAndSetTokenOnchainID(_token, _issuer);
-    }
-
     function _issueCollateralClaim(address _token, address _issuer, uint256 _amount, uint256 _expiry) internal {
         claimUtils.issueCollateralClaim(_token, _issuer, _amount, _expiry);
     }
