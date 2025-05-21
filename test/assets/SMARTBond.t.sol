@@ -81,7 +81,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         );
 
         // Grant registrar role to owner so that he can create the bond
-        IAccessControl(address(bondFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
+        IAccessControl(address(bondFactory)).grantRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE, owner);
         vm.stopPrank();
 
         // Initialize identities

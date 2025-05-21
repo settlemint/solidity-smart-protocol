@@ -118,6 +118,7 @@ contract SMARTIdentityRegistryImplementation is
     /// 4.  Sets the addresses for the `_identityStorage` and `_trustedIssuersRegistry` contracts.
     ///     These addresses must not be zero addresses.
     /// It is protected by the `initializer` modifier from OpenZeppelin, ensuring it can only be called once.
+    /// @param systemAddress The address of the deployed `SMARTSystem` contract.
     /// @param initialAdmin The address that will receive initial administrative and registrar privileges.
     /// This address will be responsible for the initial setup and management of the registry.
     /// @param identityStorage_ The address of the deployed `IERC3643IdentityRegistryStorage` contract.
@@ -125,6 +126,7 @@ contract SMARTIdentityRegistryImplementation is
     /// @param trustedIssuersRegistry_ The address of the deployed `IERC3643TrustedIssuersRegistry` contract.
     /// This contract will be used to verify claims against trusted issuers.
     function initialize(
+        address systemAddress,
         address initialAdmin,
         address identityStorage_,
         address trustedIssuersRegistry_
@@ -152,9 +154,15 @@ contract SMARTIdentityRegistryImplementation is
         emit TrustedIssuersRegistrySet(_msgSender(), address(_trustedIssuersRegistry)); // Use _msgSender()
 
         // Grant the initialAdmin the registrar role, allowing them to manage identities.
-        // TODO: Consider if the initial admin should always be the first registrar, or if this should be a separate
-        // step.
+        // TODO: Consider if the initial admin should always be the first registrar,
+        // or if this should be a separate step.
         _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.REGISTRAR_ADMIN_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.REGISTRAR_GOVERNOR_ROLE, initialAdmin);
+
+        _grantRole(SMARTSystemRoles.REGISTRAR_GOVERNOR_ROLE, systemAddress);
+        _setRoleAdmin(SMARTSystemRoles.REGISTRAR_ROLE, SMARTSystemRoles.REGISTRAR_ADMIN_ROLE);
+        _setRoleAdmin(SMARTSystemRoles.REGISTRAR_ADMIN_ROLE, SMARTSystemRoles.REGISTRAR_GOVERNOR_ROLE);
     }
 
     // --- State-Changing Functions ---

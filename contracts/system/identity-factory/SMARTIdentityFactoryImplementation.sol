@@ -178,12 +178,12 @@ contract SMARTIdentityFactoryImplementation is
         }
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
-        _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
-        _grantRole(SMARTSystemRoles.TOKEN_REGISTRAR_MANAGER_ROLE, initialAdmin);
-        _grantRole(SMARTSystemRoles.TOKEN_REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.IDENTITY_ISSUER_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.TOKEN_IDENTITY_ISSUER_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.TOKEN_IDENTITY_ISSUER_ADMIN_ROLE, initialAdmin);
 
-        _grantRole(SMARTSystemRoles.TOKEN_REGISTRAR_MANAGER_ROLE, systemAddress);
-        _setRoleAdmin(SMARTSystemRoles.TOKEN_REGISTRAR_ROLE, SMARTSystemRoles.TOKEN_REGISTRAR_MANAGER_ROLE);
+        _grantRole(SMARTSystemRoles.TOKEN_IDENTITY_ISSUER_ADMIN_ROLE, systemAddress);
+        _setRoleAdmin(SMARTSystemRoles.TOKEN_IDENTITY_ISSUER_ROLE, SMARTSystemRoles.TOKEN_IDENTITY_ISSUER_ADMIN_ROLE);
 
         _system = systemAddress;
     }
@@ -215,7 +215,7 @@ contract SMARTIdentityFactoryImplementation is
         external
         virtual
         override
-        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.IDENTITY_ISSUER_ROLE)
         returns (
             address // Solidity style guide prefers no name for return in implementation if clear from Natspec
         )
@@ -268,7 +268,7 @@ contract SMARTIdentityFactoryImplementation is
         external
         virtual
         override
-        onlyRole(SMARTSystemRoles.TOKEN_REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.TOKEN_IDENTITY_ISSUER_ROLE)
         returns (address)
     {
         if (_token == address(0)) revert ZeroAddressNotAllowed();

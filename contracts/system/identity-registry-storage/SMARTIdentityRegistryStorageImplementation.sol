@@ -3,7 +3,6 @@ pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-// import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { AccessControlEnumerableUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
@@ -13,6 +12,10 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 
 // OnchainID imports
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
+
+// Constants
+import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
+
 // Interface imports
 import { IERC3643IdentityRegistryStorage } from "./../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
 
@@ -77,31 +80,11 @@ error IdentityRegistryNotBound(address registryAddress);
 /// The contract also maintains lists of all registered identity wallets and all bound registry contracts, which can
 /// be useful for enumeration, auditing, or administrative purposes.
 contract SMARTIdentityRegistryStorageImplementation is
-    Initializable, // Enables the contract to have an `initialize` function instead of a constructor, for
-        // upgradeability.
-    ERC2771ContextUpgradeable, // Enables support for meta-transactions using a trusted forwarder.
-    AccessControlEnumerableUpgradeable, // Provides role-based access control with enumerable roles.
-    IERC3643IdentityRegistryStorage // Implements the standard interface for ERC-3643 identity registry storage.
+    Initializable,
+    ERC2771ContextUpgradeable,
+    AccessControlEnumerableUpgradeable,
+    IERC3643IdentityRegistryStorage
 {
-    // --- Roles ---
-    /// @notice A unique identifier (hash) for the role that grants permission to modify the data stored in this
-    /// contract.
-    /// @dev This role is typically granted to `SMARTIdentityRegistry` contracts that are "bound" to this storage.
-    /// Only addresses holding this role can call functions like `addIdentityToStorage`, `removeIdentityFromStorage`,
-    /// `modifyStoredIdentity`, and `modifyStoredInvestorCountry`.
-    /// The value is calculated as `keccak256("STORAGE_MODIFIER_ROLE")`.
-    bytes32 public constant STORAGE_MODIFIER_ROLE = keccak256("STORAGE_MODIFIER_ROLE");
-
-    /// @notice A unique identifier (hash) for the role that grants permission to manage the list of bound identity
-    /// registry contracts.
-    /// @dev Addresses holding this role can call `bindIdentityRegistry` to authorize a new registry contract and
-    /// `unbindIdentityRegistry` to revoke authorization from an existing one.
-    /// This role is crucial for controlling which external contracts can write to this storage.
-    /// It is typically assigned to a high-level system management contract (e.g., `SMARTSystem` or an identity factory
-    /// contract).
-    /// The value is calculated as `keccak256("MANAGE_REGISTRIES_ROLE")`.
-    bytes32 public constant MANAGE_REGISTRIES_ROLE = keccak256("MANAGE_REGISTRIES_ROLE");
-
     // --- Storage Variables ---
     /// @notice Defines a structure to hold the core information for a registered identity.
     /// An `Identity` struct links a user's wallet address to their on-chain identity representation and their country.
@@ -260,9 +243,12 @@ contract SMARTIdentityRegistryStorageImplementation is
         __AccessControlEnumerable_init_unchained(); // Sets up role-based access control.
         // ERC2771Context is initialized by its own constructor when this contract is created.
 
-        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Admin for managing roles.
-        _grantRole(STORAGE_MODIFIER_ROLE, initialAdmin); // Initial modifier, usually transferred to registries.
-        _grantRole(MANAGE_REGISTRIES_ROLE, system); // System contract can manage which registries are bound.
+        _grantRole(SMARTSystemRoles.DEFAULT_ADMIN_ROLE, initialAdmin); // Admin for managing roles.
+        _grantRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE, initialAdmin); // Initial modifier, usually transferred to
+            // registries.
+        _grantRole(SMARTSystemRoles.MANAGE_REGISTRIES_ROLE, system); // System contract can manage which registries are
+            // bound.
+        _setRoleAdmin(SMARTSystemRoles.STORAGE_MODIFIER_ROLE, SMARTSystemRoles.MANAGE_REGISTRIES_ROLE);
     }
 
     // --- Storage Modification Functions (STORAGE_MODIFIER_ROLE required) ---
@@ -299,7 +285,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     )
         external
         override
-        onlyRole(STORAGE_MODIFIER_ROLE) // Ensures only authorized contracts can modify storage.
+        onlyRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE) // Ensures only authorized contracts can modify storage.
     {
         if (_userAddress == address(0)) revert InvalidIdentityWalletAddress();
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
@@ -336,7 +322,11 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// 5.  Emits an `IdentityUnstored` event to notify off-chain listeners.
     /// @param _userAddress The user's external wallet address whose identity record is to be removed.
     /// @dev Reverts with `IdentityDoesNotExist(_userAddress)` if no identity record is found for the `_userAddress`.
-    function removeIdentityFromStorage(address _userAddress) external override onlyRole(STORAGE_MODIFIER_ROLE) {
+    function removeIdentityFromStorage(address _userAddress)
+        external
+        override
+        onlyRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE)
+    {
         // Ensure an identity exists for this user address before attempting removal.
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
         IIdentity oldIdentity = IIdentity(_identities[_userAddress].identityContract);
@@ -387,7 +377,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     )
         external
         override
-        onlyRole(STORAGE_MODIFIER_ROLE)
+        onlyRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE)
     {
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
         if (address(_identity) == address(0)) revert InvalidIdentityAddress();
@@ -414,7 +404,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     )
         external
         override
-        onlyRole(STORAGE_MODIFIER_ROLE)
+        onlyRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE)
     {
         if (_identities[_userAddress].identityContract == address(0)) revert IdentityDoesNotExist(_userAddress);
 
@@ -443,7 +433,10 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @dev Reverts with:
     ///      - `InvalidIdentityRegistryAddress()` if `_identityRegistry` is `address(0)`.
     ///      - `IdentityRegistryAlreadyBound(_identityRegistry)` if the registry is already bound.
-    function bindIdentityRegistry(address _identityRegistry) external onlyRole(MANAGE_REGISTRIES_ROLE) {
+    function bindIdentityRegistry(address _identityRegistry)
+        external
+        onlyRole(SMARTSystemRoles.MANAGE_REGISTRIES_ROLE)
+    {
         if (_identityRegistry == address(0)) revert InvalidIdentityRegistryAddress();
         if (_boundIdentityRegistries[_identityRegistry]) revert IdentityRegistryAlreadyBound(_identityRegistry);
 
@@ -452,7 +445,7 @@ contract SMARTIdentityRegistryStorageImplementation is
         _boundIdentityRegistriesIndex[_identityRegistry] = _boundIdentityRegistryAddresses.length; // Store 1-based
             // index.
 
-        _grantRole(STORAGE_MODIFIER_ROLE, _identityRegistry); // Grant role to the registry contract.
+        _grantRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE, _identityRegistry); // Grant role to the registry contract.
 
         emit IdentityRegistryBound(_identityRegistry);
     }
@@ -471,10 +464,14 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @param _identityRegistry The address of the `SMARTIdentityRegistry` contract to unbind. This registry will no
     /// longer be able to modify storage data.
     /// @dev Reverts with `IdentityRegistryNotBound(_identityRegistry)` if the registry is not currently bound.
-    function unbindIdentityRegistry(address _identityRegistry) external onlyRole(MANAGE_REGISTRIES_ROLE) {
+    function unbindIdentityRegistry(address _identityRegistry)
+        external
+        onlyRole(SMARTSystemRoles.MANAGE_REGISTRIES_ROLE)
+    {
         if (!_boundIdentityRegistries[_identityRegistry]) revert IdentityRegistryNotBound(_identityRegistry);
 
-        _revokeRole(STORAGE_MODIFIER_ROLE, _identityRegistry); // Revoke role from the registry contract.
+        _revokeRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE, _identityRegistry); // Revoke role from the registry
+            // contract.
 
         // --- Efficiently remove from _boundIdentityRegistryAddresses array (swap-and-pop) ---
         uint256 indexToRemove = _boundIdentityRegistriesIndex[_identityRegistry] - 1; // Adjust to 0-based index.
