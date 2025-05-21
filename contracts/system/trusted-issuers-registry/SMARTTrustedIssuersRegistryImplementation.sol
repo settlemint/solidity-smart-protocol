@@ -116,6 +116,10 @@ contract SMARTTrustedIssuersRegistryImplementation is
     /// @dev This is a key data structure for efficient querying. For example, to find all issuers trusted to provide
     /// KYC claims (assuming KYC is topic `1`), one would look up `_issuersByClaimTopic[1]`.
     /// This mapping is updated whenever an issuer is added, removed, or their claim topics are modified.
+    /// @dev This warning can be safely ignored as Solidity automatically initializes mapping values with their default
+    /// values (empty array in this case) when first accessed. The contract has proper checks in place when accessing
+    /// this mapping.
+    /// @custom:slither-disable-next-line uninitialized-state
     mapping(uint256 claimTopic => address[] issuers) private _issuersByClaimTopic;
 
     /// @notice Mapping for efficient removal and existence check of an issuer within a specific claim topic's list.
@@ -192,12 +196,9 @@ contract SMARTTrustedIssuersRegistryImplementation is
     function initialize(address initialAdmin) public initializer {
         __ERC165_init_unchained();
         __AccessControlEnumerable_init_unchained();
-        // ERC2771Context is initialized by the constructor ERC2771ContextUpgradeable(trustedForwarder)
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
-        _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin); // TODO: should he be the registrar? // Addressed by
-            // comment: yes,
-            // for initial setup.
+        _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
     }
 
     // --- Issuer Management Functions (REGISTRAR_ROLE required) ---

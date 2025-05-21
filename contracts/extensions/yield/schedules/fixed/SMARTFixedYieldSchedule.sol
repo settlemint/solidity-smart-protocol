@@ -285,10 +285,10 @@ contract SMARTFixedYieldSchedule is
         }
 
         // Calculate elapsed time since the schedule started.
+        // block.timestamp is not used for randomness here but for time calculation
         uint256 elapsedTime = block.timestamp - _startDate;
         // Calculate how much time has passed within the current interval.
-        // slither-disable-next-line weak-prng (block.timestamp is not used for randomness here but for time
-        // calculation)
+        // slither-disable-next-line weak-prng
         uint256 currentPeriodElapsed = elapsedTime % _interval;
         // Time until next period is the total interval duration minus the elapsed time in the current interval.
         return _interval - currentPeriodElapsed;
