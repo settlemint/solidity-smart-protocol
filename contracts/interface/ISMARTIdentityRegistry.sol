@@ -5,7 +5,7 @@ pragma solidity ^0.8.28;
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 
 // Interface imports
-import { IERC3643IdentityRegistryStorage } from "./ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTIdentityRegistryStorage } from "./ISMARTIdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
 /// @title ISMARTIdentityRegistry Interface
@@ -17,7 +17,7 @@ import { IERC3643TrustedIssuersRegistry } from "./ERC-3643/IERC3643TrustedIssuer
 ///         based on claims issued by trusted entities.
 /// @dev This registry acts as a central point of truth for associating wallet addresses with digital identities.
 ///      It relies on two other key components:
-///      1. `IERC3643IdentityRegistryStorage`: A separate contract responsible for storing the actual mappings
+///      1. `ISMARTIdentityRegistryStorage`: A separate contract responsible for storing the actual mappings
 ///         between investor addresses, identity contracts, and country codes. This separation of concerns allows
 ///         for upgradability and different storage strategies.
 ///      2. `IERC3643TrustedIssuersRegistry`: A contract that maintains a list of trusted entities (claim issuers)
@@ -31,7 +31,7 @@ interface ISMARTIdentityRegistry {
     /// @dev This event is crucial for transparency, allowing external observers to track changes in the underlying
     ///      storage mechanism used by the Identity Registry.
     /// @param sender The address of the account (typically the owner or an admin) that initiated this change.
-    /// @param _identityStorage The new address of the contract implementing `IERC3643IdentityRegistryStorage`.
+    /// @param _identityStorage The new address of the contract implementing `ISMARTIdentityRegistryStorage`.
     event IdentityStorageSet(address indexed sender, address indexed _identityStorage);
 
     /// @notice Emitted when the address of the `TrustedIssuersRegistry` contract is successfully set or updated.
@@ -74,6 +74,19 @@ interface ISMARTIdentityRegistry {
     /// @param _country The new numeric country code (conforming to ISO 3166-1 alpha-2 standard, e.g., 840 for USA).
     event CountryUpdated(address indexed sender, address indexed _investorAddress, uint16 indexed _country);
 
+    /// @notice Emitted when an identity is successfully recovered, associating it with a new wallet
+    ///         and marking the old wallet as lost.
+    /// @param identityContract The IIdentity contract whose associated wallet was recovered. (Indexed)
+    /// @param newWallet The new active wallet address for the identity. (Indexed)
+    /// @param oldLostWallet The previous wallet address that has now been marked as lost. (Indexed)
+    /// @param recoveredBy The address (typically a registrar) that performed the recovery operation. (Not Indexed)
+    event IdentityRecovered(
+        IIdentity indexed identityContract,
+        address indexed newWallet,
+        address indexed oldLostWallet,
+        address recoveredBy
+    );
+
     // --- Configuration Setters (Typically Owner/Admin Restricted) ---
 
     /**
@@ -83,7 +96,7 @@ interface ISMARTIdentityRegistry {
      * upgradable, contract.
      *      Changing this address can have significant implications, so it must be handled with care.
      * @param _identityRegistryStorage The address of the new contract that implements the
-     * `IERC3643IdentityRegistryStorage` interface.
+     * `ISMARTIdentityRegistryStorage` interface.
      * @custom:emit IdentityStorageSet
      */
     function setIdentityRegistryStorage(address _identityRegistryStorage) external;
@@ -169,6 +182,23 @@ interface ISMARTIdentityRegistry {
     )
         external;
 
+    /// @notice Recovers an identity by associating an existing IIdentity contract with a new wallet address,
+    ///         and marking the old wallet address as lost.
+    /// @dev This function is typically restricted to registrar roles.
+    ///      It ensures the old wallet was indeed linked to the given identity and is not already lost.
+    ///      The new wallet must not be in use or marked as lost.
+    /// @param identityContract The IIdentity contract to be associated with the new wallet.
+    /// @param newWallet The new wallet address to activate for the identity.
+    /// @param oldLostWallet The current wallet address associated with the identity that will be marked as lost.
+    /// @param newCountryCode The country code to associate with the new wallet registration.
+    function recoverIdentity(
+        IIdentity identityContract,
+        address newWallet,
+        address oldLostWallet,
+        uint16 newCountryCode
+    )
+        external;
+
     // --- Registry Consultation (View Functions) ---
 
     /**
@@ -215,9 +245,9 @@ interface ISMARTIdentityRegistry {
      * @notice Returns the address of the `IdentityRegistryStorage` contract currently being used by this Identity
      * Registry.
      * @dev This allows external parties to inspect which storage contract is active.
-     * @return The address of the contract implementing `IERC3643IdentityRegistryStorage`.
+     * @return The address of the contract implementing `ISMARTIdentityRegistryStorage`.
      */
-    function identityStorage() external view returns (IERC3643IdentityRegistryStorage);
+    function identityStorage() external view returns (ISMARTIdentityRegistryStorage);
 
     /**
      * @notice Returns the address of the `TrustedIssuersRegistry` contract currently being used by this Identity
@@ -226,4 +256,22 @@ interface ISMARTIdentityRegistry {
      * @return The address of the contract implementing `IERC3643TrustedIssuersRegistry`.
      */
     function issuersRegistry() external view returns (IERC3643TrustedIssuersRegistry);
+
+    // --- Lost Wallet View Functions ---
+
+    /// @notice Checks if a wallet address has been marked as lost.
+    /// @param userWallet The wallet address to check.
+    /// @return True if the wallet is marked as lost, false otherwise.
+    function isWalletLost(address userWallet) external view returns (bool);
+
+    /// @notice Checks if a wallet address has been marked as lost for a specific IIdentity contract.
+    /// @param identityContract The IIdentity contract.
+    /// @param userWallet The wallet address to check.
+    /// @return True if the wallet is marked as lost for the identity, false otherwise.
+    function isWalletLostForIdentity(IIdentity identityContract, address userWallet) external view returns (bool);
+
+    /// @notice Retrieves all wallet addresses that have been marked as lost for a specific IIdentity contract.
+    /// @param identityContract The IIdentity contract.
+    /// @return An array of lost wallet addresses.
+    function getLostWalletsForIdentity(IIdentity identityContract) external view returns (address[] memory);
 }

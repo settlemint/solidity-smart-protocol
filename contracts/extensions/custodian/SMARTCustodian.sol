@@ -120,4 +120,12 @@ abstract contract SMARTCustodian is SMARTExtension, _SMARTCustodianLogic {
         __custodian_beforeRedeemLogic(from, amount); // Custodian checks for user-initiated redeems.
         super._beforeRedeem(from, amount); // Continue with other hooks.
     }
+
+    /// @inheritdoc SMARTHooks
+    /// @dev Overrides the `_afterRecoverTokens` hook to add custodian-specific logic.
+    ///      Calls `__custodian_afterRecoverTokensLogic` to check if the new wallet is frozen.
+    function _afterRecoverTokens(address lostWallet, address newWallet) internal virtual override(SMARTHooks) {
+        __custodian_afterRecoverTokensLogic(lostWallet, newWallet); // Custodian logic for recover tokens.
+        super._afterRecoverTokens(lostWallet, newWallet); // Continue with other hooks.
+    }
 }

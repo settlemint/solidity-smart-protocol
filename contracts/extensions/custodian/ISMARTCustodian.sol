@@ -87,29 +87,6 @@ interface ISMARTCustodian {
     )
         external;
 
-    /// @notice Recovers assets from a lost or compromised wallet to a new wallet linked to the same verified identity.
-    /// @dev This is a critical recovery function. It typically involves:
-    ///      1. Verifying that `investorOnchainID` is valid and linked to the `lostWallet` (or establishing a link
-    ///         if the `newWallet` is already verified under that ID).
-    ///      2. Transferring the full token balance from `lostWallet` to `newWallet`.
-    ///      3. Transferring any frozen status (full freeze or partial freeze amount) from `lostWallet` to `newWallet`.
-    ///      4. Updating the `IdentityRegistry` to associate `investorOnchainID` with `newWallet` and disassociate
-    ///         it from `lostWallet`. This usually requires the token contract to have a `REGISTRAR_ROLE` on the
-    ///         Identity Registry.
-    ///      Like `forcedTransfer`, uses an internal flag to bypass hooks during the token movement.
-    ///      Requires strong authorization (e.g., a RECOVERY_ROLE).
-    /// @param lostWallet The compromised or inaccessible wallet address.
-    /// @param newWallet The target wallet address for recovery, which must be associated with the same identity.
-    /// @param investorOnchainID The on-chain ID contract address of the investor, proving ownership.
-    /// @return bool Returns `true` upon successful execution (should revert on failure).
-    function recoveryAddress(
-        address lostWallet,
-        address newWallet,
-        address investorOnchainID
-    )
-        external
-        returns (bool);
-
     // -- View Functions --
 
     /// @notice Checks if an address is currently fully frozen.

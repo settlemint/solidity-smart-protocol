@@ -189,6 +189,12 @@ interface ISMART is IERC20, IERC20Metadata {
     /// MUST be equal.
     function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external;
 
+    /// @notice Recovers SMART tokens from a lost wallet to the caller's address.
+    /// @dev This will make it possible to recover SMART tokens from the lostWallet to msgSender, if it was correctly
+    /// marked as lost in the identity registry.
+    /// @param _lostWallet The address of the lost wallet containing tokens to recover.
+    function recoverTokens(address _lostWallet) external;
+
     /// @notice Allows an authorized account to recover ERC20 tokens that were mistakenly sent to this SMART token
     /// contract's address.
     /// @dev This function is crucial for retrieving assets that are not the SMART token itself but are held by the

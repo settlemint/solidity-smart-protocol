@@ -113,19 +113,11 @@ abstract contract SMARTCustodianUpgradeable is Initializable, SMARTExtensionUpgr
         super._beforeRedeem(from, amount); // Maintain hook chain.
     }
 
-    // Developer Note: The UUPS upgrade mechanism requires the final contract to also inherit
-    // `UUPSUpgradeable` from OpenZeppelin and override `_authorizeUpgrade`.
-    // Example for an Ownable setup:
-    // import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-    // import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-    // contract MyFinalToken is SMARTCustodianUpgradeable, UUPSUpgradeable, OwnableUpgradeable, ... {
-    //     function initialize(...) public initializer {
-    //         ...
-    //         __Ownable_init(initialOwner);
-    //         __UUPSUpgradeable_init();
-    //         __SMARTCustodian_init();
-    //         ...
-    //     }
-    //     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
-    // }
+    /// @inheritdoc SMARTHooks
+    /// @dev Overrides the `_afterRecoverTokens` hook to add custodian-specific logic.
+    ///      Calls `__custodian_afterRecoverTokensLogic` to check if the new wallet is frozen.
+    function _afterRecoverTokens(address lostWallet, address newWallet) internal virtual override(SMARTHooks) {
+        __custodian_afterRecoverTokensLogic(lostWallet, newWallet); // Custodian logic for recover tokens.
+        super._afterRecoverTokens(lostWallet, newWallet); // Continue with other hooks.
+    }
 }

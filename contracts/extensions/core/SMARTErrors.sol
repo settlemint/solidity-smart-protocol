@@ -39,3 +39,11 @@ error CannotRecoverSelf();
 /// @dev This typically occurs during token recovery if the contract holds less of the target token than the amount
 /// requested for recovery.
 error InsufficientTokenBalance();
+
+/// @notice Error indicating that the provided lost wallet is not marked as lost.
+/// @dev This can occur if the wallet is not associated with any lost identity.
+error InvalidLostWallet();
+
+/// @notice Error indicating that there are no tokens to recover.
+/// @dev This can occur if the contract holds no tokens to recover.
+error NoTokensToRecover();

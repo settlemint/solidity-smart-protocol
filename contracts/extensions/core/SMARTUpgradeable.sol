@@ -105,6 +105,14 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
         _smart_batchTransfer(toList, amounts);
     }
 
+    /// @notice Recovers SMART tokens from a lost wallet to the caller's address.
+    /// @dev Implements the `recoverTokens` function from `ISMART` (via `_SMARTExtension`).
+    ///      Delegates to `_smart_recoverTokens` from `_SMARTLogic` for execution.
+    /// @param lostWallet The address of the lost wallet containing tokens to recover.
+    function recoverTokens(address lostWallet) external virtual override {
+        _smart_recoverTokens(lostWallet); // Uses the SMART logic's recover tokens helper
+    }
+
     // -- Internal Hook Implementations (Dependencies for _SMARTLogic) --
 
     /// @inheritdoc _SMARTLogic
@@ -124,6 +132,15 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     /// @param amount The amount of tokens to transfer.
     function __smart_executeTransfer(address from, address to, uint256 amount) internal virtual override {
         _transfer(from, to, amount); // Calls OZ ERC20Upgradeable._transfer
+    }
+
+    /// @inheritdoc _SMARTLogic
+    /// @notice Implements the abstract `__smart_balanceOf` from `_SMARTLogic`.
+    /// @dev Provides the concrete token balance retrieval action by calling OpenZeppelin `ERC20.balanceOf`.
+    /// @param account The address to query the balance of.
+    /// @return The balance of the specified account.
+    function __smart_balanceOf(address account) internal virtual override returns (uint256) {
+        return balanceOf(account);
     }
 
     // -- View Functions (ERC20 Overrides) --

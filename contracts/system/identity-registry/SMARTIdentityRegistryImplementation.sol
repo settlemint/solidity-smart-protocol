@@ -19,7 +19,7 @@ import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 import { ISMARTIdentityRegistry } from "./../../interface/ISMARTIdentityRegistry.sol";
 import { ISMART } from "./../../interface/ISMART.sol";
 
-import { IERC3643IdentityRegistryStorage } from "./../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTIdentityRegistryStorage } from "./../../interface/ISMARTIdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
 // Constants
@@ -30,7 +30,7 @@ import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 /// @notice This contract is the upgradeable logic for the SMART Identity Registry. It manages on-chain investor
 /// identities
 /// and their associated data, adhering to the ERC-3643 standard for tokenized assets.
-/// @dev This implementation relies on separate contracts for storing identity data (`IERC3643IdentityRegistryStorage`)
+/// @dev This implementation relies on separate contracts for storing identity data (`ISMARTIdentityRegistryStorage`)
 /// and for managing trusted claim issuers (`IERC3643TrustedIssuersRegistry`).
 /// It uses OpenZeppelin's `AccessControlEnumerableUpgradeable` for role-based access control,
 /// `ERC2771ContextUpgradeable` for meta-transaction support (allowing transactions to be relayed by a trusted
@@ -43,11 +43,11 @@ contract SMARTIdentityRegistryImplementation is
     ISMARTIdentityRegistry
 {
     // --- Storage References ---
-    /// @notice Stores the contract address of the `IERC3643IdentityRegistryStorage` instance.
+    /// @notice Stores the contract address of the `ISMARTIdentityRegistryStorage` instance.
     /// @dev This external contract is responsible for persisting all identity-related data,
     /// such as the mapping from user addresses to their identity contracts and investor country codes.
     /// This separation of logic and storage enhances upgradeability and modularity.
-    IERC3643IdentityRegistryStorage private _identityStorage;
+    ISMARTIdentityRegistryStorage private _identityStorage;
     /// @notice Stores the contract address of the `IERC3643TrustedIssuersRegistry` instance.
     /// @dev This external contract maintains a list of trusted entities (claim issuers) that are authorized
     /// to issue verifiable claims about identities (e.g., KYC/AML status).
@@ -81,6 +81,15 @@ contract SMARTIdentityRegistryImplementation is
     /// registered.
     /// @param userAddress The address that is already registered.
     error IdentityAlreadyRegistered(address userAddress);
+
+    // --- Custom Errors for Identity Recovery ---
+    /// @notice Error triggered if a wallet is expected to be registered to a specific identity, but it is not.
+    /// @param wallet The wallet address in question.
+    /// @param identityContract The IIdentity contract it was expected to be linked to.
+    error WalletNotRegisteredToThisIdentity(address wallet, address identityContract);
+    /// @notice Error triggered if an operation is attempted on a wallet that is already marked as lost.
+    /// @param wallet The wallet address that is already marked as lost.
+    error WalletAlreadyMarkedAsLost(address wallet);
 
     // --- Events ---
     // Events are defined in the ISMARTIdentityRegistry interface and are inherited.
@@ -123,7 +132,7 @@ contract SMARTIdentityRegistryImplementation is
     /// @param systemAddress The address of the deployed `SMARTSystem` contract.
     /// @param initialAdmin The address that will receive initial administrative and registrar privileges.
     /// This address will be responsible for the initial setup and management of the registry.
-    /// @param identityStorage_ The address of the deployed `IERC3643IdentityRegistryStorage` contract.
+    /// @param identityStorage_ The address of the deployed `ISMARTIdentityRegistryStorage` contract.
     /// This contract will be used to store all identity data.
     /// @param trustedIssuersRegistry_ The address of the deployed `IERC3643TrustedIssuersRegistry` contract.
     /// This contract will be used to verify claims against trusted issuers.
@@ -147,7 +156,7 @@ contract SMARTIdentityRegistryImplementation is
 
         // Validate and set the identity storage contract address.
         if (identityStorage_ == address(0)) revert InvalidStorageAddress();
-        _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
+        _identityStorage = ISMARTIdentityRegistryStorage(identityStorage_);
         emit IdentityStorageSet(_msgSender(), address(_identityStorage)); // Use _msgSender() for ERC2771 compatibility
 
         // Validate and set the trusted issuers registry contract address.
@@ -174,10 +183,10 @@ contract SMARTIdentityRegistryImplementation is
     /// @dev This function can only be called by an address holding the `DEFAULT_ADMIN_ROLE`.
     /// It performs a check to ensure the new `identityStorage_` address is not the zero address.
     /// Emits an `IdentityStorageSet` event upon successful update.
-    /// @param identityStorage_ The new address for the `IERC3643IdentityRegistryStorage` contract.
+    /// @param identityStorage_ The new address for the `ISMARTIdentityRegistryStorage` contract.
     function setIdentityRegistryStorage(address identityStorage_) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (identityStorage_ == address(0)) revert InvalidStorageAddress();
-        _identityStorage = IERC3643IdentityRegistryStorage(identityStorage_);
+        _identityStorage = ISMARTIdentityRegistryStorage(identityStorage_);
         emit IdentityStorageSet(_msgSender(), address(_identityStorage));
     }
 
@@ -333,6 +342,65 @@ contract SMARTIdentityRegistryImplementation is
         }
     }
 
+    /// @inheritdoc ISMARTIdentityRegistry
+    function recoverIdentity(
+        IIdentity identityContract,
+        address newWallet,
+        address oldLostWallet,
+        uint16 newCountryCode
+    )
+        external
+        override
+        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
+    {
+        // Initial input validation
+        if (address(identityContract) == address(0)) revert InvalidIdentityAddress();
+        if (newWallet == address(0)) revert InvalidUserAddress();
+        if (oldLostWallet == address(0)) revert InvalidUserAddress();
+
+        // 1. Verify oldLostWallet is currently active and linked to the provided identityContract
+        IIdentity storedIdentityForOldWallet;
+        try _identityStorage.storedIdentity(oldLostWallet) returns (IIdentity id) {
+            storedIdentityForOldWallet = id;
+        } catch {
+            revert WalletNotRegisteredToThisIdentity(oldLostWallet, address(identityContract));
+        }
+        if (address(storedIdentityForOldWallet) != address(identityContract)) {
+            revert WalletNotRegisteredToThisIdentity(oldLostWallet, address(identityContract));
+        }
+
+        // 2. Check if oldLostWallet is already marked as lost
+        if (_identityStorage.isWalletMarkedAsLost(oldLostWallet)) {
+            revert WalletAlreadyMarkedAsLost(oldLostWallet);
+        }
+
+        // 3. Verify newWallet is not already in use or marked as lost
+        bool newWalletIsCurrentlyRegistered = false;
+        try _identityStorage.storedIdentity(newWallet) returns (IIdentity) {
+            newWalletIsCurrentlyRegistered = true; // Found an active registration
+        } catch {
+            // Expected if newWallet is not registered, so no action needed in catch.
+        }
+        if (newWalletIsCurrentlyRegistered) {
+            revert IdentityAlreadyRegistered(newWallet);
+        }
+        if (_identityStorage.isWalletMarkedAsLost(newWallet)) {
+            revert WalletAlreadyMarkedAsLost(newWallet);
+        }
+
+        // 4. Mark oldLostWallet as lost in the storage layer
+        _identityStorage.markWalletAsLost(address(identityContract), oldLostWallet);
+
+        // 5. Remove oldLostWallet's active registration from storage
+        _identityStorage.removeIdentityFromStorage(oldLostWallet);
+
+        // 6. Register the newWallet with the original identityContract and newCountryCode
+        //    Internally, addIdentityToStorage should handle the emit for IdentityRegistered
+        _identityStorage.addIdentityToStorage(newWallet, identityContract, newCountryCode);
+
+        emit IdentityRecovered(identityContract, newWallet, oldLostWallet, _msgSender());
+    }
+
     // --- View Functions ---
 
     /// @inheritdoc ISMARTIdentityRegistry
@@ -383,9 +451,19 @@ contract SMARTIdentityRegistryImplementation is
         override
         returns (bool)
     {
+        // Check if the wallet is globally marked as lost first.
+        if (_identityStorage.isWalletMarkedAsLost(_userAddress)) {
+            return false;
+        }
+
         // First, check if the user address is even registered.
+        // Note: `this.contains()` itself relies on `_identityStorage.storedIdentity`
+        // and handles try-catch. If wallet is lost, above check catches it.
+        // If not registered (and not lost), `this.contains` will return false.
         if (!this.contains(_userAddress)) return false;
+
         // If there are no required claim topics, the identity is considered verified by default.
+        // (Assuming it passed the contains() and not-lost checks)
         if (requiredClaimTopics.length == 0) return true;
 
         // Retrieve the user's identity contract from storage.
@@ -494,8 +572,8 @@ contract SMARTIdentityRegistryImplementation is
     /// @inheritdoc ISMARTIdentityRegistry
     /// @notice Returns the address of the currently configured identity storage contract.
     /// @dev This allows external contracts or UIs to discover the location of the storage layer.
-    /// @return The address of the `IERC3643IdentityRegistryStorage` contract.
-    function identityStorage() external view override returns (IERC3643IdentityRegistryStorage) {
+    /// @return The address of the `ISMARTIdentityRegistryStorage` contract.
+    function identityStorage() external view override returns (ISMARTIdentityRegistryStorage) {
         return _identityStorage;
     }
 
@@ -505,6 +583,35 @@ contract SMARTIdentityRegistryImplementation is
     /// @return The address of the `IERC3643TrustedIssuersRegistry` contract.
     function issuersRegistry() external view override returns (IERC3643TrustedIssuersRegistry) {
         return _trustedIssuersRegistry;
+    }
+
+    // --- Lost Wallet View Functions ---
+
+    /// @inheritdoc ISMARTIdentityRegistry
+    function isWalletLost(address userWallet) external view override returns (bool) {
+        return _identityStorage.isWalletMarkedAsLost(userWallet);
+    }
+
+    /// @inheritdoc ISMARTIdentityRegistry
+    function isWalletLostForIdentity(
+        IIdentity identityContract,
+        address userWallet
+    )
+        external
+        view
+        override
+        returns (bool)
+    {
+        return _identityStorage.isWalletMarkedAsLostForIdentity(address(identityContract), userWallet);
+    }
+
+    /// @inheritdoc ISMARTIdentityRegistry
+    function getLostWalletsForIdentity(IIdentity identityContract) external view override returns (address[] memory) {
+        if (address(identityContract) == address(0)) {
+            // Consider if reverting is better, but returning empty array is also acceptable.
+            return new address[](0);
+        }
+        return _identityStorage.getLostWalletsForIdentityFromStorage(address(identityContract));
     }
 
     // --- Internal Functions ---

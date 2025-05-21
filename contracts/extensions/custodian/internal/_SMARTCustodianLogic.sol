@@ -262,117 +262,6 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
         }
     }
 
-    /// @notice Internal core logic for recovering assets from a lost wallet to a new wallet.
-    /// @dev This is a complex operation involving token transfer, state migration, and identity registry updates.
-    ///      1. Reverts with `NoTokensToRecover` if `lostWallet` has zero balance.
-    ///      2. Retrieves the `identityRegistry` and `requiredClaimTopics` (assumed to be provided by the core
-    ///         SMART token functionality via `this.identityRegistry()` and `this.requiredClaimTopics()`).
-    ///      3. Verifies `lostWallet` and `newWallet` against these topics. Reverts with `RecoveryWalletsNotVerified`
-    ///         if a basic verification check fails (e.g., neither wallet is verified initially or linkage cannot be
-    /// established).
-    ///      4. Reverts with `RecoveryTargetAddressFrozen` if `newWallet` is currently fully frozen.
-    ///      5. Transfers the full `balance` from `lostWallet` to `newWallet` using `__custodian_executeTransferUpdate`
-    ///         with `__isForcedUpdate = true` to bypass hooks.
-    ///      6. Migrates partial freeze state: `__frozenTokens[lostWallet]` is moved to `__frozenTokens[newWallet]`,
-    ///         emitting `TokensUnfrozen` for `lostWallet` and `TokensFrozen` for `newWallet`.
-    ///      7. Migrates full freeze state: If `lostWallet` was frozen, `newWallet` is frozen and `lostWallet` is
-    /// unfrozen.
-    ///         Appropriate `AddressFrozen` events are emitted.
-    ///      8. Emits `RecoverySuccess` event.
-    ///      9. Interacts with the `identityRegistry`:
-    ///         - If `lostWallet` was verified, its registration details (country) are retrieved.
-    ///         - If `newWallet` was not verified, it's registered with the `investorOnchainID` and the retrieved
-    /// country.
-    ///         - The registration for `lostWallet` is deleted.
-    ///         This step requires the token contract to have `REGISTRAR_ROLE` on the `identityRegistry`.
-    /// @param lostWallet The address of the compromised or inaccessible wallet.
-    /// @param newWallet The address of the new wallet to recover assets to.
-    /// @param investorOnchainID The on-chain ID contract (`IIdentity`) of the investor, used for verification and
-    /// registration.
-    /// @return bool Always returns `true` on success (reverts on failure).
-    function _smart_recoveryAddress(
-        address lostWallet,
-        address newWallet,
-        address investorOnchainID
-    )
-        internal
-        virtual
-        returns (bool)
-    {
-        uint256 balance = __custodian_getBalance(lostWallet);
-        if (balance == 0) revert NoTokensToRecover();
-
-        ISMARTIdentityRegistry registry = this.identityRegistry();
-        uint256[] memory topics = this.requiredClaimTopics();
-
-        bool lostWalletVerified = registry.isVerified(lostWallet, topics);
-        bool newWalletVerified = registry.isVerified(newWallet, topics);
-
-        // Basic sanity check for verification. More nuanced logic for registration/update happens below.
-        if (!lostWalletVerified && !newWalletVerified) {
-            // If neither is verified and investorOnchainID cannot link them, this is problematic.
-            // The actual linking/registration logic is complex and might depend on IdentityRegistry behavior.
-            // For now, this check ensures we don't proceed if there's no clear path to identity linkage.
-            revert RecoveryWalletsNotVerified();
-        }
-        if (__frozen[newWallet]) revert RecoveryTargetAddressFrozen(); // Cannot recover to a frozen new wallet
-
-        uint256 frozenTokens = __frozenTokens[lostWallet];
-        bool walletFrozen = __frozen[lostWallet];
-
-        // Execute token transfer, bypassing standard hooks.
-        __isForcedUpdate = true;
-        __custodian_executeTransferUpdate(lostWallet, newWallet, balance);
-        __isForcedUpdate = false;
-
-        // Migrate partial freeze state.
-        if (frozenTokens > 0) {
-            emit TokensUnfrozen(_smartSender(), lostWallet, frozenTokens);
-            __frozenTokens[lostWallet] = 0;
-            __frozenTokens[newWallet] = frozenTokens;
-            emit TokensFrozen(_smartSender(), newWallet, frozenTokens);
-        }
-
-        // Migrate full freeze state.
-        if (walletFrozen) {
-            __frozen[newWallet] = true;
-            __frozen[lostWallet] = false; // Ensure old wallet is explicitly unfrozen.
-            emit AddressFrozen(_smartSender(), newWallet, true);
-            emit AddressFrozen(_smartSender(), lostWallet, false);
-        } else if (__frozen[newWallet]) {
-            // Defensive: If newWallet was somehow frozen but old wasn't, ensure newWallet is unfrozen post-recovery.
-            __frozen[newWallet] = false;
-            emit AddressFrozen(_smartSender(), newWallet, false);
-        }
-
-        // Emit event *before* external calls to identity registry (reentrancy guard best practice).
-        emit RecoverySuccess(_smartSender(), lostWallet, newWallet, investorOnchainID);
-
-        // Update identity registry (Requires this contract to have REGISTRAR_ROLE on the registry).
-        if (lostWalletVerified) {
-            uint16 country = registry.investorCountry(lostWallet);
-            // If new wallet isn't verified, register it under the investorOnchainID using details from lost wallet.
-            if (!newWalletVerified) {
-                // This assumes investorOnchainID is a valid IIdentity contract for the investor.
-                registry.registerIdentity(newWallet, IIdentity(investorOnchainID), country);
-            }
-            // Whether newWallet was initially verified or just got registered, the old registration must be removed.
-            registry.deleteIdentity(lostWallet);
-        } else if (newWalletVerified) {
-            // Lost wallet wasn't verified, but new one is. If they share investorOnchainID, newWallet is primary.
-            // No action needed here as lostWallet wasn't registered to begin with (or its registration was invalid).
-        } else {
-            // Both were unverified initially. This state should have been caught by `RecoveryWalletsNotVerified`.
-            // If reached, it implies an issue with verification logic or a specific IdentityRegistry behavior
-            // not covered, e.g., if investorOnchainID itself is used to link/register a fresh newWallet.
-            // For safety, one might register newWallet here if that's the intended flow:
-            // registry.registerIdentity(newWallet, IIdentity(investorOnchainID), 0); // Assuming default country if
-            // unknown
-        }
-
-        return true;
-    }
-
     // -- View Functions --
 
     /// @inheritdoc ISMARTCustodian
@@ -477,6 +366,37 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
         uint256 availableUnfrozen = __custodian_getBalance(from) - frozenTokens;
         if (availableUnfrozen < amount) {
             revert IERC20Errors.ERC20InsufficientBalance(from, availableUnfrozen, amount);
+        }
+    }
+
+    /// @notice Internal logic executed *after* a recover operation.
+    /// @dev Called by the concrete custodian contract's `_afterRecoverTokens` hook override.
+    ///      Migrates partial freeze state and full freeze state from `lostWallet` to `newWallet`.
+    /// @param lostWallet The address of the wallet that lost its tokens.
+    /// @param newWallet The address of the wallet that will receive the tokens.
+    function __custodian_afterRecoverTokensLogic(address lostWallet, address newWallet) internal virtual {
+        uint256 frozenTokens = __frozenTokens[lostWallet];
+
+        // Migrate partial freeze state.
+        if (frozenTokens > 0) {
+            emit TokensUnfrozen(_smartSender(), lostWallet, frozenTokens);
+            __frozenTokens[lostWallet] = 0;
+            __frozenTokens[newWallet] = frozenTokens;
+            emit TokensFrozen(_smartSender(), newWallet, frozenTokens);
+        }
+
+        bool walletFrozen = __frozen[lostWallet];
+
+        // Migrate full freeze state.
+        if (walletFrozen) {
+            __frozen[newWallet] = true;
+            __frozen[lostWallet] = false; // Ensure old wallet is explicitly unfrozen.
+            emit AddressFrozen(_smartSender(), newWallet, true);
+            emit AddressFrozen(_smartSender(), lostWallet, false);
+        } else if (__frozen[newWallet]) {
+            // Defensive: If newWallet was somehow frozen but old wasn't, ensure newWallet is unfrozen post-recovery.
+            __frozen[newWallet] = false;
+            emit AddressFrozen(_smartSender(), newWallet, false);
         }
     }
 }
