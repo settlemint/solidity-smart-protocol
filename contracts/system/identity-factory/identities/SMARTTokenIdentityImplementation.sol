@@ -1,76 +1,298 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.28;
 
+import { ISMARTTokenIdentity } from "./ISMARTTokenIdentity.sol";
 import { Identity } from "@onchainid/contracts/Identity.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
+import { IERC735 } from "@onchainid/contracts/interface/IERC735.sol";
+import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
+import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-
+import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import { ISMARTTokenAccessManaged } from "../../../extensions/access-managed/ISMARTTokenAccessManaged.sol";
+import { ISMARTTokenAccessManager } from "../../../extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { AccessControlUnauthorizedAccount } from "../../../extensions/access-managed/SMARTTokenAccessManagedErrors.sol";
+import { ERC735 } from "./extensions/ERC735.sol";
+import { SMARTSystemRoles } from "../../SMARTSystemRoles.sol";
 /// @title SMART Token Identity Implementation Contract
 /// @author SettleMint Tokenization Services
-/// @notice This contract serves as the logic implementation for token-bound identities within the SMART Protocol.
-/// Token-bound identities are on-chain identities (ERC725/ERC734 compliant via OnchainID's `Identity` contract)
-/// that are specifically associated with a token contract, such as representing the token issuer or the token itself.
-/// @dev This contract is designed to be deployed as a singleton logic contract. Multiple `SMARTTokenIdentityProxy`
-/// instances will delegate their calls to this single implementation.
-/// It inherits from `Identity` to provide the core ERC725 (Identity) and ERC734 (Key Management) functionalities.
-/// It also inherits from `ERC165Upgradeable` to support interface detection (ERC165) in an upgradeable proxy context.
-///
-/// Key considerations and future improvements (TODOs):
-/// 1.  **Management Linkage**: The management keys and permissions for this identity should ideally be linked to,
-///     or derived from, the access control mechanisms of the associated token contract it represents.
-///     This would ensure that control over the token naturally extends to control over its on-chain identity.
-/// 2.  **Meta-transaction Support (ERC2771)**: For broader usability, especially with wallets that may not hold ETH
-///     for gas fees, this contract should be made compatible with ERC2771 (trusted forwarders).
-///     This would involve inheriting from `ERC2771ContextUpgradeable` and using `_msgSender()` appropriately.
-/// 3.  **ERC165 Initialization**: The standard pattern for initializing `ERC165Upgradeable` in an upgradeable contract
-///     is to call `__ERC165_init_unchained()` within an `initialize` function. This contract currently lacks an
-///     explicit initializer, which is acceptable for a non-upgradeable logic contract, but if it were to be made
-///     directly upgradeable itself (not just via proxy), this would need to be addressed. Proxies calling this
-///     will handle their own initialization patterns for upgradeability.
-contract SMARTTokenIdentityImplementation is Identity, ERC165Upgradeable {
-    /// @notice Constructor for the `SMARTTokenIdentityImplementation` contract.
-    /// @dev This constructor is called only once when this logic contract is deployed to the blockchain.
-    /// It calls the constructor of the parent `Identity` contract with specific parameters:
-    /// -   `owner`: `address(0)` is passed, meaning the identity is not initially owned or managed by another external
-    /// identity contract.
-    ///      Management and ownership keys are typically set up later, often through an `initialize` function called by
-    /// a proxy,
-    ///      or directly by the deployer adding keys if the contract were not intended for proxy usage.
-    /// -   `selfManagement`: `true` is passed. This parameter in the OnchainID `Identity` constructor typically means
-    ///      that the deployer of the `Identity` contract is *not* automatically granted management keys.
-    ///      Instead, for `SMARTTokenIdentityProxy` instances using this logic, the initial management key(s)
-    ///      (e.g., the address of the token owner or the token contract itself) are established during the proxy's
-    ///      initialization process (via a `delegatecall` to an `initialize` function that this contract would provide
-    /// if it had one, or by direct key additions post-deployment if used standalone).
-    /// As this is a logic contract for proxies, its own constructor state related to `ERC165Upgradeable` is less
-    /// critical
-    /// than the initialization within the proxy context. If this contract had an `initialize` function for proxy use,
-    /// `__ERC165_init_unchained()` would typically be called there.
-    constructor() Identity(address(0), true) {
-        // ERC165Upgradeable initialization for this specific logic contract instance itself is implicitly handled.
-        // If this contract were to be made *itself* upgradeable (not just serving as an implementation for proxies),
-        // an initializer function (e.g., `initializeSMARTTokenIdentity()`) would be added, and
-        // `__ERC165_init_unchained()` would be called within that initializer.
-        // For its role as a proxy implementation, the proxy's initializer handles ERC165 setup for the proxy storage.
+/// @notice This contract provides the upgradeable logic for on-chain identities associated with tokens/assets
+///         within the SMART Protocol. It is based on the OnchainID `Identity` contract but restricts
+///         ERC734 key management, relying on an external Access Manager for ERC735 claim operations.
+/// @dev Inherits `Identity` for ERC735 storage and basic claim logic, `ERC165Upgradeable` for interface detection,
+///      and `ERC2771ContextUpgradeable` for meta-transaction support. ERC734 functions are disabled.
+
+contract SMARTTokenIdentityImplementation is
+    ISMARTTokenIdentity,
+    ERC165Upgradeable,
+    ERC2771ContextUpgradeable,
+    ERC735,
+    ISMARTTokenAccessManaged
+{
+    // --- State Variables ---
+
+    /// @notice The blockchain address of the central `SMARTTokenAccessManager` contract.
+    /// @dev This manager contract is responsible for all role assignments and checks.
+    ///      This variable is declared `internal`, meaning it's accessible within this contract
+    ///      and any contracts that inherit from it, but not externally.
+    address internal _accessManager;
+
+    // --- Errors ---
+
+    /// @dev Error thrown when attempting to use key-based functionality
+    error UnsupportedKeyOperation();
+
+    /// @dev Error thrown when attempting to use execution functionality in an unsupported way
+    error UnsupportedExecutionOperation();
+
+    /// @dev Error thrown when trying to set an invalid access manager
+    error InvalidAccessManager();
+
+    // --- Modifiers ---
+
+    modifier onlyAccessManagerRole(bytes32 role) {
+        _checkRole(role, _msgSender());
+        _;
     }
 
+    /// @notice Constructor for the `SMARTTokenIdentityImplementation`.
+    /// @dev Calls the constructor of the parent `Identity` contract.
+    ///      - `address(0)`: This indicates that the identity contract itself is not initially owned by another identity
+    /// contract.
+    ///      - `true`: This boolean likely signifies that the deployer (`msg.sender` of this logic contract deployment,
+    /// if deployed directly)
+    ///                is *not* automatically added as a management key. The `initialize` function called via
+    /// `delegatecall` by the proxy
+    ///                is responsible for setting up the initial management key(s) for each specific identity instance.
+    ///      This constructor will only be called once when this logic contract is deployed.
+    ///      For proxied identities, the state (including keys and claims) is managed in the proxy's storage,
+    /// initialized via `delegatecall` to `Identity.initialize(initialManagementKey)`.
+    constructor(address trustedForwarder) ERC2771ContextUpgradeable(trustedForwarder) {
+        _disableInitializers();
+    }
+
+    /**
+     * @notice Initializes the SMARTTokenIdentityImplementation.
+     * @dev Intended to be called once by a proxy via delegatecall.
+     *      NOTE: Named `initializeSMARTTokenIdentity` to avoid conflict with the non-virtual `initialize`
+     *      function in the base `Identity` contract from OnchainID.
+     * @param accessManagerAddress The address of the ISMARTTokenAccessManager contract.
+     */
+    function initialize(address accessManagerAddress) external override initializer {
+        if (accessManagerAddress == address(0)) revert InvalidAccessManager();
+
+        __ERC165_init_unchained();
+
+        _accessManager = accessManagerAddress;
+    }
+
+    // --- Access Manager Functions ---
+
+    /// @notice Checks if a given account has a specific role, as defined by the `_accessManager`.
+    /// @dev This function implements the `ISMARTTokenAccessManaged` interface.
+    ///      It delegates the actual role check to the `hasRole` function of the `_accessManager` contract.
+    ///      The `virtual` keyword means that this function can be overridden by inheriting contracts.
+    /// @param role The `bytes32` identifier of the role to check.
+    /// @param account The address of the account whose roles are being checked.
+    /// @return `true` if the account has the role, `false` otherwise.
+    function hasRole(bytes32 role, address account) external view virtual override returns (bool) {
+        if (_accessManager == address(0)) return false; // Not yet initialized or access manager not set
+        return ISMARTTokenAccessManager(_accessManager).hasRole(role, account);
+    }
+
+    /// @notice Returns the address of the access manager for the token.
+    /// @return The address of the access manager.
+    function accessManager() external view returns (address) {
+        return _accessManager;
+    }
+
+    // --- ERC735 (Claim Holder) Functions - Overridden for Access Control ---
+
+    /// @inheritdoc IERC735
+    /// @dev Adds or updates a claim. Requires CLAIM_SIGNER_KEY purpose from the sender.
+    function addClaim(
+        uint256 _topic,
+        uint256 _scheme,
+        address _issuer,
+        bytes memory _signature,
+        bytes memory _data,
+        string memory _uri
+    )
+        public
+        virtual
+        override(ERC735, IERC735) // Overrides ERC735's implementation and fulfills IERC735
+        onlyAccessManagerRole(SMARTSystemRoles.CLAIM_MANAGER_ROLE)
+        returns (bytes32 claimId)
+    {
+        return super.addClaim(_topic, _scheme, _issuer, _signature, _data, _uri);
+    }
+
+    /// @inheritdoc IERC735
+    /// @dev Removes a claim. Requires CLAIM_SIGNER_KEY purpose from the sender.
+    function removeClaim(bytes32 _claimId)
+        public
+        virtual
+        override(ERC735, IERC735)
+        onlyAccessManagerRole(SMARTSystemRoles.CLAIM_MANAGER_ROLE)
+        returns (bool success)
+    {
+        return super.removeClaim(_claimId);
+    }
+
+    // --- ERC734 (Key Holder) Functions - Overridden for Access Control & Specific Logic ---
+
+    /// @inheritdoc IERC734
+    /// @dev Adds a key with a specific purpose and type. Requires MANAGEMENT_KEY purpose.
+    ///      The parameters (_key, _purpose, _keyType) are unused as key operations are unsupported in this
+    /// implementation.
+    function addKey(
+        bytes32, /*_key*/
+        uint256, /*_purpose*/
+        uint256 /*_keyType*/
+    )
+        public
+        virtual
+        override
+        returns (bool)
+    {
+        revert UnsupportedKeyOperation();
+    }
+
+    /// @inheritdoc IERC734
+    /// @dev Removes a purpose from a key. If it's the last purpose, the key is removed. Requires MANAGEMENT_KEY
+    /// purpose.
+    ///      The parameters (_key, _purpose) are unused as key operations are unsupported in this implementation.
+    function removeKey(bytes32, /*_key*/ uint256 /*_purpose*/ ) public virtual override returns (bool /*success*/ ) {
+        revert UnsupportedKeyOperation();
+    }
+
+    /// @inheritdoc IERC734
+    /// @dev Approves or disapproves an execution.
+    ///      Requires MANAGEMENT_KEY if the execution targets the identity itself.
+    ///      Requires ACTION_KEY if the execution targets an external contract.
+    ///      The parameters (_id, _toApprove) are unused as execution operations are unsupported in this implementation.
+    function approve(uint256, /*_id*/ bool /*_toApprove*/ ) public virtual override returns (bool /*success*/ ) {
+        revert UnsupportedExecutionOperation();
+    }
+
+    /// @inheritdoc IERC734
+    /// @dev Initiates an execution. If the sender has MANAGEMENT_KEY, or ACTION_KEY (for external calls),
+    ///      the execution is auto-approved.
+    ///      The parameters (_to, _value, _data) are unused as execution operations are unsupported in this
+    /// implementation.
+    function execute(
+        address, /*_to*/
+        uint256, /*_value*/
+        bytes calldata /*_data*/
+    )
+        public
+        payable
+        virtual
+        override
+        returns (uint256 /*executionId*/ )
+    {
+        revert UnsupportedExecutionOperation();
+    }
+
+    /// @inheritdoc IERC734
+    /// @dev Gets key data. This operation is unsupported in this identity model.
+    ///      The parameter (_key) is unused as key operations are unsupported in this implementation.
+    function getKey(bytes32 /*_key*/ )
+        external
+        view
+        virtual
+        override
+        returns (uint256[] memory, /*purposes*/ uint256, /*keyType*/ bytes32 /*key*/ )
+    {
+        revert UnsupportedKeyOperation();
+    }
+
+    /// @inheritdoc IERC734
+    /// @dev Gets key purposes. This operation is unsupported in this identity model.
+    ///      The parameter (_key) is unused as key operations are unsupported in this implementation.
+    function getKeyPurposes(bytes32 /*_key*/ )
+        external
+        view
+        virtual
+        override
+        returns (uint256[] memory /*_purposes*/ )
+    {
+        revert UnsupportedKeyOperation();
+    }
+
+    /// @inheritdoc IERC734
+    /// @dev Gets keys by purpose. This operation is unsupported in this identity model.
+    ///      The parameter (_purpose) is unused as key operations are unsupported in this implementation.
+    function getKeysByPurpose(uint256 /*_purpose*/ )
+        external
+        view
+        virtual
+        override
+        returns (bytes32[] memory /*keys*/ )
+    {
+        revert UnsupportedKeyOperation();
+    }
+
+    /// @inheritdoc IERC734
+    /// @dev Checks if a key has a purpose. This operation is unsupported.
+    ///      The parameters (_key, _purpose) are unused as key operations are unsupported in this implementation.
+    function keyHasPurpose(
+        bytes32, /*_key*/
+        uint256 /*_purpose*/
+    )
+        external
+        view
+        virtual
+        override
+        returns (bool /*exists*/ )
+    {
+        revert UnsupportedKeyOperation();
+    }
+
+    // --- IIdentity Specific Functions ---
+
+    /// @dev Checks claim validity.
+    ///      Parameters (_identity, claimTopic, sig, data) are unused as this identity implementation
+    ///      does not issue claims and always returns false.
+    function isClaimValid(
+        IIdentity, /*_identity*/
+        uint256, /*claimTopic*/
+        bytes calldata, /*sig*/
+        bytes calldata /*data*/
+    )
+        external
+        pure
+        returns (bool /*claimValid*/ )
+    {
+        // Since this identity does not have keys it cannot distribute claims,
+        // it's only a claim holder identity.
+        return false;
+    }
+
+    // --- ERC165 Support ---
+
     /// @inheritdoc IERC165
-    /// @notice Checks if this contract (or the contract it's an implementation for, via `delegatecall`)
-    /// supports a given interface ID, according to the ERC165 standard.
-    /// @dev This function overrides `supportsInterface` from `ERC165Upgradeable`.
-    /// It explicitly declares support for:
-    /// -   `type(IIdentity).interfaceId`: This indicates compliance with the `IIdentity` interface from OnchainID,
-    ///     which encompasses ERC725 (Identity) and ERC734 (Key Management) functionalities.
-    /// -   `type(IERC165).interfaceId`: This indicates compliance with the ERC165 interface detection standard itself.
-    /// It then calls `super.supportsInterface(interfaceId)` to include support for any interfaces registered
-    /// by parent contracts further up the inheritance chain (e.g., `Identity` itself might register others if it
-    /// inherited `ERC165`).
-    /// This ensures a complete and accurate report of all supported interfaces.
-    /// @param interfaceId The EIP-165 interface identifier (a `bytes4` value) to check for support.
-    /// @return `true` if the contract supports the specified `interfaceId`, `false` otherwise.
+    /// @notice Checks if the contract supports a given interface ID.
+    /// @dev It declares support for `IIdentity`, `IERC734`, `IERC735` (components of `IIdentity`),
+    ///      and `IERC165` itself. It chains to `ERC165Upgradeable.supportsInterface`.
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
-        return interfaceId == type(IIdentity).interfaceId || interfaceId == type(IERC165).interfaceId
-            || super.supportsInterface(interfaceId);
+        return interfaceId == type(ISMARTTokenIdentity).interfaceId || interfaceId == type(IERC735).interfaceId
+            || interfaceId == type(IIdentity).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    // --- Internal functions ---
+
+    /// @notice Internal view function to verify if an account has a specific role.
+    /// @dev If the account does not have the role, this function reverts the transaction
+    ///      with an `AccessControlUnauthorizedAccount` error, providing the account address
+    ///      and the role that was needed.
+    ///      This is often used in modifiers or at the beginning of functions to guard access.
+    /// @param role The `bytes32` identifier of the role to check for.
+    /// @param account The address of the account to verify.
+    function _checkRole(bytes32 role, address account) internal view {
+        if (_accessManager == address(0) || !ISMARTTokenAccessManager(_accessManager).hasRole(role, account)) {
+            revert AccessControlUnauthorizedAccount(account, role);
+        }
     }
 }

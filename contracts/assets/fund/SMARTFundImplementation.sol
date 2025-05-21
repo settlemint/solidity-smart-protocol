@@ -2,6 +2,7 @@
 pragma solidity 0.8.28;
 
 // OpenZeppelin imports
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -9,35 +10,72 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { ERC20VotesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Constants
-import { SMARTRoles } from "./SMARTRoles.sol";
+import { SMARTRoles } from "../SMARTRoles.sol";
 
 // Interface imports
-import { SMARTComplianceModuleParamPair } from "../interface/structs/SMARTComplianceModuleParamPair.sol";
+import { ISMARTFund } from "./ISMARTFund.sol";
+import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
-import { SMARTUpgradeable } from "../extensions/core/SMARTUpgradeable.sol"; // Base SMART logic + ERC20
-import { SMARTHooks } from "../extensions/common/SMARTHooks.sol";
+import { SMARTUpgradeable } from "../../extensions/core/SMARTUpgradeable.sol"; // Base SMART logic + ERC20
+import { SMARTHooks } from "../../extensions/common/SMARTHooks.sol";
 
 // Feature extensions
-import { SMARTPausableUpgradeable } from "../extensions/pausable/SMARTPausableUpgradeable.sol";
-import { SMARTBurnableUpgradeable } from "../extensions/burnable/SMARTBurnableUpgradeable.sol";
-import { SMARTCustodianUpgradeable } from "../extensions/custodian/SMARTCustodianUpgradeable.sol";
-import { SMARTTokenAccessManagedUpgradeable } from "../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
+import { SMARTPausableUpgradeable } from "../../extensions/pausable/SMARTPausableUpgradeable.sol";
+import { SMARTBurnableUpgradeable } from "../../extensions/burnable/SMARTBurnableUpgradeable.sol";
+import { SMARTCustodianUpgradeable } from "../../extensions/custodian/SMARTCustodianUpgradeable.sol";
+import { SMARTTokenAccessManagedUpgradeable } from
+    "../../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
 
-contract SMARTEquity is
+/// @title SMARTFund - A security token representing fund shares with management fees
+/// @notice This contract implements a security token that represents fund shares with voting rights,
+/// blocklist, custodian features, and management fee collection. It supports different fund classes
+/// and categories, and includes governance capabilities through the ERC20Votes extension.
+/// @dev Inherits from multiple OpenZeppelin contracts to provide comprehensive security token functionality
+/// with governance capabilities, meta-transactions support, and role-based access control.
+/// @custom:security-contact support@settlemint.com
+contract SMARTFundImplementation is
+    Initializable,
+    ISMARTFund,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,
-    SMARTCustodianUpgradeable,
-    SMARTPausableUpgradeable,
     SMARTBurnableUpgradeable,
-    ERC20VotesUpgradeable, // TODO?
+    SMARTPausableUpgradeable,
+    SMARTCustodianUpgradeable,
+    ERC20VotesUpgradeable, // TODO: ??
     ERC2771ContextUpgradeable
 {
-    string private _equityClass;
-    string private _equityCategory;
+    using Math for uint256;
+    using SafeERC20 for IERC20;
+
+    /// @notice Custom errors for the SMARTFund contract
+    /// @dev These errors provide more gas-efficient and descriptive error handling
+
+    /// @notice The timestamp of the last fee collection
+    /// @dev Used to calculate time-based management fees
+    uint40 private _lastFeeCollection;
+
+    /// @notice The management fee in basis points (1 basis point = 0.01%)
+    /// @dev Set at deployment and cannot be changed
+    uint16 private _managementFeeBps;
+
+    /// @notice The class of the fund (e.g., "Hedge SMARTFund", "Mutual SMARTFund")
+    /// @dev Set at deployment and cannot be changed
+    string private _fundClass;
+
+    /// @notice The category of the fund (e.g., "Long/Short Equity", "Global Macro")
+    /// @dev Set at deployment and cannot be changed
+    string private _fundCategory;
+
+    /// @notice Emitted when management fees are collected
+    /// @param sender The address that collected the management fees
+    /// @param amount The amount of tokens minted as management fees
+    /// @param timestamp The timestamp when the fees were collected
+    event ManagementFeeCollected(address indexed sender, uint256 amount, uint256 timestamp);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     /// @param forwarder_ The address of the forwarder contract.
@@ -49,8 +87,9 @@ contract SMARTEquity is
     /// @param name_ The name of the token.
     /// @param symbol_ The symbol of the token.
     /// @param decimals_ The number of decimals the token uses.
-    /// @param equityClass_ The class of the equity.
-    /// @param equityCategory_ The category of the equity.
+    /// @param managementFeeBps_ The management fee in basis points (1 basis point = 0.01%)
+    /// @param fundClass_ The class of the fund (e.g., "Hedge SMARTFund", "Mutual SMARTFund")
+    /// @param fundCategory_ The category of the fund (e.g., "Long/Short Equity", "Global Macro")
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
     /// @param identityRegistry_ The address of the Identity Registry contract.
@@ -60,8 +99,9 @@ contract SMARTEquity is
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
-        string memory equityClass_,
-        string memory equityCategory_,
+        uint16 managementFeeBps_,
+        string memory fundClass_,
+        string memory fundCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -69,6 +109,7 @@ contract SMARTEquity is
         address accessManager_
     )
         public
+        override
         initializer
     {
         __SMART_init(
@@ -86,22 +127,61 @@ contract SMARTEquity is
         __SMARTPausable_init();
         __SMARTTokenAccessManaged_init(accessManager_);
 
-        _equityClass = equityClass_;
-        _equityCategory = equityCategory_;
+        _managementFeeBps = managementFeeBps_;
+        _fundClass = fundClass_;
+        _fundCategory = fundCategory_;
+        _lastFeeCollection = uint40(block.timestamp);
     }
 
     // --- View Functions ---
 
-    /// @notice Returns the class of the equity.
-    /// @return The class of the equity.
-    function equityClass() public view returns (string memory) {
-        return _equityClass;
+    /// @notice Returns the fund class
+    /// @dev The fund class is immutable after construction
+    /// @return The fund class as a string (e.g., "Hedge SMARTFund", "Mutual SMARTFund")
+    function fundClass() external view returns (string memory) {
+        return _fundClass;
     }
 
-    /// @notice Returns the category of the equity.
-    /// @return The category of the equity.
-    function equityCategory() public view returns (string memory) {
-        return _equityCategory;
+    /// @notice Returns the fund category
+    /// @dev The fund category is immutable after construction
+    /// @return The fund category as a string (e.g., "Long/Short Equity", "Global Macro")
+    function fundCategory() external view returns (string memory) {
+        return _fundCategory;
+    }
+
+    /// @notice Returns the management fee in basis points
+    /// @dev One basis point equals 0.01%
+    /// @return The management fee in basis points
+    function managementFeeBps() external view returns (uint16) {
+        return _managementFeeBps;
+    }
+
+    /// @notice Returns the current timestamp for voting snapshots
+    /// @dev Implementation of ERC20Votes clock method for voting delay and period calculations
+    /// @return Current block timestamp cast to uint48
+    function clock() public view override returns (uint48) {
+        return uint48(block.timestamp);
+    }
+
+    // --- State-Changing Functions ---
+    /// @notice Collects management fee based on time elapsed and assets under management
+    /// @dev Only callable by addresses with DEFAULT_ADMIN_ROLE. Fee is calculated as:
+    /// (AUM * fee_rate * time_elapsed) / (100% * 1 year)
+    /// @return The amount of tokens minted as management fee
+    function collectManagementFee() public onlyAccessManagerRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE) returns (uint256) {
+        uint256 timeElapsed = block.timestamp - _lastFeeCollection;
+        uint256 aum = totalSupply();
+
+        uint256 fee = Math.mulDiv(Math.mulDiv(aum, _managementFeeBps, 10_000), timeElapsed, 365 days);
+
+        if (fee > 0) {
+            address sender = _msgSender();
+            _mint(sender, fee);
+            emit ManagementFeeCollected(sender, fee, block.timestamp);
+        }
+
+        _lastFeeCollection = uint40(block.timestamp);
+        return fee;
     }
 
     // --- ISMART Implementation ---
@@ -380,8 +460,9 @@ contract SMARTEquity is
         return super.decimals();
     }
 
-    function nonces(address owner) public view virtual override(NoncesUpgradeable) returns (uint256) {
-        return super.nonces(owner);
+    /// @inheritdoc SMARTUpgradeable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(SMARTUpgradeable) returns (bool) {
+        return interfaceId == type(ISMARTFund).interfaceId || super.supportsInterface(interfaceId);
     }
 
     // --- Hooks (Overrides for Chaining) ---

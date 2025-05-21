@@ -26,6 +26,10 @@ interface ISMARTYield is ISMARTHistoricalBalances {
     /// `ISMARTYieldSchedule`.
     function setYieldSchedule(address schedule) external;
 
+    /// @notice Returns the address of the yield schedule contract for this token.
+    /// @return schedule The address of the yield schedule contract.
+    function yieldSchedule() external view returns (address schedule);
+
     /// @notice Returns the basis amount used to calculate yield per single unit of the token (e.g., per 1 token with 18
     /// decimals).
     /// @dev The "yield basis" is a fundamental value upon which yield calculations are performed. For example:
@@ -47,15 +51,4 @@ interface ISMARTYield is ISMARTHistoricalBalances {
     /// This function specifies which ERC20 token will be transferred to holders when they claim their accrued yield.
     /// @return paymentToken An `IERC20` interface instance representing the token used for yield payments.
     function yieldToken() external view returns (IERC20 paymentToken);
-
-    /// @notice Checks if a given address has the permission to manage yield-related settings for this token.
-    /// @dev "Managing yield" could include actions like calling `setYieldSchedule` or other administrative functions
-    /// related to the yield mechanism (if any are defined in the implementing contract).
-    /// This function is essential for access control, ensuring that only authorized entities can alter critical yield
-    /// parameters.
-    /// Implementers should define the logic for what constitutes a "yield manager" (e.g., holding a specific role in an
-    /// AccessControl system).
-    /// @param manager The address to check for yield management permissions.
-    /// @return canManage A boolean value: `true` if the `manager` address can manage yield settings, `false` otherwise.
-    function canManageYield(address manager) external view returns (bool canManage);
 }

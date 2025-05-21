@@ -3,18 +3,23 @@ pragma solidity 0.8.28;
 
 import { Test } from "forge-std/Test.sol";
 import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
-import { SMARTEquity } from "../../contracts/assets/SMARTEquity.sol";
-import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
+import { ISMARTEquityFactory } from "../../contracts/assets/equity/ISMARTEquityFactory.sol";
+import { SMARTEquityFactoryImplementation } from "../../contracts/assets/equity/SMARTEquityFactoryImplementation.sol";
+import { ISMARTEquity } from "../../contracts/assets/equity/ISMARTEquity.sol";
+import { SMARTEquityImplementation } from "../../contracts/assets/equity/SMARTEquityImplementation.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { ClaimUtils } from "../../test/utils/ClaimUtils.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 
 contract SMARTEquityTest is AbstractSMARTAssetTest {
-    SMARTEquity internal smartEquity;
+    ISMARTEquityFactory internal equityFactory;
+    ISMARTEquity internal smartEquity;
 
     address internal owner;
     address internal user1;
@@ -44,12 +49,24 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         // Initialize SMART
         setUpSMART(owner);
 
-        address[] memory identities = new address[](4);
-        identities[0] = owner;
-        identities[1] = user1;
-        identities[2] = user2;
-        identities[3] = spender;
-        _setUpIdentities(identities);
+        // Set up the Equity Factory
+        SMARTEquityFactoryImplementation equityFactoryImpl = new SMARTEquityFactoryImplementation(address(forwarder));
+        SMARTEquityImplementation equityImpl = new SMARTEquityImplementation(address(forwarder));
+
+        vm.startPrank(platformAdmin);
+        equityFactory = ISMARTEquityFactory(
+            systemUtils.system().createTokenFactory("Equity", address(equityFactoryImpl), address(equityImpl))
+        );
+
+        // Grant registrar role to owner so that he can create the equity
+        IAccessControl(address(equityFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
+        vm.stopPrank();
+
+        // Initialize identities
+        _setUpIdentity(owner, "Owner");
+        _setUpIdentity(user1, "User 1");
+        _setUpIdentity(user2, "User 2");
+        _setUpIdentity(spender, "Spender");
 
         smartEquity =
             _createEquityAndMint(NAME, SYMBOL, DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0));
@@ -69,33 +86,19 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         internal
-        returns (SMARTEquity result)
+        returns (ISMARTEquity result)
     {
         vm.startPrank(owner);
-        SMARTEquity smartEquityImplementation = new SMARTEquity(address(forwarder));
-        vm.label(address(smartEquityImplementation), "Equity Implementation");
-
-        bytes memory data = abi.encodeWithSelector(
-            SMARTEquity.initialize.selector,
-            name_,
-            symbol_,
-            decimals_,
-            EQUITY_CLASS,
-            EQUITY_CATEGORY,
-            requiredClaimTopics_,
-            initialModulePairs_,
-            identityRegistry,
-            compliance,
-            address(accessManager)
+        address equityAddress = equityFactory.createEquity(
+            name_, symbol_, decimals_, EQUITY_CLASS, EQUITY_CATEGORY, requiredClaimTopics_, initialModulePairs_
         );
 
-        result = SMARTEquity(address(new ERC1967Proxy(address(smartEquityImplementation), data)));
-        vm.label(address(result), "Equity");
+        result = ISMARTEquity(equityAddress);
+
+        vm.label(equityAddress, "Equity");
         vm.stopPrank();
 
-        _grantAllRoles(owner, owner);
-
-        _createAndSetTokenOnchainID(address(result), owner);
+        _grantAllRoles(result.accessManager(), owner, owner);
 
         vm.prank(owner);
         result.mint(owner, INITIAL_SUPPLY);
@@ -124,26 +127,9 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         decimalValues[3] = 18; // Test max decimals
 
         for (uint256 i = 0; i < decimalValues.length; ++i) {
-            vm.startPrank(owner);
-            SMARTEquity smartEquityImplementation = new SMARTEquity(address(forwarder));
-
-            bytes memory data = abi.encodeWithSelector(
-                SMARTEquity.initialize.selector,
-                "Test SMART Equity",
-                "TEST",
-                decimalValues[i],
-                EQUITY_CLASS,
-                EQUITY_CATEGORY,
-                new uint256[](0),
-                new SMARTComplianceModuleParamPair[](0),
-                identityRegistry,
-                compliance,
-                address(accessManager)
+            ISMARTEquity newEquity = _createEquityAndMint(
+                "Test SMART Equity", "TEST", decimalValues[i], new uint256[](0), new SMARTComplianceModuleParamPair[](0)
             );
-
-            SMARTEquity newEquity = SMARTEquity(address(new ERC1967Proxy(address(smartEquityImplementation), data)));
-            vm.stopPrank();
-
             assertEq(newEquity.decimals(), decimalValues[i]);
         }
     }
@@ -172,10 +158,10 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        ISMARTTokenAccessManager(smartEquity.accessManager()).grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
         assertTrue(smartEquity.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
 
-        accessManager.revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        ISMARTTokenAccessManager(smartEquity.accessManager()).revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
         assertFalse(smartEquity.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
         vm.stopPrank();
     }

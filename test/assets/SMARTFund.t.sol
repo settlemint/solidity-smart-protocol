@@ -6,17 +6,23 @@ import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { SMARTFund } from "../../contracts/assets/SMARTFund.sol";
+import { ISMARTFund } from "../../contracts/assets/fund/ISMARTFund.sol";
+import { ISMARTFundFactory } from "../../contracts/assets/fund/ISMARTFundFactory.sol";
+import { SMARTFundFactoryImplementation } from "../../contracts/assets/fund/SMARTFundFactoryImplementation.sol";
+import { SMARTFundImplementation } from "../../contracts/assets/fund/SMARTFundImplementation.sol";
+
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
-import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { TokenRecovered } from "../../contracts/extensions/core/SMARTEvents.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { TokenPaused } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract SMARTFundTest is AbstractSMARTAssetTest {
-    SMARTFund public fund;
+    ISMARTFundFactory public fundFactory;
+    ISMARTFund public fund;
+
     address public owner;
     address public investor1;
     address public investor2;
@@ -46,12 +52,23 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         // Initialize SMART
         setUpSMART(owner);
 
+        // Set up the Fund Factory
+        SMARTFundFactoryImplementation fundFactoryImpl = new SMARTFundFactoryImplementation(address(forwarder));
+        SMARTFundImplementation fundImpl = new SMARTFundImplementation(address(forwarder));
+
+        vm.startPrank(platformAdmin);
+        fundFactory = ISMARTFundFactory(
+            systemUtils.system().createTokenFactory("Fund", address(fundFactoryImpl), address(fundImpl))
+        );
+
+        // Grant registrar role to owner so that he can create the fund
+        IAccessControl(address(fundFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
+        vm.stopPrank();
+
         // Initialize identities
-        address[] memory identities = new address[](3);
-        identities[0] = owner;
-        identities[1] = investor1;
-        identities[2] = investor2;
-        _setUpIdentities(identities);
+        _setUpIdentity(owner, "Owner");
+        _setUpIdentity(investor1, "Investor 1");
+        _setUpIdentity(investor2, "Investor 2");
 
         fund = _createFundAndMint(
             NAME,
@@ -77,13 +94,10 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         internal
-        returns (SMARTFund result)
+        returns (ISMARTFund result)
     {
         vm.startPrank(owner);
-        SMARTFund smartFundImplementation = new SMARTFund(address(forwarder));
-        vm.label(address(smartFundImplementation), "Fund Implementation");
-        bytes memory data = abi.encodeWithSelector(
-            SMARTFund.initialize.selector,
+        address fundAddress = fundFactory.createFund(
             name_,
             symbol_,
             decimals_,
@@ -91,19 +105,15 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
             fundClass_,
             fundCategory_,
             requiredClaimTopics_,
-            initialModulePairs_,
-            identityRegistry,
-            compliance,
-            address(accessManager)
+            initialModulePairs_
         );
 
-        result = SMARTFund(address(new ERC1967Proxy(address(smartFundImplementation), data)));
-        vm.label(address(result), "Fund");
+        result = ISMARTFund(fundAddress);
+
+        vm.label(fundAddress, "Fund");
         vm.stopPrank();
 
-        _grantAllRoles(owner, owner);
-
-        _createAndSetTokenOnchainID(address(result), owner);
+        _grantAllRoles(result.accessManager(), owner, owner);
 
         vm.prank(owner);
         result.mint(owner, INITIAL_SUPPLY);

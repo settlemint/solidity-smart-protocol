@@ -5,9 +5,11 @@ import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
 import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
 import { ISMARTYield } from "../../contracts/extensions/yield/ISMARTYield.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
-import { SMARTBond } from "../../contracts/assets/SMARTBond.sol";
-import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
+import { ISMARTBond } from "../../contracts/assets/bond/ISMARTBond.sol";
+import { ISMARTBondFactory } from "../../contracts/assets/bond/ISMARTBondFactory.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -17,9 +19,13 @@ import { SMARTFixedYieldScheduleFactory } from
 import { SMARTFixedYieldSchedule } from "../../contracts/extensions/yield/schedules/fixed/SMARTFixedYieldSchedule.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { YieldScheduleAlreadySet, YieldScheduleActive } from "../../contracts/extensions/yield/SMARTYieldErrors.sol";
+import { SMARTBondFactoryImplementation } from "../../contracts/assets/bond/SMARTBondFactoryImplementation.sol";
+import { SMARTBondImplementation } from "../../contracts/assets/bond/SMARTBondImplementation.sol";
+import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 
 contract SMARTBondTest is AbstractSMARTAssetTest {
-    SMARTBond public bond;
+    ISMARTBondFactory public bondFactory;
+    ISMARTBond public bond;
     MockedERC20Token public underlyingAsset;
 
     address public owner;
@@ -65,13 +71,24 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         // Initialize SMART
         setUpSMART(owner);
 
+        // Set up the Bond Factory
+        SMARTBondFactoryImplementation bondFactoryImpl = new SMARTBondFactoryImplementation(address(forwarder));
+        SMARTBondImplementation bondImpl = new SMARTBondImplementation(address(forwarder));
+
+        vm.startPrank(platformAdmin);
+        bondFactory = ISMARTBondFactory(
+            systemUtils.system().createTokenFactory("Bond", address(bondFactoryImpl), address(bondImpl))
+        );
+
+        // Grant registrar role to owner so that he can create the bond
+        IAccessControl(address(bondFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
+        vm.stopPrank();
+
         // Initialize identities
-        address[] memory identities = new address[](4);
-        identities[0] = owner;
-        identities[1] = user1;
-        identities[2] = user2;
-        identities[3] = spender;
-        _setUpIdentities(identities);
+        _setUpIdentity(owner, "Owner");
+        _setUpIdentity(user1, "User1");
+        _setUpIdentity(user2, "User2");
+        _setUpIdentity(spender, "Spender");
 
         maturityDate = block.timestamp + 365 days;
 
@@ -110,14 +127,10 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
         internal
-        returns (SMARTBond result)
+        returns (ISMARTBond result)
     {
         vm.startPrank(owner);
-        SMARTBond smartBondImplementation = new SMARTBond(address(forwarder));
-        vm.label(address(smartBondImplementation), "Bond Implementation");
-
-        bytes memory data = abi.encodeWithSelector(
-            SMARTBond.initialize.selector,
+        address bondAddress = bondFactory.createBond(
             name_,
             symbol_,
             decimals_,
@@ -126,19 +139,15 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
             faceValue_,
             underlyingAsset_,
             requiredClaimTopics_,
-            initialModulePairs_,
-            identityRegistry,
-            compliance,
-            address(accessManager)
+            initialModulePairs_
         );
 
-        result = SMARTBond(address(new ERC1967Proxy(address(smartBondImplementation), data)));
-        vm.label(address(result), "Bond");
+        result = ISMARTBond(bondAddress);
+
+        vm.label(bondAddress, "Bond");
         vm.stopPrank();
 
-        _grantAllRoles(owner, owner);
-
-        _createAndSetTokenOnchainID(address(result), owner);
+        _grantAllRoles(result.accessManager(), owner, owner);
 
         vm.prank(owner);
         result.mint(owner, initialSupply);
@@ -171,7 +180,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         decimalValues[3] = 18; // Test max decimals
 
         for (uint256 i = 0; i < decimalValues.length; ++i) {
-            SMARTBond newBond = _createBondAndMint(
+            ISMARTBond newBond = _createBondAndMint(
                 "Test Bond",
                 "TBOND",
                 decimalValues[i],
@@ -188,9 +197,9 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
 
     function test_RevertOnInvalidDecimals() public {
         vm.startPrank(owner);
-        SMARTBond smartBondImplementation = new SMARTBond(address(forwarder));
-        bytes memory data = abi.encodeWithSelector(
-            SMARTBond.initialize.selector,
+
+        vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
+        bondFactory.createBond(
             "Test Bond",
             "TBOND",
             19,
@@ -199,14 +208,9 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
             faceValue,
             address(underlyingAsset),
             new uint256[](0),
-            new SMARTComplianceModuleParamPair[](0),
-            identityRegistry,
-            compliance,
-            address(accessManager)
+            new SMARTComplianceModuleParamPair[](0)
         );
 
-        vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
-        SMARTBond(address(new ERC1967Proxy(address(smartBondImplementation), data)));
         vm.stopPrank();
     }
 
@@ -255,10 +259,10 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        ISMARTTokenAccessManager(bond.accessManager()).grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
         assertTrue(bond.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
 
-        accessManager.revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        ISMARTTokenAccessManager(bond.accessManager()).revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
         assertFalse(bond.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
         vm.stopPrank();
     }
@@ -383,7 +387,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         underlyingAsset.transfer(address(bond), initialUnderlyingSupply);
 
         bond.mature();
-        vm.expectRevert(SMARTBond.BondAlreadyMatured.selector);
+        vm.expectRevert(ISMARTBond.BondAlreadyMatured.selector);
         bond.mature();
         vm.stopPrank();
     }
@@ -393,7 +397,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         vm.startPrank(owner);
 
         // Try to mature without any underlying assets
-        vm.expectRevert(SMARTBond.InsufficientUnderlyingBalance.selector);
+        vm.expectRevert(ISMARTBond.InsufficientUnderlyingBalance.selector);
         bond.mature();
 
         // Add some underlying assets but not enough
@@ -404,7 +408,7 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         underlyingAsset.transfer(address(bond), partialAmount);
 
         // Try to mature with insufficient underlying assets
-        vm.expectRevert(SMARTBond.InsufficientUnderlyingBalance.selector);
+        vm.expectRevert(ISMARTBond.InsufficientUnderlyingBalance.selector);
         bond.mature();
 
         vm.stopPrank();

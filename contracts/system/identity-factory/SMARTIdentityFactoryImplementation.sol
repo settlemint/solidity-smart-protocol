@@ -14,16 +14,20 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 
 // Interface imports
 import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
-// IImplementationAuthority is not directly used, consider removing if not needed for future use.
-// import { IImplementationAuthority } from "@onchainid/contracts/interface/IImplementationAuthority.sol";
 import { ISMARTIdentityFactory } from "./ISMARTIdentityFactory.sol";
+import { ISMARTIdentity } from "./identities/ISMARTIdentity.sol";
+import { ISMARTTokenIdentity } from "./identities/ISMARTTokenIdentity.sol";
 
 // System imports
 import { InvalidSystemAddress } from "../SMARTSystemErrors.sol"; // Assuming this is correctly placed
+import { ISMARTSystem } from "../ISMARTSystem.sol";
 
 // Implementation imports
 import { SMARTIdentityProxy } from "./identities/SMARTIdentityProxy.sol";
 import { SMARTTokenIdentityProxy } from "./identities/SMARTTokenIdentityProxy.sol";
+
+// Constants
+import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 
 // --- Errors ---
 /// @notice Indicates that an operation was attempted with the zero address (address(0))
@@ -49,6 +53,10 @@ error TokenAlreadyLinked(address token);
 /// @dev This is a critical error suggesting a potential issue in the CREATE2 computation, salt, or deployment bytecode,
 /// or an unexpected change in blockchain state between prediction and deployment.
 error DeploymentAddressMismatch();
+/// @notice Indicates that the identity implementation is invalid.
+error InvalidIdentityImplementation();
+/// @notice Indicates that the token identity implementation is invalid.
+error InvalidTokenIdentityImplementation();
 
 /// @title SMART Identity Factory Implementation
 /// @author SettleMint Tokenization Services
@@ -78,12 +86,6 @@ contract SMARTIdentityFactoryImplementation is
     /// @dev For example, salt might be `keccak256(abi.encodePacked("OID", <walletAddressHex>))` (OID stands for
     /// OnchainID).
     string public constant WALLET_SALT_PREFIX = "OID";
-
-    // --- Roles ---
-    /// @notice Role identifier for accounts authorized to register new identities (both wallet and token identities).
-    /// @dev Only addresses granted this role can call `createIdentity` and `createTokenIdentity`.
-    /// The value is `keccak256("REGISTRAR_ROLE")`.
-    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
     // --- Storage Variables ---
     /// @notice The address of the `ISMARTSystem` contract.
@@ -116,6 +118,14 @@ contract SMARTIdentityFactoryImplementation is
     /// @param identity The address of the newly deployed `SMARTTokenIdentityProxy` contract.
     /// @param token The address of the token contract for which the identity was created.
     event TokenIdentityCreated(address indexed sender, address indexed identity, address indexed token);
+    /// @notice Emitted when the TOKEN_REGISTRAR_ROLE is granted to an account.
+    /// @param account The account that was granted the role.
+    /// @param sender The account that granted the role.
+    event TokenRegistrarRoleGranted(address indexed account, address indexed sender);
+    /// @notice Emitted when the TOKEN_REGISTRAR_ROLE is revoked from an account.
+    /// @param account The account that had the role revoked.
+    /// @param sender The account that revoked the role.
+    event TokenRegistrarRoleRevoked(address indexed account, address indexed sender);
 
     // --- Constructor ---
     /// @notice Constructor for the identity factory implementation.
@@ -151,10 +161,29 @@ contract SMARTIdentityFactoryImplementation is
         __ERC165_init_unchained();
         __AccessControlEnumerable_init_unchained();
 
+        if (
+            !IERC165(ISMARTSystem(systemAddress).identityImplementation()).supportsInterface(
+                type(ISMARTIdentity).interfaceId
+            )
+        ) {
+            revert InvalidIdentityImplementation();
+        }
+
+        if (
+            !IERC165(ISMARTSystem(systemAddress).tokenIdentityImplementation()).supportsInterface(
+                type(ISMARTTokenIdentity).interfaceId
+            )
+        ) {
+            revert InvalidTokenIdentityImplementation();
+        }
+
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
-        // TODO: Confirm if the initialAdmin should always be the default registrar.
-        // For now, granting REGISTRAR_ROLE to initialAdmin by default.
-        _grantRole(REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.TOKEN_REGISTRAR_MANAGER_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.TOKEN_REGISTRAR_ROLE, initialAdmin);
+
+        _grantRole(SMARTSystemRoles.TOKEN_REGISTRAR_MANAGER_ROLE, systemAddress);
+        _setRoleAdmin(SMARTSystemRoles.TOKEN_REGISTRAR_ROLE, SMARTSystemRoles.TOKEN_REGISTRAR_MANAGER_ROLE);
 
         _system = systemAddress;
     }
@@ -186,7 +215,7 @@ contract SMARTIdentityFactoryImplementation is
         external
         virtual
         override
-        onlyRole(REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
         returns (
             address // Solidity style guide prefers no name for return in implementation if clear from Natspec
         )
@@ -229,24 +258,25 @@ contract SMARTIdentityFactoryImplementation is
     /// 3. Stores the mapping from the `_token` address to the new `identity` contract address.
     /// 4. Emits a `TokenIdentityCreated` event.
     /// @param _token The address of the token contract for which the identity is being created.
-    /// @param _tokenOwner The address that will be designated as the initial owner/manager of the token's identity.
+    /// @param _accessManager The address of the access manager contract that will be set as the initial owner/manager
+    /// of the token's identity.
     /// @return address The address of the newly created and registered `SMARTTokenIdentityProxy` contract.
     function createTokenIdentity(
         address _token,
-        address _tokenOwner
+        address _accessManager
     )
         external
         virtual
         override
-        onlyRole(REGISTRAR_ROLE)
+        onlyRole(SMARTSystemRoles.TOKEN_REGISTRAR_ROLE)
         returns (address)
     {
         if (_token == address(0)) revert ZeroAddressNotAllowed();
-        if (_tokenOwner == address(0)) revert ZeroAddressNotAllowed();
+        if (_accessManager == address(0)) revert ZeroAddressNotAllowed();
         if (_tokenIdentities[_token] != address(0)) revert TokenAlreadyLinked(_token);
 
         // Deploy identity with _tokenOwner as the initial management key
-        address identity = _createAndRegisterTokenIdentity(_token, _tokenOwner);
+        address identity = _createAndRegisterTokenIdentity(_token, _accessManager);
 
         _tokenIdentities[_token] = identity;
         emit TokenIdentityCreated(_msgSender(), identity, _token);
@@ -361,20 +391,14 @@ contract SMARTIdentityFactoryImplementation is
     /// @dev Calculates a unique salt for the `_tokenAddress`, checks if the salt has been taken, deploys
     ///      the `SMARTTokenIdentityProxy` using `_deployTokenProxy`, and marks the salt as taken.
     /// @param _tokenAddress The address of the token for which to create an identity.
-    /// @param _initialManagerAddress The address to be set as the initial management key in the proxy's constructor.
+    /// @param _accessManager The address of the access manager contract that will be set as the initial owner/manager
     /// @return address The address of the newly deployed `SMARTTokenIdentityProxy`.
-    function _createAndRegisterTokenIdentity(
-        address _tokenAddress,
-        address _initialManagerAddress
-    )
-        private
-        returns (address)
-    {
+    function _createAndRegisterTokenIdentity(address _tokenAddress, address _accessManager) private returns (address) {
         (bytes32 saltBytes, string memory saltString) = _calculateSalt(TOKEN_SALT_PREFIX, _tokenAddress);
 
         if (_saltTakenByteSalt[saltBytes]) revert SaltAlreadyTaken(saltString);
 
-        address identity = _deployTokenProxy(saltBytes, _initialManagerAddress);
+        address identity = _deployTokenProxy(saltBytes, _accessManager);
 
         _saltTakenByteSalt[saltBytes] = true;
         return identity;
@@ -445,11 +469,11 @@ contract SMARTIdentityFactoryImplementation is
     /// @dev Similar to `_deployWalletProxy` but for token identities, using `_computeTokenProxyAddress` and
     /// `_getTokenProxyAndConstructorArgs`.
     /// @param _saltBytes The `bytes32` salt for the CREATE2 deployment.
-    /// @param _initialManager The address to be set as the initial manager in the proxy's constructor.
+    /// @param _accessManager The address of the access manager contract that will be set as the initial owner/manager
     /// @return address The address of the newly deployed `SMARTTokenIdentityProxy`.
-    function _deployTokenProxy(bytes32 _saltBytes, address _initialManager) private returns (address) {
-        address predictedAddr = _computeTokenProxyAddress(_saltBytes, _initialManager);
-        (bytes memory proxyBytecode, bytes memory constructorArgs) = _getTokenProxyAndConstructorArgs(_initialManager);
+    function _deployTokenProxy(bytes32 _saltBytes, address _accessManager) private returns (address) {
+        address predictedAddr = _computeTokenProxyAddress(_saltBytes, _accessManager);
+        (bytes memory proxyBytecode, bytes memory constructorArgs) = _getTokenProxyAndConstructorArgs(_accessManager);
         return _deployProxy(predictedAddr, proxyBytecode, constructorArgs, _saltBytes);
     }
 
@@ -472,17 +496,17 @@ contract SMARTIdentityFactoryImplementation is
     /// @notice Internal helper to get the creation bytecode and encoded constructor arguments for
     /// `SMARTTokenIdentityProxy`.
     /// @dev The constructor of `SMARTTokenIdentityProxy` takes the `_system` address (from factory state) and
-    /// `_initialManager`.
-    /// @param _initialManager The address to be encoded as the initial manager argument.
+    /// `_accessManager`.
+    /// @param _accessManager The address of the access manager contract that will be set as the initial owner/manager
     /// @return proxyBytecode The creation bytecode of `SMARTTokenIdentityProxy`.
-    /// @return constructorArgs The ABI-encoded constructor arguments (`_system`, `_initialManager`).
-    function _getTokenProxyAndConstructorArgs(address _initialManager)
+    /// @return constructorArgs The ABI-encoded constructor arguments (`_system`, `_accessManager`).
+    function _getTokenProxyAndConstructorArgs(address _accessManager)
         private
         view
         returns (bytes memory proxyBytecode, bytes memory constructorArgs)
     {
         proxyBytecode = type(SMARTTokenIdentityProxy).creationCode;
-        constructorArgs = abi.encode(_system, _initialManager);
+        constructorArgs = abi.encode(_system, _accessManager);
         // No explicit return needed due to named return variables
     }
 

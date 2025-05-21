@@ -3,19 +3,26 @@ pragma solidity 0.8.28;
 
 import { Test } from "forge-std/Test.sol";
 import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
-import { SMARTStableCoin } from "../../contracts/assets/SMARTStableCoin.sol";
-import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
+
+import { ISMARTStableCoin } from "../../contracts/assets/stable-coin/ISMARTStableCoin.sol";
+import { ISMARTStableCoinFactory } from "../../contracts/assets/stable-coin/ISMARTStableCoinFactory.sol";
+import { SMARTStableCoinFactoryImplementation } from
+    "../../contracts/assets/stable-coin/SMARTStableCoinFactoryImplementation.sol";
+import { SMARTStableCoinImplementation } from "../../contracts/assets/stable-coin/SMARTStableCoinImplementation.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { ClaimUtils } from "../../test/utils/ClaimUtils.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { InsufficientCollateral } from "../../contracts/extensions/collateral/SMARTCollateralErrors.sol";
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 
 contract SMARTStableCoinTest is AbstractSMARTAssetTest {
-    SMARTStableCoin public stableCoin;
+    ISMARTStableCoinFactory public stableCoinFactory;
+    ISMARTStableCoin public stableCoin;
 
     address public owner;
     address public user1;
@@ -39,13 +46,27 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         // Initialize SMART
         setUpSMART(owner);
 
+        // Set up the Deposit Factory
+        SMARTStableCoinFactoryImplementation stableCoinFactoryImpl =
+            new SMARTStableCoinFactoryImplementation(address(forwarder));
+        SMARTStableCoinImplementation stableCoinImpl = new SMARTStableCoinImplementation(address(forwarder));
+
+        vm.startPrank(platformAdmin);
+        stableCoinFactory = ISMARTStableCoinFactory(
+            systemUtils.system().createTokenFactory(
+                "StableCoin", address(stableCoinFactoryImpl), address(stableCoinImpl)
+            )
+        );
+
+        // Grant registrar role to owner so that he can create the stable coin
+        IAccessControl(address(stableCoinFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
+        vm.stopPrank();
+
         // Initialize identities
-        address[] memory identities = new address[](4);
-        identities[0] = owner;
-        identities[1] = user1;
-        identities[2] = user2;
-        identities[3] = spender;
-        _setUpIdentities(identities);
+        _setUpIdentity(owner, "Owner");
+        _setUpIdentity(user1, "User1");
+        _setUpIdentity(user2, "User2");
+        _setUpIdentity(spender, "Spender");
 
         stableCoin =
             _createStableCoin("StableCoin", "STBL", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0));
@@ -60,30 +81,18 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         SMARTComplianceModuleParamPair[] memory initialModulePairs
     )
         internal
-        returns (SMARTStableCoin result)
+        returns (ISMARTStableCoin result)
     {
         vm.startPrank(owner);
-        SMARTStableCoin smartStableCoinImplementation = new SMARTStableCoin(address(forwarder));
-        vm.label(address(smartStableCoinImplementation), "StableCoin Implementation");
-        bytes memory data = abi.encodeWithSelector(
-            SMARTStableCoin.initialize.selector,
-            name,
-            symbol,
-            decimals,
-            requiredClaimTopics,
-            initialModulePairs,
-            identityRegistry,
-            compliance,
-            address(accessManager)
-        );
+        address stableCoinAddress =
+            stableCoinFactory.createStableCoin(name, symbol, decimals, requiredClaimTopics, initialModulePairs);
 
-        result = SMARTStableCoin(address(new ERC1967Proxy(address(smartStableCoinImplementation), data)));
-        vm.label(address(result), "StableCoin");
+        result = ISMARTStableCoin(stableCoinAddress);
+
+        vm.label(stableCoinAddress, "StableCoin");
         vm.stopPrank();
 
-        _grantAllRoles(owner, owner);
-
-        _createAndSetTokenOnchainID(address(result), owner);
+        _grantAllRoles(result.accessManager(), owner, owner);
 
         return result;
     }
@@ -122,7 +131,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
         decimalValues[3] = 18; // Test max decimals
 
         for (uint256 i = 0; i < decimalValues.length; ++i) {
-            SMARTStableCoin newToken = _createStableCoin(
+            ISMARTStableCoin newToken = _createStableCoin(
                 "StableCoin", "STBL", decimalValues[i], new uint256[](0), new SMARTComplianceModuleParamPair[](0)
             );
             assertEq(newToken.decimals(), decimalValues[i]);
@@ -131,22 +140,11 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
 
     function test_RevertOnInvalidDecimals() public {
         vm.startPrank(owner);
-        SMARTStableCoin smartStableCoinImplementation = new SMARTStableCoin(address(forwarder));
-
-        bytes memory data = abi.encodeWithSelector(
-            SMARTStableCoin.initialize.selector,
-            "StableCoin",
-            "STBL",
-            19,
-            new uint256[](0),
-            new SMARTComplianceModuleParamPair[](0),
-            identityRegistry,
-            compliance,
-            address(accessManager)
-        );
 
         vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
-        SMARTStableCoin(address(new ERC1967Proxy(address(smartStableCoinImplementation), data)));
+        stableCoinFactory.createStableCoin(
+            "StableCoin", "STBL", 19, new uint256[](0), new SMARTComplianceModuleParamPair[](0)
+        );
         vm.stopPrank();
     }
 
@@ -170,10 +168,10 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        ISMARTTokenAccessManager(stableCoin.accessManager()).grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
         assertTrue(stableCoin.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
 
-        accessManager.revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        ISMARTTokenAccessManager(stableCoin.accessManager()).revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
         assertFalse(stableCoin.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
         vm.stopPrank();
     }

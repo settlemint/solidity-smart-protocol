@@ -5,24 +5,30 @@ import { Test } from "forge-std/Test.sol";
 import { AbstractSMARTAssetTest } from "./AbstractSMARTAssetTest.sol";
 
 import { ClaimUtils } from "../utils/ClaimUtils.sol";
-import { SMARTDeposit } from "../../contracts/assets/SMARTDeposit.sol";
-import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
+import { ISMARTDeposit } from "../../contracts/assets/deposit/ISMARTDeposit.sol";
+import { ISMARTDepositFactory } from "../../contracts/assets/deposit/ISMARTDepositFactory.sol";
+import { SMARTDepositFactoryImplementation } from "../../contracts/assets/deposit/SMARTDepositFactoryImplementation.sol";
+import { SMARTDepositImplementation } from "../../contracts/assets/deposit/SMARTDepositImplementation.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { InsufficientCollateral } from "../../contracts/extensions/collateral/SMARTCollateralErrors.sol";
 import { console } from "forge-std/console.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
 
 contract SMARTDepositTest is AbstractSMARTAssetTest {
+    ISMARTDepositFactory public depositFactory;
+    ISMARTDeposit public deposit;
+
     address public owner;
     address public user1;
     address public user2;
     address public spender;
-
-    SMARTDeposit public deposit;
 
     uint8 public constant DECIMALS = 8;
     uint256 public constant INITIAL_SUPPLY = 1_000_000 * 10 ** DECIMALS;
@@ -38,16 +44,26 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         // Initialize SMART
         setUpSMART(owner);
 
-        // Initialize identities
-        address[] memory identities = new address[](4);
-        identities[0] = owner;
-        identities[1] = user1;
-        identities[2] = user2;
-        identities[3] = spender;
-        _setUpIdentities(identities);
+        // Set up the Deposit Factory
+        SMARTDepositFactoryImplementation depositFactoryImpl = new SMARTDepositFactoryImplementation(address(forwarder));
+        SMARTDepositImplementation depositImpl = new SMARTDepositImplementation(address(forwarder));
 
-        deposit =
-            _createDeposit("Deposit", "DEP", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0), owner);
+        vm.startPrank(platformAdmin);
+        depositFactory = ISMARTDepositFactory(
+            systemUtils.system().createTokenFactory("Deposit", address(depositFactoryImpl), address(depositImpl))
+        );
+
+        // Grant registrar role to owner so that he can create the deposit
+        IAccessControl(address(depositFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
+        vm.stopPrank();
+
+        // Initialize identities
+        _setUpIdentity(owner, "Owner");
+        _setUpIdentity(user1, "User1");
+        _setUpIdentity(user2, "User2");
+        _setUpIdentity(spender, "Spender");
+
+        deposit = _createDeposit("Deposit", "DEP", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0));
         vm.label(address(deposit), "Deposit");
     }
 
@@ -56,34 +72,21 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         string memory symbol,
         uint8 decimals,
         uint256[] memory requiredClaimTopics,
-        SMARTComplianceModuleParamPair[] memory initialModulePairs,
-        address owner_
+        SMARTComplianceModuleParamPair[] memory initialModulePairs
     )
         internal
-        returns (SMARTDeposit result)
+        returns (ISMARTDeposit result)
     {
         vm.startPrank(owner);
-        SMARTDeposit smartDepositImplementation = new SMARTDeposit(address(forwarder));
-        vm.label(address(smartDepositImplementation), "Deposit Implementation");
-        bytes memory data = abi.encodeWithSelector(
-            SMARTDeposit.initialize.selector,
-            name,
-            symbol,
-            decimals,
-            requiredClaimTopics,
-            initialModulePairs,
-            identityRegistry,
-            compliance,
-            address(accessManager)
-        );
+        address depositAddress =
+            depositFactory.createDeposit(name, symbol, decimals, requiredClaimTopics, initialModulePairs);
 
-        result = SMARTDeposit(address(new ERC1967Proxy(address(smartDepositImplementation), data)));
-        vm.label(address(result), "Deposit");
+        result = ISMARTDeposit(depositAddress);
+
+        vm.label(depositAddress, "Deposit");
         vm.stopPrank();
 
-        _grantAllRoles(owner, owner);
-
-        _createAndSetTokenOnchainID(address(result), owner_);
+        _grantAllRoles(result.accessManager(), owner, owner);
 
         return result;
     }
@@ -121,8 +124,8 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         decimalValues[2] = 8; // Test max decimals
 
         for (uint256 i = 0; i < decimalValues.length; ++i) {
-            SMARTDeposit newToken = _createDeposit(
-                "Deposit", "DEP", decimalValues[i], new uint256[](0), new SMARTComplianceModuleParamPair[](0), owner
+            ISMARTDeposit newToken = _createDeposit(
+                "Deposit", "DEP", decimalValues[i], new uint256[](0), new SMARTComplianceModuleParamPair[](0)
             );
             assertEq(newToken.decimals(), decimalValues[i]);
         }
@@ -130,22 +133,9 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
 
     function test_RevertOnInvalidDecimals() public {
         vm.startPrank(owner);
-        SMARTDeposit smartDepositImplementation = new SMARTDeposit(address(forwarder));
-
-        bytes memory data = abi.encodeWithSelector(
-            SMARTDeposit.initialize.selector,
-            "Deposit",
-            "DEP",
-            19,
-            new uint256[](0),
-            new SMARTComplianceModuleParamPair[](0),
-            identityRegistry,
-            compliance,
-            address(accessManager)
-        );
 
         vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
-        new ERC1967Proxy(address(smartDepositImplementation), data);
+        depositFactory.createDeposit("Deposit", "DEP", 19, new uint256[](0), new SMARTComplianceModuleParamPair[](0));
         vm.stopPrank();
     }
 
@@ -169,10 +159,10 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
 
     function test_RoleManagement() public {
         vm.startPrank(owner);
-        accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        ISMARTTokenAccessManager(deposit.accessManager()).grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
         assertTrue(deposit.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
 
-        accessManager.revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
+        ISMARTTokenAccessManager(deposit.accessManager()).revokeRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1);
         assertFalse(deposit.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, user1));
         vm.stopPrank();
     }
@@ -303,21 +293,13 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
     // Test for recoverERC20 function
     function test_RecoverERC20() public {
         // Create a mock token
-        SMARTDeposit mockToken =
-            _createDeposit("Mock", "MCK", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0), owner);
+        MockedERC20Token mockToken = new MockedERC20Token("Mock", "MCK", DECIMALS);
 
-        // Set up identity for the deposit contract (required to receive tokens)
-        _setUpIdentity(address(deposit));
-
-        // Update collateral and mint some tokens to the deposit contract
-        _updateCollateral(address(mockToken), owner, 1000);
         vm.startPrank(owner);
         mockToken.mint(address(deposit), 1000);
         vm.stopPrank();
 
         assertEq(mockToken.balanceOf(address(deposit)), 1000);
-
-        // Remove redundant identity setup for user1 (already done in setUp)
 
         // Test recovery by owner (who has DEFAULT_ADMIN_ROLE)
         vm.startPrank(owner);
@@ -357,14 +339,8 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
     // Test recoverERC20 revert on insufficient balance
     function test_RecoverERC20RevertOnInsufficientBalance() public {
         // Create a mock token
-        SMARTDeposit mockToken =
-            _createDeposit("Mock", "MCK", DECIMALS, new uint256[](0), new SMARTComplianceModuleParamPair[](0), owner);
+        MockedERC20Token mockToken = new MockedERC20Token("Mock", "MCK", DECIMALS);
 
-        // Set up identity for the deposit contract (required to receive tokens)
-        _setUpIdentity(address(deposit));
-
-        // Update collateral and mint some tokens to the deposit contract
-        _updateCollateral(address(mockToken), owner, 100);
         vm.startPrank(owner);
         mockToken.mint(address(deposit), 100);
         vm.stopPrank();

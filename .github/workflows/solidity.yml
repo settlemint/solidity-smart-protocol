@@ -131,9 +131,7 @@ jobs:
       - name: Run Forge build
         run: |
           forge --version
-          # Need it for testing, but it's too big
-          forge build --sizes --skip SMARTTokenUpgradeable.sol
-          forge build
+          forge build --sizes
 
       - name: Run Hardhat build
         run: |

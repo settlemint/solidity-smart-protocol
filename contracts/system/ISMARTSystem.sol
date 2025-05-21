@@ -22,6 +22,18 @@ interface ISMARTSystem {
     /// in the protocol's operation.
     function bootstrap() external;
 
+    /// @notice Creates a new token factory implementation and proxy.
+    /// @param _typeName The human-readable type name of the token factory.
+    /// @param _factoryImplementation The address of the token factory implementation contract.
+    /// @param _tokenImplementation The address of the token implementation contract.
+    function createTokenFactory(
+        string calldata _typeName,
+        address _factoryImplementation,
+        address _tokenImplementation
+    )
+        external
+        returns (address);
+
     /// @notice Retrieves the current, active smart contract address of the compliance module's logic.
     /// @dev Compliance modules are responsible for enforcing rules and restrictions on token transfers, account
     /// interactions,
@@ -111,6 +123,22 @@ interface ISMARTSystem {
     /// identity logic.
     function tokenIdentityImplementation() external view returns (address tokenIdentityImplementationAddress);
 
+    /// @notice Retrieves the current, active smart contract address of the token access manager contract's logic.
+    /// @dev Token access managers are responsible for managing access control for tokens.
+    /// This function returns the address of the base implementation (template) contract that new token access
+    /// managers will be created from.
+    /// This address can change if the underlying logic for token access managers is upgraded.
+    /// @return tokenAccessManagerImplementationAddress The blockchain address of the smart contract containing the
+    function tokenAccessManagerImplementation()
+        external
+        view
+        returns (address tokenAccessManagerImplementationAddress);
+
+    /// @notice Returns the address of the current token registry implementation.
+    /// @param factoryTypeHash The hash of the factory type.
+    /// @return The address of the token factory implementation contract.
+    function tokenFactoryImplementation(bytes32 factoryTypeHash) external view returns (address);
+
     /// @notice Retrieves the smart contract address of the proxy for the compliance module.
     /// @dev A proxy contract is an intermediary contract that delegates all function calls it receives to another
     /// contract, known as the implementation contract (which contains the actual logic).
@@ -155,4 +183,9 @@ interface ISMARTSystem {
     /// identity factory.
     /// @return identityFactoryProxyAddress The blockchain address of the identity factory module's proxy contract.
     function identityFactoryProxy() external view returns (address identityFactoryProxyAddress);
+
+    /// @notice Returns the address of the token factory proxy.
+    /// @param factoryTypeHash The hash of the factory type.
+    /// @return The address of the token factory proxy contract.
+    function tokenFactoryProxy(bytes32 factoryTypeHash) external view returns (address);
 }

@@ -7,41 +7,43 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { ERC20VotesUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
 
 // Constants
-import { SMARTConstants } from "./SMARTConstants.sol";
-import { SMARTRoles } from "./SMARTRoles.sol";
+import { SMARTRoles } from "../SMARTRoles.sol";
 
 // Interface imports
-import { SMARTComplianceModuleParamPair } from "../interface/structs/SMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
+import { ISMARTEquity } from "./ISMARTEquity.sol";
 
 // Core extensions
-import { SMARTUpgradeable } from "../extensions/core/SMARTUpgradeable.sol"; // Base SMART logic + ERC20
-import { SMARTHooks } from "../extensions/common/SMARTHooks.sol";
+import { SMARTUpgradeable } from "../../extensions/core/SMARTUpgradeable.sol"; // Base SMART logic + ERC20
+import { SMARTHooks } from "../../extensions/common/SMARTHooks.sol";
 
 // Feature extensions
-import { SMARTPausableUpgradeable } from "../extensions/pausable/SMARTPausableUpgradeable.sol";
-import { SMARTBurnableUpgradeable } from "../extensions/burnable/SMARTBurnableUpgradeable.sol";
-import { SMARTCustodianUpgradeable } from "../extensions/custodian/SMARTCustodianUpgradeable.sol";
-import { SMARTCollateralUpgradeable } from "../extensions/collateral/SMARTCollateralUpgradeable.sol";
-import { SMARTTokenAccessManagedUpgradeable } from "../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
+import { SMARTPausableUpgradeable } from "../../extensions/pausable/SMARTPausableUpgradeable.sol";
+import { SMARTBurnableUpgradeable } from "../../extensions/burnable/SMARTBurnableUpgradeable.sol";
+import { SMARTCustodianUpgradeable } from "../../extensions/custodian/SMARTCustodianUpgradeable.sol";
+import { SMARTTokenAccessManagedUpgradeable } from
+    "../../extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
 
-/// @title SMARTStableCoin
-/// @notice An implementation of a stablecoin using the SMART extension framework,
-///         backed by collateral and using custom roles.
-/// @dev Combines core SMART features (compliance, verification) with extensions for pausing,
-///      burning, custodian actions, and collateral tracking. Access control uses custom roles.
-contract SMARTStableCoin is
+contract SMARTEquityImplementation is
     Initializable,
+    ISMARTEquity,
     SMARTUpgradeable,
     SMARTTokenAccessManagedUpgradeable,
-    SMARTCollateralUpgradeable,
     SMARTCustodianUpgradeable,
     SMARTPausableUpgradeable,
     SMARTBurnableUpgradeable,
+    ERC20VotesUpgradeable, // TODO?
     ERC2771ContextUpgradeable
 {
+    string private _equityClass;
+    string private _equityCategory;
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     /// @param forwarder_ The address of the forwarder contract.
     constructor(address forwarder_) ERC2771ContextUpgradeable(forwarder_) {
@@ -52,6 +54,8 @@ contract SMARTStableCoin is
     /// @param name_ The name of the token.
     /// @param symbol_ The symbol of the token.
     /// @param decimals_ The number of decimals the token uses.
+    /// @param equityClass_ The class of the equity.
+    /// @param equityCategory_ The category of the equity.
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
     /// @param identityRegistry_ The address of the Identity Registry contract.
@@ -61,6 +65,8 @@ contract SMARTStableCoin is
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
+        string memory equityClass_,
+        string memory equityCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -68,6 +74,7 @@ contract SMARTStableCoin is
         address accessManager_
     )
         public
+        override
         initializer
     {
         __SMART_init(
@@ -84,7 +91,23 @@ contract SMARTStableCoin is
         __SMARTBurnable_init();
         __SMARTPausable_init();
         __SMARTTokenAccessManaged_init(accessManager_);
-        __SMARTCollateral_init(SMARTConstants.CLAIM_TOPIC_COLLATERAL);
+
+        _equityClass = equityClass_;
+        _equityCategory = equityCategory_;
+    }
+
+    // --- View Functions ---
+
+    /// @notice Returns the class of the equity.
+    /// @return The class of the equity.
+    function equityClass() public view returns (string memory) {
+        return _equityClass;
+    }
+
+    /// @notice Returns the category of the equity.
+    /// @return The category of the equity.
+    function equityCategory() public view returns (string memory) {
+        return _equityCategory;
     }
 
     // --- ISMART Implementation ---
@@ -363,6 +386,11 @@ contract SMARTStableCoin is
         return super.decimals();
     }
 
+    /// @inheritdoc SMARTUpgradeable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(SMARTUpgradeable) returns (bool) {
+        return interfaceId == type(ISMARTEquity).interfaceId || super.supportsInterface(interfaceId);
+    }
+
     // --- Hooks (Overrides for Chaining) ---
     // These ensure that logic from multiple inherited extensions (SMART, SMARTCustodian, etc.) is called correctly.
 
@@ -373,7 +401,7 @@ contract SMARTStableCoin is
     )
         internal
         virtual
-        override(SMARTCollateralUpgradeable, SMARTCustodianUpgradeable, SMARTUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._beforeMint(to, amount);
     }
@@ -386,7 +414,7 @@ contract SMARTStableCoin is
     )
         internal
         virtual
-        override(SMARTCustodianUpgradeable, SMARTUpgradeable, SMARTHooks)
+        override(SMARTUpgradeable, SMARTCustodianUpgradeable, SMARTHooks)
     {
         super._beforeTransfer(from, to, amount);
     }
@@ -450,9 +478,9 @@ contract SMARTStableCoin is
     )
         internal
         virtual
-        override(SMARTPausableUpgradeable, SMARTUpgradeable, ERC20Upgradeable)
+        override(SMARTPausableUpgradeable, SMARTUpgradeable, ERC20VotesUpgradeable, ERC20Upgradeable)
     {
-        // Calls chain: SMARTPausable -> SMART -> ERC20
+        // Calls chain: SMARTPausable -> SMART -> ERC20Votes -> ERC20
         super._update(from, to, value);
     }
 

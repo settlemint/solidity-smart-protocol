@@ -563,11 +563,11 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
         assertEq(token.balanceOf(newWallet), initialLostBalance, "New wallet balance wrong");
         assertTrue(
-            infrastructureUtils.identityRegistry().isVerified(newWallet, requiredClaimTopics),
+            systemUtils.identityRegistry().isVerified(newWallet, requiredClaimTopics),
             "New wallet not verified after recovery"
         );
         assertEq(
-            infrastructureUtils.identityRegistry().investorCountry(newWallet),
+            systemUtils.identityRegistry().investorCountry(newWallet),
             TestConstants.COUNTRY_CODE_BE,
             "Country code wrong"
         );
@@ -601,9 +601,7 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         assertFalse(tokenUtils.isFrozen(address(token), lostWallet), "Lost wallet still frozen after recovery");
         assertEq(tokenUtils.getFrozenTokens(address(token), newWallet), freezeAmount, "New wallet frozen tokens wrong");
         assertEq(tokenUtils.getFrozenTokens(address(token), lostWallet), 0, "Lost wallet frozen tokens not zero");
-        assertTrue(
-            infrastructureUtils.identityRegistry().isVerified(newWallet, requiredClaimTopics), "New wallet not verified"
-        );
+        assertTrue(systemUtils.identityRegistry().isVerified(newWallet, requiredClaimTopics), "New wallet not verified");
     }
 
     function test_Custodian_AddressRecovery_NoBalance_Reverts() public {

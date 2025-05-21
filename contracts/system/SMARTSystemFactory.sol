@@ -10,6 +10,7 @@ import {
     IdentityFactoryImplementationNotSet,
     IdentityImplementationNotSet,
     TokenIdentityImplementationNotSet,
+    TokenAccessManagerImplementationNotSet,
     IndexOutOfBounds
 } from "./SMARTSystemErrors.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
@@ -56,6 +57,10 @@ contract SMARTSystemFactory is ERC2771Context {
     /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial token identity
     /// implementation.
     address public immutable defaultTokenIdentityImplementation;
+    /// @notice The default contract address for the token access manager contract's logic (implementation).
+    /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial token access manager
+    /// implementation.
+    address public immutable defaultTokenAccessManagerImplementation;
     /// @notice The address of the trusted forwarder contract used by this factory for meta-transactions (ERC2771).
     /// @dev This same forwarder address will also be passed to each new `SMARTSystem` instance created by this factory,
     /// enabling them to support meta-transactions as well.
@@ -68,10 +73,9 @@ contract SMARTSystemFactory is ERC2771Context {
     // --- Events ---
 
     /// @notice Emitted when a new `SMARTSystem` instance is successfully created and deployed by this factory.
+    /// @param sender The address that called the `createSystem` function.
     /// @param systemAddress The blockchain address of the newly deployed `SMARTSystem` contract.
-    /// @param initialAdmin The address that was set as the initial administrator (holding `DEFAULT_ADMIN_ROLE`)
-    /// for the new `SMARTSystem` instance. This is typically the address that called the `createSystem` function.
-    event SMARTSystemCreated(address indexed systemAddress, address indexed initialAdmin);
+    event SMARTSystemCreated(address indexed sender, address indexed systemAddress);
 
     // --- Constructor ---
 
@@ -100,6 +104,7 @@ contract SMARTSystemFactory is ERC2771Context {
         address identityFactoryImplementation_,
         address identityImplementation_,
         address tokenIdentityImplementation_,
+        address tokenAccessManagerImplementation_,
         address forwarder_
     )
         ERC2771Context(forwarder_) // Initializes ERC2771 support with the provided forwarder address.
@@ -123,6 +128,10 @@ contract SMARTSystemFactory is ERC2771Context {
         if (tokenIdentityImplementation_ == address(0)) {
             revert TokenIdentityImplementationNotSet(); // Assumes this custom error is defined in SMARTSystemErrors.sol
         }
+        if (tokenAccessManagerImplementation_ == address(0)) {
+            revert TokenAccessManagerImplementationNotSet(); // Assumes this custom error is defined in
+                // SMARTSystemErrors.sol
+        }
 
         // Set the immutable state variables with the provided addresses.
         defaultComplianceImplementation = complianceImplementation_;
@@ -132,6 +141,7 @@ contract SMARTSystemFactory is ERC2771Context {
         defaultIdentityFactoryImplementation = identityFactoryImplementation_;
         defaultIdentityImplementation = identityImplementation_;
         defaultTokenIdentityImplementation = tokenIdentityImplementation_;
+        defaultTokenAccessManagerImplementation = tokenAccessManagerImplementation_;
         factoryForwarder = forwarder_; // Store the forwarder address for use by this factory and new systems.
     }
 
@@ -149,13 +159,13 @@ contract SMARTSystemFactory is ERC2771Context {
     function createSystem() public returns (address systemAddress) {
         // Determine the initial admin for the new SMARTSystem.
         // _msgSender() correctly identifies the original user even if called via a trusted forwarder (ERC2771).
-        address initialAdmin = _msgSender();
+        address sender = _msgSender();
 
         // Deploy a new SMARTSystem contract instance.
         // It passes all the default implementation addresses stored in this factory, plus the factory's forwarder
         // address.
         SMARTSystem newSystem = new SMARTSystem(
-            initialAdmin,
+            sender,
             defaultComplianceImplementation,
             defaultIdentityRegistryImplementation,
             defaultIdentityRegistryStorageImplementation,
@@ -163,6 +173,7 @@ contract SMARTSystemFactory is ERC2771Context {
             defaultIdentityFactoryImplementation,
             defaultIdentityImplementation,
             defaultTokenIdentityImplementation,
+            defaultTokenAccessManagerImplementation,
             factoryForwarder // The same forwarder is used for the new system.
         );
 
@@ -172,7 +183,7 @@ contract SMARTSystemFactory is ERC2771Context {
         smartSystems.push(systemAddress);
 
         // Emit an event to log the creation, including the new system's address and its initial admin.
-        emit SMARTSystemCreated(systemAddress, initialAdmin);
+        emit SMARTSystemCreated(sender, systemAddress);
 
         // Return the address of the newly created system.
         return systemAddress;

@@ -48,6 +48,11 @@ error IdentityImplementationNotSet();
 /// identities), but its logic contract address is zero or has not been configured in the `SMARTSystem`.
 error TokenIdentityImplementationNotSet();
 
+/// @notice Error indicating that the token access manager contract implementation address has not been set.
+/// @dev This error is thrown if an operation requires the token access manager implementation, but its logic
+/// contract address is zero or has not been configured in the `SMARTSystem`.
+error TokenAccessManagerImplementationNotSet();
+
 /// @notice Error indicating that an index provided for accessing an array or list is out of its valid range.
 /// @dev For example, trying to access the 5th element in an array that only has 3 elements.
 /// @param index The invalid index that was attempted to be accessed.
@@ -71,3 +76,27 @@ error InvalidImplementationInterface(address implAddress, bytes4 interfaceId);
 /// @dev This can happen if the contract does not have enough Ether, or if the recipient address cannot accept Ether
 /// (e.g., it's a contract without a payable fallback/receive function that reverts on Ether receipt).
 error EtherWithdrawalFailed();
+
+/// @notice Error indicating that an invalid token factory address was provided.
+error InvalidTokenFactoryAddress();
+
+/// @notice Error indicating that the token factory implementation address has not been set.
+error TokenFactoryImplementationNotSet(bytes32 registryTypeHash);
+
+/// @notice Error indicating that a token factory type hash has already been registered.
+error TokenFactoryTypeAlreadyRegistered(bytes32 registryTypeHash);
+
+/// @notice Error indicating that the token implementation address has not been set.
+error TokenImplementationNotSet();
+
+/// @notice Error indicating that an invalid token implementation address was provided.
+error InvalidTokenImplementationAddress();
+
+/// @notice Error indicating that an invalid token implementation interface was provided.
+error InvalidTokenImplementationInterface();
+
+/// @notice Error indicating that an attempt was made to initialize a component with a zero address for its
+/// implementation.
+/// @dev This typically occurs in proxy constructors if the logic contract address fetched from the system is
+/// address(0).
+error InitializationWithZeroAddress();

@@ -2,18 +2,20 @@
 pragma solidity 0.8.28;
 
 import { Test } from "forge-std/Test.sol";
-import { InfrastructureUtils } from "../utils/InfrastructureUtils.sol";
+import { SystemUtils } from "../utils/SystemUtils.sol";
 import { TestConstants } from "../Constants.sol";
 import { TokenUtils } from "../utils/TokenUtils.sol";
 import { ClaimUtils } from "../utils/ClaimUtils.sol";
 import { IdentityUtils } from "../utils/IdentityUtils.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
-import { SMARTConstants } from "../../contracts/assets/SMARTConstants.sol";
+import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
+import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { SMARTForwarder } from "../../contracts/vendor/SMARTForwarder.sol";
-import { SMARTTokenAccessManager } from "../../contracts/extensions/access-managed/manager/SMARTTokenAccessManager.sol";
+import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { SMARTBondImplementation } from "../../contracts/assets/bond/SMARTBondImplementation.sol";
 
 abstract contract AbstractSMARTAssetTest is Test {
     address public platformAdmin;
@@ -21,15 +23,10 @@ abstract contract AbstractSMARTAssetTest is Test {
 
     uint256 internal claimIssuerPrivateKey = 0x12345;
 
-    InfrastructureUtils internal infrastructureUtils;
+    SystemUtils internal systemUtils;
     TokenUtils internal tokenUtils;
     ClaimUtils internal claimUtils;
     IdentityUtils internal identityUtils;
-
-    address public identityRegistry;
-    address public compliance;
-
-    SMARTTokenAccessManager public accessManager;
 
     SMARTForwarder public forwarder;
 
@@ -41,37 +38,31 @@ abstract contract AbstractSMARTAssetTest is Test {
         claimIssuer = vm.addr(claimIssuerPrivateKey);
 
         // Set up utils
-        infrastructureUtils = new InfrastructureUtils(platformAdmin);
+        systemUtils = new SystemUtils(platformAdmin);
         tokenUtils = new TokenUtils(
-            platformAdmin,
-            infrastructureUtils.identityFactory(),
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.compliance()
+            platformAdmin, systemUtils.identityFactory(), systemUtils.identityRegistry(), systemUtils.compliance()
         );
         claimUtils = new ClaimUtils(
             platformAdmin,
             claimIssuer,
             claimIssuerPrivateKey,
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.identityFactory(),
-            SMARTConstants.CLAIM_TOPIC_COLLATERAL,
+            systemUtils.identityRegistry(),
+            systemUtils.identityFactory(),
+            SMARTTopics.CLAIM_TOPIC_COLLATERAL,
             TestConstants.CLAIM_TOPIC_KYC,
             TestConstants.CLAIM_TOPIC_AML
         );
         identityUtils = new IdentityUtils(
             platformAdmin,
-            infrastructureUtils.identityFactory(),
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.trustedIssuersRegistry()
+            systemUtils.identityFactory(),
+            systemUtils.identityRegistry(),
+            systemUtils.trustedIssuersRegistry()
         );
-
-        identityRegistry = address(infrastructureUtils.identityRegistry());
-        compliance = address(infrastructureUtils.compliance());
 
         // Initialize the claim issuer
         uint256[] memory claimTopics = new uint256[](2);
         claimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
-        claimTopics[1] = SMARTConstants.CLAIM_TOPIC_COLLATERAL;
+        claimTopics[1] = SMARTTopics.CLAIM_TOPIC_COLLATERAL;
         // Use claimIssuer address directly, createIssuerIdentity handles creating the on-chain identity
         vm.label(claimIssuer, "Claim Issuer");
         address claimIssuerIdentity = identityUtils.createIssuerIdentity(claimIssuer, claimTopics);
@@ -82,23 +73,21 @@ abstract contract AbstractSMARTAssetTest is Test {
 
         // Initialize the access manager
         vm.prank(_owner);
-        accessManager = new SMARTTokenAccessManager(address(forwarder));
     }
 
-    function _setUpIdentity(address _wallet) internal {
-        identityUtils.createClientIdentity(_wallet, TestConstants.COUNTRY_CODE_BE);
+    function _setUpIdentity(address _wallet, string memory _label) internal {
+        vm.label(_wallet, _label);
+        address identity = identityUtils.createClientIdentity(_wallet, TestConstants.COUNTRY_CODE_BE);
+        vm.label(identity, string.concat(_label, " Identity"));
         claimUtils.issueInvestorClaim(_wallet, TestConstants.CLAIM_TOPIC_KYC, "Verified KYC by Issuer");
     }
 
-    function _setUpIdentities(address[] memory _wallets) internal {
+    function _setUpIdentities(string[] memory _labels, address[] memory _wallets) internal {
+        require(_labels.length == _wallets.length, "Labels and wallets arrays must have the same length");
         uint256 walletsLength = _wallets.length;
         for (uint256 i = 0; i < walletsLength; ++i) {
-            _setUpIdentity(_wallets[i]);
+            _setUpIdentity(_wallets[i], _labels[i]);
         }
-    }
-
-    function _createAndSetTokenOnchainID(address _token, address _issuer) internal {
-        tokenUtils.createAndSetTokenOnchainID(_token, _issuer);
     }
 
     function _issueCollateralClaim(address _token, address _issuer, uint256 _amount, uint256 _expiry) internal {
@@ -120,20 +109,21 @@ abstract contract AbstractSMARTAssetTest is Test {
             platformAdmin,
             claimIssuer_,
             claimIssuerPrivateKey_,
-            infrastructureUtils.identityRegistry(),
-            infrastructureUtils.identityFactory(),
-            SMARTConstants.CLAIM_TOPIC_COLLATERAL,
+            systemUtils.identityRegistry(),
+            systemUtils.identityFactory(),
+            SMARTTopics.CLAIM_TOPIC_COLLATERAL,
             TestConstants.CLAIM_TOPIC_KYC,
             TestConstants.CLAIM_TOPIC_AML
         );
     }
 
-    function _grantAllRoles(address wallet, address defaultAdmin) internal {
+    function _grantAllRoles(address accessManager, address wallet, address defaultAdmin) internal {
         vm.startPrank(defaultAdmin);
-        accessManager.grantRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, wallet);
-        accessManager.grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, wallet);
-        accessManager.grantRole(SMARTRoles.CUSTODIAN_ROLE, wallet);
-        accessManager.grantRole(SMARTRoles.EMERGENCY_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.CUSTODIAN_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTRoles.EMERGENCY_ROLE, wallet);
+        ISMARTTokenAccessManager(accessManager).grantRole(SMARTSystemRoles.CLAIM_MANAGER_ROLE, wallet);
         vm.stopPrank();
     }
 }
