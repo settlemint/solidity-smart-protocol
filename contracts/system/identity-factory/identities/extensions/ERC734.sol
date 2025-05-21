@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // --- Custom Errors ---
 error KeyCannotBeZero();
@@ -12,7 +12,6 @@ error ExecutionAlreadyPerformed(uint256 executionId);
 error KeyDoesNotExist(bytes32 key);
 error KeyDoesNotHaveThisPurpose(bytes32 key, uint256 purpose);
 error CannotExecuteToZeroAddress();
-error ReentrancyGuard();
 // Example: error MissingApprovalPermission(bytes32 key, uint256 requiredPurpose);
 
 /// @title ERC734 Key Holder Standard Implementation
