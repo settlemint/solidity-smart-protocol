@@ -23,7 +23,7 @@ const SMARTTestBondModule = buildModule("SMARTTestBondModule", (m) => {
     { id: "bondAddress" }
   );
   const bondToken = m.contractAt("SMARTBondImplementation", bondAddress, {
-    id: "deposit",
+    id: "bond",
   });
 
   // TODO: add yield etc
