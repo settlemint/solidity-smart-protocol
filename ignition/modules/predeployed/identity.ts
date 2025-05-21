@@ -1,8 +1,13 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+import ForwarderModule from "./forwarder";
 
 const IdentityModule = buildModule("IdentityModule", (m) => {
-  const identity = m.contract("SMARTIdentityImplementation");
-  const tokenIdentity = m.contract("SMARTTokenIdentityImplementation");
+  const { forwarder } = m.useModule(ForwarderModule);
+
+  const identity = m.contract("SMARTIdentityImplementation", [forwarder]);
+  const tokenIdentity = m.contract("SMARTTokenIdentityImplementation", [
+    forwarder,
+  ]);
 
   return { identity, tokenIdentity };
 });
