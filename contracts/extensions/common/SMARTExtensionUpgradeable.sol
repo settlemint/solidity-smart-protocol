@@ -52,4 +52,24 @@ abstract contract SMARTExtensionUpgradeable is Initializable, _SMARTExtension, E
     function _smartSender() internal view virtual override(SMARTContext) returns (address) {
         return _msgSender(); // In ERC20Upgradeable, _msgSender() can support meta-tx via ERC2771ContextUpgradeable.
     }
+
+    /// @inheritdoc _SMARTExtension
+    /// @notice Implements the abstract `__smartExtension_executeTransfer` from `_SMARTExtension`.
+    /// @dev Provides the concrete token transfer action by calling OpenZeppelin `ERC20._transfer`.
+    ///      Called by `_SMARTExtension._smart_transfer`.
+    /// @param from The sender address.
+    /// @param to The recipient address.
+    /// @param amount The amount of tokens to transfer.
+    function __smartExtension_executeTransfer(address from, address to, uint256 amount) internal virtual override {
+        _transfer(from, to, amount); // Calls OZ ERC20 _transfer function
+    }
+
+    /// @inheritdoc _SMARTExtension
+    /// @notice Implements the abstract `__smart_balanceOf` from `_SMARTLogic`.
+    /// @dev Provides the concrete token balance retrieval action by calling OpenZeppelin `ERC20.balanceOf`.
+    /// @param account The address to query the balance of.
+    /// @return The balance of the specified account.
+    function __smartExtension_balanceOf(address account) internal virtual override returns (uint256) {
+        return balanceOf(account);
+    }
 }

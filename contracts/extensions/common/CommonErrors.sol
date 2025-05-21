@@ -21,3 +21,16 @@ error LengthMismatch();
 ///      For example, setting a critical administrative role to the zero address, or transferring tokens
 ///      to the zero address (which can effectively burn them, but should be explicit if intended).
 error ZeroAddressNotAllowed();
+
+/// @notice Error indicating that the provided lost wallet is not marked as lost.
+/// @dev This can occur if the wallet is not associated with any lost identity.
+error InvalidLostWallet();
+
+/// @notice Error indicating that there are no tokens to recover.
+/// @dev This can occur if the contract holds no tokens to recover.
+error NoTokensToRecover();
+
+/// @notice Error indicating an attempt to recover the token contract's own tokens.
+/// @dev The `recoverERC20` function is designed to recover other ERC20 tokens mistakenly sent to this contract,
+///      not the token this contract itself represents.
+error CannotRecoverSelf();
