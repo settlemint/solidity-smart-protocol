@@ -108,14 +108,13 @@ contract SMARTIdentityImplementation is
     /// @dev Revokes a claim by its signature
     /// @param signature The signature of the claim to revoke
     function revokeClaimBySignature(bytes calldata signature) external virtual override onlyManager {
-        return _revokeClaimBySignature(signature);
+        _revokeClaimBySignature(signature);
     }
 
     /// @dev Revokes a claim by its ID
     /// @param _claimId The ID of the claim to revoke
-    /// @param _identity The identity contract that holds the claim
-    function revokeClaim(bytes32 _claimId, address _identity) external virtual override onlyManager returns (bool) {
-        return _revokeClaim(_claimId, _identity);
+    function revokeClaim(bytes32 _claimId) external virtual override onlyManager returns (bool) {
+        return _revokeClaim(_claimId);
     }
 
     // --- ERC734 (Key Holder) Functions - Overridden for Access Control & Specific Logic ---
@@ -250,6 +249,16 @@ contract SMARTIdentityImplementation is
         returns (bool success)
     {
         return super.removeClaim(_claimId);
+    }
+
+    function getClaim(bytes32 _claimId)
+        public
+        view
+        virtual
+        override(ERC735, OnChainIdentityWithRevocation, IERC735)
+        returns (uint256, uint256, address, bytes memory, bytes memory, string memory)
+    {
+        return ERC735.getClaim(_claimId);
     }
 
     // --- ERC165 Support ---

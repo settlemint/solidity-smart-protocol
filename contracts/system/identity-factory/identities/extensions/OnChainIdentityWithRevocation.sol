@@ -6,18 +6,23 @@ import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 
 abstract contract OnChainIdentityWithRevocation is OnChainIdentity {
-    // Mapping to track revoked claims by their signature
-    mapping(bytes => bool) public revokedClaims;
+    // Mapping to track revoked claims by their signature hash
+    mapping(bytes32 => bool) public revokedClaims;
 
     // Event emitted when a claim is revoked
     event ClaimRevoked(bytes signature);
 
     // --- Errors ---
-    error ClaimAlreadyRevoked(bytes signature);
+    error ClaimAlreadyRevoked(bytes32 signatureHash);
 
     // -- Abstract Functions ---
+    function getClaim(bytes32 _claimId)
+        public
+        view
+        virtual
+        returns (uint256, uint256, address, bytes memory, bytes memory, string memory);
     function revokeClaimBySignature(bytes calldata signature) external virtual;
-    function revokeClaim(bytes32 _claimId, address _identity) external virtual returns (bool);
+    function revokeClaim(bytes32 _claimId) external virtual returns (bool);
 
     /// @dev Checks if a claim is valid by first checking the parent implementation and then verifying it's not revoked
     /// @param _identity the identity contract related to the claim
@@ -50,30 +55,30 @@ abstract contract OnChainIdentityWithRevocation is OnChainIdentity {
     /// @param _sig The signature of the claim to check
     /// @return true if the claim is revoked, false otherwise
     function isClaimRevoked(bytes memory _sig) public view virtual returns (bool) {
-        return revokedClaims[_sig];
+        return revokedClaims[keccak256(_sig)];
     }
 
     /// @dev Revokes a claim by its signature
     /// @param signature The signature of the claim to revoke
     function _revokeClaimBySignature(bytes memory signature) internal virtual {
-        if (revokedClaims[signature]) revert ClaimAlreadyRevoked(signature);
+        bytes32 signatureHash = keccak256(signature);
+        if (revokedClaims[signatureHash]) revert ClaimAlreadyRevoked(signatureHash);
 
-        revokedClaims[signature] = true;
+        revokedClaims[signatureHash] = true;
 
         emit ClaimRevoked(signature);
     }
 
     /// @dev Revokes a claim by its ID
     /// @param _claimId The ID of the claim to revoke
-    /// @param _identity The identity contract that holds the claim
-    function _revokeClaim(bytes32 _claimId, address _identity) internal virtual returns (bool) {
+    function _revokeClaim(bytes32 _claimId) internal virtual returns (bool) {
         uint256 foundClaimTopic;
         uint256 scheme;
         address issuer;
         bytes memory sig;
         bytes memory data;
 
-        (foundClaimTopic, scheme, issuer, sig, data,) = IIdentity(_identity).getClaim(_claimId);
+        (foundClaimTopic, scheme, issuer, sig, data,) = getClaim(_claimId);
 
         _revokeClaimBySignature(sig);
 

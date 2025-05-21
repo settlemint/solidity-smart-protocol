@@ -119,6 +119,7 @@ contract ERC735 is IERC735 {
     function getClaim(bytes32 _claimId)
         public
         view
+        virtual
         override
         returns (
             uint256 topic,
