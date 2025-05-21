@@ -29,35 +29,6 @@ import { SMARTTokenIdentityProxy } from "./identities/SMARTTokenIdentityProxy.so
 // Constants
 import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 
-// --- Errors ---
-/// @notice Indicates that an operation was attempted with the zero address (address(0))
-///         where a valid, non-zero address was expected (e.g., for a wallet or token owner).
-error ZeroAddressNotAllowed();
-/// @notice Indicates that a deterministic deployment (CREATE2) was attempted with a salt that has already been used.
-/// @param salt The string representation of the salt that was already taken.
-/// @dev Salts must be unique for each CREATE2 deployment from the same factory to ensure unique addresses.
-error SaltAlreadyTaken(string salt);
-/// @notice Indicates an attempt to create an identity for a wallet that already has one linked in this factory.
-/// @param wallet The address of the wallet that is already linked to an identity.
-error WalletAlreadyLinked(address wallet);
-/// @notice Indicates that a wallet address was found within the list of management keys being added to its own
-/// identity.
-/// @dev An identity's own wallet address (if it represents a user) typically has management capabilities by default or
-/// through specific key types;
-/// explicitly adding it as a generic management key might be redundant or an error.
-error WalletInManagementKeys();
-/// @notice Indicates an attempt to create an identity for a token that already has one linked in this factory.
-/// @param token The address of the token contract that is already linked to an identity.
-error TokenAlreadyLinked(address token);
-/// @notice Indicates that the address deployed via CREATE2 does not match the pre-calculated predicted address.
-/// @dev This is a critical error suggesting a potential issue in the CREATE2 computation, salt, or deployment bytecode,
-/// or an unexpected change in blockchain state between prediction and deployment.
-error DeploymentAddressMismatch();
-/// @notice Indicates that the identity implementation is invalid.
-error InvalidIdentityImplementation();
-/// @notice Indicates that the token identity implementation is invalid.
-error InvalidTokenIdentityImplementation();
-
 /// @title SMART Identity Factory Implementation
 /// @author SettleMint Tokenization Services
 /// @notice This contract is the upgradeable logic implementation for creating and managing on-chain identities
@@ -106,6 +77,38 @@ contract SMARTIdentityFactoryImplementation is
     /// contract.
     /// @dev This allows for quick lookup of an existing identity for a given token.
     mapping(address token => address identityProxy) private _tokenIdentities;
+
+    // --- Errors ---
+    /// @notice Indicates that an operation was attempted with the zero address (address(0))
+    ///         where a valid, non-zero address was expected (e.g., for a wallet or token owner).
+    error ZeroAddressNotAllowed();
+    /// @notice Indicates that a deterministic deployment (CREATE2) was attempted with a salt that has already been
+    /// used.
+    /// @param salt The string representation of the salt that was already taken.
+    /// @dev Salts must be unique for each CREATE2 deployment from the same factory to ensure unique addresses.
+    error SaltAlreadyTaken(string salt);
+    /// @notice Indicates an attempt to create an identity for a wallet that already has one linked in this factory.
+    /// @param wallet The address of the wallet that is already linked to an identity.
+    error WalletAlreadyLinked(address wallet);
+    /// @notice Indicates that a wallet address was found within the list of management keys being added to its own
+    /// identity.
+    /// @dev An identity's own wallet address (if it represents a user) typically has management capabilities by default
+    /// or
+    /// through specific key types;
+    /// explicitly adding it as a generic management key might be redundant or an error.
+    error WalletInManagementKeys();
+    /// @notice Indicates an attempt to create an identity for a token that already has one linked in this factory.
+    /// @param token The address of the token contract that is already linked to an identity.
+    error TokenAlreadyLinked(address token);
+    /// @notice Indicates that the address deployed via CREATE2 does not match the pre-calculated predicted address.
+    /// @dev This is a critical error suggesting a potential issue in the CREATE2 computation, salt, or deployment
+    /// bytecode,
+    /// or an unexpected change in blockchain state between prediction and deployment.
+    error DeploymentAddressMismatch();
+    /// @notice Indicates that the identity implementation is invalid.
+    error InvalidIdentityImplementation();
+    /// @notice Indicates that the token identity implementation is invalid.
+    error InvalidTokenIdentityImplementation();
 
     // --- Events ---
     /// @notice Emitted when a new identity contract is successfully created and registered for an investor wallet.

@@ -16,6 +16,12 @@ import { SMARTComplianceModuleParamPair } from "./structs/SMARTComplianceModuleP
 /// This contract itself usually doesn't implement specific rules but delegates them to individual
 /// `ISMARTComplianceModule` contracts.
 interface ISMARTCompliance {
+    // --- Errors ---
+    /// @notice Error indicating that a provided address is not a valid compliance module.
+    /// @dev This error is typically reverted when a contract address provided as a compliance module
+    /// does not correctly implement the `ISMARTComplianceModule` interface, or if the interface check fails.
+    error InvalidModule();
+
     /// @notice Checks if a potential token operation (transfer, mint, or burn) is compliant with all configured rules.
     /// @dev This function MUST be a `view` function (it should not modify state).
     ///      It is called by the `ISMART` token contract *before* executing an operation.

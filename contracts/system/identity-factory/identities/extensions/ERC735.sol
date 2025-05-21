@@ -6,11 +6,6 @@ import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol"; 
     // validation
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol"; // Required for IClaimIssuer interface
 
-// --- Custom Errors ---
-error IssuerCannotBeZeroAddress();
-error ClaimNotValidAccordingToIssuer(address issuer, uint256 topic);
-error ClaimDoesNotExist(bytes32 claimId);
-
 /// @title ERC735 Claim Holder Standard Implementation
 /// @dev Implementation of the IERC735 (Claim Holder) standard.
 /// This contract manages claims issued by different entities.
@@ -26,6 +21,11 @@ contract ERC735 is IERC735 {
 
     mapping(bytes32 => Claim) internal _claims; // claimId => Claim
     mapping(uint256 => bytes32[]) internal _claimsByTopic; // topic => claimId[]
+
+    // --- Custom Errors ---
+    error IssuerCannotBeZeroAddress();
+    error ClaimNotValidAccordingToIssuer(address issuer, uint256 topic);
+    error ClaimDoesNotExist(bytes32 claimId);
 
     /// @dev See {IERC735-addClaim}.
     /// Adds or updates a claim. Emits {ClaimAdded} or {ClaimChanged}.

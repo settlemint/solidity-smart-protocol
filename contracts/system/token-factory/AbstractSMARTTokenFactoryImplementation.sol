@@ -21,18 +21,6 @@ import { SMARTRoles } from "../../assets/SMARTRoles.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 
-// -- Errors --
-/// @notice Custom errors for the factory contract
-/// @dev Defines custom error types used by the contract for various failure conditions.
-
-error InvalidTokenAddress();
-/// @notice Error for attempting to unregister a token that is not registered.
-error InvalidImplementationAddress();
-/// @notice Error for when the provided token implementation address is the zero address.
-error ProxyCreationFailed(); // Added for CREATE2
-/// @notice Error when a CREATE2 proxy deployment fails.
-error AddressAlreadyDeployed(address predictedAddress); // Added for CREATE2
-
 /// @title SMARTTokenFactory - Contract for managing token registries with role-based access control
 /// @notice This contract provides functionality for registering tokens and checking their registration status,
 /// managed by roles defined in AccessControl. It also supports deploying proxy contracts using CREATE2.
@@ -51,6 +39,18 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @dev Stores a boolean value for each token address, true if deployed by this factory.
     mapping(address tokenAddress => bool isFactoryToken) public isFactoryToken; // Added for
         // CREATE2
+
+    // -- Errors --
+    /// @notice Custom errors for the factory contract
+    /// @dev Defines custom error types used by the contract for various failure conditions.
+
+    error InvalidTokenAddress();
+    /// @notice Error for attempting to unregister a token that is not registered.
+    error InvalidImplementationAddress();
+    /// @notice Error for when the provided token implementation address is the zero address.
+    error ProxyCreationFailed(); // Added for CREATE2
+    /// @notice Error when a CREATE2 proxy deployment fails.
+    error AddressAlreadyDeployed(address predictedAddress); // Added for CREATE2
 
     /// @notice Emitted when the token implementation address is updated.
     /// @param oldImplementation The address of the old token implementation.

@@ -14,16 +14,6 @@ import { ERC734 } from "./extensions/ERC734.sol";
 import { ERC735 } from "./extensions/ERC735.sol";
 import { OnChainIdentity } from "./extensions/OnChainIdentity.sol";
 
-// --- Custom Errors for SMARTIdentityImplementation ---
-error AlreadyInitialized();
-error InvalidInitialManagementKey();
-error SenderLacksManagementKey();
-error SenderLacksActionKey();
-error SenderLacksClaimSignerKey();
-// Errors for checks that might be redundant if ERC734.sol handles them robustly
-error ReplicatedExecutionIdDoesNotExist(uint256 executionId);
-error ReplicatedExecutionAlreadyPerformed(uint256 executionId);
-
 /// @title SMART Identity Implementation Contract (Logic for Wallet Identities)
 /// @author SettleMint Tokenization Services
 /// @notice This contract provides the upgradeable logic for standard on-chain identities associated with user wallets
@@ -41,11 +31,16 @@ contract SMARTIdentityImplementation is
 {
     // --- State Variables ---
     bool private _smartIdentityInitialized;
-    // --- Constants for Key Purposes ---
-    uint256 public constant MANAGEMENT_KEY_PURPOSE = 1;
-    uint256 public constant ACTION_KEY_PURPOSE = 2;
-    uint256 public constant CLAIM_SIGNER_KEY_PURPOSE = 3;
-    uint256 public constant ENCRYPTION_KEY_PURPOSE = 4; // Optional, but common
+
+    // --- Custom Errors for SMARTIdentityImplementation ---
+    error AlreadyInitialized();
+    error InvalidInitialManagementKey();
+    error SenderLacksManagementKey();
+    error SenderLacksActionKey();
+    error SenderLacksClaimSignerKey();
+    // Errors for checks that might be redundant if ERC734.sol handles them robustly
+    error ReplicatedExecutionIdDoesNotExist(uint256 executionId);
+    error ReplicatedExecutionAlreadyPerformed(uint256 executionId);
 
     // --- Modifiers for Access Control ---
     modifier onlyManager() {

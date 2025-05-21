@@ -4,20 +4,27 @@ pragma solidity ^0.8.28;
 import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-// --- Custom Errors ---
-error KeyCannotBeZero();
-error KeyAlreadyHasThisPurpose(bytes32 key, uint256 purpose);
-error ExecutionIdDoesNotExist(uint256 executionId);
-error ExecutionAlreadyPerformed(uint256 executionId);
-error KeyDoesNotExist(bytes32 key);
-error KeyDoesNotHaveThisPurpose(bytes32 key, uint256 purpose);
-error CannotExecuteToZeroAddress();
 // Example: error MissingApprovalPermission(bytes32 key, uint256 requiredPurpose);
 
 /// @title ERC734 Key Holder Standard Implementation
 /// @dev Implementation of the IERC734 (Key Holder) standard.
 /// This contract manages keys with different purposes and allows for execution of operations based on key approvals.
 contract ERC734 is IERC734, ReentrancyGuard {
+    // --- Constants for Key Purposes ---
+    uint256 public constant MANAGEMENT_KEY_PURPOSE = 1;
+    uint256 public constant ACTION_KEY_PURPOSE = 2;
+    uint256 public constant CLAIM_SIGNER_KEY_PURPOSE = 3;
+    uint256 public constant ENCRYPTION_KEY_PURPOSE = 4; // Optional, but common
+
+    // --- Custom Errors ---
+    error KeyCannotBeZero();
+    error KeyAlreadyHasThisPurpose(bytes32 key, uint256 purpose);
+    error ExecutionIdDoesNotExist(uint256 executionId);
+    error ExecutionAlreadyPerformed(uint256 executionId);
+    error KeyDoesNotExist(bytes32 key);
+    error KeyDoesNotHaveThisPurpose(bytes32 key, uint256 purpose);
+    error CannotExecuteToZeroAddress();
+
     struct Key {
         bytes32 key;
         uint256[] purposes;
@@ -235,8 +242,7 @@ contract ERC734 is IERC734, ReentrancyGuard {
         uint256 purposesLength = k.purposes.length;
         for (uint256 i = 0; i < purposesLength; ++i) {
             uint256 purpose = k.purposes[i];
-            // 1 is the MANAGEMENT purpose
-            if (purpose == 1 || purpose == _purpose) {
+            if (purpose == MANAGEMENT_KEY_PURPOSE || purpose == _purpose) {
                 return true;
             }
         }
