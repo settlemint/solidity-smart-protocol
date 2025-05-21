@@ -38,50 +38,36 @@ contract ERC735 is IERC735 {
         uint256 _topic,
         uint256 _scheme,
         address _issuer,
-        bytes calldata _signature,
-        bytes calldata _data,
-        string calldata _uri
+        bytes memory _signature,
+        bytes memory _data,
+        string memory _uri
     )
         public
         virtual
         override
-        returns (bytes32 claimId)
+        returns (bytes32 claimRequestId)
     {
-        if (_issuer == address(0)) revert IssuerCannotBeZeroAddress();
-
-        // If the issuer is an external contract, it should implement IClaimIssuer
-        // to validate the claim. If issuer is self (this contract), it's a self-attested claim.
         if (_issuer != address(this)) {
-            // The IClaimIssuer interface expects an IIdentity, so we cast address(this)
-            // This implies that the contract inheriting ERC735 might also need to implement IIdentity or parts of it
-            // for external issuers to validate claims against it correctly.
-            if (!IClaimIssuer(_issuer).isClaimValid(IIdentity(payable(address(this))), _topic, _signature, _data)) {
-                revert ClaimNotValidAccordingToIssuer({ issuer: _issuer, topic: _topic });
-            }
+            require(
+                IClaimIssuer(_issuer).isClaimValid(IIdentity(address(this)), _topic, _signature, _data), "invalid claim"
+            );
         }
 
-        claimId = keccak256(abi.encodePacked(_issuer, _topic));
-
-        bool isNewClaim = _claims[claimId].issuer == address(0);
-
+        bytes32 claimId = keccak256(abi.encode(_issuer, _topic));
         _claims[claimId].topic = _topic;
         _claims[claimId].scheme = _scheme;
-        _claims[claimId].issuer = _issuer; // Set issuer after potential validation
         _claims[claimId].signature = _signature;
         _claims[claimId].data = _data;
         _claims[claimId].uri = _uri;
 
-        if (isNewClaim) {
+        if (_claims[claimId].issuer != _issuer) {
             _claimsByTopic[_topic].push(claimId);
+            _claims[claimId].issuer = _issuer;
+
             emit ClaimAdded(claimId, _topic, _scheme, _issuer, _signature, _data, _uri);
         } else {
-            // Ensure the issuer is not changing for an existing claimId, as claimId is derived from issuer and topic.
-            // The EIP735 spec implies `addClaim` can update, so if issuer must be constant for a claimId,
-            // this means only other fields (scheme, signature, data, uri) can change.
-            // The reference Identity.sol allows changing the claim if claimId exists.
             emit ClaimChanged(claimId, _topic, _scheme, _issuer, _signature, _data, _uri);
         }
-
         return claimId;
     }
 
@@ -94,40 +80,36 @@ contract ERC735 is IERC735 {
     /// contract,
     ///   or only allow issuer or self to remove).
     function removeClaim(bytes32 _claimId) public virtual override returns (bool success) {
-        Claim storage claimToRemove = _claims[_claimId];
-        if (claimToRemove.issuer == address(0)) revert ClaimDoesNotExist({ claimId: _claimId }); // Check if claim
-            // exists
+        uint256 _topic = _claims[_claimId].topic;
+        if (_topic == 0) {
+            revert("NonExisting: There is no claim with this ID");
+        }
 
-        uint256 topic = claimToRemove.topic;
+        uint256 claimIndex = 0;
+        uint256 arrayLength = _claimsByTopic[_topic].length;
+        while (_claimsByTopic[_topic][claimIndex] != _claimId) {
+            claimIndex++;
 
-        // Remove from _claimsByTopic array
-        bytes32[] storage claimsForTopic = _claimsByTopic[topic];
-        uint256 claimIndex = type(uint256).max;
-        uint256 claimsForTopicLength = claimsForTopic.length;
-        for (uint256 i = 0; i < claimsForTopicLength; ++i) {
-            if (claimsForTopic[i] == _claimId) {
-                claimIndex = i;
+            if (claimIndex >= arrayLength) {
                 break;
             }
         }
 
-        // This should ideally always find the claim if it exists in _claims
-        if (claimIndex != type(uint256).max) {
-            claimsForTopic[claimIndex] = claimsForTopic[claimsForTopicLength - 1];
-            claimsForTopic.pop();
-        }
+        _claimsByTopic[_topic][claimIndex] = _claimsByTopic[_topic][arrayLength - 1];
+        _claimsByTopic[_topic].pop();
 
         emit ClaimRemoved(
             _claimId,
-            claimToRemove.topic,
-            claimToRemove.scheme,
-            claimToRemove.issuer,
-            claimToRemove.signature,
-            claimToRemove.data,
-            claimToRemove.uri
+            _topic,
+            _claims[_claimId].scheme,
+            _claims[_claimId].issuer,
+            _claims[_claimId].signature,
+            _claims[_claimId].data,
+            _claims[_claimId].uri
         );
 
         delete _claims[_claimId];
+
         return true;
     }
 
@@ -135,9 +117,8 @@ contract ERC735 is IERC735 {
     /// Retrieves a claim by its ID.
     /// Claim ID is `keccak256(abi.encode(issuer_address, topic))`.
     function getClaim(bytes32 _claimId)
-        external
+        public
         view
-        virtual
         override
         returns (
             uint256 topic,
@@ -148,9 +129,14 @@ contract ERC735 is IERC735 {
             string memory uri
         )
     {
-        Claim storage c = _claims[_claimId];
-        // No explicit require for existence, will return zero values if not found, as per EIP.
-        return (c.topic, c.scheme, c.issuer, c.signature, c.data, c.uri);
+        return (
+            _claims[_claimId].topic,
+            _claims[_claimId].scheme,
+            _claims[_claimId].issuer,
+            _claims[_claimId].signature,
+            _claims[_claimId].data,
+            _claims[_claimId].uri
+        );
     }
 
     /// @dev See {IERC735-getClaimIdsByTopic}.

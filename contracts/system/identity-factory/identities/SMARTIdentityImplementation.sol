@@ -217,9 +217,9 @@ contract SMARTIdentityImplementation is
         uint256 _topic,
         uint256 _scheme,
         address _issuer,
-        bytes calldata _signature,
-        bytes calldata _data,
-        string calldata _uri
+        bytes memory _signature,
+        bytes memory _data,
+        string memory _uri
     )
         public
         virtual
