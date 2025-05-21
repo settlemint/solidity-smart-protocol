@@ -1,8 +1,8 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import SMARTModule from "../../main";
+import SMARTOnboardingModule from "../../onboarding";
 import SMARTTestDepositModule from "./deposit";
 const SMARTTestBondModule = buildModule("SMARTTestBondModule", (m) => {
-  const { bondFactory } = m.useModule(SMARTModule);
+  const { bondFactory } = m.useModule(SMARTOnboardingModule);
   const { depositToken } = m.useModule(SMARTTestDepositModule);
 
   const createBond = m.call(bondFactory, "createBond", [
