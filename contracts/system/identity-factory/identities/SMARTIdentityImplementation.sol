@@ -13,6 +13,7 @@ import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/m
 import { ERC734 } from "./extensions/ERC734.sol";
 import { ERC735 } from "./extensions/ERC735.sol";
 import { OnChainIdentity } from "./extensions/OnChainIdentity.sol";
+import { OnChainIdentityWithRevocation } from "./extensions/OnChainIdentityWithRevocation.sol";
 
 /// @title SMART Identity Implementation Contract (Logic for Wallet Identities)
 /// @author SettleMint Tokenization Services
@@ -25,7 +26,7 @@ contract SMARTIdentityImplementation is
     ISMARTIdentity,
     ERC734,
     ERC735,
-    OnChainIdentity,
+    OnChainIdentityWithRevocation,
     ERC165Upgradeable,
     ERC2771ContextUpgradeable
 {
@@ -101,6 +102,19 @@ contract SMARTIdentityImplementation is
 
         // Emit event defined in ERC734/IERC734
         emit KeyAdded(keyHash, MANAGEMENT_KEY_PURPOSE, 1);
+    }
+
+    // --- OnchainIdentityWithRevocation Functions ---
+    /// @dev Revokes a claim by its signature
+    /// @param signature The signature of the claim to revoke
+    function revokeClaimBySignature(bytes calldata signature) external virtual override onlyManager {
+        _revokeClaimBySignature(signature);
+    }
+
+    /// @dev Revokes a claim by its ID
+    /// @param _claimId The ID of the claim to revoke
+    function revokeClaim(bytes32 _claimId) external virtual override onlyManager returns (bool) {
+        return _revokeClaim(_claimId);
     }
 
     // --- ERC734 (Key Holder) Functions - Overridden for Access Control & Specific Logic ---
@@ -235,6 +249,16 @@ contract SMARTIdentityImplementation is
         returns (bool success)
     {
         return super.removeClaim(_claimId);
+    }
+
+    function getClaim(bytes32 _claimId)
+        public
+        view
+        virtual
+        override(ERC735, OnChainIdentityWithRevocation, IERC735)
+        returns (uint256, uint256, address, bytes memory, bytes memory, string memory)
+    {
+        return ERC735.getClaim(_claimId);
     }
 
     // --- ERC165 Support ---
