@@ -117,7 +117,6 @@ abstract contract AbstractSMARTTest is Test {
 
         // Grant REGISTRAR_ROLE to the token contract on the Identity Registry
         // Needed for custody address recovery
-        // TODO: this should be done in the token factory? how can we improve this?
         address registryAddress = address(systemUtils.identityRegistry());
         address tokenAddress = address(token);
 

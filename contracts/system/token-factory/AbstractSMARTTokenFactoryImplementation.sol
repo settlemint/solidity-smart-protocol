@@ -9,6 +9,7 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ISMARTTokenFactory } from "./ISMARTTokenFactory.sol";
 import { ISMART } from "../../interface/ISMART.sol";
+import { ISMARTCustodian } from "../../extensions/custodian/ISMARTCustodian.sol";
 import { SMARTTokenAccessManagerProxy } from "../access-manager/SMARTTokenAccessManagerProxy.sol";
 import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
@@ -19,6 +20,7 @@ import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 import { SMARTRoles } from "../../assets/SMARTRoles.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+
 // -- Errors --
 /// @notice Custom errors for the factory contract
 /// @dev Defines custom error types used by the contract for various failure conditions.
@@ -84,7 +86,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @inheritdoc ISMARTTokenFactory
     /// @param systemAddress The address of the `ISMARTSystem` contract.
     /// @param tokenImplementation_ The initial address of the token implementation contract.
-    /// @param initialAdmin The address to be granted the DEFAULT_ADMIN_ROLE and REGISTRAR_ROLE.
+    /// @param initialAdmin The address to be granted the DEFAULT_ADMIN_ROLE and TOKEN_DEPLOYER_ROLE.
     function initialize(
         address systemAddress,
         address tokenImplementation_,
@@ -104,7 +106,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
             revert InvalidImplementationAddress();
         }
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
-        _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
+        _grantRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE, initialAdmin);
 
         _tokenImplementation = tokenImplementation_;
         _systemAddress = systemAddress;
@@ -145,52 +147,16 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @notice Creates a new access manager for a token.
     /// @dev This function creates a new access manager for a token using the `SMARTTokenAccessManagerProxy`.
     /// @return accessManager The address of the new access manager.
-    function _createAccessManager() internal virtual returns (ISMARTTokenAccessManager) {
+    function _createAccessManager()
+        internal
+        virtual
+        onlyRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE)
+        returns (ISMARTTokenAccessManager)
+    {
         address[] memory admins = new address[](2);
         admins[0] = _msgSender();
         admins[1] = address(this); // Allow the factory to manage the access manager.
         return ISMARTTokenAccessManager(address(new SMARTTokenAccessManagerProxy(_systemAddress, admins)));
-    }
-
-    /// @notice Calculates the salt for CREATE2 deployment.
-    /// @dev Combines the name and symbol into a unique salt value.
-    ///      Can be overridden by derived contracts for custom salt calculation.
-    /// @param nameForSalt The name component for the salt.
-    /// @param symbolForSalt The symbol component for the salt.
-    /// @return The calculated salt for CREATE2 deployment.
-    function _calculateSalt(
-        string memory nameForSalt,
-        string memory symbolForSalt
-    )
-        internal
-        pure
-        virtual
-        returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(nameForSalt, symbolForSalt));
-    }
-
-    /// @notice Predicts the deployment address of a proxy using CREATE2.
-    /// @dev Internal function to compute the address without performing deployment.
-    /// @param proxyCreationCode The creation bytecode of the proxy contract.
-    /// @param encodedConstructorArgs ABI-encoded constructor arguments for the proxy.
-    /// @param nameForSalt The name component for the salt.
-    /// @param symbolForSalt The symbol component for the salt.
-    /// @return predictedAddress The predicted address where the proxy would be deployed.
-    function _predictProxyAddress(
-        bytes memory proxyCreationCode,
-        bytes memory encodedConstructorArgs,
-        string memory nameForSalt,
-        string memory symbolForSalt
-    )
-        internal
-        view
-        returns (address predictedAddress)
-    {
-        bytes32 salt = _calculateSalt(nameForSalt, symbolForSalt);
-        bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
-        bytes32 bytecodeHash = keccak256(fullCreationCode);
-        predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
     }
 
     /// @notice Deploys a proxy contract using CREATE2.
@@ -209,6 +175,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         string memory symbolForSalt
     )
         internal
+        onlyRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE)
         returns (address deployedAddress)
     {
         address predictedAddress =
@@ -234,7 +201,41 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         return deployedAddress;
     }
 
-    function _finalizeTokenCreation(address tokenAddress, address accessManager) internal virtual {
+    // --- Private Functions ---
+    /// @notice Calculates the salt for CREATE2 deployment.
+    /// @dev Combines the name and symbol into a unique salt value.
+    ///      Can be overridden by derived contracts for custom salt calculation.
+    /// @param nameForSalt The name component for the salt.
+    /// @param symbolForSalt The symbol component for the salt.
+    /// @return The calculated salt for CREATE2 deployment.
+    function _calculateSalt(string memory nameForSalt, string memory symbolForSalt) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(nameForSalt, symbolForSalt));
+    }
+
+    /// @notice Predicts the deployment address of a proxy using CREATE2.
+    /// @dev Internal function to compute the address without performing deployment.
+    /// @param proxyCreationCode The creation bytecode of the proxy contract.
+    /// @param encodedConstructorArgs ABI-encoded constructor arguments for the proxy.
+    /// @param nameForSalt The name component for the salt.
+    /// @param symbolForSalt The symbol component for the salt.
+    /// @return predictedAddress The predicted address where the proxy would be deployed.
+    function _predictProxyAddress(
+        bytes memory proxyCreationCode,
+        bytes memory encodedConstructorArgs,
+        string memory nameForSalt,
+        string memory symbolForSalt
+    )
+        private
+        view
+        returns (address predictedAddress)
+    {
+        bytes32 salt = _calculateSalt(nameForSalt, symbolForSalt);
+        bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
+        bytes32 bytecodeHash = keccak256(fullCreationCode);
+        predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
+    }
+
+    function _finalizeTokenCreation(address tokenAddress, address accessManager) private {
         ISMARTSystem system_ = ISMARTSystem(_systemAddress);
         ISMARTIdentityFactory identityFactory_ = ISMARTIdentityFactory(system_.identityFactoryProxy());
         address tokenIdentity = identityFactory_.createTokenIdentity(tokenAddress, accessManager);
@@ -245,6 +246,11 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         ISMART(tokenAddress).setOnchainID(tokenIdentity);
         IAccessControl(accessManager).renounceRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, address(this));
         IAccessControl(accessManager).renounceRole(SMARTSystemRoles.DEFAULT_ADMIN_ROLE, address(this));
+
+        // Make it possible that the token can register token identities, only needed for Custodian recovery.
+        if (IERC165(tokenAddress).supportsInterface(type(ISMARTCustodian).interfaceId)) {
+            IAccessControl(system_.identityRegistryProxy()).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, tokenAddress);
+        }
 
         emit TokenAssetCreated(_msgSender(), tokenAddress, tokenIdentity, accessManager);
     }

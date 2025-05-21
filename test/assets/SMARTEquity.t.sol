@@ -59,7 +59,7 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         );
 
         // Grant registrar role to owner so that he can create the equity
-        IAccessControl(address(equityFactory)).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, owner);
+        IAccessControl(address(equityFactory)).grantRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE, owner);
         vm.stopPrank();
 
         // Initialize identities
