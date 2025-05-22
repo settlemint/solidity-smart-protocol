@@ -51,9 +51,10 @@
     "@nomicfoundation/hardhat-ignition-viem": "0.15.11",
     "@nomicfoundation/hardhat-toolbox-viem": "3.0.0",
     "@nomiclabs/hardhat-solhint": "4.0.1",
+    "@openzeppelin/subgraphs": "0.1.8-5",
     "hardhat": "2.24.0",
     "solhint": "5.1.0",
-    "@openzeppelin/subgraphs": "0.1.8-5"
+    "viem": "^2.30.0"
   },
   "overrides": {
     "elliptic": "6.6.1",
