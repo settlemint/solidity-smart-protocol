@@ -6,6 +6,7 @@ import SMARTTestEquityModule from "./test/assets/equity";
 import SMARTTestFundModule from "./test/assets/fund";
 import SMARTTestStablecoinModule from "./test/assets/stablecoin";
 import SMARTTopics from "./test/constants/topics";
+import { claimIssuer } from "./test/utils/claim-issuer";
 /**
  * This module is used to deploy the SMART contracts, this should be used to
  * bootstrap a public network. For SettleMint consortium networks this is handled
@@ -18,7 +19,7 @@ const SMARTTestModule = buildModule("SMARTTestModule", (m) => {
 
 	// Make sure deployer can claim topics
 	m.call(trustedIssuersRegistry, "addTrustedIssuer", [
-		deployerAddress,
+		claimIssuer.address,
 		[SMARTTopics.kyc, SMARTTopics.aml, SMARTTopics.collateral],
 	]);
 

@@ -5,10 +5,7 @@ import { toBytes } from "viem";
 import SMARTOnboardingModule from "../../onboarding";
 import SMARTRoles from "../constants/roles";
 import SMARTTopics from "../constants/topics";
-import { createClaim } from "../utils/create-claim";
-
-// Access ethers via the Hardhat Runtime Environment, potentially exposed by the ModuleBuilder
-// This assumes 'm.hre.ethers' is available, or that 'ethers' is globally available in a way the linter should pick up.
+import { claimIssuer } from "../utils/claim-issuer";
 
 const SMARTTestDepositModule = buildModule("SMARTTestDepositModule", (m) => {
 	const { depositFactory } = m.useModule(SMARTOnboardingModule);
@@ -45,6 +42,14 @@ const SMARTTestDepositModule = buildModule("SMARTTestDepositModule", (m) => {
 		id: "deposit",
 	});
 
+	const depositIdentityContract = m.contractAt(
+		"SMARTIdentity",
+		depositIdentityAddress,
+		{
+			id: "depositIdentity",
+		},
+	);
+
 	const accessManagerContract = m.contractAt(
 		"SMARTTokenAccessManagerImplementation",
 		depositAccessManagerAddress,
@@ -64,28 +69,17 @@ const SMARTTestDepositModule = buildModule("SMARTTestDepositModule", (m) => {
 		encodeAbiParameters(parseAbiParameters("string isinValue"), [isinValue]),
 	);
 
-	m.call(async ({ getAccount }) => {
-		const issuerSigner = await getAccount(m.getAccount(0));
+  const claim = await claimIssuer.createClaim(
+    resolvedIdentityAddress,
+    SMARTTopics.isin,
+    encodedIsinData,
+  );
 
-		const isinClaim = createClaim(
-			issuerSigner,
-			depositIdentityAddress,
-			SMARTTopics.isin,
-			encodedIsinData,
-		);
-	});
 
-	// set isin on token identity
-	// update collateral
-	// create some users with identity claims
-	// mint
-	// transfer
-	// burn
-
-	// TODO: execute all other functions of the deposit
 
 	return {
 		depositToken,
+		depositIdentityContract,
 		accessManagerContract,
 	};
 });
