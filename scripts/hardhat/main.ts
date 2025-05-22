@@ -7,20 +7,14 @@ async function main() {
 	// Get the contract instance. It will use Account 0 by default for writes.
 	const depositFactory = smartProtocolDeployer.getDepositFactoryContract();
 
-	console.log(
-		"Attempting to create deposit with default account (Account 0)...",
-	);
-	const transactionHash = await depositFactory.write.createDeposit(
-		[
-			"Euro Deposits",
-			"EURD",
-			6,
-			[], // TODO: fill in with the setup for ATK
-			[], // TODO: fill in with the setup for ATK
-		],
-		// We can try omitting the explicit { account: ... } as the contract instance
-		// should now be configured with the default WalletClient (and its account) by the deployer.
-	);
+	// TODO: typing doesn't work? Check txsigner utils
+	const transactionHash = await depositFactory.write.createDeposit([
+		"Euro Deposits",
+		"EURD",
+		6,
+		[], // TODO: fill in with the setup for ATK
+		[], // TODO: fill in with the setup for ATK
+	]);
 
 	console.log("Deposit created. Transaction Hash:", transactionHash);
 }
