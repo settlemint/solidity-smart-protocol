@@ -51,45 +51,9 @@ type ViemContract<
 
 /**
  * Defines the structure for the contracts deployed by SMARTOnboardingModule,
- * typed with Viem for read-only operations.
- */
-export interface SMARTOnboardingContracts {
-	system: ViemContract<typeof contractAbis.system, PublicClient>;
-	compliance: ViemContract<typeof contractAbis.compliance, PublicClient>;
-	identityRegistry: ViemContract<
-		typeof contractAbis.identityRegistry,
-		PublicClient
-	>;
-	identityRegistryStorage: ViemContract<
-		typeof contractAbis.identityRegistryStorage,
-		PublicClient
-	>;
-	trustedIssuersRegistry: ViemContract<
-		typeof contractAbis.trustedIssuersRegistry,
-		PublicClient
-	>;
-	identityFactory: ViemContract<
-		typeof contractAbis.identityFactory,
-		PublicClient
-	>;
-	bondFactory: ViemContract<typeof contractAbis.bondFactory, PublicClient>;
-	depositFactory: ViemContract<
-		typeof contractAbis.depositFactory,
-		PublicClient
-	>;
-	equityFactory: ViemContract<typeof contractAbis.equityFactory, PublicClient>;
-	fundFactory: ViemContract<typeof contractAbis.fundFactory, PublicClient>;
-	stablecoinFactory: ViemContract<
-		typeof contractAbis.stablecoinFactory,
-		PublicClient
-	>;
-}
-
-/**
- * Defines the structure for the contracts deployed by SMARTOnboardingModule,
  * typed with Viem for write operations (includes WalletClient).
  */
-export type SMARTOnboardingContractsWithWallet = {
+export type SMARTOnboardingContracts = {
 	system: ViemContract<
 		typeof contractAbis.system,
 		{ public: PublicClient; wallet: WalletClient }
@@ -163,9 +127,12 @@ export class SmartProtocolDeployer {
 	private static instance: SmartProtocolDeployer | null = null;
 	private _deployedContractAddresses: DeployedContractAddresses | undefined;
 	private _publicClient: PublicClient | undefined;
+	private _defaultWalletClient: WalletClient | undefined;
 
 	public constructor() {
 		this._deployedContractAddresses = undefined;
+		this._publicClient = undefined;
+		this._defaultWalletClient = undefined;
 	}
 
 	/**
@@ -197,13 +164,20 @@ export class SmartProtocolDeployer {
 				chain: viemChain,
 				transport: custom(hre.network.provider), // Use Hardhat's EIP-1193 provider
 			});
-			this._publicClient = publicClient; // Store the public client
+			this._publicClient = publicClient;
 
-			// 3. Store deployed addresses
+			// 3. Get and store the default wallet client (account 0)
+			const [defaultSigner] = await hre.viem.getWalletClients();
+			if (!defaultSigner) {
+				throw new Error("Could not get a default wallet client from Hardhat.");
+			}
+			this._defaultWalletClient = defaultSigner;
+
+			// 4. Store deployed addresses
 			this._deployedContractAddresses = deploymentAddresses;
 
 			console.log(
-				"SMARTOnboardingModule deployed successfully! Contract addresses stored.",
+				"SMARTOnboardingModule deployed successfully! Contract addresses and default signer stored.",
 			);
 			if (this._deployedContractAddresses) {
 				console.log("Deployed Contracts Addresses:");
@@ -221,25 +195,12 @@ export class SmartProtocolDeployer {
 		}
 	}
 
-	// Overload signatures for getContract
 	private getContract<K extends keyof SMARTOnboardingContracts>(
 		contractName: K,
-	): ViemContract<(typeof contractAbis)[K], PublicClient>;
-	private getContract<K extends keyof SMARTOnboardingContracts>(
-		contractName: K,
-		walletClient: WalletClient,
+		explicitWalletClient?: WalletClient,
 	): ViemContract<
 		(typeof contractAbis)[K],
 		{ public: PublicClient; wallet: WalletClient }
-	>;
-
-	// Implementation of getContract
-	private getContract<K extends keyof SMARTOnboardingContracts>(
-		contractName: K,
-		walletClient?: WalletClient,
-	): ViemContract<
-		(typeof contractAbis)[K],
-		PublicClient | { public: PublicClient; wallet: WalletClient }
 	> {
 		if (!this._deployedContractAddresses) {
 			throw new Error(
@@ -251,6 +212,12 @@ export class SmartProtocolDeployer {
 				"Public client not initialized. Call setUp() before accessing contracts.",
 			);
 		}
+		if (!this._defaultWalletClient) {
+			throw new Error(
+				"Default wallet client not initialized. Call setUp() before accessing contracts.",
+			);
+		}
+
 		const contractInfo = this._deployedContractAddresses[contractName];
 		if (!contractInfo?.address) {
 			throw new Error(
@@ -264,185 +231,84 @@ export class SmartProtocolDeployer {
 			throw new Error(`ABI for contract "${String(contractName)}" not found.`);
 		}
 
-		const clientConfig = walletClient
-			? { public: this._publicClient, wallet: walletClient }
-			: this._publicClient;
+		const walletToUse = explicitWalletClient || this._defaultWalletClient;
 
 		return getViemContract({
 			address: contractInfo.address,
 			abi: abi,
-			client: clientConfig,
+			client: { public: this._publicClient, wallet: walletToUse },
 		}) as ViemContract<
 			(typeof contractAbis)[K],
-			PublicClient | { public: PublicClient; wallet: WalletClient }
-		>; // Cast needed for the unified implementation signature
+			{ public: PublicClient; wallet: WalletClient }
+		>;
 	}
 
 	// --- Unified Contract Accessor Methods ---
 
-	public getSystemContract(): SMARTOnboardingContracts["system"];
-	public getSystemContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["system"];
 	public getSystemContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["system"]
-		| SMARTOnboardingContractsWithWallet["system"] {
-		if (walletClient) {
-			return this.getContract("system", walletClient);
-		}
-		return this.getContract("system");
+	): SMARTOnboardingContracts["system"] {
+		return this.getContract("system", walletClient);
 	}
 
-	public getComplianceContract(): SMARTOnboardingContracts["compliance"];
-	public getComplianceContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["compliance"];
 	public getComplianceContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["compliance"]
-		| SMARTOnboardingContractsWithWallet["compliance"] {
-		if (walletClient) {
-			return this.getContract("compliance", walletClient);
-		}
-		return this.getContract("compliance");
+	): SMARTOnboardingContracts["compliance"] {
+		return this.getContract("compliance", walletClient);
 	}
 
-	public getIdentityRegistryContract(): SMARTOnboardingContracts["identityRegistry"];
-	public getIdentityRegistryContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["identityRegistry"];
 	public getIdentityRegistryContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["identityRegistry"]
-		| SMARTOnboardingContractsWithWallet["identityRegistry"] {
-		if (walletClient) {
-			return this.getContract("identityRegistry", walletClient);
-		}
-		return this.getContract("identityRegistry");
+	): SMARTOnboardingContracts["identityRegistry"] {
+		return this.getContract("identityRegistry", walletClient);
 	}
 
-	public getIdentityRegistryStorageContract(): SMARTOnboardingContracts["identityRegistryStorage"];
-	public getIdentityRegistryStorageContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["identityRegistryStorage"];
 	public getIdentityRegistryStorageContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["identityRegistryStorage"]
-		| SMARTOnboardingContractsWithWallet["identityRegistryStorage"] {
-		if (walletClient) {
-			return this.getContract("identityRegistryStorage", walletClient);
-		}
-		return this.getContract("identityRegistryStorage");
+	): SMARTOnboardingContracts["identityRegistryStorage"] {
+		return this.getContract("identityRegistryStorage", walletClient);
 	}
 
-	public getTrustedIssuersRegistryContract(): SMARTOnboardingContracts["trustedIssuersRegistry"];
-	public getTrustedIssuersRegistryContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["trustedIssuersRegistry"];
 	public getTrustedIssuersRegistryContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["trustedIssuersRegistry"]
-		| SMARTOnboardingContractsWithWallet["trustedIssuersRegistry"] {
-		if (walletClient) {
-			return this.getContract("trustedIssuersRegistry", walletClient);
-		}
-		return this.getContract("trustedIssuersRegistry");
+	): SMARTOnboardingContracts["trustedIssuersRegistry"] {
+		return this.getContract("trustedIssuersRegistry", walletClient);
 	}
 
-	public getIdentityFactoryContract(): SMARTOnboardingContracts["identityFactory"];
-	public getIdentityFactoryContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["identityFactory"];
 	public getIdentityFactoryContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["identityFactory"]
-		| SMARTOnboardingContractsWithWallet["identityFactory"] {
-		if (walletClient) {
-			return this.getContract("identityFactory", walletClient);
-		}
-		return this.getContract("identityFactory");
+	): SMARTOnboardingContracts["identityFactory"] {
+		return this.getContract("identityFactory", walletClient);
 	}
 
-	public getBondFactoryContract(): SMARTOnboardingContracts["bondFactory"];
-	public getBondFactoryContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["bondFactory"];
 	public getBondFactoryContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["bondFactory"]
-		| SMARTOnboardingContractsWithWallet["bondFactory"] {
-		if (walletClient) {
-			return this.getContract("bondFactory", walletClient);
-		}
-		return this.getContract("bondFactory");
+	): SMARTOnboardingContracts["bondFactory"] {
+		return this.getContract("bondFactory", walletClient);
 	}
 
-	public getDepositFactoryContract(): SMARTOnboardingContracts["depositFactory"];
-	public getDepositFactoryContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["depositFactory"];
 	public getDepositFactoryContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["depositFactory"]
-		| SMARTOnboardingContractsWithWallet["depositFactory"] {
-		if (walletClient) {
-			return this.getContract("depositFactory", walletClient);
-		}
-		return this.getContract("depositFactory");
+	): SMARTOnboardingContracts["depositFactory"] {
+		return this.getContract("depositFactory", walletClient);
 	}
 
-	public getEquityFactoryContract(): SMARTOnboardingContracts["equityFactory"];
-	public getEquityFactoryContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["equityFactory"];
 	public getEquityFactoryContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["equityFactory"]
-		| SMARTOnboardingContractsWithWallet["equityFactory"] {
-		if (walletClient) {
-			return this.getContract("equityFactory", walletClient);
-		}
-		return this.getContract("equityFactory");
+	): SMARTOnboardingContracts["equityFactory"] {
+		return this.getContract("equityFactory", walletClient);
 	}
 
-	public getFundFactoryContract(): SMARTOnboardingContracts["fundFactory"];
-	public getFundFactoryContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["fundFactory"];
 	public getFundFactoryContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["fundFactory"]
-		| SMARTOnboardingContractsWithWallet["fundFactory"] {
-		if (walletClient) {
-			return this.getContract("fundFactory", walletClient);
-		}
-		return this.getContract("fundFactory");
+	): SMARTOnboardingContracts["fundFactory"] {
+		return this.getContract("fundFactory", walletClient);
 	}
 
-	public getStablecoinFactoryContract(): SMARTOnboardingContracts["stablecoinFactory"];
-	public getStablecoinFactoryContract(
-		walletClient: WalletClient,
-	): SMARTOnboardingContractsWithWallet["stablecoinFactory"];
 	public getStablecoinFactoryContract(
 		walletClient?: WalletClient,
-	):
-		| SMARTOnboardingContracts["stablecoinFactory"]
-		| SMARTOnboardingContractsWithWallet["stablecoinFactory"] {
-		if (walletClient) {
-			return this.getContract("stablecoinFactory", walletClient);
-		}
-		return this.getContract("stablecoinFactory");
+	): SMARTOnboardingContracts["stablecoinFactory"] {
+		return this.getContract("stablecoinFactory", walletClient);
 	}
 }
 
