@@ -25,6 +25,13 @@ const SMARTTestDepositModule = buildModule("SMARTTestDepositModule", (m) => {
     }
   );
 
+  // set isin on token identity
+  // update collateral
+  // create some users with identity claims
+  // mint
+  // transfer
+  // burn
+
   // TODO: execute all other functions of the deposit
 
   return {
