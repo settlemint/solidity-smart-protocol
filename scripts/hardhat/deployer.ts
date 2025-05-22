@@ -41,7 +41,10 @@ const contractAbis = {
 	equityFactory: asAbi(equityFactoryAbiJson),
 	fundFactory: asAbi(fundFactoryAbiJson),
 	stablecoinFactory: asAbi(stablecoinFactoryAbiJson),
-};
+} as const;
+
+// Type for the keys of CONTRACT_METADATA, e.g., "system" | "compliance" | ...
+type ContractName = keyof typeof contractAbis;
 
 // Helper type for Viem contract instances
 type ViemContract<
@@ -54,55 +57,15 @@ type ViemContract<
  * typed with Viem for write operations (includes WalletClient).
  */
 export type SMARTOnboardingContracts = {
-	system: ViemContract<
-		typeof contractAbis.system,
-		{ public: PublicClient; wallet: WalletClient }
-	>;
-	compliance: ViemContract<
-		typeof contractAbis.compliance,
-		{ public: PublicClient; wallet: WalletClient }
-	>;
-	identityRegistry: ViemContract<
-		typeof contractAbis.identityRegistry,
-		{ public: PublicClient; wallet: WalletClient }
-	>;
-	identityRegistryStorage: ViemContract<
-		typeof contractAbis.identityRegistryStorage,
-		{ public: PublicClient; wallet: WalletClient }
-	>;
-	trustedIssuersRegistry: ViemContract<
-		typeof contractAbis.trustedIssuersRegistry,
-		{ public: PublicClient; wallet: WalletClient }
-	>;
-	identityFactory: ViemContract<
-		typeof contractAbis.identityFactory,
-		{ public: PublicClient; wallet: WalletClient }
-	>;
-	bondFactory: ViemContract<
-		typeof contractAbis.bondFactory,
-		{ public: PublicClient; wallet: WalletClient }
-	>;
-	depositFactory: ViemContract<
-		typeof contractAbis.depositFactory,
-		{ public: PublicClient; wallet: WalletClient }
-	>;
-	equityFactory: ViemContract<
-		typeof contractAbis.equityFactory,
-		{ public: PublicClient; wallet: WalletClient }
-	>;
-	fundFactory: ViemContract<
-		typeof contractAbis.fundFactory,
-		{ public: PublicClient; wallet: WalletClient }
-	>;
-	stablecoinFactory: ViemContract<
-		typeof contractAbis.stablecoinFactory,
+	[K in ContractName]: ViemContract<
+		(typeof contractAbis)[K], // Access ABI by key
 		{ public: PublicClient; wallet: WalletClient }
 	>;
 };
 
 // Type for storing deployed contract addresses
 type DeployedContractAddresses = {
-	[K in keyof SMARTOnboardingContracts]: { address: Address };
+	[K in ContractName]: { address: Address };
 };
 
 // Helper to get Viem chain object from chainId
@@ -195,7 +158,8 @@ export class SmartProtocolDeployer {
 		}
 	}
 
-	private getContract<K extends keyof SMARTOnboardingContracts>(
+	private getContract<K extends ContractName>(
+		// Use ContractName here
 		contractName: K,
 		explicitWalletClient?: WalletClient,
 	): ViemContract<
@@ -226,16 +190,12 @@ export class SmartProtocolDeployer {
 				)}" address not found in deployment results.`,
 			);
 		}
-		const abi = contractAbis[contractName];
-		if (!abi) {
-			throw new Error(`ABI for contract "${String(contractName)}" not found.`);
-		}
 
 		const walletToUse = explicitWalletClient || this._defaultWalletClient;
 
 		return getViemContract({
 			address: contractInfo.address,
-			abi: abi,
+			abi: contractAbis[contractName], // Use contractAbis[contractName]
 			client: { public: this._publicClient, wallet: walletToUse },
 		}) as ViemContract<
 			(typeof contractAbis)[K],
