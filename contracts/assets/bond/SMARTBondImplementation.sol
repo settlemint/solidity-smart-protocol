@@ -633,13 +633,12 @@ contract SMARTBondImplementation is
 
     /// @notice Implementation of the abstract burn execution using the base ERC20Upgradeable `_burn` function.
     /// @dev Assumes the inheriting contract includes an ERC20Upgradeable implementation with an internal `_burn`
-    /// function.
-    function __redeemable_redeem(address from, uint256 amount) internal virtual override {
+    /// function. Uses reentrancy protection to prevent external call exploits.
+    function __redeemable_redeem(address from, uint256 amount) internal virtual override nonReentrant {
         uint256 currentBalance = balanceOf(from);
-        uint256 currentRedeemed = bondRedeemed[from];
-        uint256 redeemable = currentBalance - currentRedeemed;
 
-        if (amount > redeemable) revert InsufficientRedeemableBalance();
+        // Simple check: user can only redeem what they currently have
+        if (amount > currentBalance) revert InsufficientRedeemableBalance();
 
         uint256 underlyingAmount = _calculateUnderlyingAmount(amount);
 
@@ -648,10 +647,12 @@ contract SMARTBondImplementation is
             revert InsufficientUnderlyingBalance();
         }
 
+        // State changes BEFORE external calls (checks-effects-interactions pattern)
+        uint256 currentRedeemed = bondRedeemed[from];
         bondRedeemed[from] = currentRedeemed + amount;
-
         _burn(from, amount);
 
+        // External call AFTER all state changes
         bool success = _underlyingAsset.transfer(from, underlyingAmount);
         if (!success) revert InsufficientUnderlyingBalance();
 
