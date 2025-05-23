@@ -1,14 +1,6 @@
-import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import { encodeAbiParameters } from "viem";
-import { parseAbiParameters } from "viem";
-import { type Address, type Hex, toBytes } from "viem";
-import { SMARTContracts } from "../constants/contracts";
-import SMARTRoles from "../constants/roles";
-import SMARTTopics from "../constants/topics";
+import type { Address, Hex } from "viem";
 import { smartProtocolDeployer } from "../deployer";
 import { claimIssuer } from "../utils/claim-issuer";
-import { getDefaultWalletClient } from "../utils/default-signer";
-import { getContractInstance } from "../utils/get-contract";
 import { waitForEvent } from "../utils/wait-for-event";
 import { grantClaimManagerRole } from "./actions/grant-claim-manager-role";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
@@ -45,13 +37,17 @@ export const createDeposit = async () => {
 		await grantClaimManagerRole(accessManager, claimIssuer.address);
 		// issue isin claim
 		await issueIsinClaim(tokenIdentity, "12345678901234567890");
+
+		// update collateral
+		// create some users with identity claims
+		// mint
+		// transfer
+		// burn
+
+		// TODO: execute all other functions of the deposit
+
+		return tokenAddress;
 	}
 
-	// update collateral
-	// create some users with identity claims
-	// mint
-	// transfer
-	// burn
-
-	// TODO: execute all other functions of the deposit
+	throw new Error("Failed to create deposit");
 };

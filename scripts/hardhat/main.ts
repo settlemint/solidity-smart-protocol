@@ -1,4 +1,8 @@
+import { createBond } from "./assets/bond";
 import { createDeposit } from "./assets/deposit";
+import { createEquity } from "./assets/equity";
+import { createFund } from "./assets/fund";
+import { createStablecoin } from "./assets/stablecoin";
 import SMARTTopics from "./constants/topics";
 import { smartProtocolDeployer } from "./deployer";
 import { claimIssuer } from "./utils/claim-issuer";
@@ -16,7 +20,11 @@ async function main() {
 	]);
 
 	// Create a deposit
-	await createDeposit();
+	const deposit = await createDeposit();
+	const equity = await createEquity();
+	const bond = await createBond(deposit);
+	const fund = await createFund();
+	const stablecoin = await createStablecoin();
 }
 
 // Execute the script

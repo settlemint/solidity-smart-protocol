@@ -28,12 +28,13 @@ export const issueIsinClaim = async (
 		walletClient: claimIssuer.getWalletClient(),
 	});
 
-	await tokenIdentityContract.write.addClaim([
-		SMARTTopics.isin,
-		1, // ECDSA
-		claimIssuer.address,
-		isinClaimSignature,
-		isinClaimData,
-		"",
-	]);
+	// TODO: Add claim
+	// await tokenIdentityContract.write.addClaim([
+	// 	SMARTTopics.isin,
+	// 	1, // ECDSA
+	// 	claimIssuer.address,
+	// 	isinClaimSignature,
+	// 	isinClaimData,
+	// 	"",
+	// ]);
 };

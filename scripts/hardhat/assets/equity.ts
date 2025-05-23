@@ -1,10 +1,15 @@
-import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import SMARTOnboardingModule from "../../onboarding";
+import type { Address, Hex } from "viem";
+import { smartProtocolDeployer } from "../deployer";
+import { claimIssuer } from "../utils/claim-issuer";
+import { waitForEvent } from "../utils/wait-for-event";
+import { grantClaimManagerRole } from "./actions/grant-claim-manager-role";
+import { issueIsinClaim } from "./actions/issue-isin-claim";
 
-const SMARTTestEquityModule = buildModule("SMARTTestEquityModule", (m) => {
-	const { equityFactory } = m.useModule(SMARTOnboardingModule);
+export const createEquity = async () => {
+	const equityFactory = smartProtocolDeployer.getEquityFactoryContract();
 
-	const createEquity = m.call(equityFactory, "createEquity", [
+	// TODO: typing doesn't work? Check txsigner utils
+	const transactionHash: Hex = await equityFactory.write.createEquity([
 		"Apple",
 		"AAPL",
 		18,
@@ -13,21 +18,32 @@ const SMARTTestEquityModule = buildModule("SMARTTestEquityModule", (m) => {
 		[], // TODO: fill in with the setup for ATK
 		[], // TODO: fill in with the setup for ATK
 	]);
-	const equityAddress = m.readEventArgument(
-		createEquity,
-		"TokenAssetCreated",
-		"tokenAddress",
-		{ id: "equityAddress" },
-	);
-	const equityToken = m.contractAt("ISMARTEquity", equityAddress, {
-		id: "equity",
-	});
 
-	// TODO: execute all other functions of the equity
-
-	return {
-		equityToken,
+	const { tokenAddress, tokenIdentity, accessManager } = (await waitForEvent({
+		transactionHash,
+		contract: equityFactory,
+		eventName: "TokenAssetCreated",
+	})) as unknown as {
+		sender: Address;
+		tokenAddress: Address;
+		tokenIdentity: Address;
+		accessManager: Address;
 	};
-});
 
-export default SMARTTestEquityModule;
+	if (tokenAddress && tokenIdentity && accessManager) {
+		console.log("Equity address:", tokenAddress);
+		console.log("Equity identity:", tokenIdentity);
+		console.log("Equity access manager:", accessManager);
+
+		// needs to be done so that he can add the claims
+		await grantClaimManagerRole(accessManager, claimIssuer.address);
+		// issue isin claim
+		await issueIsinClaim(tokenIdentity, "12345678901234567890");
+
+		// TODO: execute all other functions of the equity
+
+		return tokenAddress;
+	}
+
+	throw new Error("Failed to create equity");
+};

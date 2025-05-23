@@ -1,11 +1,15 @@
-import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import SMARTOnboardingModule from "../../onboarding";
-import SMARTTestDepositModule from "./deposit";
-const SMARTTestBondModule = buildModule("SMARTTestBondModule", (m) => {
-	const { bondFactory } = m.useModule(SMARTOnboardingModule);
-	const { depositToken } = m.useModule(SMARTTestDepositModule);
+import type { Address, Hex } from "viem";
+import { smartProtocolDeployer } from "../deployer";
+import { claimIssuer } from "../utils/claim-issuer";
+import { waitForEvent } from "../utils/wait-for-event";
+import { grantClaimManagerRole } from "./actions/grant-claim-manager-role";
+import { issueIsinClaim } from "./actions/issue-isin-claim";
 
-	const createBond = m.call(bondFactory, "createBond", [
+export const createBond = async (depositToken: Address) => {
+	const bondFactory = smartProtocolDeployer.getBondFactoryContract();
+
+	// TODO: typing doesn't work? Check txsigner utils
+	const transactionHash: Hex = await bondFactory.write.createBond([
 		"Euro Bonds",
 		"EURB",
 		6,
@@ -16,22 +20,33 @@ const SMARTTestBondModule = buildModule("SMARTTestBondModule", (m) => {
 		[], // TODO: fill in with the setup for ATK
 		[], // TODO: fill in with the setup for ATK
 	]);
-	const bondAddress = m.readEventArgument(
-		createBond,
-		"TokenAssetCreated",
-		"tokenAddress",
-		{ id: "bondAddress" },
-	);
-	const bondToken = m.contractAt("ISMARTBond", bondAddress, {
-		id: "bond",
-	});
 
-	// TODO: add yield etc
-	// TODO: execute all other functions of the bond
-
-	return {
-		bondToken,
+	const { tokenAddress, tokenIdentity, accessManager } = (await waitForEvent({
+		transactionHash,
+		contract: bondFactory,
+		eventName: "TokenAssetCreated",
+	})) as unknown as {
+		sender: Address;
+		tokenAddress: Address;
+		tokenIdentity: Address;
+		accessManager: Address;
 	};
-});
 
-export default SMARTTestBondModule;
+	if (tokenAddress && tokenIdentity && accessManager) {
+		console.log("Bond address:", tokenAddress);
+		console.log("Bond identity:", tokenIdentity);
+		console.log("Bond access manager:", accessManager);
+
+		// needs to be done so that he can add the claims
+		await grantClaimManagerRole(accessManager, claimIssuer.address);
+		// issue isin claim
+		await issueIsinClaim(tokenIdentity, "12345678901234567890");
+
+		// TODO: add yield etc
+		// TODO: execute all other functions of the bond
+
+		return tokenAddress;
+	}
+
+	throw new Error("Failed to create bond");
+};
