@@ -43,6 +43,7 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         override
         returns (address deployedEquityAddress)
     {
+        // slither-disable-next-line encode-packed-collision
         bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
         // Create the access manager for the token
         ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
@@ -101,6 +102,7 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         override
         returns (address predictedAddress)
     {
+        // slither-disable-next-line encode-packed-collision
         bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
         address accessManagerAddress_ = _predictAccessManagerAddress(salt);
         bytes memory constructorArgs = abi.encode(

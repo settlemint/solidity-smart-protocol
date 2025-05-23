@@ -40,6 +40,7 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         override
         returns (address deployedDepositAddress)
     {
+        // slither-disable-next-line encode-packed-collision
         bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
 
         // Create the access manager for the token
@@ -93,6 +94,7 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         override
         returns (address predictedAddress)
     {
+        // slither-disable-next-line encode-packed-collision
         bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
         address accessManagerAddress_ = _predictAccessManagerAddress(salt);
         // ABI encode constructor arguments for SMARTDepositProxy
