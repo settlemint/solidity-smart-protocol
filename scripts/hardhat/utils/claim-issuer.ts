@@ -1,21 +1,19 @@
 import type { Signer } from "ethers"; // ethers signer type
 import hre from "hardhat";
 import {
-	http,
 	type Hex,
-	Transport,
 	type WalletClient,
 	concat,
 	createWalletClient,
 	custom,
-	encodePacked,
+	encodeAbiParameters,
 	keccak256,
+	parseAbiParameters,
 	toBytes,
-	toHex,
 } from "viem";
 import type { LocalAccount } from "viem/accounts"; // viem signer type
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import type { Chain } from "viem/chains";
+
 import { smartProtocolDeployer } from "../deployer";
 import { getViemChain } from "./viem-chain";
 import { waitForEvent } from "./wait-for-event";
@@ -123,12 +121,13 @@ export async function createClaim(
 	claimData: `0x${string}`,
 ): Promise<{ data: `0x${string}`; signature: `0x${string}` }> {
 	// Solidity-style hash: keccak256(abi.encode(address, uint256, bytes))
-	const dataHash = keccak256(
-		encodePacked(
-			["address", "uint256", "bytes"],
-			[subjectIdentityAddress, claimTopic, claimData],
+	const dataToSign = encodeAbiParameters(
+		parseAbiParameters(
+			"address subject, uint256 topicValue, bytes memory dataBytes",
 		),
+		[subjectIdentityAddress, claimTopic, claimData],
 	);
+	const dataHash = keccak256(dataToSign);
 
 	// Ethereum Signed Message hash
 	const prefixedHash = keccak256(
