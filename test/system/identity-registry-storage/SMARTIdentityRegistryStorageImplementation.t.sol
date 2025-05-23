@@ -103,13 +103,13 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
 
     function test_AddIdentityToStorage_InvalidWalletAddress_ShouldRevert() public {
         vm.prank(admin);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSignature("InvalidIdentityWalletAddress()"));
         storageContract.addIdentityToStorage(address(0), identity1, COUNTRY_US);
     }
 
     function test_AddIdentityToStorage_InvalidIdentityAddress_ShouldRevert() public {
         vm.prank(admin);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSignature("InvalidIdentityAddress()"));
         storageContract.addIdentityToStorage(user1, IIdentity(address(0)), COUNTRY_US);
     }
 
@@ -117,7 +117,7 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         vm.startPrank(admin);
         storageContract.addIdentityToStorage(user1, identity1, COUNTRY_US);
         
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSignature("IdentityAlreadyExists(address)", user1));
         storageContract.addIdentityToStorage(user1, identity2, COUNTRY_UK);
         vm.stopPrank();
     }
@@ -243,7 +243,7 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
 
     function test_BindIdentityRegistry_InvalidAddress_ShouldRevert() public {
         vm.prank(system);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSignature("InvalidIdentityRegistryAddress()"));
         storageContract.bindIdentityRegistry(address(0));
     }
 
@@ -251,7 +251,7 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         vm.startPrank(system);
         storageContract.bindIdentityRegistry(registry1);
         
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSignature("IdentityRegistryAlreadyBound(address)", registry1));
         storageContract.bindIdentityRegistry(registry1);
         vm.stopPrank();
     }

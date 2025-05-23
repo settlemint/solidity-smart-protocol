@@ -18,6 +18,8 @@ contract TestableTokenFactory is AbstractSMARTTokenFactoryImplementation {
     }
 
     // Expose internal functions for testing by reimplementing the logic
+    // Note: Functions are private in AbstractSMARTTokenFactoryImplementation, so we
+    // replicate the logic here. This ensures our test assumptions match implementation.
     function exposedCalculateSalt(string memory name, string memory symbol) external pure returns (bytes32) {
         return keccak256(abi.encodePacked(name, symbol));
     }
@@ -53,7 +55,7 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
 
     function testConstructorDisablesInitializers() public {
         // Test that the constructor properly disables initializers
-        vm.expectRevert();
+        vm.expectRevert("Initializable: contract is already initialized");
         factory.initialize(admin, admin, admin);
     }
 

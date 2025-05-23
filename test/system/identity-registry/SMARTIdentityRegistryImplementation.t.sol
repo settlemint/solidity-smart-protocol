@@ -57,9 +57,6 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         identity1 = IIdentity(identity1Addr);
         identity2 = IIdentity(identity2Addr);
         
-        // Setup claim topics for testing
-        claimTopics.push(1); // KYC topic
-        claimTopics.push(2); // AML topic
         
         vm.stopPrank();
     }
@@ -291,6 +288,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         identityRegistry.registerIdentity(user1, identity1, COUNTRY_US);
 
         uint256[] memory emptyTopics = new uint256[](0);
+        // Verification should pass when no claims are required
         assertTrue(identityRegistry.isVerified(user1, emptyTopics));
     }
 
@@ -298,8 +296,14 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         vm.prank(admin);
         identityRegistry.registerIdentity(user1, identity1, COUNTRY_US);
 
-        // Should return false since we haven't set up proper claims
-        assertFalse(identityRegistry.isVerified(user1, claimTopics));
+        // Setup claim topics for this specific test
+        uint256[] memory testClaimTopics = new uint256[](2);
+        testClaimTopics[0] = 1; // KYC topic
+        testClaimTopics[1] = 2; // AML topic
+
+        // Should return false since we haven't set up proper claims for verification
+        // TODO: Add comprehensive claim verification tests with proper claim setup
+        assertFalse(identityRegistry.isVerified(user1, testClaimTopics));
     }
 
     function testInvestorCountryRevertsIfNotRegistered() public {
