@@ -45,8 +45,8 @@ contract TestComplianceModule is AbstractComplianceModule {
         }
     }
 
-    function name() external pure override returns (string memory) {
-        return "Test Module";
+    function name() external view override returns (string memory) {
+        return _moduleName;
     }
 }
 
