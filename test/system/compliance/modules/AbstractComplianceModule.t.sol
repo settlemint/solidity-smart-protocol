@@ -128,6 +128,7 @@ contract AbstractComplianceModuleTest is Test {
     function test_SupportsInterface() public {
         assertTrue(module.supportsInterface(type(ISMARTComplianceModule).interfaceId));
         assertTrue(module.supportsInterface(type(IAccessControl).interfaceId));
+        assertTrue(module.supportsInterface(type(IAccessControlEnumerable).interfaceId));
         assertTrue(module.supportsInterface(type(IERC165).interfaceId));
         assertFalse(module.supportsInterface(bytes4(0x12345678)));
     }
