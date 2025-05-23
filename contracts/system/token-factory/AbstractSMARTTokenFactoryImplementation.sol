@@ -139,16 +139,16 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @dev Can be overridden by derived contracts for custom salt calculation.
     /// @param saltInputData The ABI encoded data to be used for salt calculation.
     /// @return The calculated salt for CREATE2 deployment.
-    function _calculateSalt(bytes memory saltInputData) internal pure returns (bytes32) {
-        return keccak256(saltInputData);
+    function _calculateSalt(bytes memory saltInputData) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked(saltInputData, address(this)));
     }
 
     /// @notice Calculates the salt for CREATE2 deployment of an access manager.
-    /// @dev Prepends "AccessManagerSalt" to the provided saltInputData.
+    /// @dev Prepends "AccessManagerSalt" to the provided saltInputData and appends address(this).
     /// @param saltInputData The ABI encoded data to be used for salt calculation.
     /// @return The calculated salt for access manager CREATE2 deployment.
-    function _calculateAccessManagerSalt(bytes memory saltInputData) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked("AccessManagerSalt", saltInputData));
+    function _calculateAccessManagerSalt(bytes memory saltInputData) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked("AccessManagerSalt", saltInputData, address(this)));
     }
 
     /// @notice Prepares the data required for access manager creation using CREATE2.
