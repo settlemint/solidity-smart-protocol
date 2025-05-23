@@ -16,6 +16,7 @@ import { SMARTComplianceModuleParamPair } from "../../contracts/interface/struct
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract SMARTEquityTest is AbstractSMARTAssetTest {
     ISMARTEquityFactory internal equityFactory;
@@ -128,7 +129,11 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
 
         for (uint256 i = 0; i < decimalValues.length; ++i) {
             ISMARTEquity newEquity = _createEquityAndMint(
-                "Test SMART Equity", "TEST", decimalValues[i], new uint256[](0), new SMARTComplianceModuleParamPair[](0)
+                string.concat("Test SMART Equity", Strings.toString(decimalValues[i])),
+                string.concat("TEST", Strings.toString(decimalValues[i])),
+                decimalValues[i],
+                new uint256[](0),
+                new SMARTComplianceModuleParamPair[](0)
             );
             assertEq(newEquity.decimals(), decimalValues[i]);
         }

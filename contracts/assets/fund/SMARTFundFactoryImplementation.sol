@@ -46,8 +46,9 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
         override
         returns (address deployedFundAddress)
     {
+        bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
         // Create the access manager for the token
-        ISMARTTokenAccessManager accessManager = _createAccessManager(name_, symbol_);
+        ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
 
         // ABI encode constructor arguments for SMARTDepositProxy
         bytes memory constructorArgs = abi.encode(
@@ -69,7 +70,7 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
         bytes memory proxyBytecode = type(SMARTFundProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        deployedFundAddress = _deployToken(proxyBytecode, constructorArgs, name_, symbol_, address(accessManager));
+        deployedFundAddress = _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
 
         return deployedFundAddress;
     }
@@ -106,7 +107,8 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
         override
         returns (address predictedAddress)
     {
-        address accessManagerAddress_ = _predictAccessManagerAddress(name_, symbol_);
+        bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
+        address accessManagerAddress_ = _predictAccessManagerAddress(salt);
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
@@ -123,7 +125,7 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
         );
 
         bytes memory proxyBytecode = type(SMARTFundProxy).creationCode;
-        predictedAddress = _predictProxyAddress(proxyBytecode, constructorArgs, name_, symbol_);
+        predictedAddress = _predictProxyAddress(proxyBytecode, constructorArgs, salt);
         return predictedAddress;
     }
 }

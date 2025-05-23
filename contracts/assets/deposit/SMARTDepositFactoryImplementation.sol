@@ -40,8 +40,10 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         override
         returns (address deployedDepositAddress)
     {
+        bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
+
         // Create the access manager for the token
-        ISMARTTokenAccessManager accessManager = _createAccessManager(name_, symbol_);
+        ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
 
         // ABI encode constructor arguments for SMARTDepositProxy
         bytes memory constructorArgs = abi.encode(
@@ -60,7 +62,7 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         bytes memory proxyBytecode = type(SMARTDepositProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        deployedDepositAddress = _deployToken(proxyBytecode, constructorArgs, name_, symbol_, address(accessManager));
+        deployedDepositAddress = _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
 
         return deployedDepositAddress;
     }
@@ -91,7 +93,8 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         override
         returns (address predictedAddress)
     {
-        address accessManagerAddress_ = _predictAccessManagerAddress(name_, symbol_);
+        bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
+        address accessManagerAddress_ = _predictAccessManagerAddress(salt);
         // ABI encode constructor arguments for SMARTDepositProxy
         bytes memory constructorArgs = abi.encode(
             address(this), // The factory address is part of the constructor args
@@ -109,7 +112,7 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         bytes memory proxyBytecode = type(SMARTDepositProxy).creationCode;
 
         // Predict the address using the helper from the abstract contract
-        predictedAddress = _predictProxyAddress(proxyBytecode, constructorArgs, name_, symbol_);
+        predictedAddress = _predictProxyAddress(proxyBytecode, constructorArgs, salt);
 
         return predictedAddress;
     }

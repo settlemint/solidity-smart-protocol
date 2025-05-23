@@ -40,6 +40,10 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     mapping(address tokenAddress => bool isFactoryToken) public isFactoryToken; // Added for
         // CREATE2
 
+    /// @notice Mapping indicating whether an access manager address was deployed by this factory.
+    /// @dev Stores a boolean value for each access manager address, true if deployed by this factory.
+    mapping(address accessManagerAddress => bool isFactoryAccessManager) public isFactoryAccessManager;
+
     // -- Errors --
     /// @notice Custom errors for the factory contract
     /// @dev Defines custom error types used by the contract for various failure conditions.
@@ -51,6 +55,9 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     error ProxyCreationFailed(); // Added for CREATE2
     /// @notice Error when a CREATE2 proxy deployment fails.
     error AddressAlreadyDeployed(address predictedAddress); // Added for CREATE2
+    /// @notice Error when a predicted CREATE2 address for an access manager is already marked as deployed by this
+    /// factory.
+    error AccessManagerAlreadyDeployed(address predictedAddress);
 
     /// @notice Emitted when the token implementation address is updated.
     /// @param oldImplementation The address of the old token implementation.
@@ -145,46 +152,32 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     }
 
     /// @notice Calculates the salt for CREATE2 deployment.
-    /// @dev Combines the name and symbol into a unique salt value.
-    ///      Can be overridden by derived contracts for custom salt calculation.
-    /// @param nameForSalt The name component for the salt.
-    /// @param symbolForSalt The symbol component for the salt.
+    /// @dev Can be overridden by derived contracts for custom salt calculation.
+    /// @param saltInputData The ABI encoded data to be used for salt calculation.
     /// @return The calculated salt for CREATE2 deployment.
-    function _calculateSalt(string memory nameForSalt, string memory symbolForSalt) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(nameForSalt, symbolForSalt));
+    function _calculateSalt(bytes memory saltInputData) internal pure returns (bytes32) {
+        return keccak256(saltInputData);
     }
 
     /// @notice Calculates the salt for CREATE2 deployment of an access manager.
-    /// @dev Combines the name, symbol, and a prefix into a unique salt value.
-    /// @param nameForSalt The name component for the salt.
-    /// @param symbolForSalt The symbol component for the salt.
+    /// @dev Prepends "AccessManagerSalt" to the provided saltInputData.
+    /// @param saltInputData The ABI encoded data to be used for salt calculation.
     /// @return The calculated salt for access manager CREATE2 deployment.
-    function _calculateAccessManagerSalt(
-        string memory nameForSalt,
-        string memory symbolForSalt
-    )
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(abi.encodePacked("AccessManagerSalt", nameForSalt, symbolForSalt));
+    function _calculateAccessManagerSalt(bytes memory saltInputData) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("AccessManagerSalt", saltInputData));
     }
 
     /// @notice Prepares the data required for access manager creation using CREATE2.
     /// @dev Internal helper function to calculate salt and full creation code.
-    /// @param nameForSalt The name component for the salt.
-    /// @param symbolForSalt The symbol component for the salt.
+    /// @param accessManagerSaltInputData The ABI encoded data to be used for salt calculation for the access manager.
     /// @return salt The calculated salt for CREATE2 deployment.
     /// @return fullCreationCode The complete bytecode for deploying the access manager.
-    function _prepareAccessManagerCreationData(
-        string memory nameForSalt,
-        string memory symbolForSalt
-    )
+    function _prepareAccessManagerCreationData(bytes memory accessManagerSaltInputData)
         internal
         view
         returns (bytes32 salt, bytes memory fullCreationCode)
     {
-        salt = _calculateAccessManagerSalt(nameForSalt, symbolForSalt);
+        salt = _calculateAccessManagerSalt(accessManagerSaltInputData);
         address[] memory initialAdmins = new address[](1); // Factory is initial admin
         initialAdmins[0] = address(this);
         bytes memory constructorArgs = abi.encode(_systemAddress, initialAdmins);
@@ -193,18 +186,14 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     }
 
     /// @notice Predicts the deployment address of an access manager using CREATE2.
-    /// @param nameForSalt The name component for the salt.
-    /// @param symbolForSalt The symbol component for the salt.
+    /// @param accessManagerSaltInputData The ABI encoded data to be used for salt calculation for the access manager.
     /// @return predictedAddress The predicted address where the access manager would be deployed.
-    function _predictAccessManagerAddress(
-        string memory nameForSalt,
-        string memory symbolForSalt
-    )
+    function _predictAccessManagerAddress(bytes memory accessManagerSaltInputData)
         internal
         view
         returns (address predictedAddress)
     {
-        (bytes32 salt, bytes memory fullCreationCode) = _prepareAccessManagerCreationData(nameForSalt, symbolForSalt);
+        (bytes32 salt, bytes memory fullCreationCode) = _prepareAccessManagerCreationData(accessManagerSaltInputData);
         bytes32 bytecodeHash = keccak256(fullCreationCode);
         predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
         return predictedAddress;
@@ -212,27 +201,29 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
 
     /// @notice Creates a new access manager for a token using CREATE2.
     /// @dev Deploys SMARTTokenAccessManagerProxy with a deterministic address.
-    /// @param nameForSalt The name component for the salt calculation.
-    /// @param symbolForSalt The symbol component for the salt calculation.
+    /// @param accessManagerSaltInputData The ABI encoded data to be used for salt calculation for the access manager.
     /// @return accessManager The instance of the newly created access manager.
-    function _createAccessManager(
-        string memory nameForSalt,
-        string memory symbolForSalt
-    )
+    function _createAccessManager(bytes memory accessManagerSaltInputData)
         internal
         virtual
         onlyRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE)
         returns (ISMARTTokenAccessManager)
     {
-        (bytes32 salt, bytes memory fullCreationCode) = _prepareAccessManagerCreationData(nameForSalt, symbolForSalt);
+        (bytes32 salt, bytes memory fullCreationCode) = _prepareAccessManagerCreationData(accessManagerSaltInputData);
 
         address predictedAccessManagerAddress = Create2.computeAddress(salt, keccak256(fullCreationCode), address(this));
+
+        if (isFactoryAccessManager[predictedAccessManagerAddress]) {
+            revert AccessManagerAlreadyDeployed(predictedAccessManagerAddress);
+        }
+
         address deployedAddress = Create2.deploy(0, salt, fullCreationCode);
 
         if (deployedAddress != predictedAccessManagerAddress) {
             revert ProxyCreationFailed(); // Could be more specific: AccessManagerCreationFailed
         }
 
+        isFactoryAccessManager[deployedAddress] = true;
         ISMARTTokenAccessManager accessManager = ISMARTTokenAccessManager(deployedAddress);
 
         return accessManager;
@@ -243,29 +234,26 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     ///      The proxy is deployed uninitialized, pointing to the current `_tokenImplementation`.
     /// @param proxyCreationCode The creation bytecode of the proxy contract.
     /// @param encodedConstructorArgs ABI-encoded constructor arguments for the proxy.
-    /// @param nameForSalt The name component for the salt calculation.
-    /// @param symbolForSalt The symbol component for the salt calculation.
+    /// @param tokenSaltInputData The ABI encoded data to be used for salt calculation for the token.
     /// @param accessManager The address of the access manager.
     /// @return deployedAddress The address of the newly deployed proxy contract.
     function _deployToken(
         bytes memory proxyCreationCode,
         bytes memory encodedConstructorArgs,
-        string memory nameForSalt,
-        string memory symbolForSalt,
+        bytes memory tokenSaltInputData,
         address accessManager
     )
         internal
         onlyRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE)
         returns (address deployedAddress)
     {
-        address predictedAddress =
-            _predictProxyAddress(proxyCreationCode, encodedConstructorArgs, nameForSalt, symbolForSalt);
+        address predictedAddress = _predictProxyAddress(proxyCreationCode, encodedConstructorArgs, tokenSaltInputData);
 
         if (isFactoryToken[predictedAddress]) {
             revert AddressAlreadyDeployed(predictedAddress);
         }
 
-        bytes32 salt = _calculateSalt(nameForSalt, symbolForSalt);
+        bytes32 salt = _calculateSalt(tokenSaltInputData);
         bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
 
         deployedAddress = Create2.deploy(0, salt, fullCreationCode);
@@ -286,20 +274,18 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     ///      Assumes the proxy constructor takes (address _logic, bytes memory _data).
     /// @param proxyCreationCode The creation bytecode of the proxy contract.
     /// @param encodedConstructorArgs ABI-encoded constructor arguments for the proxy.
-    /// @param nameForSalt The name component for the salt.
-    /// @param symbolForSalt The symbol component for the salt.
+    /// @param tokenSaltInputData The ABI encoded data to be used for salt calculation for the token.
     /// @return predictedAddress The predicted address where the proxy would be deployed.
     function _predictProxyAddress(
         bytes memory proxyCreationCode,
         bytes memory encodedConstructorArgs,
-        string memory nameForSalt,
-        string memory symbolForSalt
+        bytes memory tokenSaltInputData
     )
         internal
         view
         returns (address predictedAddress)
     {
-        bytes32 salt = _calculateSalt(nameForSalt, symbolForSalt);
+        bytes32 salt = _calculateSalt(tokenSaltInputData);
         bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
         bytes32 bytecodeHash = keccak256(fullCreationCode);
         predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));

@@ -43,8 +43,9 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         override
         returns (address deployedEquityAddress)
     {
+        bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
         // Create the access manager for the token
-        ISMARTTokenAccessManager accessManager = _createAccessManager(name_, symbol_);
+        ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
 
         // ABI encode constructor arguments for SMARTDepositProxy
         bytes memory constructorArgs = abi.encode(
@@ -65,7 +66,7 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         bytes memory proxyBytecode = type(SMARTEquityProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        deployedEquityAddress = _deployToken(proxyBytecode, constructorArgs, name_, symbol_, address(accessManager));
+        deployedEquityAddress = _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
 
         return deployedEquityAddress;
     }
@@ -100,7 +101,8 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         override
         returns (address predictedAddress)
     {
-        address accessManagerAddress_ = _predictAccessManagerAddress(name_, symbol_);
+        bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
+        address accessManagerAddress_ = _predictAccessManagerAddress(salt);
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
@@ -116,7 +118,7 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         );
 
         bytes memory proxyBytecode = type(SMARTEquityProxy).creationCode;
-        predictedAddress = _predictProxyAddress(proxyBytecode, constructorArgs, name_, symbol_);
+        predictedAddress = _predictProxyAddress(proxyBytecode, constructorArgs, salt);
         return predictedAddress;
     }
 }

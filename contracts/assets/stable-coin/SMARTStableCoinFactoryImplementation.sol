@@ -39,8 +39,9 @@ contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, Abstra
         external
         returns (address deployedStableCoinAddress)
     {
+        bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
         // Create the access manager for the token
-        ISMARTTokenAccessManager accessManager = _createAccessManager(name_, symbol_);
+        ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
 
         // ABI encode constructor arguments for SMARTStableCoinProxy
         bytes memory constructorArgs = abi.encode(
@@ -59,7 +60,7 @@ contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, Abstra
         bytes memory proxyBytecode = type(SMARTStableCoinProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        deployedStableCoinAddress = _deployToken(proxyBytecode, constructorArgs, name_, symbol_, address(accessManager));
+        deployedStableCoinAddress = _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
 
         return deployedStableCoinAddress;
     }
@@ -90,7 +91,8 @@ contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, Abstra
         override
         returns (address predictedAddress)
     {
-        address accessManagerAddress_ = _predictAccessManagerAddress(name_, symbol_);
+        bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
+        address accessManagerAddress_ = _predictAccessManagerAddress(salt);
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
@@ -104,7 +106,7 @@ contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, Abstra
         );
 
         bytes memory proxyBytecode = type(SMARTStableCoinProxy).creationCode;
-        predictedAddress = _predictProxyAddress(proxyBytecode, constructorArgs, name_, symbol_);
+        predictedAddress = _predictProxyAddress(proxyBytecode, constructorArgs, salt);
         return predictedAddress;
     }
 }
