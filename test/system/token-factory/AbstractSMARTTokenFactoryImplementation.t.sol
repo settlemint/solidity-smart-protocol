@@ -55,7 +55,7 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
 
     function testConstructorDisablesInitializers() public {
         // Test that the constructor properly disables initializers
-        vm.expectRevert("Initializable: contract is already initialized");
+        vm.expectRevert(abi.encodeWithSignature("InvalidInitialization()"));
         factory.initialize(admin, admin, admin);
     }
 
