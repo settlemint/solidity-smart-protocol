@@ -12,6 +12,11 @@ error InvalidSystemAddress();
 /// of a critical component if a required setup step could not be completed successfully.
 error InitializationFailed();
 
+/// @notice Error indicating that the system has already been bootstrapped and cannot be bootstrapped again.
+/// @dev This error is thrown if the `bootstrap` function is called when the system proxy contracts have already
+/// been deployed and initialized.
+error SystemAlreadyBootstrapped();
+
 /// @notice Error indicating that the compliance module implementation address has not been set.
 /// @dev This error is thrown if an operation requires the compliance module, but its logic contract address is
 /// zero or has not been configured in the `SMARTSystem`.
