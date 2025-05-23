@@ -108,9 +108,6 @@ contract SMARTTokenAccessManagerTest is Test {
         
         assertTrue(IAccessControl(address(accessManager)).hasRole(operatorRole, operator));
         
-        // Verify the role was granted successfully
-        assertTrue(IAccessControl(address(accessManager)).hasRole(operatorRole, operator));
-        
         vm.stopPrank();
     }
     
