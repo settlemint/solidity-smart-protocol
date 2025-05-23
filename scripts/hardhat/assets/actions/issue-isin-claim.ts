@@ -29,12 +29,13 @@ export const issueIsinClaim = async (
 	});
 
 	// TODO: Add claim
-	// await tokenIdentityContract.write.addClaim([
-	// 	SMARTTopics.isin,
-	// 	1, // ECDSA
-	// 	claimIssuer.address,
-	// 	isinClaimSignature,
-	// 	isinClaimData,
-	// 	"",
-	// ]);
+	const claimIssuerIdentity = await claimIssuer.getOrCreateIdentity();
+	await tokenIdentityContract.write.addClaim([
+		SMARTTopics.isin,
+		1, // ECDSA
+		claimIssuerIdentity,
+		isinClaimSignature,
+		isinClaimData,
+		"",
+	]);
 };

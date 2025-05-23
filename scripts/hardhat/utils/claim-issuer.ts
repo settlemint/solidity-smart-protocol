@@ -2,6 +2,7 @@ import type { Signer } from "ethers"; // ethers signer type
 import hre from "hardhat";
 import {
 	http,
+	type Hex,
 	Transport,
 	type WalletClient,
 	concat,
@@ -15,14 +16,16 @@ import {
 import type { LocalAccount } from "viem/accounts"; // viem signer type
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { Chain } from "viem/chains";
+import { smartProtocolDeployer } from "../deployer";
 import { getViemChain } from "./viem-chain";
+import { waitForEvent } from "./wait-for-event";
 
 /**
  * Class representing a claim issuer that can generate and sign claims
  */
 class ClaimIssuer {
 	private readonly signer: LocalAccount;
-
+	private identity: Hex | undefined;
 	/**
 	 * Create a new claim issuer
 	 * @param privateKey - Optional private key for the signer. If not provided, a random one will be generated.
@@ -37,6 +40,28 @@ class ClaimIssuer {
 	 */
 	get address(): `0x${string}` {
 		return this.signer.address;
+	}
+
+	async getOrCreateIdentity(): Promise<`0x${string}`> {
+		if (this.identity) {
+			return this.identity;
+		}
+
+		const identityFactory = smartProtocolDeployer.getIdentityFactoryContract();
+		const transactionHash: Hex = await identityFactory.write.createIdentity([
+			this.address,
+			[],
+		]);
+
+		const { identity } = (await waitForEvent({
+			transactionHash,
+			contract: identityFactory,
+			eventName: "IdentityCreated",
+		})) as unknown as { identity: `0x${string}` };
+
+		this.identity = identity;
+
+		return identity;
 	}
 
 	/**
