@@ -24,7 +24,8 @@ import {
     TokenFactoryTypeAlreadyRegistered,
     InvalidTokenImplementationAddress,
     InvalidTokenImplementationInterface,
-    TokenAccessManagerImplementationNotSet
+    TokenAccessManagerImplementationNotSet,
+    SystemAlreadyBootstrapped
 } from "./SMARTSystemErrors.sol";
 
 // Constants
@@ -323,6 +324,15 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// is not set (i.e., is the zero address) before calling this function.
     function bootstrap() public onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         // --- Pre-condition Checks ---
+        // Check if system is already bootstrapped by verifying if any proxy is already deployed
+        if (
+            _complianceProxy != address(0) || _identityRegistryProxy != address(0)
+                || _identityRegistryStorageProxy != address(0) || _trustedIssuersRegistryProxy != address(0)
+                || _identityFactoryProxy != address(0)
+        ) {
+            revert SystemAlreadyBootstrapped();
+        }
+
         // Ensure all necessary implementation addresses are set before proceeding with proxy deployment.
         if (_complianceImplementation == address(0)) revert ComplianceImplementationNotSet();
         if (_identityRegistryImplementation == address(0)) revert IdentityRegistryImplementationNotSet();

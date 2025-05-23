@@ -164,12 +164,183 @@ contract SMARTFixedYieldScheduleTest is Test {
         // Move to after first period
         vm.warp(startDate + INTERVAL + 1);
 
+        // Calculate expected yield for completed periods: balance * basis * rate / RATE_BASIS_POINTS
+        uint256 completedPeriodYieldUser1 = (1000e18 * 1000 * 500) / 10_000; // 50e18 for period 1
+        uint256 completedPeriodYieldUser2 = (500e18 * 1000 * 500) / 10_000; // 25e18 for period 1
+
+        // Calculate pro-rata yield for current period (we're 1 second into period 2)
+        // Pro-rata: (balance * basis * rate * timeInPeriod) / (interval * RATE_BASIS_POINTS)
+        uint256 timeInCurrentPeriod = 1; // 1 second into the new period
+        uint256 currentPeriodYieldUser1 = (1000e18 * 1000 * 500 * timeInCurrentPeriod) / (INTERVAL * 10_000);
+        uint256 currentPeriodYieldUser2 = (500e18 * 1000 * 500 * timeInCurrentPeriod) / (INTERVAL * 10_000);
+
+        uint256 expectedYieldUser1 = completedPeriodYieldUser1 + currentPeriodYieldUser1;
+        uint256 expectedYieldUser2 = completedPeriodYieldUser2 + currentPeriodYieldUser2;
+
         uint256 yieldForUser1 = yieldSchedule.calculateAccruedYield(user1);
         uint256 yieldForUser2 = yieldSchedule.calculateAccruedYield(user2);
 
-        assertTrue(yieldForUser1 > 0);
-        assertTrue(yieldForUser2 > 0);
+        // Debug the calculation
+        console.log("Expected User1:", expectedYieldUser1);
+        console.log("Actual User1:  ", yieldForUser1);
+        console.log(
+            "Difference:    ",
+            yieldForUser1 > expectedYieldUser1 ? yieldForUser1 - expectedYieldUser1 : expectedYieldUser1 - yieldForUser1
+        );
+
+        assertEq(yieldForUser1, expectedYieldUser1);
+        assertEq(yieldForUser2, expectedYieldUser2);
+
+        // Verify relative amounts
         assertTrue(yieldForUser1 > yieldForUser2); // user1 has more tokens
+    }
+
+    function test_YieldCalculations_DifferentBasis() public {
+        // Set different basis for users
+        smartToken.setYieldBasisPerUnit(user1, 2000); // 200% basis
+        smartToken.setYieldBasisPerUnit(user2, 500); // 50% basis
+
+        vm.warp(startDate + INTERVAL + 1);
+
+        // Calculate expected yields with different basis for completed period
+        uint256 completedYieldUser1 = (1000e18 * 2000 * 500) / 10_000; // 100e18
+        uint256 completedYieldUser2 = (500e18 * 500 * 500) / 10_000; // 12.5e18
+
+        // Calculate pro-rata for current period (1 second into period 2)
+        uint256 timeInCurrentPeriod = 1;
+        uint256 currentYieldUser1 = (1000e18 * 2000 * 500 * timeInCurrentPeriod) / (INTERVAL * 10_000);
+        uint256 currentYieldUser2 = (500e18 * 500 * 500 * timeInCurrentPeriod) / (INTERVAL * 10_000);
+
+        uint256 expectedYieldUser1 = completedYieldUser1 + currentYieldUser1;
+        uint256 expectedYieldUser2 = completedYieldUser2 + currentYieldUser2;
+
+        uint256 yieldUser1 = yieldSchedule.calculateAccruedYield(user1);
+        uint256 yieldUser2 = yieldSchedule.calculateAccruedYield(user2);
+
+        // Debug the calculation
+        console.log("Expected User1:", expectedYieldUser1);
+        console.log("Actual User1:  ", yieldUser1);
+        console.log(
+            "Difference:    ",
+            yieldUser1 > expectedYieldUser1 ? yieldUser1 - expectedYieldUser1 : expectedYieldUser1 - yieldUser1
+        );
+
+        assertEq(yieldUser1, expectedYieldUser1);
+        assertEq(yieldUser2, expectedYieldUser2);
+    }
+
+    function test_YieldCalculations_MultipleClaimsAcrossPeriods() public {
+        // Fund the contract
+        uint256 fundAmount = 100_000e18;
+        underlyingToken.transfer(address(yieldSchedule), fundAmount);
+
+        uint256 initialBalance = underlyingToken.balanceOf(user1);
+
+        // Move to after first period and claim
+        vm.warp(startDate + INTERVAL + 1);
+        vm.prank(user1);
+        yieldSchedule.claimYield();
+
+        uint256 balanceAfterFirstClaim = underlyingToken.balanceOf(user1);
+        uint256 firstClaimAmount = balanceAfterFirstClaim - initialBalance;
+        uint256 expectedFirstClaim = (1000e18 * 1000 * 500) / 10_000; // 50e18
+        assertEq(firstClaimAmount, expectedFirstClaim);
+
+        // Move to after second period and claim again
+        vm.warp(startDate + (2 * INTERVAL) + 1);
+        vm.prank(user1);
+        yieldSchedule.claimYield();
+
+        uint256 balanceAfterSecondClaim = underlyingToken.balanceOf(user1);
+        uint256 secondClaimAmount = balanceAfterSecondClaim - balanceAfterFirstClaim;
+        assertEq(secondClaimAmount, expectedFirstClaim); // Same amount for second period
+
+        // Total claimed should be 2x the period amount
+        assertEq(balanceAfterSecondClaim - initialBalance, expectedFirstClaim * 2);
+        assertEq(yieldSchedule.lastClaimedPeriod(user1), 2);
+    }
+
+    function test_YieldCalculations_ChangingBalances() public {
+        // Set initial historical balances for first period
+        smartToken.setBalanceOfAt(user1, startDate + INTERVAL, 1000e18);
+        smartToken.setBalanceOfAt(user2, startDate + INTERVAL, 500e18);
+
+        // Set different balances for second period (simulate balance changes)
+        smartToken.setBalanceOfAt(user1, startDate + (2 * INTERVAL), 2000e18); // Doubled
+        smartToken.setBalanceOfAt(user2, startDate + (2 * INTERVAL), 250e18); // Halved
+
+        // Also need to update current balances for pro-rata calculation
+        // Current balances: user1: 1000e18, user2: 500e18 (from setUp)
+        // Target balances: user1: 1250e18, user2: 250e18
+        vm.prank(user2);
+        smartToken.transfer(user1, 250e18); // user1: 1250e18, user2: 250e18
+
+        // Update total supply accordingly
+        smartToken.setTotalSupplyAt(startDate + (2 * INTERVAL), 1500e18); // Keep total same
+
+        // Move to after second period
+        vm.warp(startDate + (2 * INTERVAL) + 1);
+
+        uint256 actualYieldUser1 = yieldSchedule.calculateAccruedYield(user1);
+        uint256 actualYieldUser2 = yieldSchedule.calculateAccruedYield(user2);
+
+        // Verify yields are positive
+        assertTrue(actualYieldUser1 > 0);
+        assertTrue(actualYieldUser2 > 0);
+
+        // Verify yield ratios reflect the balance changes
+        // Period 1: user1 had 2x user2's balance (1000 vs 500)
+        // Period 2: user1 had 8x user2's balance (2000 vs 250)
+        // Current: user1 has 5x user2's balance (1250 vs 250)
+        // So user1's total yield should be much higher than user2's
+        assertTrue(actualYieldUser1 > actualYieldUser2 * 3);
+
+        // Verify that the yield calculation is working as expected by checking components
+        // At minimum, both should have earned yield from 2 completed periods
+        uint256 minExpectedUser1 = 50e18 + 100e18; // Period 1 + Period 2 completed yields
+        uint256 minExpectedUser2 = 25e18 + 12.5e18; // Period 1 + Period 2 completed yields
+
+        assertTrue(actualYieldUser1 >= minExpectedUser1);
+        assertTrue(actualYieldUser2 >= minExpectedUser2);
+    }
+
+    function test_YieldCalculations_ZeroBalance() public {
+        // Check user2's initial balance
+        uint256 user2Balance = smartToken.balanceOf(user2);
+
+        // Set user2 balance to zero for the completed period
+        smartToken.setBalanceOfAt(user2, startDate + INTERVAL, 0);
+
+        // Transfer user2's tokens away to make current balance 0
+        vm.prank(user2);
+        smartToken.transfer(user1, user2Balance);
+
+        vm.warp(startDate + INTERVAL + 1);
+
+        uint256 yieldUser1 = yieldSchedule.calculateAccruedYield(user1);
+        uint256 yieldUser2 = yieldSchedule.calculateAccruedYield(user2);
+
+        // user1 should still get yield (including current period pro-rata)
+        assertTrue(yieldUser1 > 0);
+        // user2 should get no yield due to zero balance in completed period and current balance
+        assertEq(yieldUser2, 0);
+    }
+
+    function test_YieldCalculations_BeforeScheduleStarts() public {
+        // Before start date, no yield should be calculated
+        vm.warp(startDate - 1);
+
+        vm.expectRevert(SMARTFixedYieldSchedule.ScheduleNotActive.selector);
+        yieldSchedule.calculateAccruedYield(user1);
+    }
+
+    function test_YieldCalculations_AfterScheduleEnds() public {
+        // Move to after end date
+        vm.warp(endDate + 1 days);
+
+        // Should still be able to calculate yield for completed periods
+        uint256 yieldUser1 = yieldSchedule.calculateAccruedYield(user1);
+        assertTrue(yieldUser1 > 0);
     }
 
     function test_TopUpUnderlyingAsset() public {

@@ -22,6 +22,9 @@ import { ISMARTTokenFactory } from "../../contracts/system/token-factory/ISMARTT
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 
+// Import system errors
+import { SystemAlreadyBootstrapped } from "../../contracts/system/SMARTSystemErrors.sol";
+
 // Import actual implementations
 import { SMARTComplianceImplementation } from "../../contracts/system/compliance/SMARTComplianceImplementation.sol";
 import { SMARTIdentityRegistryImplementation } from
@@ -129,6 +132,13 @@ contract SMARTSystemTest is Test {
         vm.prank(user);
         vm.expectRevert();
         newSystem.bootstrap();
+    }
+
+    function test_Bootstrap_AlreadyBootstrapped() public {
+        // smartSystem is already bootstrapped in setUp via SystemUtils
+        vm.prank(admin);
+        vm.expectRevert(SystemAlreadyBootstrapped.selector); // Should revert when trying to bootstrap again
+        smartSystem.bootstrap();
     }
 
     function test_SetComplianceImplementation() public {
