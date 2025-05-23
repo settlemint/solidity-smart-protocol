@@ -15,9 +15,23 @@ import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTCom
 // Local imports
 import { SMARTFundProxy } from "./SMARTFundProxy.sol";
 
+/// @title Implementation of the SMART Fund Factory
+/// @notice This contract is responsible for creating instances of SMART Funds.
 contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTTokenFactoryImplementation {
+    /// @notice Constructor for the SMARTFundFactoryImplementation.
+    /// @param forwarder The address of the trusted forwarder for meta-transactions.
     constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
+    /// @notice Creates a new SMART Fund.
+    /// @param name_ The name of the fund.
+    /// @param symbol_ The symbol of the fund.
+    /// @param decimals_ The number of decimals for the fund tokens.
+    /// @param managementFeeBps_ The management fee in basis points.
+    /// @param fundClass_ The class of the fund (e.g., Equity, Fixed Income).
+    /// @param fundCategory_ The category of the fund (e.g., Growth, Value).
+    /// @param requiredClaimTopics_ An array of claim topics required for interacting with the fund.
+    /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
+    /// @return deployedFundAddress The address of the newly deployed fund contract.
     function createFund(
         string memory name_,
         string memory symbol_,
@@ -60,7 +74,10 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
         return deployedFundAddress;
     }
 
-    function isValidTokenImplementation(address tokenImplementation_) public view returns (bool) {
+    /// @notice Checks if a given address implements the ISMARTFund interface.
+    /// @param tokenImplementation_ The address of the contract to check.
+    /// @return bool True if the contract supports the ISMARTFund interface, false otherwise.
+    function isValidTokenImplementation(address tokenImplementation_) public view override returns (bool) {
         return IERC165(tokenImplementation_).supportsInterface(type(ISMARTFund).interfaceId);
     }
 

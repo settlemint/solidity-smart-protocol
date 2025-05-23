@@ -15,9 +15,24 @@ import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTCom
 // Local imports
 import { SMARTBondProxy } from "./SMARTBondProxy.sol";
 
+/// @title Implementation of the SMART Bond Factory
+/// @notice This contract is responsible for creating instances of SMART Bonds.
 contract SMARTBondFactoryImplementation is ISMARTBondFactory, AbstractSMARTTokenFactoryImplementation {
+    /// @notice Constructor for the SMARTBondFactoryImplementation.
+    /// @param forwarder The address of the trusted forwarder for meta-transactions.
     constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
+    /// @notice Creates a new SMART Bond.
+    /// @param name_ The name of the bond.
+    /// @param symbol_ The symbol of the bond.
+    /// @param decimals_ The number of decimals for the bond tokens.
+    /// @param cap_ The maximum total supply of the bond tokens.
+    /// @param maturityDate_ The Unix timestamp representing the bond's maturity date.
+    /// @param faceValue_ The face value of each bond token in the underlying asset's base units.
+    /// @param underlyingAsset_ The address of the ERC20 token used as the underlying asset for the bond.
+    /// @param requiredClaimTopics_ An array of claim topics required for interacting with the bond.
+    /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
+    /// @return deployedBondAddress The address of the newly deployed bond contract.
     function createBond(
         string memory name_,
         string memory symbol_,
@@ -62,7 +77,10 @@ contract SMARTBondFactoryImplementation is ISMARTBondFactory, AbstractSMARTToken
         return deployedBondAddress;
     }
 
-    function isValidTokenImplementation(address tokenImplementation_) public view returns (bool) {
+    /// @notice Checks if a given address implements the ISMARTBond interface.
+    /// @param tokenImplementation_ The address of the contract to check.
+    /// @return bool True if the contract supports the ISMARTBond interface, false otherwise.
+    function isValidTokenImplementation(address tokenImplementation_) public view override returns (bool) {
         return IERC165(tokenImplementation_).supportsInterface(type(ISMARTBond).interfaceId);
     }
 
@@ -88,7 +106,7 @@ contract SMARTBondFactoryImplementation is ISMARTBondFactory, AbstractSMARTToken
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
-        public
+        external
         view
         override
         returns (address predictedAddress)

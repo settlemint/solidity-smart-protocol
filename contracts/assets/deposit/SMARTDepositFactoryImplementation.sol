@@ -15,9 +15,20 @@ import { ISMARTDepositFactory } from "./ISMARTDepositFactory.sol";
 // Local imports
 import { SMARTDepositProxy } from "./SMARTDepositProxy.sol";
 
+/// @title Implementation of the SMART Deposit Factory
+/// @notice This contract is responsible for creating instances of SMART Deposit tokens.
 contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMARTTokenFactoryImplementation {
+    /// @notice Constructor for the SMARTDepositFactoryImplementation.
+    /// @param forwarder The address of the trusted forwarder for meta-transactions.
     constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
+    /// @notice Creates a new SMART Deposit token.
+    /// @param name_ The name of the deposit token.
+    /// @param symbol_ The symbol of the deposit token.
+    /// @param decimals_ The number of decimals for the deposit token.
+    /// @param requiredClaimTopics_ An array of claim topics required for interacting with the deposit token.
+    /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
+    /// @return deployedDepositAddress The address of the newly deployed deposit token contract.
     function createDeposit(
         string memory name_,
         string memory symbol_,
@@ -54,7 +65,10 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         return deployedDepositAddress;
     }
 
-    function isValidTokenImplementation(address tokenImplementation_) public view returns (bool) {
+    /// @notice Checks if a given address implements the ISMARTDeposit interface.
+    /// @param tokenImplementation_ The address of the contract to check.
+    /// @return bool True if the contract supports the ISMARTDeposit interface, false otherwise.
+    function isValidTokenImplementation(address tokenImplementation_) public view override returns (bool) {
         return IERC165(tokenImplementation_).supportsInterface(type(ISMARTDeposit).interfaceId);
     }
 

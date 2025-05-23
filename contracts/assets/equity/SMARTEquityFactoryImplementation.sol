@@ -14,9 +14,22 @@ import { ISMARTEquityFactory } from "./ISMARTEquityFactory.sol";
 // Local imports
 import { SMARTEquityProxy } from "./SMARTEquityProxy.sol";
 
+/// @title Implementation of the SMART Equity Factory
+/// @notice This contract is responsible for creating instances of SMART Equity tokens.
 contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTTokenFactoryImplementation {
+    /// @notice Constructor for the SMARTEquityFactoryImplementation.
+    /// @param forwarder The address of the trusted forwarder for meta-transactions.
     constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
+    /// @notice Creates a new SMART Equity token.
+    /// @param name_ The name of the equity token.
+    /// @param symbol_ The symbol of the equity token.
+    /// @param decimals_ The number of decimals for the equity token.
+    /// @param equityClass_ The class of the equity (e.g., Common, Preferred).
+    /// @param equityCategory_ The category of the equity (e.g., Voting, Non-Voting).
+    /// @param requiredClaimTopics_ An array of claim topics required for interacting with the equity token.
+    /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
+    /// @return deployedEquityAddress The address of the newly deployed equity token contract.
     function createEquity(
         string memory name_,
         string memory symbol_,
@@ -57,7 +70,10 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         return deployedEquityAddress;
     }
 
-    function isValidTokenImplementation(address tokenImplementation_) public view returns (bool) {
+    /// @notice Checks if a given address implements the ISMARTEquity interface.
+    /// @param tokenImplementation_ The address of the contract to check.
+    /// @return bool True if the contract supports the ISMARTEquity interface, false otherwise.
+    function isValidTokenImplementation(address tokenImplementation_) public view override returns (bool) {
         return IERC165(tokenImplementation_).supportsInterface(type(ISMARTEquity).interfaceId);
     }
 

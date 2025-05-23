@@ -15,9 +15,20 @@ import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTCom
 // Local imports
 import { SMARTStableCoinProxy } from "./SMARTStableCoinProxy.sol";
 
+/// @title Implementation of the SMART Stable Coin Factory
+/// @notice This contract is responsible for creating instances of SMART Stable Coins.
 contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, AbstractSMARTTokenFactoryImplementation {
+    /// @notice Constructor for the SMARTStableCoinFactoryImplementation.
+    /// @param forwarder The address of the trusted forwarder for meta-transactions.
     constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
+    /// @notice Creates a new SMART Stable Coin.
+    /// @param name_ The name of the stable coin.
+    /// @param symbol_ The symbol of the stable coin.
+    /// @param decimals_ The number of decimals for the stable coin.
+    /// @param requiredClaimTopics_ An array of claim topics required for interacting with the stable coin.
+    /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
+    /// @return deployedStableCoinAddress The address of the newly deployed stable coin contract.
     function createStableCoin(
         string memory name_,
         string memory symbol_,
@@ -53,7 +64,10 @@ contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, Abstra
         return deployedStableCoinAddress;
     }
 
-    function isValidTokenImplementation(address tokenImplementation_) public view returns (bool) {
+    /// @notice Checks if a given address implements the ISMARTStableCoin interface.
+    /// @param tokenImplementation_ The address of the contract to check.
+    /// @return bool True if the contract supports the ISMARTStableCoin interface, false otherwise.
+    function isValidTokenImplementation(address tokenImplementation_) public view override returns (bool) {
         return IERC165(tokenImplementation_).supportsInterface(type(ISMARTStableCoin).interfaceId);
     }
 

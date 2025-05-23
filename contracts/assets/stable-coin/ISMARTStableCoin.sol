@@ -11,6 +11,8 @@ import { ISMARTPausable } from "../../extensions/pausable/ISMARTPausable.sol";
 import { ISMARTBurnable } from "../../extensions/burnable/ISMARTBurnable.sol";
 import { ISMARTCollateral } from "../../extensions/collateral/ISMARTCollateral.sol";
 
+/// @title Interface for a SMART Stable Coin
+/// @notice Defines the core functionality and extensions for a SMART Stable Coin.
 interface ISMARTStableCoin is
     ISMART,
     ISMARTTokenAccessManaged,
@@ -19,6 +21,15 @@ interface ISMARTStableCoin is
     ISMARTPausable,
     ISMARTBurnable
 {
+    /// @notice Initializes the SMART Stable Coin contract.
+    /// @param name_ The name of the stable coin.
+    /// @param symbol_ The symbol of the stable coin.
+    /// @param decimals_ The number of decimals for the stable coin.
+    /// @param requiredClaimTopics_ An array of claim topics required for interacting with the stable coin.
+    /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
+    /// @param identityRegistry_ The address of the identity registry contract.
+    /// @param compliance_ The address of the compliance contract.
+    /// @param accessManager_ The address of the access manager contract for this token.
     function initialize(
         string memory name_,
         string memory symbol_,
