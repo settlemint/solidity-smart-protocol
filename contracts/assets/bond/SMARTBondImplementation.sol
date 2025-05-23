@@ -6,9 +6,10 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 // Constants
 import { SMARTRoles } from "./../SMARTRoles.sol";
@@ -53,8 +54,10 @@ contract SMARTBondImplementation is
     SMARTYieldUpgradeable,
     SMARTCappedUpgradeable,
     ERC2771ContextUpgradeable,
-    ReentrancyGuard
+    ReentrancyGuardUpgradeable
 {
+    using SafeERC20 for IERC20;
+
     /// @notice Timestamp when the bond matures
     /// @dev Set at deployment and cannot be changed
     uint256 private _maturityDate;
@@ -152,6 +155,7 @@ contract SMARTBondImplementation is
         __SMARTRedeemable_init();
         __SMARTHistoricalBalances_init();
         __SMARTCapped_init(cap_);
+        __ReentrancyGuard_init();
 
         _maturityDate = maturityDate_;
         _faceValue = faceValue_;
@@ -653,8 +657,7 @@ contract SMARTBondImplementation is
         _burn(from, amount);
 
         // External call AFTER all state changes
-        bool success = _underlyingAsset.transfer(from, underlyingAmount);
-        if (!success) revert InsufficientUnderlyingBalance();
+        _underlyingAsset.safeTransfer(from, underlyingAmount);
 
         emit BondRedeemed(_msgSender(), from, amount, underlyingAmount);
     }
