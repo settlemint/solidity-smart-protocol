@@ -1,17 +1,17 @@
 import hre from "hardhat";
-import {
-	type Abi,
-	type Address,
-	type GetContractReturnType,
-	type PublicClient,
-	type WalletClient,
-	getContract as getViemContract,
+import type {
+	Abi,
+	Address,
+	GetContractReturnType,
+	PublicClient,
+	WalletClient,
 } from "viem";
 
 import SMARTOnboardingModule from "../../ignition/modules/onboarding";
 import { SMARTContracts } from "./constants/contracts";
 
 import { getDefaultWalletClient } from "./utils/default-signer";
+import { getContractInstance } from "./utils/get-contract";
 // --- Utility Imports ---
 import { getPublicClient } from "./utils/public-client";
 
@@ -134,10 +134,16 @@ export class SmartProtocolDeployer {
 
 		const walletToUse = explicitWalletClient || this._defaultWalletClient;
 
-		return getViemContract({
+		if (!walletToUse) {
+			throw new Error(
+				"Wallet client could not be determined. Ensure SMARTOnboardingModule is set up correctly or provide an explicit wallet client.",
+			);
+		}
+
+		return getContractInstance({
 			address: contractInfo.address,
 			abi: SMARTContracts[contractName],
-			client: { public: getPublicClient(), wallet: walletToUse },
+			walletClient: walletToUse,
 		}) as ViemContract<
 			(typeof SMARTContracts)[K],
 			{ public: PublicClient; wallet: WalletClient }

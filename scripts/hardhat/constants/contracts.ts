@@ -12,7 +12,8 @@ import { abi as identityRegistryAbiJson } from "../../../out/ISMARTIdentityRegis
 import { abi as stablecoinFactoryAbiJson } from "../../../out/ISMARTStablecoinFactory.sol/ISMARTStablecoinFactory.json";
 import { abi as systemAbiJson } from "../../../out/ISMARTSystem.sol/ISMARTSystem.json";
 import { abi as accessManagerAbiJson } from "../../../out/ISMARTTokenAccessManager.sol/ISMARTTokenAccessManager.json";
-// Helper function to ensure ABI is treated as `Abi` type
+import { abi as tokenIdentityAbiJson } from "../../../out/ISMARTTokenIdentity.sol/ISMARTTokenIdentity.json";
+
 const asAbi = (abi: unknown): Abi => abi as Abi;
 
 export const SMARTContracts = {
@@ -30,4 +31,5 @@ export const SMARTContracts = {
 	stablecoinFactory: asAbi(stablecoinFactoryAbiJson),
 	// token
 	accessManager: asAbi(accessManagerAbiJson),
+	tokenIdentity: asAbi(tokenIdentityAbiJson),
 } as const;

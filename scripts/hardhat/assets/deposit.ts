@@ -1,87 +1,57 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { encodeAbiParameters } from "viem";
 import { parseAbiParameters } from "viem";
-import { toBytes } from "viem";
-import SMARTOnboardingModule from "../../onboarding";
+import { type Address, type Hex, toBytes } from "viem";
+import { SMARTContracts } from "../constants/contracts";
 import SMARTRoles from "../constants/roles";
 import SMARTTopics from "../constants/topics";
+import { smartProtocolDeployer } from "../deployer";
 import { claimIssuer } from "../utils/claim-issuer";
+import { getDefaultWalletClient } from "../utils/default-signer";
+import { getContractInstance } from "../utils/get-contract";
+import { waitForEvent } from "../utils/wait-for-event";
+import { grantClaimManagerRole } from "./actions/grant-claim-manager-role";
+import { issueIsinClaim } from "./actions/issue-isin-claim";
 
-const SMARTTestDepositModule = buildModule("SMARTTestDepositModule", (m) => {
-	const { depositFactory } = m.useModule(SMARTOnboardingModule);
+export const createDeposit = async () => {
+	const depositFactory = smartProtocolDeployer.getDepositFactoryContract();
 
-	const createDeposit = m.call(depositFactory, "createDeposit", [
+	// TODO: typing doesn't work? Check txsigner utils
+	const transactionHash: Hex = await depositFactory.write.createDeposit([
 		"Euro Deposits",
 		"EURD",
 		6,
 		[], // TODO: fill in with the setup for ATK
 		[], // TODO: fill in with the setup for ATK
 	]);
-	const depositAddress = m.readEventArgument(
-		createDeposit,
-		"TokenAssetCreated",
-		"tokenAddress",
-		{ id: "depositAddress" },
-	);
 
-	const depositIdentityAddress = m.readEventArgument(
-		createDeposit,
-		"TokenAssetCreated",
-		"tokenIdentity",
-		{ id: "depositIdentityAddress" },
-	);
-
-	const depositAccessManagerAddress = m.readEventArgument(
-		createDeposit,
-		"TokenAssetCreated",
-		"accessManager",
-		{ id: "depositAccessManagerAddress" },
-	);
-
-	const depositToken = m.contractAt("ISMARTDeposit", depositAddress, {
-		id: "deposit",
-	});
-
-	const depositIdentityContract = m.contractAt(
-		"SMARTIdentity",
-		depositIdentityAddress,
-		{
-			id: "depositIdentity",
-		},
-	);
-
-	const accessManagerContract = m.contractAt(
-		"SMARTTokenAccessManagerImplementation",
-		depositAccessManagerAddress,
-		{ id: "accessManagerContract" },
-	);
-
-	const deployerAddress = m.getAccount(0);
-
-	// need to have the claim manager role in order to add claims to the token identity
-	m.call(accessManagerContract, "grantRole", [
-		SMARTRoles.claimManagerRole,
-		deployerAddress,
-	]);
-
-	const isinValue = "12345678901234567890";
-	const encodedIsinData = toBytes(
-		encodeAbiParameters(parseAbiParameters("string isinValue"), [isinValue]),
-	);
-
-  const claim = await claimIssuer.createClaim(
-    resolvedIdentityAddress,
-    SMARTTopics.isin,
-    encodedIsinData,
-  );
-
-
-
-	return {
-		depositToken,
-		depositIdentityContract,
-		accessManagerContract,
+	const { tokenAddress, tokenIdentity, accessManager } = (await waitForEvent({
+		transactionHash,
+		contract: depositFactory,
+		eventName: "TokenAssetCreated",
+	})) as unknown as {
+		sender: Address;
+		tokenAddress: Address;
+		tokenIdentity: Address;
+		accessManager: Address;
 	};
-});
 
-export default SMARTTestDepositModule;
+	if (tokenAddress && tokenIdentity && accessManager) {
+		console.log("Deposit address:", tokenAddress);
+		console.log("Deposit identity:", tokenIdentity);
+		console.log("Deposit access manager:", accessManager);
+
+		// needs to be done so that he can add the claims
+		await grantClaimManagerRole(accessManager, claimIssuer.address);
+		// issue isin claim
+		await issueIsinClaim(tokenIdentity, "12345678901234567890");
+	}
+
+	// update collateral
+	// create some users with identity claims
+	// mint
+	// transfer
+	// burn
+
+	// TODO: execute all other functions of the deposit
+};
