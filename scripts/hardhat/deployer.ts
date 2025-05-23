@@ -5,51 +5,36 @@ import {
 	type GetContractReturnType,
 	type PublicClient,
 	type WalletClient,
-	createPublicClient,
-	custom,
 	getContract as getViemContract,
 } from "viem";
-import * as viemChains from "viem/chains";
 
 import SMARTOnboardingModule from "../../ignition/modules/onboarding";
+import { SMARTContracts } from "./constants/contracts";
 
-// --- ABI Imports ---
-import { abi as identityRegistryStorageAbiJson } from "../../out/IERC3643IdentityRegistryStorage.sol/IERC3643IdentityRegistryStorage.json";
-import { abi as trustedIssuersRegistryAbiJson } from "../../out/IERC3643TrustedIssuersRegistry.sol/IERC3643TrustedIssuersRegistry.json";
-import { abi as bondFactoryAbiJson } from "../../out/ISMARTBondFactory.sol/ISMARTBondFactory.json";
-import { abi as complianceAbiJson } from "../../out/ISMARTCompliance.sol/ISMARTCompliance.json";
-import { abi as depositFactoryAbiJson } from "../../out/ISMARTDepositFactory.sol/ISMARTDepositFactory.json";
-import { abi as equityFactoryAbiJson } from "../../out/ISMARTEquityFactory.sol/ISMARTEquityFactory.json";
-import { abi as fundFactoryAbiJson } from "../../out/ISMARTFundFactory.sol/ISMARTFundFactory.json";
-import { abi as identityFactoryAbiJson } from "../../out/ISMARTIdentityFactory.sol/ISMARTIdentityFactory.json";
-import { abi as identityRegistryAbiJson } from "../../out/ISMARTIdentityRegistry.sol/ISMARTIdentityRegistry.json";
-import { abi as stablecoinFactoryAbiJson } from "../../out/ISMARTStablecoinFactory.sol/ISMARTStablecoinFactory.json";
-import { abi as systemAbiJson } from "../../out/ISMARTSystem.sol/ISMARTSystem.json";
-
-// Helper function to ensure ABI is treated as `Abi` type
-const asAbi = (abi: unknown): Abi => abi as Abi;
-
-const contractAbis = {
-	system: asAbi(systemAbiJson),
-	compliance: asAbi(complianceAbiJson),
-	identityRegistry: asAbi(identityRegistryAbiJson),
-	identityRegistryStorage: asAbi(identityRegistryStorageAbiJson),
-	trustedIssuersRegistry: asAbi(trustedIssuersRegistryAbiJson),
-	identityFactory: asAbi(identityFactoryAbiJson),
-	bondFactory: asAbi(bondFactoryAbiJson),
-	depositFactory: asAbi(depositFactoryAbiJson),
-	equityFactory: asAbi(equityFactoryAbiJson),
-	fundFactory: asAbi(fundFactoryAbiJson),
-	stablecoinFactory: asAbi(stablecoinFactoryAbiJson),
-} as const;
+import { getDefaultWalletClient } from "./utils/default-signer";
+// --- Utility Imports ---
+import { getPublicClient } from "./utils/public-client";
 
 // Type for the keys of CONTRACT_METADATA, e.g., "system" | "compliance" | ...
-type ContractName = keyof typeof contractAbis;
+type ContractName = keyof Pick<
+	typeof SMARTContracts,
+	| "system"
+	| "compliance"
+	| "identityRegistry"
+	| "identityRegistryStorage"
+	| "trustedIssuersRegistry"
+	| "identityFactory"
+	| "bondFactory"
+	| "depositFactory"
+	| "equityFactory"
+	| "fundFactory"
+	| "stablecoinFactory"
+>;
 
 // Helper type for Viem contract instances
-type ViemContract<
+export type ViemContract<
 	TAbi extends Abi,
-	TClient extends PublicClient | { public: PublicClient; wallet: WalletClient },
+	TClient extends { public: PublicClient; wallet: WalletClient },
 > = GetContractReturnType<TAbi, TClient>;
 
 /**
@@ -58,7 +43,7 @@ type ViemContract<
  */
 export type SMARTOnboardingContracts = {
 	[K in ContractName]: ViemContract<
-		(typeof contractAbis)[K], // Access ABI by key
+		(typeof SMARTContracts)[K], // Access ABI by key
 		{ public: PublicClient; wallet: WalletClient }
 	>;
 };
@@ -68,33 +53,15 @@ type DeployedContractAddresses = {
 	[K in ContractName]: { address: Address };
 };
 
-// Helper to get Viem chain object from chainId
-function getViemChain(chainId: number): viemChains.Chain {
-	for (const chainKey in viemChains) {
-		// biome-ignore lint/suspicious/noExplicitAny: Iterating over module exports
-		const chain = (viemChains as any)[chainKey] as viemChains.Chain;
-		if (chain.id === chainId) {
-			return chain;
-		}
-	}
-	console.warn(
-		`Viem chain definition not found for chainId ${chainId}. Defaulting to Hardhat local chain.`,
-	);
-	return viemChains.hardhat; // Fallback
-}
-
 /**
  * A singleton class to manage the deployment and access of SMART Protocol contracts.
  */
 export class SmartProtocolDeployer {
-	private static instance: SmartProtocolDeployer | null = null;
 	private _deployedContractAddresses: DeployedContractAddresses | undefined;
-	private _publicClient: PublicClient | undefined;
 	private _defaultWalletClient: WalletClient | undefined;
 
 	public constructor() {
 		this._deployedContractAddresses = undefined;
-		this._publicClient = undefined;
 		this._defaultWalletClient = undefined;
 	}
 
@@ -117,30 +84,14 @@ export class SmartProtocolDeployer {
 				SMARTOnboardingModule,
 			)) as DeployedContractAddresses;
 
-			// 2. Create Viem PublicClient
-			const chainId = hre.network.config?.chainId;
-			if (typeof chainId !== "number") {
-				throw new Error("Chain ID not found in Hardhat network configuration.");
-			}
-			const viemChain = getViemChain(chainId);
-			const publicClient = createPublicClient({
-				chain: viemChain,
-				transport: custom(hre.network.provider), // Use Hardhat's EIP-1193 provider
-			});
-			this._publicClient = publicClient;
+			// 2. Initialize the default wallet client
+			this._defaultWalletClient = await getDefaultWalletClient();
 
-			// 3. Get and store the default wallet client (account 0)
-			const [defaultSigner] = await hre.viem.getWalletClients();
-			if (!defaultSigner) {
-				throw new Error("Could not get a default wallet client from Hardhat.");
-			}
-			this._defaultWalletClient = defaultSigner;
-
-			// 4. Store deployed addresses
+			// 3. Store deployed addresses
 			this._deployedContractAddresses = deploymentAddresses;
 
 			console.log(
-				"SMARTOnboardingModule deployed successfully! Contract addresses and default signer stored.",
+				"SMARTOnboardingModule deployed successfully! Contract addresses and default signer initialized.",
 			);
 			if (this._deployedContractAddresses) {
 				console.log("Deployed Contracts Addresses:");
@@ -158,40 +109,17 @@ export class SmartProtocolDeployer {
 		}
 	}
 
-	/**
-	 * Returns the public client instance.
-	 * Throws an error if setUp() has not been called or if the public client is not initialized.
-	 */
-	public getPublicClient(): PublicClient {
-		if (!this._publicClient) {
-			throw new Error(
-				"Public client not initialized. Call setUp() before accessing the public client.",
-			);
-		}
-		return this._publicClient;
-	}
-
 	private getContract<K extends ContractName>(
 		// Use ContractName here
 		contractName: K,
 		explicitWalletClient?: WalletClient,
 	): ViemContract<
-		(typeof contractAbis)[K],
+		(typeof SMARTContracts)[K],
 		{ public: PublicClient; wallet: WalletClient }
 	> {
 		if (!this._deployedContractAddresses) {
 			throw new Error(
 				"Contracts not deployed. Call setUp() before accessing contracts.",
-			);
-		}
-		if (!this._publicClient) {
-			throw new Error(
-				"Public client not initialized. Call setUp() before accessing contracts.",
-			);
-		}
-		if (!this._defaultWalletClient) {
-			throw new Error(
-				"Default wallet client not initialized. Call setUp() before accessing contracts.",
 			);
 		}
 
@@ -208,10 +136,10 @@ export class SmartProtocolDeployer {
 
 		return getViemContract({
 			address: contractInfo.address,
-			abi: contractAbis[contractName], // Use contractAbis[contractName]
-			client: { public: this._publicClient, wallet: walletToUse },
+			abi: SMARTContracts[contractName],
+			client: { public: getPublicClient(), wallet: walletToUse },
 		}) as ViemContract<
-			(typeof contractAbis)[K],
+			(typeof SMARTContracts)[K],
 			{ public: PublicClient; wallet: WalletClient }
 		>;
 	}
