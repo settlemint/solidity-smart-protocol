@@ -40,7 +40,8 @@
 		"format": "settlemint scs foundry format && prettier --write .",
 		"compile:forge": "settlemint scs foundry build --sizes",
 		"compile:hardhat": "settlemint scs hardhat build",
-		"test": "forge test -vvv"
+		"test": "forge test -vvv",
+		"coverage": "forge coverage --ir-minimum"
 	},
 	"dependencies": {
 		"@nomicfoundation/hardhat-foundry": "1.1.3",
