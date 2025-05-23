@@ -14,4 +14,15 @@ interface ISMARTDepositFactory is ISMARTTokenFactory {
     )
         external
         returns (address deployedDepositAddress);
+
+    function predictDepositAddress(
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
+        uint256[] memory requiredClaimTopics_,
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_
+    )
+        external
+        view
+        returns (address predictedAddress);
 }

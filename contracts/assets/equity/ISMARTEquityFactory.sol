@@ -16,4 +16,17 @@ interface ISMARTEquityFactory is ISMARTTokenFactory {
     )
         external
         returns (address deployedEquityAddress);
+
+    function predictEquityAddress(
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
+        string memory equityClass_,
+        string memory equityCategory_,
+        uint256[] memory requiredClaimTopics_,
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_
+    )
+        external
+        view
+        returns (address predictedAddress);
 }

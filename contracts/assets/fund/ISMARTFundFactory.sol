@@ -17,4 +17,18 @@ interface ISMARTFundFactory is ISMARTTokenFactory {
     )
         external
         returns (address deployedFundAddress);
+
+    function predictFundAddress(
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
+        uint16 managementFeeBps_,
+        string memory fundClass_,
+        string memory fundCategory_,
+        uint256[] memory requiredClaimTopics_,
+        SMARTComplianceModuleParamPair[] memory initialModulePairs_
+    )
+        external
+        view
+        returns (address predictedAddress);
 }
