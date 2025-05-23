@@ -158,6 +158,19 @@ export class SmartProtocolDeployer {
 		}
 	}
 
+	/**
+	 * Returns the public client instance.
+	 * Throws an error if setUp() has not been called or if the public client is not initialized.
+	 */
+	public getPublicClient(): PublicClient {
+		if (!this._publicClient) {
+			throw new Error(
+				"Public client not initialized. Call setUp() before accessing the public client.",
+			);
+		}
+		return this._publicClient;
+	}
+
 	private getContract<K extends ContractName>(
 		// Use ContractName here
 		contractName: K,

@@ -2,6 +2,22 @@
 pragma solidity 0.8.28;
 
 interface ISMARTTokenFactory {
+    /// @notice Emitted when the token implementation address is updated.
+    /// @param oldImplementation The address of the old token implementation.
+    /// @param newImplementation The address of the new token implementation.
+    event TokenImplementationUpdated(
+        address indexed sender, address indexed oldImplementation, address indexed newImplementation
+    );
+
+    /// @notice Emitted when a new proxy contract is created using CREATE2.
+    /// @param sender The address of the sender.
+    /// @param tokenAddress The address of the newly created token.
+    /// @param tokenIdentity The address of the token identity.
+    /// @param accessManager The address of the access manager.
+    event TokenAssetCreated(
+        address indexed sender, address indexed tokenAddress, address indexed tokenIdentity, address accessManager
+    );
+
     /// @notice Initializes the token registry.
     /// @param systemAddress The address of the `ISMARTSystem` contract.
     /// @param tokenImplementation_ The address of the token implementation contract.
