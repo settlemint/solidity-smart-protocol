@@ -167,6 +167,18 @@ contract SMARTSystemTest is Test {
         assertEq(smartSystem.identityRegistryImplementation(), address(identityRegistryImpl));
     }
 
+    function test_SetIdentityRegistryImplementation_ZeroAddress() public {
+        vm.prank(admin);
+        vm.expectRevert();
+        smartSystem.setIdentityRegistryImplementation(address(0));
+    }
+
+    function test_SetIdentityRegistryImplementation_InvalidInterface() public {
+        vm.prank(admin);
+        vm.expectRevert();
+        smartSystem.setIdentityRegistryImplementation(address(mockInvalidContract));
+    }
+
     function test_SetIdentityRegistryStorageImplementation() public {
         vm.prank(admin);
         vm.expectEmit(true, true, false, false);
