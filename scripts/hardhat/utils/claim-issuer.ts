@@ -1,7 +1,21 @@
 import type { Signer } from "ethers"; // ethers signer type
-import { concat, encodePacked, keccak256, toBytes, toHex } from "viem";
+import hre from "hardhat";
+import {
+	http,
+	Transport,
+	type WalletClient,
+	concat,
+	createWalletClient,
+	custom,
+	encodePacked,
+	keccak256,
+	toBytes,
+	toHex,
+} from "viem";
 import type { LocalAccount } from "viem/accounts"; // viem signer type
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import type { Chain } from "viem/chains";
+import { getViemChain } from "./viem-chain";
 
 /**
  * Class representing a claim issuer that can generate and sign claims
@@ -35,14 +49,37 @@ class ClaimIssuer {
 	async createClaim(
 		subjectIdentityAddress: `0x${string}`,
 		claimTopic: bigint,
-		claimData: Uint8Array,
-	): Promise<{ data: Uint8Array; signature: Uint8Array }> {
+		claimData: `0x${string}`,
+	): Promise<{ data: `0x${string}`; signature: `0x${string}` }> {
 		return createClaim(
 			this.signer,
 			subjectIdentityAddress,
 			claimTopic,
 			claimData,
 		);
+	}
+
+	/**
+	 * Get a viem WalletClient for this issuer's account.
+	 * @returns A WalletClient instance.
+	 * @example
+	 * ```ts
+	 * import { sepolia } from "viem/chains";
+	 * import { http } from "viem";
+	 * const issuer = new ClaimIssuer();
+	 * const walletClient = issuer.getWalletClient({
+	 *   chain: sepolia,
+	 *   transport: http("https://rpc.sepolia.org")
+	 * });
+	 * ```
+	 */
+	public getWalletClient(): WalletClient {
+		const viemChain = getViemChain();
+		return createWalletClient({
+			account: this.signer,
+			chain: viemChain,
+			transport: custom(hre.network.provider), // Use Hardhat's EIP-1193 provider
+		});
 	}
 }
 
@@ -58,15 +95,13 @@ export async function createClaim(
 	signer: LocalAccount | Signer,
 	subjectIdentityAddress: `0x${string}`,
 	claimTopic: bigint,
-	claimData: Uint8Array,
-): Promise<{ data: Uint8Array; signature: Uint8Array }> {
+	claimData: `0x${string}`,
+): Promise<{ data: `0x${string}`; signature: `0x${string}` }> {
 	// Solidity-style hash: keccak256(abi.encode(address, uint256, bytes))
 	const dataHash = keccak256(
-		toBytes(
-			encodePacked(
-				["address", "uint256", "bytes"],
-				[subjectIdentityAddress, claimTopic, toHex(claimData)],
-			),
+		encodePacked(
+			["address", "uint256", "bytes"],
+			[subjectIdentityAddress, claimTopic, claimData],
 		),
 	);
 
@@ -94,16 +129,14 @@ export async function createClaim(
 		signatureHex = signature as `0x${string}`;
 	}
 
-	// Extract r, s, v
-	const r = signatureHex.slice(2, 66);
-	const s = signatureHex.slice(66, 130);
-	const v = signatureHex.slice(130, 132);
-
-	const signature = toBytes(`0x${r}${s}${v}`);
+	// The signatureHex is already a complete hex string (r + s + v)
+	// No need to extract r, s, v separately if the contract expects a flat bytes signature.
+	// If the contract expects r, s, v separately, then the extraction is needed.
+	// Assuming the contract's addClaim function expects `bytes memory signature` which can be a flat hex string.
 
 	return {
 		data: claimData,
-		signature,
+		signature: signatureHex,
 	};
 }
 

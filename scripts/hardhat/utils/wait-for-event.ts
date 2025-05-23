@@ -25,17 +25,11 @@ export async function waitForEvent<
 	const abi = contract.abi;
 	const publicClient = getPublicClient();
 
-	if (!publicClient) {
-		console.error(
-			"Public client is not available in findEventArgsFromTransaction.",
-		);
-		return null;
-	}
 	try {
 		const receipt: TransactionReceipt =
 			await publicClient.waitForTransactionReceipt({ hash: transactionHash });
 
-		console.log("Transaction mined for event search. Full receipt:", receipt);
+		console.log("Transaction mined: ", receipt.status);
 
 		if (receipt.status === "success") {
 			for (const log of receipt.logs) {

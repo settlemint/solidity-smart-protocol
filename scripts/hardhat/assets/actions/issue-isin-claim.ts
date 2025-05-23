@@ -1,20 +1,16 @@
-import {
-	type Address,
-	encodeAbiParameters,
-	parseAbiParameters,
-	toBytes,
-} from "viem";
+import { type Address, encodeAbiParameters, parseAbiParameters } from "viem";
 import { SMARTContracts } from "../../constants/contracts";
 import SMARTTopics from "../../constants/topics";
 import { claimIssuer } from "../../utils/claim-issuer";
-import { getContractInstanceWithDefaultWalletClient } from "../../utils/get-contract";
+import { getContractInstance } from "../../utils/get-contract";
 
 export const issueIsinClaim = async (
 	tokenIdentityAddress: Address,
 	isin: string,
 ) => {
-	const encodedIsinData = toBytes(
-		encodeAbiParameters(parseAbiParameters("string isinValue"), [isin]),
+	const encodedIsinData = encodeAbiParameters(
+		parseAbiParameters("string isinValue"),
+		[isin],
 	);
 
 	const { data: isinClaimData, signature: isinClaimSignature } =
@@ -26,11 +22,11 @@ export const issueIsinClaim = async (
 
 	console.log("Isin claim:", isinClaimData, isinClaimSignature);
 
-	const tokenIdentityContract =
-		await getContractInstanceWithDefaultWalletClient({
-			address: tokenIdentityAddress,
-			abi: SMARTContracts.tokenIdentity,
-		});
+	const tokenIdentityContract = await getContractInstance({
+		address: tokenIdentityAddress,
+		abi: SMARTContracts.tokenIdentity,
+		walletClient: claimIssuer.getWalletClient(),
+	});
 
 	await tokenIdentityContract.write.addClaim([
 		SMARTTopics.isin,
