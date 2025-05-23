@@ -13,6 +13,8 @@ contract MockSMARTToken is MockedERC20Token {
     mapping(address => mapping(uint256 => uint256)) private _balanceOfAt;
     IERC20 private _yieldTokenAddress;
 
+    uint256 private constant DEFAULT_YIELD_BASIS = 1000;
+
     constructor(
         string memory name,
         string memory symbol,
@@ -29,7 +31,7 @@ contract MockSMARTToken is MockedERC20Token {
     }
 
     function yieldBasisPerUnit(address holder) external view returns (uint256) {
-        return _yieldBasisPerUnit[holder] > 0 ? _yieldBasisPerUnit[holder] : 1000; // Default 1000 basis
+        return _yieldBasisPerUnit[holder] > 0 ? _yieldBasisPerUnit[holder] : DEFAULT_YIELD_BASIS;
     }
 
     function yieldToken() external view returns (IERC20) {
