@@ -41,3 +41,4 @@ ignition/deployments
 # Soldeer
 /dependencies
 .DS_Store
+.claude
