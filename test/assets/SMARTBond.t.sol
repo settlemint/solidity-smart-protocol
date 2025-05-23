@@ -22,6 +22,7 @@ import { YieldScheduleAlreadySet, YieldScheduleActive } from "../../contracts/ex
 import { SMARTBondFactoryImplementation } from "../../contracts/assets/bond/SMARTBondFactoryImplementation.sol";
 import { SMARTBondImplementation } from "../../contracts/assets/bond/SMARTBondImplementation.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract SMARTBondTest is AbstractSMARTAssetTest {
     ISMARTBondFactory public bondFactory;
@@ -181,8 +182,8 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
 
         for (uint256 i = 0; i < decimalValues.length; ++i) {
             ISMARTBond newBond = _createBondAndMint(
-                "Test Bond",
-                "TBOND",
+                string.concat("Test Bond ", Strings.toString(decimalValues[i])),
+                string.concat("TBOND", Strings.toString(decimalValues[i])),
                 decimalValues[i],
                 CAP,
                 maturityDate,
@@ -200,8 +201,8 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
 
         vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
         bondFactory.createBond(
-            "Test Bond",
-            "TBOND",
+            "Test Bond 19",
+            "TBOND19",
             19,
             CAP,
             maturityDate,
@@ -522,8 +523,8 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         // Step 1: Initial state - warp to a starting point and deploy
         vm.warp(1000);
         bond = _createBondAndMint(
-            "Test Bond",
-            "TBOND",
+            "Test Bond HB",
+            "TBONDHB",
             DECIMALS,
             CAP,
             maturityDate,
@@ -575,8 +576,8 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         // Step 1: Initial state - warp to a starting point and redeploy
         vm.warp(1000);
         bond = _createBondAndMint(
-            "Test Bond",
-            "TBOND",
+            "Test Bond HBMT",
+            "TBONDHBMT",
             DECIMALS,
             CAP,
             maturityDate,
@@ -649,8 +650,8 @@ contract SMARTBondTest is AbstractSMARTAssetTest {
         // First warp to a starting point and redeploy the contract
         vm.warp(1000);
         bond = _createBondAndMint(
-            "Test Bond",
-            "TBOND",
+            "Test Bond HBBFT",
+            "TBONDHBBFT",
             DECIMALS,
             CAP,
             maturityDate,

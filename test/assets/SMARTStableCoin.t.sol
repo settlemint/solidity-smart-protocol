@@ -15,6 +15,7 @@ import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { ClaimUtils } from "../../test/utils/ClaimUtils.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { InsufficientCollateral } from "../../contracts/extensions/collateral/SMARTCollateralErrors.sol";
@@ -132,7 +133,11 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
 
         for (uint256 i = 0; i < decimalValues.length; ++i) {
             ISMARTStableCoin newToken = _createStableCoin(
-                "StableCoin", "STBL", decimalValues[i], new uint256[](0), new SMARTComplianceModuleParamPair[](0)
+                string.concat("StableCoin ", Strings.toString(decimalValues[i])),
+                string.concat("STBL", Strings.toString(decimalValues[i])),
+                decimalValues[i],
+                new uint256[](0),
+                new SMARTComplianceModuleParamPair[](0)
             );
             assertEq(newToken.decimals(), decimalValues[i]);
         }
@@ -143,7 +148,7 @@ contract SMARTStableCoinTest is AbstractSMARTAssetTest {
 
         vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
         stableCoinFactory.createStableCoin(
-            "StableCoin", "STBL", 19, new uint256[](0), new SMARTComplianceModuleParamPair[](0)
+            "StableCoin 19", "STBL19", 19, new uint256[](0), new SMARTComplianceModuleParamPair[](0)
         );
         vm.stopPrank();
     }

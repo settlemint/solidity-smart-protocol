@@ -14,7 +14,20 @@ import { ISMARTPausable } from "../../extensions/pausable/ISMARTPausable.sol";
 import { ISMARTBurnable } from "../../extensions/burnable/ISMARTBurnable.sol";
 import { ISMARTCollateral } from "../../extensions/collateral/ISMARTCollateral.sol";
 
+/// @title Interface for a SMART Equity token
+/// @notice Defines the core functionality and extensions for a SMART Equity token, including voting capabilities.
 interface ISMARTEquity is ISMART, ISMARTTokenAccessManaged, ISMARTCustodian, ISMARTPausable, ISMARTBurnable, IVotes {
+    /// @notice Initializes the SMART Equity token contract.
+    /// @param name_ The name of the equity token.
+    /// @param symbol_ The symbol of the equity token.
+    /// @param decimals_ The number of decimals for the equity token.
+    /// @param equityClass_ The class of the equity (e.g., Common, Preferred).
+    /// @param equityCategory_ The category of the equity (e.g., Voting, Non-Voting).
+    /// @param requiredClaimTopics_ An array of claim topics required for interacting with the equity token.
+    /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
+    /// @param identityRegistry_ The address of the identity registry contract.
+    /// @param compliance_ The address of the compliance contract.
+    /// @param accessManager_ The address of the access manager contract for this token.
     function initialize(
         string memory name_,
         string memory symbol_,
