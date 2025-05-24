@@ -426,16 +426,17 @@ contract SMARTIdentityFactoryImplementation is
         returns (bytes32 saltBytes, string memory saltString)
     {
         saltString = string.concat(_saltPrefix, Strings.toHexString(_address));
-        saltBytes = _calculateSaltFromString(saltString);
+        saltBytes = _calculateSaltFromString(_system, saltString);
         // No explicit return needed due to named return variables
     }
 
     /// @notice Internal helper to calculate salt with system address prefix.
     /// @dev Ensures consistent salt generation with system address scoping.
+    /// @param systemAddress The system address to prevent cross-system collisions.
     /// @param saltString The string to be used for salt calculation.
     /// @return The calculated salt for CREATE2 deployment.
-    function _calculateSaltFromString(string memory saltString) internal view returns (bytes32) {
-        return keccak256(abi.encode(_system, saltString));
+    function _calculateSaltFromString(address systemAddress, string memory saltString) internal pure returns (bytes32) {
+        return keccak256(abi.encode(systemAddress, saltString));
     }
 
     /// @notice Internal view function to compute the CREATE2 address for a `SMARTIdentityProxy` (for wallets).

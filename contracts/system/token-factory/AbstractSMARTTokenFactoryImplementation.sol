@@ -137,18 +137,20 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
 
     /// @notice Calculates the salt for CREATE2 deployment.
     /// @dev Can be overridden by derived contracts for custom salt calculation.
+    /// @param systemAddress The system address to prevent cross-system collisions.
     /// @param saltInputData The ABI encoded data to be used for salt calculation.
     /// @return The calculated salt for CREATE2 deployment.
-    function _calculateSalt(bytes memory saltInputData) internal view returns (bytes32) {
-        return keccak256(abi.encode(_systemAddress, saltInputData));
+    function _calculateSalt(address systemAddress, bytes memory saltInputData) internal pure returns (bytes32) {
+        return keccak256(abi.encode(systemAddress, saltInputData));
     }
 
     /// @notice Calculates the salt for CREATE2 deployment of an access manager.
     /// @dev Prepends "AccessManagerSalt" to the provided saltInputData.
+    /// @param systemAddress The system address to prevent cross-system collisions.
     /// @param saltInputData The ABI encoded data to be used for salt calculation.
     /// @return The calculated salt for access manager CREATE2 deployment.
-    function _calculateAccessManagerSalt(bytes memory saltInputData) internal view returns (bytes32) {
-        return keccak256(abi.encode(_systemAddress, "AccessManagerSalt", saltInputData));
+    function _calculateAccessManagerSalt(address systemAddress, bytes memory saltInputData) internal pure returns (bytes32) {
+        return keccak256(abi.encode(systemAddress, "AccessManagerSalt", saltInputData));
     }
 
     /// @notice Builds salt input data for token creation.
@@ -175,7 +177,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         view
         returns (bytes32 salt, bytes memory fullCreationCode)
     {
-        salt = _calculateAccessManagerSalt(accessManagerSaltInputData);
+        salt = _calculateAccessManagerSalt(_systemAddress, accessManagerSaltInputData);
         address[] memory initialAdmins = new address[](1); // Factory is initial admin
         initialAdmins[0] = address(this);
         bytes memory constructorArgs = abi.encode(_systemAddress, initialAdmins);
@@ -251,7 +253,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
             revert AddressAlreadyDeployed(predictedAddress);
         }
 
-        bytes32 salt = _calculateSalt(tokenSaltInputData);
+        bytes32 salt = _calculateSalt(_systemAddress, tokenSaltInputData);
         bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
 
         deployedAddress = Create2.deploy(0, salt, fullCreationCode);
@@ -283,7 +285,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         view
         returns (address predictedAddress)
     {
-        bytes32 salt = _calculateSalt(tokenSaltInputData);
+        bytes32 salt = _calculateSalt(_systemAddress, tokenSaltInputData);
         bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
         bytes32 bytecodeHash = keccak256(fullCreationCode);
         predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
