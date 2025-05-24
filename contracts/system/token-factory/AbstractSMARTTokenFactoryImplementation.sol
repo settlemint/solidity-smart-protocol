@@ -151,6 +151,20 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         return keccak256(abi.encode(_systemAddress, "AccessManagerSalt", saltInputData));
     }
 
+    /// @notice Builds salt input data for token creation.
+    /// @dev Internal helper to build the salt input for access manager and related operations.
+    /// @param name_ The name of the token.
+    /// @param symbol_ The symbol of the token.
+    /// @param decimals_ The number of decimals for the token.
+    /// @return The ABI encoded salt input data.
+    function _buildSaltInput(
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_
+    ) internal pure returns (bytes memory) {
+        return abi.encode(name_, symbol_, decimals_);
+    }
+
     /// @notice Prepares the data required for access manager creation using CREATE2.
     /// @dev Internal helper function to calculate salt and full creation code.
     /// @param accessManagerSaltInputData The ABI encoded data to be used for salt calculation for the access manager.

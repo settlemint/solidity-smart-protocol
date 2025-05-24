@@ -43,7 +43,7 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         override
         returns (address deployedEquityAddress)
     {
-        bytes memory salt = abi.encode(name_, symbol_, decimals_);
+        bytes memory salt = _buildSaltInput(name_, symbol_, decimals_);
         // Create the access manager for the token
         ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
 
@@ -101,7 +101,7 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         override
         returns (address predictedAddress)
     {
-        bytes memory salt = abi.encode(name_, symbol_, decimals_);
+        bytes memory salt = _buildSaltInput(name_, symbol_, decimals_);
         address accessManagerAddress_ = _predictAccessManagerAddress(salt);
         bytes memory constructorArgs = abi.encode(
             address(this),

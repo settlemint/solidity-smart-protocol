@@ -40,7 +40,7 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         override
         returns (address deployedDepositAddress)
     {
-        bytes memory salt = abi.encode(name_, symbol_, decimals_);
+        bytes memory salt = _buildSaltInput(name_, symbol_, decimals_);
 
         // Create the access manager for the token
         ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
@@ -93,7 +93,7 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         override
         returns (address predictedAddress)
     {
-        bytes memory salt = abi.encode(name_, symbol_, decimals_);
+        bytes memory salt = _buildSaltInput(name_, symbol_, decimals_);
         address accessManagerAddress_ = _predictAccessManagerAddress(salt);
         // ABI encode constructor arguments for SMARTDepositProxy
         bytes memory constructorArgs = abi.encode(
