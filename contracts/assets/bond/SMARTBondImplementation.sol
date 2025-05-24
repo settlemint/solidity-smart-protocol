@@ -591,7 +591,7 @@ contract SMARTBondImplementation is
         override(SMARTCustodianUpgradeable, SMARTHooks)
     {
         if (!isMatured) revert BondNotYetMatured();
-        if (amount == 0) revert InvalidRedemptionAmount();
+        if (amount <= 0) revert InvalidRedemptionAmount();
 
         super._beforeRedeem(owner, amount);
     }

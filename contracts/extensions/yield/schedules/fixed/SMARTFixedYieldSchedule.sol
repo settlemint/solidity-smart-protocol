@@ -454,7 +454,7 @@ contract SMARTFixedYieldSchedule is
             // If balance is 0 for a period, its corresponding entry in periodAmounts remains 0.
         }
 
-        if (totalAmountToClaim == 0) revert NoYieldAvailable(); // No yield accrued in the claimable periods.
+        if (totalAmountToClaim <= 0) revert NoYieldAvailable(); // No yield accrued in the claimable periods.
 
         // State updates *before* external call (transfer).
         _lastClaimedPeriod[sender] = lastPeriod; // Update the last period claimed by the user.
@@ -514,7 +514,7 @@ contract SMARTFixedYieldSchedule is
         if (to == address(0)) revert InvalidUnderlyingAsset(); // Cannot withdraw to zero address.
 
         uint256 balance = _underlyingAsset.balanceOf(address(this));
-        if (balance == 0) revert InsufficientUnderlyingBalance(); // No funds to withdraw.
+        if (balance <= 0) revert InsufficientUnderlyingBalance(); // No funds to withdraw.
 
         _underlyingAsset.safeTransfer(to, balance);
 

@@ -300,7 +300,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
         returns (bool)
     {
         uint256 balance = __custodian_getBalance(lostWallet);
-        if (balance == 0) revert NoTokensToRecover();
+        if (balance <= 0) revert NoTokensToRecover();
 
         ISMARTIdentityRegistry registry = this.identityRegistry();
         uint256[] memory topics = this.requiredClaimTopics();
