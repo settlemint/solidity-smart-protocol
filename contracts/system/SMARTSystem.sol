@@ -139,7 +139,6 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         address indexed sender, string typeName, address proxyAddress, address implementationAddress, uint256 timestamp
     );
 
-
     // --- State Variables ---
     // State variables store data persistently on the blockchain.
 
@@ -641,7 +640,6 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     function tokenFactoryProxy(bytes32 factoryTypeHash) public view override returns (address) {
         return tokenFactoryProxiesByType[factoryTypeHash];
     }
-
 
     // --- Internal Functions (Overrides for ERC2771Context and ERC165/AccessControl) ---
 

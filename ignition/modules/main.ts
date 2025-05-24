@@ -12,31 +12,31 @@ import SystemFactoryModule from "./predeployed/system-factory";
  * by predeploying in the genesis file.
  */
 const SMARTModule = buildModule("SMARTModule", (m) => {
-	const { systemFactory } = m.useModule(SystemFactoryModule);
-	const { bondImplementation, bondFactoryImplementation } =
-		m.useModule(BondModule);
-	const { depositImplementation, depositFactoryImplementation } =
-		m.useModule(DepositModule);
-	const { equityImplementation, equityFactoryImplementation } =
-		m.useModule(EquityModule);
-	const { fundImplementation, fundFactoryImplementation } =
-		m.useModule(FundModule);
-	const { stablecoinImplementation, stablecoinFactoryImplementation } =
-		m.useModule(StableCoinModule);
+  const { systemFactory } = m.useModule(SystemFactoryModule);
+  const { bondImplementation, bondFactoryImplementation } =
+    m.useModule(BondModule);
+  const { depositImplementation, depositFactoryImplementation } =
+    m.useModule(DepositModule);
+  const { equityImplementation, equityFactoryImplementation } =
+    m.useModule(EquityModule);
+  const { fundImplementation, fundFactoryImplementation } =
+    m.useModule(FundModule);
+  const { stablecoinImplementation, stablecoinFactoryImplementation } =
+    m.useModule(StableCoinModule);
 
-	return {
-		systemFactory,
-		bondImplementation,
-		bondFactoryImplementation,
-		depositImplementation,
-		depositFactoryImplementation,
-		equityImplementation,
-		equityFactoryImplementation,
-		fundImplementation,
-		fundFactoryImplementation,
-		stablecoinImplementation,
-		stablecoinFactoryImplementation,
-	};
+  return {
+    systemFactory,
+    bondImplementation,
+    bondFactoryImplementation,
+    depositImplementation,
+    depositFactoryImplementation,
+    equityImplementation,
+    equityFactoryImplementation,
+    fundImplementation,
+    fundFactoryImplementation,
+    stablecoinImplementation,
+    stablecoinFactoryImplementation,
+  };
 });
 
 export default SMARTModule;

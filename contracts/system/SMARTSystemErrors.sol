@@ -77,7 +77,6 @@ error ETHTransfersNotAllowed();
 /// @param interfaceId The bytes4 identifier of the interface that the `implAddress` was expected to support.
 error InvalidImplementationInterface(address implAddress, bytes4 interfaceId);
 
-
 /// @notice Error indicating that an invalid token factory address was provided.
 error InvalidTokenFactoryAddress();
 

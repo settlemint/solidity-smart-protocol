@@ -149,7 +149,14 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @param systemAddress The system address to prevent cross-system collisions.
     /// @param saltInputData The ABI encoded data to be used for salt calculation.
     /// @return The calculated salt for access manager CREATE2 deployment.
-    function _calculateAccessManagerSalt(address systemAddress, bytes memory saltInputData) internal pure returns (bytes32) {
+    function _calculateAccessManagerSalt(
+        address systemAddress,
+        bytes memory saltInputData
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encode(systemAddress, "AccessManagerSalt", saltInputData));
     }
 
@@ -163,7 +170,11 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         string memory name_,
         string memory symbol_,
         uint8 decimals_
-    ) internal pure returns (bytes memory) {
+    )
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(name_, symbol_, decimals_);
     }
 
@@ -211,7 +222,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     {
         // Calculate salt and creation code once
         bytes32 salt = _calculateAccessManagerSalt(_systemAddress, accessManagerSaltInputData);
-        
+
         // Use inline array assembly for gas efficiency
         address[] memory initialAdmins;
         assembly {
@@ -220,11 +231,11 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
             mstore(initialAdmins, 1)
             mstore(add(initialAdmins, 0x20), address())
         }
-        
+
         bytes memory constructorArgs = abi.encode(_systemAddress, initialAdmins);
         bytes memory bytecode = type(SMARTTokenAccessManagerProxy).creationCode;
         bytes memory fullCreationCode = bytes.concat(bytecode, constructorArgs);
-        
+
         // Predict address using pre-calculated data
         bytes32 bytecodeHash = keccak256(fullCreationCode);
         address predictedAccessManagerAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
@@ -266,7 +277,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         // Calculate salt and creation code once
         bytes32 salt = _calculateSalt(_systemAddress, tokenSaltInputData);
         bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
-        
+
         // Predict address using pre-calculated data
         bytes32 bytecodeHash = keccak256(fullCreationCode);
         address predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));

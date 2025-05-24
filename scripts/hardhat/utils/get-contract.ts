@@ -1,10 +1,10 @@
 import {
-	type Abi,
-	type Address,
-	type GetContractReturnType,
-	type PublicClient,
-	type WalletClient,
-	getContract as getViemContract,
+  type Abi,
+  type Address,
+  type GetContractReturnType,
+  type PublicClient,
+  type WalletClient,
+  getContract as getViemContract,
 } from "viem";
 import { getDefaultWalletClient } from "./default-signer";
 import { getPublicClient } from "./public-client";
@@ -21,39 +21,39 @@ import { getPublicClient } from "./public-client";
  * @returns {GetContractReturnType<TAbi, { public: PublicClient; wallet: WalletClient }>} The Viem contract instance.
  */
 export function getContractInstance<TAbi extends Abi>({
-	address,
-	abi,
-	walletClient,
+  address,
+  abi,
+  walletClient,
 }: {
-	address: Address;
-	abi: TAbi;
-	walletClient: WalletClient;
+  address: Address;
+  abi: TAbi;
+  walletClient: WalletClient;
 }): GetContractReturnType<
-	TAbi,
-	{ public: PublicClient; wallet: WalletClient }
+  TAbi,
+  { public: PublicClient; wallet: WalletClient }
 > {
-	return getViemContract({
-		address,
-		abi,
-		client: { public: getPublicClient(), wallet: walletClient },
-	});
+  return getViemContract({
+    address,
+    abi,
+    client: { public: getPublicClient(), wallet: walletClient },
+  });
 }
 
 export async function getContractInstanceWithDefaultWalletClient<
-	TAbi extends Abi,
+  TAbi extends Abi
 >({
-	address,
-	abi,
+  address,
+  abi,
 }: {
-	address: Address;
-	abi: TAbi;
+  address: Address;
+  abi: TAbi;
 }): Promise<
-	GetContractReturnType<TAbi, { public: PublicClient; wallet: WalletClient }>
+  GetContractReturnType<TAbi, { public: PublicClient; wallet: WalletClient }>
 > {
-	const defaultWalletClient = await getDefaultWalletClient();
-	return getContractInstance({
-		address,
-		abi,
-		walletClient: defaultWalletClient,
-	});
+  const defaultWalletClient = await getDefaultWalletClient();
+  return getContractInstance({
+    address,
+    abi,
+    walletClient: defaultWalletClient,
+  });
 }

@@ -261,7 +261,6 @@ contract SMARTSystemTest is Test {
         smartSystem.createTokenFactory("TestFactory", address(0x123), address(0));
     }
 
-
     function test_SupportsInterface() public view {
         assertTrue(smartSystem.supportsInterface(type(ISMARTSystem).interfaceId));
         assertTrue(smartSystem.supportsInterface(type(IERC165).interfaceId));

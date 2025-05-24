@@ -23,15 +23,19 @@ SMART Protocol is an advanced, modular smart contract framework designed for cre
 SMART Protocol consists of three main layers:
 
 ### 1. **Token Layer**
+
 Core ERC-20 compliant tokens with specialized implementations:
+
 - **SMARTBond**: For debt instruments and bond tokenization
-- **SMARTEquity**: For equity shares and ownership tokens  
+- **SMARTEquity**: For equity shares and ownership tokens
 - **SMARTDeposit**: For deposit certificates and savings products
 - **SMARTFund**: For fund shares and investment vehicles
 - **SMARTStableCoin**: For stable value digital currencies
 
-### 2. **Extension Layer** 
+### 2. **Extension Layer**
+
 Modular components that add specific functionality:
+
 - **SMARTBurnable**: Token burning capabilities
 - **SMARTCustodian**: Address freezing and forced transfers
 - **SMARTCollateral**: Collateral proof requirements
@@ -41,7 +45,9 @@ Modular components that add specific functionality:
 - **SMARTHistoricalBalances**: Balance snapshot tracking
 
 ### 3. **System Layer**
+
 Infrastructure contracts for identity and compliance:
+
 - **Identity Management**: ERC-734/735 compliant on-chain identities
 - **Compliance Engine**: ERC-3643 regulatory compliance validation
 - **Access Control**: Role-based permission management
@@ -52,12 +58,14 @@ Infrastructure contracts for identity and compliance:
 SMART Protocol implements multiple Ethereum standards to provide comprehensive functionality:
 
 ### **ERC-20: Fungible Token Standard**
+
 - **Full Compatibility**: Complete ERC-20 and ERC-20 Metadata implementation
 - **DeFi Ready**: Works seamlessly with DEXs, lending protocols, and wallets
 - **Extensions**: Transfer hooks, pausable transfers, burnable tokens
 - **Upgradeability**: UUPS proxy pattern support for contract upgrades
 
 ### **ERC-3643: T-REX Security Token Standard**
+
 - **Regulatory Compliance**: Built-in KYC/AML and jurisdiction-specific rules
 - **Transfer Restrictions**: Conditional transfers based on investor eligibility
 - **Identity Verification**: Integration with trusted identity providers
@@ -69,24 +77,28 @@ SMART Protocol implements multiple Ethereum standards to provide comprehensive f
   - Claim topics for required documentation types
 
 ### **ERC-734: Key Holder Standard**
+
 - **On-chain Identity**: Self-sovereign identity management
 - **Multi-purpose Keys**: Management, action, claim signing, and encryption keys
 - **Execution Framework**: Multi-signature execution with key-based approval
 - **Key Management**: Add, remove, and replace keys with proper authorization
 
 ### **ERC-735: Claim Holder Standard**
+
 - **Verifiable Claims**: On-chain attestations about identity attributes
 - **Trusted Issuers**: Claims validated by authorized third parties
 - **Topic-based Organization**: Claims categorized by topics (KYC, nationality, etc.)
 - **Revocation Support**: Ability to revoke outdated or invalid claims
 
 ### **ERC-2771: Meta-Transaction Standard**
+
 - **Gasless Transactions**: Users can transact without holding ETH
 - **Improved UX**: Third-party relayers can sponsor transaction costs
 - **Trusted Forwarders**: Secure delegation of transaction execution
 - **Native Integration**: Built into all SMART Protocol contracts
 
 ### **ERC-5313: Light Contract Ownership**
+
 - **Access Control**: Role-based permission system
 - **Batch Operations**: Efficient multi-role management
 - **OpenZeppelin Integration**: Compatible with existing access control patterns
@@ -127,6 +139,7 @@ SMART rethinks the ERC-3643 architecture by moving modularity, configuration, an
 ### **Quick Start: Asset Tokenization**
 
 1. **Deploy System Infrastructure**
+
    ```solidity
    // Deploy the core system with identity and compliance infrastructure
    SMARTSystemFactory systemFactory = new SMARTSystemFactory();
@@ -138,6 +151,7 @@ SMART rethinks the ERC-3643 architecture by moving modularity, configuration, an
    ```
 
 2. **Create Asset-Specific Tokens**
+
    ```solidity
    // Deploy a bond token
    SMARTBondFactory bondFactory = system.getBondFactory();
@@ -151,28 +165,30 @@ SMART rethinks the ERC-3643 architecture by moving modularity, configuration, an
    ```
 
 3. **Set Up Identity and Compliance**
+
    ```solidity
    // Register investors with required claims
    SMARTIdentity investorIdentity = system.createIdentity(investorAddress);
-   
+
    // Issue KYC claim through trusted issuer
    system.getTrustedIssuersRegistry().addTrustedIssuer(
        kycProviderIdentity,
        [Topics.KYC]
    );
-   
+
    // Investor gets verified through KYC provider
    kycProvider.issueClaim(investorIdentity, Topics.KYC, kycData);
    ```
 
 4. **Configure Token Extensions**
+
    ```solidity
    // Add yield distribution capability
    bond.addExtension(address(new SMARTYield()));
-   
+
    // Set up custodian controls
    bond.addExtension(address(new SMARTCustodian()));
-   
+
    // Enable token redemption
    bond.addExtension(address(new SMARTRedeemable()));
    ```
@@ -180,6 +196,7 @@ SMART rethinks the ERC-3643 architecture by moving modularity, configuration, an
 ### **Advanced Usage Patterns**
 
 #### **Multi-Jurisdiction Compliance**
+
 ```solidity
 // Set up country-specific rules
 CountryAllowListModule allowList = new CountryAllowListModule();
@@ -195,6 +212,7 @@ system.getCompliance().addModule(address(blockList));
 ```
 
 #### **Custom Yield Schedules**
+
 ```solidity
 // Fixed yield schedule for bonds
 SMARTFixedYieldSchedule schedule = new SMARTFixedYieldSchedule();
@@ -205,6 +223,7 @@ bond.setYieldSchedule(address(schedule));
 ```
 
 #### **Collateral Management**
+
 ```solidity
 // Require collateral proof for high-value transfers
 SMARTCollateral collateralExt = SMARTCollateral(bond.getExtension("SMARTCollateral"));
@@ -217,6 +236,7 @@ collateralExt.setCollateralRequirement(
 ### **Integration Examples**
 
 #### **DeFi Integration**
+
 ```solidity
 // SMART tokens work with any ERC-20 compatible protocol
 // Example: Uniswap V3 liquidity provision
@@ -231,6 +251,7 @@ IUniswapV3Pool pool = factory.createPool(
 ```
 
 #### **Cross-Chain Asset Bridging**
+
 ```solidity
 // Bridge assets while maintaining compliance
 function bridgeAsset(
@@ -241,7 +262,7 @@ function bridgeAsset(
 ) external {
     // Compliance check before bridging
     require(ISMART(token).canTransfer(msg.sender, recipient, amount), "Transfer not compliant");
-    
+
     // Bridge logic...
     bridgeContract.lockAndMint(token, amount, destinationChain, recipient);
 }
@@ -249,17 +270,18 @@ function bridgeAsset(
 
 ### **Common Use Cases**
 
-| **Use Case** | **Asset Type** | **Key Extensions** | **Compliance Requirements** |
-|--------------|----------------|-------------------|------------------------------|
-| **Corporate Bonds** | SMARTBond | Yield, Redeemable, Pausable | Accredited investor, KYC |
-| **Real Estate Shares** | SMARTEquity | Custodian, Historical Balances | KYC, Jurisdiction restrictions |
-| **Tokenized Deposits** | SMARTDeposit | Yield, Capped | Bank verification, deposit insurance |
-| **Investment Funds** | SMARTFund | Yield, Custodian, Burnable | Fund prospectus, investor suitability |
-| **Regulatory Stablecoins** | SMARTStableCoin | Pausable, Custodian | Money transmitter license |
+| **Use Case**               | **Asset Type**  | **Key Extensions**             | **Compliance Requirements**           |
+| -------------------------- | --------------- | ------------------------------ | ------------------------------------- |
+| **Corporate Bonds**        | SMARTBond       | Yield, Redeemable, Pausable    | Accredited investor, KYC              |
+| **Real Estate Shares**     | SMARTEquity     | Custodian, Historical Balances | KYC, Jurisdiction restrictions        |
+| **Tokenized Deposits**     | SMARTDeposit    | Yield, Capped                  | Bank verification, deposit insurance  |
+| **Investment Funds**       | SMARTFund       | Yield, Custodian, Burnable     | Fund prospectus, investor suitability |
+| **Regulatory Stablecoins** | SMARTStableCoin | Pausable, Custodian            | Money transmitter license             |
 
 ## 🧪 Development & Testing
 
 ### **Running Tests**
+
 ```bash
 # Run Foundry tests
 forge test
@@ -275,6 +297,7 @@ npm run test
 ```
 
 ### **Deployment**
+
 ```bash
 # Deploy using Hardhat Ignition
 npx hardhat ignition deploy ignition/modules/main.ts --network <network>
@@ -284,6 +307,7 @@ forge script scripts/Deploy.s.sol --rpc-url <rpc-url> --broadcast
 ```
 
 ### **Local Development**
+
 ```bash
 # Start local blockchain
 anvil
@@ -293,7 +317,9 @@ forge script scripts/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast
 ```
 
 ### **Gas Optimization**
+
 SMART Protocol includes several gas optimization features:
+
 - **Batch Operations**: Multi-user operations in single transactions
 - **Efficient Storage**: Packed structs and optimized storage layout
 - **Meta-Transactions**: Reduce user gas costs via ERC-2771

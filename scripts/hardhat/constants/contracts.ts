@@ -17,19 +17,19 @@ import { abi as tokenIdentityAbiJson } from "../../../out/ISMARTTokenIdentity.so
 const asAbi = (abi: unknown): Abi => abi as Abi;
 
 export const SMARTContracts = {
-	// onboarding
-	system: asAbi(systemAbiJson),
-	compliance: asAbi(complianceAbiJson),
-	identityRegistry: asAbi(identityRegistryAbiJson),
-	identityRegistryStorage: asAbi(identityRegistryStorageAbiJson),
-	trustedIssuersRegistry: asAbi(trustedIssuersRegistryAbiJson),
-	identityFactory: asAbi(identityFactoryAbiJson),
-	bondFactory: asAbi(bondFactoryAbiJson),
-	depositFactory: asAbi(depositFactoryAbiJson),
-	equityFactory: asAbi(equityFactoryAbiJson),
-	fundFactory: asAbi(fundFactoryAbiJson),
-	stablecoinFactory: asAbi(stablecoinFactoryAbiJson),
-	// token
-	accessManager: asAbi(accessManagerAbiJson),
-	tokenIdentity: asAbi(tokenIdentityAbiJson),
+  // onboarding
+  system: asAbi(systemAbiJson),
+  compliance: asAbi(complianceAbiJson),
+  identityRegistry: asAbi(identityRegistryAbiJson),
+  identityRegistryStorage: asAbi(identityRegistryStorageAbiJson),
+  trustedIssuersRegistry: asAbi(trustedIssuersRegistryAbiJson),
+  identityFactory: asAbi(identityFactoryAbiJson),
+  bondFactory: asAbi(bondFactoryAbiJson),
+  depositFactory: asAbi(depositFactoryAbiJson),
+  equityFactory: asAbi(equityFactoryAbiJson),
+  fundFactory: asAbi(fundFactoryAbiJson),
+  stablecoinFactory: asAbi(stablecoinFactoryAbiJson),
+  // token
+  accessManager: asAbi(accessManagerAbiJson),
+  tokenIdentity: asAbi(tokenIdentityAbiJson),
 } as const;

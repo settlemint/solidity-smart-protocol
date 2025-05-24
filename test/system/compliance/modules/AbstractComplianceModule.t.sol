@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Test} from "forge-std/Test.sol";
-import {AbstractComplianceModule} from "../../../../contracts/system/compliance/modules/AbstractComplianceModule.sol";
-import {ISMARTComplianceModule} from "../../../../contracts/interface/ISMARTComplianceModule.sol";
-import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
-import {IAccessControlEnumerable} from "@openzeppelin/contracts/access/extensions/IAccessControlEnumerable.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { Test } from "forge-std/Test.sol";
+import { AbstractComplianceModule } from "../../../../contracts/system/compliance/modules/AbstractComplianceModule.sol";
+import { ISMARTComplianceModule } from "../../../../contracts/interface/ISMARTComplianceModule.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { IAccessControlEnumerable } from "@openzeppelin/contracts/access/extensions/IAccessControlEnumerable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 contract TestComplianceModule is AbstractComplianceModule {
     string private _moduleName;
@@ -27,13 +27,7 @@ contract TestComplianceModule is AbstractComplianceModule {
         _shouldRevertOnValidation = shouldRevert;
     }
 
-    function canTransfer(
-        address,
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external view override {
+    function canTransfer(address, address, address, uint256, bytes calldata) external view override {
         if (!_allowTransfers) {
             revert("Transfer not allowed");
         }
@@ -74,7 +68,7 @@ contract AbstractComplianceModuleTest is Test {
     function test_ConstructorWithDifferentDeployer() public {
         vm.prank(user1);
         TestComplianceModule newModule = new TestComplianceModule("Another Module");
-        
+
         assertTrue(newModule.hasRole(newModule.DEFAULT_ADMIN_ROLE(), user1));
         assertFalse(newModule.hasRole(newModule.DEFAULT_ADMIN_ROLE(), admin));
     }
@@ -134,20 +128,20 @@ contract AbstractComplianceModuleTest is Test {
 
     function test_AccessControl_GrantRole() public {
         bytes32 newRole = keccak256("NEW_ROLE");
-        
+
         vm.prank(admin);
         module.grantRole(newRole, user1);
-        
+
         assertTrue(module.hasRole(newRole, user1));
     }
 
     function test_AccessControl_RevokeRole() public {
         bytes32 newRole = keccak256("NEW_ROLE");
-        
+
         vm.startPrank(admin);
         module.grantRole(newRole, user1);
         assertTrue(module.hasRole(newRole, user1));
-        
+
         module.revokeRole(newRole, user1);
         assertFalse(module.hasRole(newRole, user1));
         vm.stopPrank();
@@ -155,7 +149,7 @@ contract AbstractComplianceModuleTest is Test {
 
     function test_AccessControl_OnlyAdminCanGrantRole() public {
         bytes32 newRole = keccak256("NEW_ROLE");
-        
+
         vm.prank(user1);
         vm.expectRevert();
         module.grantRole(newRole, user2);
@@ -163,13 +157,13 @@ contract AbstractComplianceModuleTest is Test {
 
     function test_AccessControl_RenounceRole() public {
         bytes32 newRole = keccak256("NEW_ROLE");
-        
+
         vm.prank(admin);
         module.grantRole(newRole, user1);
-        
+
         vm.prank(user1);
         module.renounceRole(newRole, user1);
-        
+
         assertFalse(module.hasRole(newRole, user1));
     }
 
@@ -180,7 +174,7 @@ contract AbstractComplianceModuleTest is Test {
 
     function test_HooksWithParameters() public {
         bytes memory params = abi.encode(uint256(123), "test");
-        
+
         module.transferred(tokenContract, user1, user2, 100, params);
         module.created(tokenContract, user1, 100, params);
         module.destroyed(tokenContract, user1, 100, params);
@@ -188,7 +182,7 @@ contract AbstractComplianceModuleTest is Test {
 
     function test_CanTransferWithParameters() public {
         bytes memory params = abi.encode(uint256(456), address(user1));
-        
+
         vm.prank(admin);
         module.setAllowTransfers(true);
 
@@ -197,7 +191,7 @@ contract AbstractComplianceModuleTest is Test {
 
     function test_ValidateParametersWithData() public {
         bytes memory params = abi.encode(uint256(789), "validation_data");
-        
+
         vm.prank(admin);
         module.setShouldRevertOnValidation(false);
 
@@ -207,10 +201,10 @@ contract AbstractComplianceModuleTest is Test {
     function test_MultipleModulesIndependentRoles() public {
         vm.prank(user1);
         TestComplianceModule module2 = new TestComplianceModule("Second Module");
-        
+
         assertTrue(module.hasRole(module.DEFAULT_ADMIN_ROLE(), admin));
         assertFalse(module.hasRole(module.DEFAULT_ADMIN_ROLE(), user1));
-        
+
         assertTrue(module2.hasRole(module2.DEFAULT_ADMIN_ROLE(), user1));
         assertFalse(module2.hasRole(module2.DEFAULT_ADMIN_ROLE(), admin));
     }
@@ -218,12 +212,12 @@ contract AbstractComplianceModuleTest is Test {
     function test_MultipleRoles() public {
         bytes32 role1 = keccak256("ROLE_1");
         bytes32 role2 = keccak256("ROLE_2");
-        
+
         vm.startPrank(admin);
         module.grantRole(role1, user1);
         module.grantRole(role2, user1);
         vm.stopPrank();
-        
+
         assertTrue(module.hasRole(role1, user1));
         assertTrue(module.hasRole(role2, user1));
         assertFalse(module.hasRole(role1, user2));
@@ -236,19 +230,16 @@ contract AbstractComplianceModuleTest is Test {
         address to,
         uint256 value,
         bytes calldata params
-    ) public {
+    )
+        public
+    {
         vm.prank(admin);
         module.setAllowTransfers(true);
 
         module.canTransfer(token, from, to, value, params);
     }
 
-    function test_Fuzz_Hooks(
-        address token,
-        address addr,
-        uint256 value,
-        bytes calldata params
-    ) public {
+    function test_Fuzz_Hooks(address token, address addr, uint256 value, bytes calldata params) public {
         module.transferred(token, addr, addr, value, params);
         module.created(token, addr, value, params);
         module.destroyed(token, addr, value, params);
@@ -258,7 +249,7 @@ contract AbstractComplianceModuleTest is Test {
         module.transferred(address(0), address(0), address(0), 0, "");
         module.created(address(0), address(0), 0, "");
         module.destroyed(address(0), address(0), 0, "");
-        
+
         vm.prank(admin);
         module.setAllowTransfers(true);
         module.canTransfer(address(0), address(0), address(0), 0, "");
@@ -266,11 +257,11 @@ contract AbstractComplianceModuleTest is Test {
 
     function test_EdgeCase_LargeValues() public {
         uint256 maxValue = type(uint256).max;
-        
+
         module.transferred(tokenContract, user1, user2, maxValue, "");
         module.created(tokenContract, user1, maxValue, "");
         module.destroyed(tokenContract, user1, maxValue, "");
-        
+
         vm.prank(admin);
         module.setAllowTransfers(true);
         module.canTransfer(tokenContract, user1, user2, maxValue, "");

@@ -6,7 +6,8 @@ import { SMARTTokenAccessManagerImplementation } from
     "../../../contracts/system/access-manager/SMARTTokenAccessManagerImplementation.sol";
 import { ISMARTTokenAccessManager } from "../../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { AccessControlEnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlEnumerableUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
@@ -33,7 +34,7 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
     function setUp() public {
         // Deploy implementation
         implementation = new SMARTTokenAccessManagerImplementation(forwarder);
-        
+
         // Deploy proxy with initialization data
         address[] memory initialAdmins = new address[](1);
         initialAdmins[0] = admin;
@@ -45,10 +46,20 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
     function test_InitializeSuccess() public view {
         // Verify admin has both admin and can access role enumeration
         assertTrue(IAccessControl(address(accessManager)).hasRole(implementation.DEFAULT_ADMIN_ROLE(), admin));
-        
+
         // Verify role enumeration works
-        assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(implementation.DEFAULT_ADMIN_ROLE()), 1);
-        assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMember(implementation.DEFAULT_ADMIN_ROLE(), 0), admin);
+        assertEq(
+            AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(
+                implementation.DEFAULT_ADMIN_ROLE()
+            ),
+            1
+        );
+        assertEq(
+            AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMember(
+                implementation.DEFAULT_ADMIN_ROLE(), 0
+            ),
+            admin
+        );
     }
 
     function test_InitializeWithMultipleAdmins() public {
@@ -57,7 +68,7 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         multipleAdmins[0] = admin;
         multipleAdmins[1] = user1;
         multipleAdmins[2] = user2;
-        
+
         SMARTTokenAccessManagerImplementation newImpl = new SMARTTokenAccessManagerImplementation(forwarder);
         bytes memory initData = abi.encodeWithSelector(newImpl.initialize.selector, multipleAdmins);
         ERC1967Proxy proxy = new ERC1967Proxy(address(newImpl), initData);
@@ -67,15 +78,17 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         assertTrue(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), admin));
         assertTrue(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), user1));
         assertTrue(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), user2));
-        
+
         // Verify count
-        assertEq(AccessControlEnumerableUpgradeable(address(newManager)).getRoleMemberCount(newImpl.DEFAULT_ADMIN_ROLE()), 3);
+        assertEq(
+            AccessControlEnumerableUpgradeable(address(newManager)).getRoleMemberCount(newImpl.DEFAULT_ADMIN_ROLE()), 3
+        );
     }
 
     function test_InitializeWithEmptyAdmins() public {
         // Deploy new instance with empty admins array
         address[] memory emptyAdmins = new address[](0);
-        
+
         SMARTTokenAccessManagerImplementation newImpl = new SMARTTokenAccessManagerImplementation(forwarder);
         bytes memory initData = abi.encodeWithSelector(newImpl.initialize.selector, emptyAdmins);
         ERC1967Proxy proxy = new ERC1967Proxy(address(newImpl), initData);
@@ -84,15 +97,17 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         // Verify no one has admin role
         assertFalse(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), admin));
         assertFalse(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), user1));
-        
+
         // Verify count is 0
-        assertEq(AccessControlEnumerableUpgradeable(address(newManager)).getRoleMemberCount(newImpl.DEFAULT_ADMIN_ROLE()), 0);
+        assertEq(
+            AccessControlEnumerableUpgradeable(address(newManager)).getRoleMemberCount(newImpl.DEFAULT_ADMIN_ROLE()), 0
+        );
     }
 
     function test_CannotInitializeTwice() public {
         address[] memory newAdmins = new address[](1);
         newAdmins[0] = user1;
-        
+
         vm.expectRevert();
         SMARTTokenAccessManagerImplementation(address(accessManager)).initialize(newAdmins);
     }
@@ -110,14 +125,14 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         emit RoleGranted(TEST_ROLE_1, user2, admin);
         vm.expectEmit(true, true, true, false);
         emit RoleGranted(TEST_ROLE_1, user3, admin);
-        
+
         accessManager.batchGrantRole(TEST_ROLE_1, accounts);
 
         // Verify all accounts have the role
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user1));
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user2));
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user3));
-        
+
         // Verify role count
         assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(TEST_ROLE_1), 3);
     }
@@ -137,7 +152,7 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
 
         vm.prank(admin);
         accessManager.batchGrantRole(TEST_ROLE_1, emptyAccounts);
-        
+
         // Verify no one has the role
         assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(TEST_ROLE_1), 0);
     }
@@ -151,7 +166,7 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
 
         vm.prank(admin);
         accessManager.batchGrantRole(TEST_ROLE_1, accounts);
-        
+
         // Verify roles were granted
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user1));
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user2));
@@ -165,14 +180,14 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         emit RoleRevoked(TEST_ROLE_1, user2, admin);
         vm.expectEmit(true, true, true, false);
         emit RoleRevoked(TEST_ROLE_1, user3, admin);
-        
+
         accessManager.batchRevokeRole(TEST_ROLE_1, accounts);
 
         // Verify all accounts lost the role
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user1));
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user2));
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user3));
-        
+
         // Verify role count is 0
         assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(TEST_ROLE_1), 0);
     }
@@ -192,7 +207,7 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
 
         vm.prank(admin);
         accessManager.batchRevokeRole(TEST_ROLE_1, emptyAccounts);
-        
+
         // Should complete without error
         assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(TEST_ROLE_1), 0);
     }
@@ -205,7 +220,7 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
 
         vm.prank(admin);
         accessManager.batchRevokeRole(TEST_ROLE_1, accounts);
-        
+
         // Should complete without error, users should still not have the role
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user1));
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user2));
@@ -215,11 +230,11 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         // Test the overridden hasRole function
         vm.prank(admin);
         IAccessControl(address(accessManager)).grantRole(TEST_ROLE_1, user1);
-        
+
         // Test through ISMARTTokenAccessManager interface
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user1));
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user2));
-        
+
         // Test through IAccessControl interface
         assertTrue(IAccessControl(address(accessManager)).hasRole(TEST_ROLE_1, user1));
         assertFalse(IAccessControl(address(accessManager)).hasRole(TEST_ROLE_1, user2));
@@ -230,7 +245,7 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         assertTrue(IERC165(address(accessManager)).supportsInterface(type(ISMARTTokenAccessManager).interfaceId));
         assertTrue(IERC165(address(accessManager)).supportsInterface(type(IAccessControl).interfaceId));
         assertTrue(IERC165(address(accessManager)).supportsInterface(type(IERC165).interfaceId));
-        
+
         // Test unsupported interface
         assertFalse(IERC165(address(accessManager)).supportsInterface(bytes4(keccak256("unsupported()"))));
     }
@@ -238,22 +253,22 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
     function test_AccessControlEnumerableFeatures() public {
         // Test enumeration features
         vm.startPrank(admin);
-        
+
         // Grant different roles to different users
         IAccessControl(address(accessManager)).grantRole(TEST_ROLE_1, user1);
         IAccessControl(address(accessManager)).grantRole(TEST_ROLE_1, user2);
         IAccessControl(address(accessManager)).grantRole(TEST_ROLE_2, user1);
-        
+
         vm.stopPrank();
-        
+
         // Test role member counts
         assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(TEST_ROLE_1), 2);
         assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(TEST_ROLE_2), 1);
-        
+
         // Test role member enumeration
         address member0 = AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMember(TEST_ROLE_1, 0);
         address member1 = AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMember(TEST_ROLE_1, 1);
-        
+
         // One should be user1, the other user2 (order not guaranteed)
         assertTrue((member0 == user1 && member1 == user2) || (member0 == user2 && member1 == user1));
     }
@@ -262,7 +277,7 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         // Test calling initialize directly on implementation (should fail due to _disableInitializers)
         address[] memory admins = new address[](1);
         admins[0] = admin;
-        
+
         vm.expectRevert();
         implementation.initialize(admins);
     }
@@ -275,18 +290,20 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
 
     function test_ComplexRoleHierarchy() public {
         vm.startPrank(admin);
-        
+
         // Create a role hierarchy - admin can grant roles, operators can do specific tasks
         IAccessControl(address(accessManager)).grantRole(OPERATOR_ROLE, user1);
         IAccessControl(address(accessManager)).grantRole(TEST_ROLE_1, user2);
-        
+
         // Set TEST_ROLE_1 admin to be OPERATOR_ROLE
         // Note: OpenZeppelin doesn't have setRoleAdmin in the interface, so we test with defaults
         assertEq(IAccessControl(address(accessManager)).getRoleAdmin(TEST_ROLE_1), implementation.DEFAULT_ADMIN_ROLE());
-        assertEq(IAccessControl(address(accessManager)).getRoleAdmin(OPERATOR_ROLE), implementation.DEFAULT_ADMIN_ROLE());
-        
+        assertEq(
+            IAccessControl(address(accessManager)).getRoleAdmin(OPERATOR_ROLE), implementation.DEFAULT_ADMIN_ROLE()
+        );
+
         vm.stopPrank();
-        
+
         // Verify roles are set correctly
         assertTrue(IAccessControl(address(accessManager)).hasRole(OPERATOR_ROLE, user1));
         assertTrue(IAccessControl(address(accessManager)).hasRole(TEST_ROLE_1, user2));
@@ -298,40 +315,43 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         vm.assume(numAccounts > 0 && numAccounts <= 20); // Reasonable bounds
         vm.assume(roleId != 0); // Avoid DEFAULT_ADMIN_ROLE which already has admin assigned
         bytes32 role = bytes32(roleId);
-        
+
         // Create array of accounts
         address[] memory accounts = new address[](numAccounts);
         for (uint256 i = 0; i < numAccounts; i++) {
             accounts[i] = address(uint160(0x1000 + i));
         }
-        
+
         vm.startPrank(admin);
-        
+
         // Get initial count (should be 0 for non-admin roles)
         uint256 initialCount = AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(role);
-        
+
         // Batch grant
         accessManager.batchGrantRole(role, accounts);
-        
+
         // Verify all have the role
         for (uint256 i = 0; i < numAccounts; i++) {
             assertTrue(accessManager.hasRole(role, accounts[i]));
         }
-        
+
         // Verify count increased by numAccounts
-        assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(role), initialCount + numAccounts);
-        
+        assertEq(
+            AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(role),
+            initialCount + numAccounts
+        );
+
         // Batch revoke
         accessManager.batchRevokeRole(role, accounts);
-        
+
         // Verify all lost the role
         for (uint256 i = 0; i < numAccounts; i++) {
             assertFalse(accessManager.hasRole(role, accounts[i]));
         }
-        
+
         // Verify count is back to initial
         assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(role), initialCount);
-        
+
         vm.stopPrank();
     }
 
@@ -341,29 +361,29 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         accounts[1] = user2;
 
         vm.startPrank(admin);
-        
+
         // Grant one role manually
         IAccessControl(address(accessManager)).grantRole(TEST_ROLE_1, user1);
-        
+
         // Batch grant to both (one already has it)
         accessManager.batchGrantRole(TEST_ROLE_1, accounts);
-        
+
         // Both should have the role
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user1));
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user2));
         assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(TEST_ROLE_1), 2);
-        
+
         // Revoke one manually
         IAccessControl(address(accessManager)).revokeRole(TEST_ROLE_1, user1);
-        
+
         // Batch revoke from both (one already doesn't have it)
         accessManager.batchRevokeRole(TEST_ROLE_1, accounts);
-        
+
         // Neither should have the role
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user1));
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user2));
         assertEq(AccessControlEnumerableUpgradeable(address(accessManager)).getRoleMemberCount(TEST_ROLE_1), 0);
-        
+
         vm.stopPrank();
     }
 }

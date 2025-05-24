@@ -14,16 +14,16 @@ let publicClientInstance: PublicClient | null = null;
  * @throws Error if chainId is not found in Hardhat network configuration during initialization.
  */
 export function getPublicClient(): PublicClient {
-	if (publicClientInstance) {
-		return publicClientInstance;
-	}
+  if (publicClientInstance) {
+    return publicClientInstance;
+  }
 
-	const viemChain = getViemChain();
+  const viemChain = getViemChain();
 
-	publicClientInstance = createPublicClient({
-		chain: viemChain,
-		transport: custom(hre.network.provider), // Use Hardhat's EIP-1193 provider
-	});
+  publicClientInstance = createPublicClient({
+    chain: viemChain,
+    transport: custom(hre.network.provider), // Use Hardhat's EIP-1193 provider
+  });
 
-	return publicClientInstance;
+  return publicClientInstance;
 }

@@ -435,7 +435,14 @@ contract SMARTIdentityFactoryImplementation is
     /// @param systemAddress The system address to prevent cross-system collisions.
     /// @param saltString The string to be used for salt calculation.
     /// @return The calculated salt for CREATE2 deployment.
-    function _calculateSaltFromString(address systemAddress, string memory saltString) internal pure returns (bytes32) {
+    function _calculateSaltFromString(
+        address systemAddress,
+        string memory saltString
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encode(systemAddress, saltString));
     }
 

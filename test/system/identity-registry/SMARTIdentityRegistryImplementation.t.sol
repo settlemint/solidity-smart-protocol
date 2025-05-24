@@ -9,7 +9,8 @@ import "../../utils/IdentityUtils.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
-import { IERC3643TrustedIssuersRegistry } from "../../../contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { IERC3643TrustedIssuersRegistry } from
+    "../../../contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
 contract SMARTIdentityRegistryImplementationTest is Test {
     SystemUtils public systemUtils;
@@ -19,7 +20,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
     address public user1;
     address public user2;
     address public unauthorizedUser;
-    
+
     IIdentity public identity1;
     IIdentity public identity2;
     uint16 public constant COUNTRY_US = 840;
@@ -41,23 +42,19 @@ contract SMARTIdentityRegistryImplementationTest is Test {
 
         systemUtils = new SystemUtils(admin);
         identityRegistry = systemUtils.identityRegistry();
-        
+
         identityUtils = new IdentityUtils(
-            admin,
-            systemUtils.identityFactory(),
-            identityRegistry,
-            systemUtils.trustedIssuersRegistry()
+            admin, systemUtils.identityFactory(), identityRegistry, systemUtils.trustedIssuersRegistry()
         );
-        
+
         vm.startPrank(admin);
-        
+
         // Create test identities
         address identity1Addr = identityUtils.createIdentity(user1);
         address identity2Addr = identityUtils.createIdentity(user2);
         identity1 = IIdentity(identity1Addr);
         identity2 = IIdentity(identity2Addr);
-        
-        
+
         vm.stopPrank();
     }
 
@@ -95,12 +92,14 @@ contract SMARTIdentityRegistryImplementationTest is Test {
 
     function testRegisterIdentityRevertsIfAlreadyRegistered() public {
         vm.startPrank(admin);
-        
+
         identityRegistry.registerIdentity(user1, identity1, COUNTRY_US);
-        
-        vm.expectRevert(abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityAlreadyRegistered.selector, user1));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityAlreadyRegistered.selector, user1)
+        );
         identityRegistry.registerIdentity(user1, identity2, COUNTRY_UK);
-        
+
         vm.stopPrank();
     }
 
@@ -112,7 +111,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
 
     function testDeleteIdentity() public {
         vm.startPrank(admin);
-        
+
         identityRegistry.registerIdentity(user1, identity1, COUNTRY_US);
         assertTrue(identityRegistry.contains(user1));
 
@@ -120,15 +119,17 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         emit IdentityRemoved(admin, user1, identity1);
 
         identityRegistry.deleteIdentity(user1);
-        
+
         assertFalse(identityRegistry.contains(user1));
-        
+
         vm.stopPrank();
     }
 
     function testDeleteIdentityRevertsIfNotRegistered() public {
         vm.prank(admin);
-        vm.expectRevert(abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityNotRegistered.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityNotRegistered.selector, user1)
+        );
         identityRegistry.deleteIdentity(user1);
     }
 
@@ -144,22 +145,24 @@ contract SMARTIdentityRegistryImplementationTest is Test {
 
     function testUpdateCountry() public {
         vm.startPrank(admin);
-        
+
         identityRegistry.registerIdentity(user1, identity1, COUNTRY_US);
-        
+
         vm.expectEmit(true, true, false, true);
         emit CountryUpdated(admin, user1, COUNTRY_UK);
 
         identityRegistry.updateCountry(user1, COUNTRY_UK);
-        
+
         assertEq(identityRegistry.investorCountry(user1), COUNTRY_UK);
-        
+
         vm.stopPrank();
     }
 
     function testUpdateCountryRevertsIfNotRegistered() public {
         vm.prank(admin);
-        vm.expectRevert(abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityNotRegistered.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityNotRegistered.selector, user1)
+        );
         identityRegistry.updateCountry(user1, COUNTRY_UK);
     }
 
@@ -175,33 +178,35 @@ contract SMARTIdentityRegistryImplementationTest is Test {
 
     function testUpdateIdentity() public {
         vm.startPrank(admin);
-        
+
         identityRegistry.registerIdentity(user1, identity1, COUNTRY_US);
-        
+
         vm.expectEmit(true, true, true, true);
         emit IdentityUpdated(admin, identity1, identity2);
 
         identityRegistry.updateIdentity(user1, identity2);
-        
+
         assertEq(address(identityRegistry.identity(user1)), address(identity2));
-        
+
         vm.stopPrank();
     }
 
     function testUpdateIdentityRevertsIfNotRegistered() public {
         vm.prank(admin);
-        vm.expectRevert(abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityNotRegistered.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityNotRegistered.selector, user1)
+        );
         identityRegistry.updateIdentity(user1, identity2);
     }
 
     function testUpdateIdentityRevertsWithZeroIdentity() public {
         vm.startPrank(admin);
-        
+
         identityRegistry.registerIdentity(user1, identity1, COUNTRY_US);
-        
+
         vm.expectRevert(SMARTIdentityRegistryImplementation.InvalidIdentityAddress.selector);
         identityRegistry.updateIdentity(user1, IIdentity(address(0)));
-        
+
         vm.stopPrank();
     }
 
@@ -219,7 +224,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         address[] memory users = new address[](2);
         IIdentity[] memory identities = new IIdentity[](2);
         uint16[] memory countries = new uint16[](2);
-        
+
         users[0] = user1;
         users[1] = user2;
         identities[0] = identity1;
@@ -242,7 +247,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         address[] memory users = new address[](2);
         IIdentity[] memory identities = new IIdentity[](1); // Different length
         uint16[] memory countries = new uint16[](2);
-        
+
         users[0] = user1;
         users[1] = user2;
         identities[0] = identity1;
@@ -258,7 +263,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         address[] memory users = new address[](1);
         IIdentity[] memory identities = new IIdentity[](1);
         uint16[] memory countries = new uint16[](1);
-        
+
         users[0] = user1;
         identities[0] = identity1;
         countries[0] = COUNTRY_US;
@@ -307,13 +312,15 @@ contract SMARTIdentityRegistryImplementationTest is Test {
     }
 
     function testInvestorCountryRevertsIfNotRegistered() public {
-        vm.expectRevert(abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityNotRegistered.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityNotRegistered.selector, user1)
+        );
         identityRegistry.investorCountry(user1);
     }
 
     function testSetIdentityRegistryStorage() public {
         address newStorage = makeAddr("newStorage");
-        
+
         vm.expectEmit(true, true, false, false);
         emit IdentityStorageSet(admin, newStorage);
 
@@ -331,7 +338,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
 
     function testSetIdentityRegistryStorageRevertsWithUnauthorizedCaller() public {
         address newStorage = makeAddr("newStorage");
-        
+
         vm.prank(unauthorizedUser);
         vm.expectRevert();
         identityRegistry.setIdentityRegistryStorage(newStorage);
@@ -339,7 +346,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
 
     function testSetTrustedIssuersRegistry() public {
         address newRegistry = makeAddr("newRegistry");
-        
+
         vm.expectEmit(true, true, false, false);
         emit TrustedIssuersRegistrySet(admin, newRegistry);
 
@@ -357,7 +364,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
 
     function testSetTrustedIssuersRegistryRevertsWithUnauthorizedCaller() public {
         address newRegistry = makeAddr("newRegistry");
-        
+
         vm.prank(unauthorizedUser);
         vm.expectRevert();
         identityRegistry.setTrustedIssuersRegistry(newRegistry);

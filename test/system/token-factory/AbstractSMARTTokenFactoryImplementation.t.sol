@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/Create2.sol";
 
 // Simple concrete implementation for testing
 contract TestableTokenFactory is AbstractSMARTTokenFactoryImplementation {
-    constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) {}
+    constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
     function isValidTokenImplementation(address) external pure override returns (bool) {
         return true;
@@ -29,7 +29,11 @@ contract TestableTokenFactory is AbstractSMARTTokenFactoryImplementation {
         bytes memory encodedConstructorArgs,
         string memory nameForSalt,
         string memory symbolForSalt
-    ) external view returns (address) {
+    )
+        external
+        view
+        returns (address)
+    {
         bytes32 salt = keccak256(abi.encodePacked(nameForSalt, symbolForSalt));
         bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
         bytes32 bytecodeHash = keccak256(fullCreationCode);
@@ -39,6 +43,7 @@ contract TestableTokenFactory is AbstractSMARTTokenFactoryImplementation {
 
 contract MockProxy {
     uint256 public value;
+
     constructor(uint256 _value) {
         value = _value;
     }
@@ -47,7 +52,7 @@ contract MockProxy {
 contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
     TestableTokenFactory public factory;
     address public admin;
-    
+
     function setUp() public {
         admin = makeAddr("admin");
         factory = new TestableTokenFactory(address(0));
@@ -87,7 +92,7 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
     function testCalculateSaltDeterministic() public {
         bytes32 salt1 = factory.exposedCalculateSalt("TestToken", "TEST");
         bytes32 salt2 = factory.exposedCalculateSalt("TestToken", "TEST");
-        
+
         assertEq(salt1, salt2);
         assertTrue(salt1 != bytes32(0));
     }
@@ -95,28 +100,18 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
     function testCalculateSaltDifferentInputs() public {
         bytes32 salt1 = factory.exposedCalculateSalt("TestToken1", "TEST1");
         bytes32 salt2 = factory.exposedCalculateSalt("TestToken2", "TEST2");
-        
+
         assertTrue(salt1 != salt2);
     }
 
     function testPredictProxyAddressDeterministic() public {
         bytes memory proxyCode = type(MockProxy).creationCode;
         bytes memory constructorArgs = abi.encode(123);
-        
-        address predicted1 = factory.exposedPredictProxyAddress(
-            proxyCode, 
-            constructorArgs, 
-            "TestToken", 
-            "TEST"
-        );
-        
-        address predicted2 = factory.exposedPredictProxyAddress(
-            proxyCode, 
-            constructorArgs, 
-            "TestToken", 
-            "TEST"
-        );
-        
+
+        address predicted1 = factory.exposedPredictProxyAddress(proxyCode, constructorArgs, "TestToken", "TEST");
+
+        address predicted2 = factory.exposedPredictProxyAddress(proxyCode, constructorArgs, "TestToken", "TEST");
+
         assertEq(predicted1, predicted2);
         assertTrue(predicted1 != address(0));
     }
@@ -124,21 +119,11 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
     function testPredictProxyAddressDifferentSalts() public {
         bytes memory proxyCode = type(MockProxy).creationCode;
         bytes memory constructorArgs = abi.encode(123);
-        
-        address predicted1 = factory.exposedPredictProxyAddress(
-            proxyCode, 
-            constructorArgs, 
-            "TestToken1", 
-            "TEST1"
-        );
-        
-        address predicted2 = factory.exposedPredictProxyAddress(
-            proxyCode, 
-            constructorArgs, 
-            "TestToken2", 
-            "TEST2"
-        );
-        
+
+        address predicted1 = factory.exposedPredictProxyAddress(proxyCode, constructorArgs, "TestToken1", "TEST1");
+
+        address predicted2 = factory.exposedPredictProxyAddress(proxyCode, constructorArgs, "TestToken2", "TEST2");
+
         assertTrue(predicted1 != predicted2);
     }
 
@@ -148,12 +133,12 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
         bytes4 invalidImplSelector = AbstractSMARTTokenFactoryImplementation.InvalidImplementationAddress.selector;
         bytes4 proxyFailedSelector = AbstractSMARTTokenFactoryImplementation.ProxyCreationFailed.selector;
         bytes4 addressDeployedSelector = AbstractSMARTTokenFactoryImplementation.AddressAlreadyDeployed.selector;
-        
+
         assertTrue(invalidTokenSelector != bytes4(0));
         assertTrue(invalidImplSelector != bytes4(0));
         assertTrue(proxyFailedSelector != bytes4(0));
         assertTrue(addressDeployedSelector != bytes4(0));
-        
+
         // Test that they are all different
         assertTrue(invalidTokenSelector != invalidImplSelector);
         assertTrue(invalidTokenSelector != proxyFailedSelector);
@@ -168,7 +153,7 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
         assertTrue(factory.supportsInterface(type(ISMARTTokenFactory).interfaceId));
         assertTrue(factory.supportsInterface(type(IERC165).interfaceId));
         assertTrue(factory.supportsInterface(type(IAccessControl).interfaceId));
-        
+
         // Test that it doesn't support random interfaces
         assertFalse(factory.supportsInterface(bytes4(0x12345678)));
     }

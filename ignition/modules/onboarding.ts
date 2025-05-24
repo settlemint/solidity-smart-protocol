@@ -12,35 +12,35 @@ import SMARTOnboardingSystemModule from "./onboarding/system";
  * by predeploying in the genesis file.
  */
 const SMARTOnboardingModule = buildModule("SMARTOnboardingModule", (m) => {
-	const {
-		system,
-		compliance,
-		identityRegistry,
-		identityRegistryStorage,
-		trustedIssuersRegistry,
-		identityFactory,
-	} = m.useModule(SMARTOnboardingSystemModule);
+  const {
+    system,
+    compliance,
+    identityRegistry,
+    identityRegistryStorage,
+    trustedIssuersRegistry,
+    identityFactory,
+  } = m.useModule(SMARTOnboardingSystemModule);
 
-	// This can be setup based out of configuration in the onboarding wizard at some point
-	const { bondFactory } = m.useModule(SMARTOnboardingBondModule);
-	const { depositFactory } = m.useModule(SMARTOnboardingDepositModule);
-	const { equityFactory } = m.useModule(SMARTOnboardingEquityModule);
-	const { fundFactory } = m.useModule(SMARTOnboardingFundModule);
-	const { stablecoinFactory } = m.useModule(SMARTOnboardingStableCoinModule);
+  // This can be setup based out of configuration in the onboarding wizard at some point
+  const { bondFactory } = m.useModule(SMARTOnboardingBondModule);
+  const { depositFactory } = m.useModule(SMARTOnboardingDepositModule);
+  const { equityFactory } = m.useModule(SMARTOnboardingEquityModule);
+  const { fundFactory } = m.useModule(SMARTOnboardingFundModule);
+  const { stablecoinFactory } = m.useModule(SMARTOnboardingStableCoinModule);
 
-	return {
-		system,
-		compliance,
-		identityRegistry,
-		identityRegistryStorage,
-		trustedIssuersRegistry,
-		identityFactory,
-		bondFactory,
-		depositFactory,
-		equityFactory,
-		fundFactory,
-		stablecoinFactory,
-	};
+  return {
+    system,
+    compliance,
+    identityRegistry,
+    identityRegistryStorage,
+    trustedIssuersRegistry,
+    identityFactory,
+    bondFactory,
+    depositFactory,
+    equityFactory,
+    fundFactory,
+    stablecoinFactory,
+  };
 });
 
 export default SMARTOnboardingModule;

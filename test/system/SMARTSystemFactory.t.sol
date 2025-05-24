@@ -294,11 +294,11 @@ contract SMARTSystemFactoryTest is Test {
 
     function test_SystemCreatedEventEmitted() public {
         vm.prank(admin);
-        
+
         // Record logs to verify event was emitted
         vm.recordLogs();
         address systemAddress = factory.createSystem();
-        
+
         // Verify system was created and event logs exist
         assertNotEq(systemAddress, address(0));
         assertTrue(vm.getRecordedLogs().length > 0);
@@ -307,7 +307,7 @@ contract SMARTSystemFactoryTest is Test {
     function test_ERC2771ContextIntegration() public {
         // Verify forwarder is set correctly
         assertEq(factory.factoryForwarder(), forwarder);
-        
+
         // Test that the factory inherits from ERC2771Context
         // This is implicitly tested through the constructor and forwarder storage
     }
@@ -351,7 +351,7 @@ contract SMARTSystemFactoryTest is Test {
         vm.assume(numSystems > 0 && numSystems <= 50); // Reasonable limits
 
         address[] memory systems = new address[](numSystems);
-        
+
         for (uint8 i = 0; i < numSystems; i++) {
             address user = makeAddr(string(abi.encodePacked("user", i)));
             vm.prank(user);
