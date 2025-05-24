@@ -422,11 +422,11 @@ contract SMARTIdentityFactoryImplementation is
         address _address
     )
         internal
-        pure
+        view
         returns (bytes32 saltBytes, string memory saltString)
     {
         saltString = string.concat(_saltPrefix, Strings.toHexString(_address));
-        saltBytes = keccak256(abi.encodePacked(saltString));
+        saltBytes = keccak256(abi.encode(_system, saltString));
         // No explicit return needed due to named return variables
     }
 

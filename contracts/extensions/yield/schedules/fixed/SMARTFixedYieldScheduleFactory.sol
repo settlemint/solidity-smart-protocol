@@ -106,7 +106,7 @@ contract SMARTFixedYieldScheduleFactory is ERC2771Context {
     {
         // Generate a unique salt for CREATE2 deployment based on token and schedule parameters.
         // This allows for deterministic address generation.
-        bytes32 salt = keccak256(abi.encodePacked(address(token), startTime, endTime, rate, interval));
+        bytes32 salt = keccak256(abi.encode(address(token), startTime, endTime, rate, interval));
 
         // Deploy the new SMARTFixedYieldSchedule contract using CREATE2 (via the `salt` option).
         // The creator (`_msgSender()`) becomes the initial owner/admin of the new schedule.
