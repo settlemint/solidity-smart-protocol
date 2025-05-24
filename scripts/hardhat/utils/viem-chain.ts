@@ -10,25 +10,20 @@ export function getViemChain(): viemChains.Chain {
 	}
 
 	const chainId = hre.network.config?.chainId;
-	if (typeof chainId !== "number") {
-		throw new Error(
-			"Chain ID not found in Hardhat network configuration. Cannot initialize PublicClient.",
-		);
-	}
 
-	for (const chainKey in viemChains) {
-		// biome-ignore lint/suspicious/noExplicitAny: Iterating over module exports
-		const chain = (viemChains as any)[chainKey] as viemChains.Chain;
-		if (chain.id === chainId) {
-			return chain;
+	if (chainId) {
+		for (const chainKey in viemChains) {
+			// biome-ignore lint/suspicious/noExplicitAny: Iterating over module exports
+			const chain = (viemChains as any)[chainKey] as viemChains.Chain;
+			if (chain.id === chainId) {
+				viemChainInstance = chain;
+				return chain;
+			}
 		}
 	}
-	// Fallback to Hardhat local chain if no specific chain is found
-	// This is useful for local development and testing
-	console.warn(
-		`Viem chain definition not found for chainId ${chainId}. Defaulting to Hardhat local chain (chain ID: ${viemChains.hardhat.id}). This may not be suitable for all environments.`,
-	);
-	viemChainInstance = viemChains.hardhat;
+
+	// Fallback to Anvil chain
+	viemChainInstance = viemChains.anvil;
 
 	return viemChainInstance;
 }

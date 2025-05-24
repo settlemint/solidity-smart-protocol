@@ -1,28 +1,29 @@
 import type { Signer } from "ethers"; // ethers signer type
 import hre from "hardhat";
 import {
-	http,
-	Transport,
+	type Hex,
 	type WalletClient,
 	concat,
 	createWalletClient,
 	custom,
-	encodePacked,
+	encodeAbiParameters,
 	keccak256,
+	parseAbiParameters,
 	toBytes,
-	toHex,
 } from "viem";
 import type { LocalAccount } from "viem/accounts"; // viem signer type
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import type { Chain } from "viem/chains";
+
+import { smartProtocolDeployer } from "../deployer";
 import { getViemChain } from "./viem-chain";
+import { waitForEvent } from "./wait-for-event";
 
 /**
  * Class representing a claim issuer that can generate and sign claims
  */
 class ClaimIssuer {
 	private readonly signer: LocalAccount;
-
+	private identity: Hex | undefined;
 	/**
 	 * Create a new claim issuer
 	 * @param privateKey - Optional private key for the signer. If not provided, a random one will be generated.
@@ -37,6 +38,28 @@ class ClaimIssuer {
 	 */
 	get address(): `0x${string}` {
 		return this.signer.address;
+	}
+
+	async getOrCreateIdentity(): Promise<`0x${string}`> {
+		if (this.identity) {
+			return this.identity;
+		}
+
+		const identityFactory = smartProtocolDeployer.getIdentityFactoryContract();
+		const transactionHash: Hex = await identityFactory.write.createIdentity([
+			this.address,
+			[],
+		]);
+
+		const { identity } = (await waitForEvent({
+			transactionHash,
+			contract: identityFactory,
+			eventName: "IdentityCreated",
+		})) as unknown as { identity: `0x${string}` };
+
+		this.identity = identity;
+
+		return identity;
 	}
 
 	/**
@@ -98,12 +121,13 @@ export async function createClaim(
 	claimData: `0x${string}`,
 ): Promise<{ data: `0x${string}`; signature: `0x${string}` }> {
 	// Solidity-style hash: keccak256(abi.encode(address, uint256, bytes))
-	const dataHash = keccak256(
-		encodePacked(
-			["address", "uint256", "bytes"],
-			[subjectIdentityAddress, claimTopic, claimData],
+	const dataToSign = encodeAbiParameters(
+		parseAbiParameters(
+			"address subject, uint256 topicValue, bytes memory dataBytes",
 		),
+		[subjectIdentityAddress, claimTopic, claimData],
 	);
+	const dataHash = keccak256(dataToSign);
 
 	// Ethereum Signed Message hash
 	const prefixedHash = keccak256(
