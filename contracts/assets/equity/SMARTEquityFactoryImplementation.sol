@@ -19,7 +19,7 @@ import { SMARTEquityProxy } from "./SMARTEquityProxy.sol";
 contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTTokenFactoryImplementation {
     /// @notice Constructor for the SMARTEquityFactoryImplementation.
     /// @param forwarder The address of the trusted forwarder for meta-transactions.
-    constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
+    constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
     /// @notice Creates a new SMART Equity token.
     /// @param name_ The name of the equity token.

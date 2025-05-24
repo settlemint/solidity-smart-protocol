@@ -20,7 +20,7 @@ import { SMARTDepositProxy } from "./SMARTDepositProxy.sol";
 contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMARTTokenFactoryImplementation {
     /// @notice Constructor for the SMARTDepositFactoryImplementation.
     /// @param forwarder The address of the trusted forwarder for meta-transactions.
-    constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
+    constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
     /// @notice Creates a new SMART Deposit token.
     /// @param name_ The name of the deposit token.

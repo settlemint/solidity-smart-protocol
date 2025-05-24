@@ -20,7 +20,7 @@ import { SMARTFundProxy } from "./SMARTFundProxy.sol";
 contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTTokenFactoryImplementation {
     /// @notice Constructor for the SMARTFundFactoryImplementation.
     /// @param forwarder The address of the trusted forwarder for meta-transactions.
-    constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
+    constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
     /// @notice Creates a new SMART Fund.
     /// @param name_ The name of the fund.

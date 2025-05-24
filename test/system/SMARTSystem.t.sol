@@ -261,35 +261,6 @@ contract SMARTSystemTest is Test {
         smartSystem.createTokenFactory("TestFactory", address(0x123), address(0));
     }
 
-    function test_WithdrawEther() public {
-        // Send some ether to the system
-        vm.deal(address(smartSystem), 5 ether);
-        uint256 initialBalance = admin.balance;
-
-        vm.prank(admin);
-        vm.expectEmit(true, false, false, true);
-        emit SMARTSystem.EtherWithdrawn(admin, 5 ether);
-
-        smartSystem.withdrawEther();
-
-        assertEq(address(smartSystem).balance, 0);
-        assertEq(admin.balance, initialBalance + 5 ether);
-    }
-
-    function test_WithdrawEther_OnlyAdmin() public {
-        vm.deal(address(smartSystem), 1 ether);
-
-        vm.prank(user);
-        vm.expectRevert();
-        smartSystem.withdrawEther();
-    }
-
-    function test_WithdrawEther_NoBalance() public {
-        vm.prank(admin);
-        smartSystem.withdrawEther(); // Should not revert, just do nothing
-
-        assertEq(address(smartSystem).balance, 0);
-    }
 
     function test_SupportsInterface() public view {
         assertTrue(smartSystem.supportsInterface(type(ISMARTSystem).interfaceId));

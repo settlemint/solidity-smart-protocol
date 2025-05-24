@@ -20,7 +20,7 @@ import { SMARTBondProxy } from "./SMARTBondProxy.sol";
 contract SMARTBondFactoryImplementation is ISMARTBondFactory, AbstractSMARTTokenFactoryImplementation {
     /// @notice Constructor for the SMARTBondFactoryImplementation.
     /// @param forwarder The address of the trusted forwarder for meta-transactions.
-    constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
+    constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
     /// @notice Creates a new SMART Bond.
     /// @param name_ The name of the bond.

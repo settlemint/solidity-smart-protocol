@@ -20,7 +20,7 @@ import { SMARTStableCoinProxy } from "./SMARTStableCoinProxy.sol";
 contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, AbstractSMARTTokenFactoryImplementation {
     /// @notice Constructor for the SMARTStableCoinFactoryImplementation.
     /// @param forwarder The address of the trusted forwarder for meta-transactions.
-    constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
+    constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
     /// @notice Creates a new SMART Stable Coin.
     /// @param name_ The name of the stable coin.

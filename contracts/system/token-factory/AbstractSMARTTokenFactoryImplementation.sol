@@ -70,7 +70,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
 
     /// @notice Constructor for the token factory implementation.
     /// @param forwarder The address of the trusted forwarder for meta-transactions (ERC2771).
-    constructor(address forwarder) payable ERC2771ContextUpgradeable(forwarder) {
+    constructor(address forwarder) ERC2771ContextUpgradeable(forwarder) {
         _disableInitializers();
     }
 

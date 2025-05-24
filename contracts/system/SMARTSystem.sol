@@ -19,7 +19,6 @@ import {
     IdentityImplementationNotSet,
     TokenIdentityImplementationNotSet,
     InvalidImplementationInterface,
-    EtherWithdrawalFailed,
     InvalidTokenFactoryAddress,
     TokenFactoryTypeAlreadyRegistered,
     InvalidTokenImplementationAddress,
@@ -140,11 +139,6 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         address indexed sender, string typeName, address proxyAddress, address implementationAddress, uint256 timestamp
     );
 
-    /// @notice Emitted when Ether (the native cryptocurrency of the blockchain) is withdrawn from this contract by an
-    /// admin.
-    /// @param to The address that received the withdrawn Ether.
-    /// @param amount The amount of Ether (in wei) that was withdrawn.
-    event EtherWithdrawn(address indexed to, uint256 amount);
 
     // --- State Variables ---
     // State variables store data persistently on the blockchain.
@@ -252,7 +246,6 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         address tokenAccessManagerImplementation_, // Expected to be ISMARTTokenAccessManager compliant
         address forwarder_
     )
-        payable // Allows the constructor to receive Ether if sent during deployment.
         ERC2771Context(forwarder_) // Initializes ERC2771 support with the provided forwarder address.
     {
         // Grant the DEFAULT_ADMIN_ROLE to the initial administrator address.
@@ -649,23 +642,6 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         return tokenFactoryProxiesByType[factoryTypeHash];
     }
 
-    /// @notice Allows an admin (`DEFAULT_ADMIN_ROLE`) to withdraw any Ether (native currency) held by this contract.
-    /// @dev This function is primarily for recovering Ether that might have been accidentally sent to this contract
-    /// or received by its `payable` constructor. It sends the entire Ether balance of this contract to the caller
-    /// (admin).
-    /// It reverts with `EtherWithdrawalFailed` if the Ether transfer fails for any reason.
-    /// Emits an `EtherWithdrawn` event upon successful withdrawal.
-    function withdrawEther() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 balance = address(this).balance; // Get the current Ether balance of this contract.
-        if (balance > 0) {
-            // Send the entire balance to the caller (admin).
-            // Using .call{value: ...}("") is the recommended way to send Ether.
-            // slither-disable-next-line low-level-calls -- low-level call is necessary for Ether transfer.
-            (bool sent, /* bytes memory data */ ) = payable(_msgSender()).call{ value: balance }("");
-            if (!sent) revert EtherWithdrawalFailed(); // Revert if the transfer failed.
-            emit EtherWithdrawn(_msgSender(), balance); // Emit event on success.
-        }
-    }
 
     // --- Internal Functions (Overrides for ERC2771Context and ERC165/AccessControl) ---
 

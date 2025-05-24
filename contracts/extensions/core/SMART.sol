@@ -62,7 +62,6 @@ abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
-        payable // Standard practice, no specific Ether reception here.
         ERC20(name_, symbol_) // Initialize OpenZeppelin ERC20 with name and symbol.
     {
         // Initialize the core SMART logic state using the internal unchained initializer.

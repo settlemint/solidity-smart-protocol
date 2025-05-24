@@ -130,9 +130,6 @@ contract MockSMARTSystem is ISMARTSystem {
         revert("Not implemented");
     }
     
-    function withdrawEther(address) external pure {
-        revert("Not implemented");
-    }
 }
 
 // Mock implementation for testing
