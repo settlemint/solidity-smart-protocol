@@ -30,7 +30,7 @@ permissions:
   statuses: write
 
 jobs:
-  slither:
+  codescanning:
     name: Slither
     runs-on: namespace-profile-btp-scs
     if: (github.actor != 'dependabot[bot]' && github.actor != 'renovate[bot]')
