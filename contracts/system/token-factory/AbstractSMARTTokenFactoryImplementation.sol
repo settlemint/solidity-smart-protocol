@@ -209,9 +209,25 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         onlyRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE)
         returns (ISMARTTokenAccessManager)
     {
-        (bytes32 salt, bytes memory fullCreationCode) = _prepareAccessManagerCreationData(accessManagerSaltInputData);
-
-        address predictedAccessManagerAddress = Create2.computeAddress(salt, keccak256(fullCreationCode), address(this));
+        // Calculate salt and creation code once
+        bytes32 salt = _calculateAccessManagerSalt(_systemAddress, accessManagerSaltInputData);
+        
+        // Use inline array assembly for gas efficiency
+        address[] memory initialAdmins;
+        assembly {
+            initialAdmins := mload(0x40)
+            mstore(0x40, add(initialAdmins, 0x40))
+            mstore(initialAdmins, 1)
+            mstore(add(initialAdmins, 0x20), address())
+        }
+        
+        bytes memory constructorArgs = abi.encode(_systemAddress, initialAdmins);
+        bytes memory bytecode = type(SMARTTokenAccessManagerProxy).creationCode;
+        bytes memory fullCreationCode = bytes.concat(bytecode, constructorArgs);
+        
+        // Predict address using pre-calculated data
+        bytes32 bytecodeHash = keccak256(fullCreationCode);
+        address predictedAccessManagerAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
 
         if (isFactoryAccessManager[predictedAccessManagerAddress]) {
             revert AccessManagerAlreadyDeployed(predictedAccessManagerAddress);
@@ -247,14 +263,17 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         onlyRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE)
         returns (address deployedAddress)
     {
-        address predictedAddress = _predictProxyAddress(proxyCreationCode, encodedConstructorArgs, tokenSaltInputData);
+        // Calculate salt and creation code once
+        bytes32 salt = _calculateSalt(_systemAddress, tokenSaltInputData);
+        bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
+        
+        // Predict address using pre-calculated data
+        bytes32 bytecodeHash = keccak256(fullCreationCode);
+        address predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
 
         if (isFactoryToken[predictedAddress]) {
             revert AddressAlreadyDeployed(predictedAddress);
         }
-
-        bytes32 salt = _calculateSalt(_systemAddress, tokenSaltInputData);
-        bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
 
         deployedAddress = Create2.deploy(0, salt, fullCreationCode);
 

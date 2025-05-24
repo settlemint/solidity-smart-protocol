@@ -539,7 +539,6 @@ contract SMARTIdentityFactoryImplementation is
         private
         returns (address)
     {
-        // slither-disable-next-line encode-packed-collision: Standard pattern for Create2 deployment bytecode.
         bytes memory deploymentBytecode = abi.encodePacked(_proxyBytecode, _constructorArgs);
 
         address deployedAddress = Create2.deploy(0, _saltBytes, deploymentBytecode);
