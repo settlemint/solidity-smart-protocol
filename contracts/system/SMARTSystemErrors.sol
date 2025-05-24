@@ -77,10 +77,6 @@ error ETHTransfersNotAllowed();
 /// @param interfaceId The bytes4 identifier of the interface that the `implAddress` was expected to support.
 error InvalidImplementationInterface(address implAddress, bytes4 interfaceId);
 
-/// @notice Error indicating that an attempt to withdraw Ether from a contract failed.
-/// @dev This can happen if the contract does not have enough Ether, or if the recipient address cannot accept Ether
-/// (e.g., it's a contract without a payable fallback/receive function that reverts on Ether receipt).
-error EtherWithdrawalFailed();
 
 /// @notice Error indicating that an invalid token factory address was provided.
 error InvalidTokenFactoryAddress();
