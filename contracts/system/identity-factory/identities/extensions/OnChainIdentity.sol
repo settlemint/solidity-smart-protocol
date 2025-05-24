@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 abstract contract OnChainIdentity is IIdentity {
     function keyHasPurpose(bytes32 _key, uint256 _purpose) public view virtual override returns (bool exists);
@@ -50,29 +51,6 @@ abstract contract OnChainIdentity is IIdentity {
     /// @param dataHash the data that was signed
     /// returns the address that signed dataHash and created the signature sig
     function getRecoveredAddress(bytes memory sig, bytes32 dataHash) public pure returns (address addr) {
-        bytes32 ra;
-        bytes32 sa;
-        uint8 va;
-
-        // Check the signature length
-        if (sig.length != 65) {
-            return address(0);
-        }
-
-        // Divide the signature in r, s and v variables
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            ra := mload(add(sig, 32))
-            sa := mload(add(sig, 64))
-            va := byte(0, mload(add(sig, 96)))
-        }
-
-        if (va < 27) {
-            va += 27;
-        }
-
-        address recoveredAddress = ecrecover(dataHash, va, ra, sa);
-
-        return (recoveredAddress);
+        return ECDSA.recover(dataHash, sig);
     }
 }

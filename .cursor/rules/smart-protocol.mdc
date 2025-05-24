@@ -1,0 +1,186 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# SMART Protocol Development Guide
+
+## Project Overview
+This is a Solidity smart contract project implementing the SMART (Security Market Access & Regulatory Technology) protocol for compliant security tokens. The project uses Foundry for testing and follows upgradeable proxy patterns.
+
+## Project Structure
+
+### Core Contracts
+- **Token Implementation**: [contracts/SMARTToken.sol](mdc:contracts/SMARTToken.sol) - Base token contract
+- **Upgradeable Version**: [contracts/SMARTTokenUpgradeable.sol](mdc:contracts/SMARTTokenUpgradeable.sol) - Upgradeable token implementation
+
+### Asset Types
+The project implements five different asset types, each with factory, implementation, and proxy contracts:
+
+1. **Bonds**: [contracts/assets/bond/](mdc:contracts/assets/bond)
+   - Factory: [SMARTBondFactoryImplementation.sol](mdc:contracts/assets/bond/SMARTBondFactoryImplementation.sol)
+   - Implementation: [SMARTBondImplementation.sol](mdc:contracts/assets/bond/SMARTBondImplementation.sol)
+   - Interface: [ISMARTBond.sol](mdc:contracts/assets/bond/ISMARTBond.sol)
+
+2. **Deposits**: [contracts/assets/deposit/](mdc:contracts/assets/deposit)
+   - Implementation: [SMARTDepositImplementation.sol](mdc:contracts/assets/deposit/SMARTDepositImplementation.sol)
+   - Interface: [ISMARTDeposit.sol](mdc:contracts/assets/deposit/ISMARTDeposit.sol)
+
+3. **Equity**: [contracts/assets/equity/](mdc:contracts/assets/equity)
+   - Implementation: [SMARTEquityImplementation.sol](mdc:contracts/assets/equity/SMARTEquityImplementation.sol)
+   - Interface: [ISMARTEquity.sol](mdc:contracts/assets/equity/ISMARTEquity.sol)
+
+4. **Funds**: [contracts/assets/fund/](mdc:contracts/assets/fund)
+   - Implementation: [SMARTFundImplementation.sol](mdc:contracts/assets/fund/SMARTFundImplementation.sol)
+   - Interface: [ISMARTFund.sol](mdc:contracts/assets/fund/ISMARTFund.sol)
+
+5. **Stable Coins**: [contracts/assets/stable-coin/](mdc:contracts/assets/stable-coin)
+   - Implementation: [SMARTStableCoinImplementation.sol](mdc:contracts/assets/stable-coin/SMARTStableCoinImplementation.sol)
+   - Interface: [ISMARTStableCoin.sol](mdc:contracts/assets/stable-coin/ISMARTStableCoin.sol)
+
+### Extensions System
+Token functionality is modular through extensions in [contracts/extensions/](mdc:contracts/extensions):
+
+- **Access Management**: [access-managed/](mdc:contracts/extensions/access-managed) - Role-based access control
+- **Burnable**: [burnable/](mdc:contracts/extensions/burnable) - Token burning functionality
+- **Capped**: [capped/](mdc:contracts/extensions/capped) - Supply cap enforcement
+- **Collateral**: [collateral/](mdc:contracts/extensions/collateral) - Collateral management
+- **Custodian**: [custodian/](mdc:contracts/extensions/custodian) - Custodial operations
+- **Historical Balances**: [historical-balances/](mdc:contracts/extensions/historical-balances) - Balance snapshots
+- **Pausable**: [pausable/](mdc:contracts/extensions/pausable) - Emergency pause functionality
+- **Redeemable**: [redeemable/](mdc:contracts/extensions/redeemable) - Redemption mechanisms
+- **Yield**: [yield/](mdc:contracts/extensions/yield) - Yield distribution
+
+### Compliance & Identity System
+The project implements ERC-3643 compliance standard:
+
+- **Interfaces**: [contracts/interface/ERC-3643/](mdc:contracts/interface/ERC-3643)
+- **Compliance Modules**: [contracts/system/compliance/modules/](mdc:contracts/system/compliance/modules)
+  - [CountryAllowListComplianceModule.sol](mdc:contracts/system/compliance/modules/CountryAllowListComplianceModule.sol)
+  - [CountryBlockListComplianceModule.sol](mdc:contracts/system/compliance/modules/CountryBlockListComplianceModule.sol)
+- **Identity Registry**: [contracts/system/identity-registry/](mdc:contracts/system/identity-registry)
+- **Identity Factory**: [contracts/system/identity-factory/](mdc:contracts/system/identity-factory)
+
+### Role Management
+- **Token Roles**: [contracts/assets/SMARTRoles.sol](mdc:contracts/assets/SMARTRoles.sol) - Token-specific roles
+- **System Roles**: [contracts/system/SMARTSystemRoles.sol](mdc:contracts/system/SMARTSystemRoles.sol) - System-wide roles
+- **Claim Topics**: [contracts/assets/SMARTTopics.sol](mdc:contracts/assets/SMARTTopics.sol) - Claim topic constants
+
+## Testing Structure
+Tests are located in [test/](mdc:test) and follow Foundry conventions:
+
+- Test files end with `.t.sol`
+- Test utilities: [test/utils/](mdc:test/utils)
+  - [SystemUtils.sol](mdc:test/utils/SystemUtils.sol) - System setup helpers
+  - [IdentityUtils.sol](mdc:test/utils/IdentityUtils.sol) - Identity management helpers
+
+### Test Pattern Example
+```solidity
+contract SMARTStableCoinImplementationTest is Test {
+    // Setup system utilities
+    SystemUtils public systemUtils;
+    IdentityUtils public identityUtils;
+    
+    function setUp() public {
+        // Initialize test environment
+        systemUtils = new SystemUtils(admin);
+        identityUtils = new IdentityUtils(...);
+        
+        // Deploy implementation
+        implementation = new SMARTStableCoinImplementation(forwarder);
+        
+        // Deploy proxy with initialization
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+    }
+}
+```
+
+## Development Guidelines
+
+### 1. Proxy Pattern
+All main contracts use the ERC1967 upgradeable proxy pattern:
+```solidity
+// Deploy implementation
+SMARTStableCoinImplementation implementation = new SMARTStableCoinImplementation(forwarder);
+
+// Deploy proxy
+ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+
+// Use as interface
+ISMARTStableCoin stableCoin = ISMARTStableCoin(address(proxy));
+```
+
+### 2. Access Control
+Always check role requirements using the access manager:
+```solidity
+// In contract functions
+_checkRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE);
+```
+
+### 3. Compliance Checks
+All transfers must pass compliance checks:
+```solidity
+// Compliance is checked automatically in transfer hooks
+require(compliance.canTransfer(from, to, amount), "Transfer not compliant");
+```
+
+### 4. Identity Requirements
+Users must have valid identities registered:
+```solidity
+// Identity registry checks
+require(identityRegistry.isVerified(user), "User not verified");
+```
+
+### 5. Extension Pattern
+Extensions follow a consistent pattern:
+- Interface in `ISMARTExtensionName.sol`
+- Logic in `internal/_SMARTExtensionNameLogic.sol`
+- Implementation in `SMARTExtensionName.sol`
+- Upgradeable version in `SMARTExtensionNameUpgradeable.sol`
+
+## Common Commands
+
+### Foundry Testing
+```bash
+# Run all tests
+forge test
+
+# Run specific test file
+forge test --match-path test/assets/stable-coin/SMARTStableCoinImplementation.t.sol
+
+# Run with gas reporting
+forge test --gas-report
+
+# Run with verbosity
+forge test -vvvv
+```
+
+### Deployment
+Deployment scripts are in [ignition/modules/](mdc:ignition/modules):
+- [onboarding/](mdc:ignition/modules/onboarding) - User onboarding flows
+- [predeployed/](mdc:ignition/modules/predeployed) - System contracts
+
+## Key Interfaces
+
+### Core Token Interface
+[contracts/interface/ISMART.sol](mdc:contracts/interface/ISMART.sol) - Base token interface
+
+### ERC-3643 Compliance
+[contracts/interface/ERC-3643/IERC3643.sol](mdc:contracts/interface/ERC-3643/IERC3643.sol) - Security token standard
+
+### Asset-Specific Interfaces
+Each asset type has its own interface extending the base functionality with specific features.
+
+## Security Considerations
+
+1. **Initializer Protection**: All upgradeable contracts use initializer modifiers
+2. **Reentrancy Guards**: Critical functions are protected against reentrancy
+3. **Access Control**: Role-based permissions for all administrative functions
+4. **Compliance Enforcement**: Transfer restrictions based on regulatory requirements
+5. **Emergency Pause**: Ability to pause operations in case of issues
+
+## Dependencies
+- OpenZeppelin Contracts v5.2.0
+- OpenZeppelin Upgradeable Contracts v5.2.0
+- OnchainID v2.2.1
+- Forge Standard Library v1.9.6
