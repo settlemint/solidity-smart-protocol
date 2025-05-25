@@ -1,4 +1,4 @@
-import { Bytes, ethereum } from "@graphprotocol/graph-ts";
+import { Bytes, ethereum, log } from "@graphprotocol/graph-ts";
 import { Event, EventValue } from "../../../../generated/schema";
 import { fetchAccount } from "../../account/fetch/account";
 
@@ -7,6 +7,8 @@ export function fetchEvent(event: ethereum.Event, eventType: string): Event {
     .concatI32(event.logIndex.toI32())
     .concat(Bytes.fromUTF8(eventType));
   let eventEntity = Event.load(id);
+
+  log.info("Handling event '{}' with id '{}'", [eventType, id.toHexString()]);
 
   if (eventEntity) {
     return eventEntity;
