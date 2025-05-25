@@ -2,8 +2,8 @@
 pragma solidity 0.8.28;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ISMARTYield } from "./../../ISMARTYield.sol";
-import { ISMARTYieldSchedule } from "./../ISMARTYieldSchedule.sol";
+import { ISMARTYield } from "../../ISMARTYield.sol";
+import { ISMARTYieldSchedule } from "../ISMARTYieldSchedule.sol";
 
 /// @title Interface for a SMART Fixed Yield Schedule Contract
 /// @notice This interface defines the set of functions that a fixed yield schedule contract must implement.

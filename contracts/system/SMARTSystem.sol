@@ -32,12 +32,12 @@ import { SMARTSystemRoles } from "./SMARTSystemRoles.sol";
 
 // Interface imports
 import { ISMARTTokenFactory } from "./token-factory/ISMARTTokenFactory.sol";
-import { ISMARTCompliance } from "./../interface/ISMARTCompliance.sol";
+import { ISMARTCompliance } from "../interface/ISMARTCompliance.sol";
 import { ISMARTIdentityFactory } from "./identity-factory/ISMARTIdentityFactory.sol"; // Reverted to original path
-import { IERC3643TrustedIssuersRegistry } from "./../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
-import { IERC3643IdentityRegistryStorage } from "./../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
-import { ISMARTIdentityRegistry } from "./../interface/ISMARTIdentityRegistry.sol";
-import { ISMARTTokenAccessManager } from "./../extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { IERC3643TrustedIssuersRegistry } from "../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { IERC3643IdentityRegistryStorage } from "../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTIdentityRegistry } from "../interface/ISMARTIdentityRegistry.sol";
+import { ISMARTTokenAccessManager } from "../extensions/access-managed/ISMARTTokenAccessManager.sol";
 
 import { SMARTComplianceProxy } from "./compliance/SMARTComplianceProxy.sol";
 import { SMARTIdentityRegistryProxy } from "./identity-registry/SMARTIdentityRegistryProxy.sol";

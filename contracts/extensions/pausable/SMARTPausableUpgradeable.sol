@@ -6,7 +6,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 // Base contract imports
-import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol"; // Base for upgradeable
+import { SMARTExtensionUpgradeable } from "../common/SMARTExtensionUpgradeable.sol"; // Base for upgradeable
     // extensions
 
 // Internal implementation imports

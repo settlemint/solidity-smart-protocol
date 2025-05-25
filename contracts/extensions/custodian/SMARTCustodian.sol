@@ -6,7 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // Base contract imports
 import { SMARTExtension } from "../common/SMARTExtension.sol";
-import { SMARTHooks } from "./../common/SMARTHooks.sol";
+import { SMARTHooks } from "../common/SMARTHooks.sol";
 
 // Internal implementation imports
 import { _SMARTCustodianLogic } from "./internal/_SMARTCustodianLogic.sol";

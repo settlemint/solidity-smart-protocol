@@ -10,7 +10,7 @@ import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/int
 // Interface imports
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 // Base contract imports
-import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
+import { SMARTExtensionUpgradeable } from "../common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
 
 // Internal implementation imports

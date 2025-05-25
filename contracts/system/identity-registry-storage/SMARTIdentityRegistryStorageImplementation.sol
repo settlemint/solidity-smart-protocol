@@ -17,7 +17,7 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 
 // Interface imports
-import { IERC3643IdentityRegistryStorage } from "./../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { IERC3643IdentityRegistryStorage } from "../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
 
 // --- Errors ---
 /// @notice Error triggered if an attempt is made to register or operate on an identity with a zero address for the

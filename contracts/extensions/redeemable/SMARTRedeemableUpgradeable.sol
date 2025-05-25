@@ -6,7 +6,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 // Base contract imports
-import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
+import { SMARTExtensionUpgradeable } from "../common/SMARTExtensionUpgradeable.sol";
 
 // Internal implementation imports
 import { _SMARTRedeemableLogic } from "./internal/_SMARTRedeemableLogic.sol";

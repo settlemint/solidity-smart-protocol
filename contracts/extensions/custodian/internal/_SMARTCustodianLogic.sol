@@ -12,7 +12,7 @@ import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistr
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 
 // Internal implementation imports
-import { LengthMismatch } from "./../../common/CommonErrors.sol";
+import { LengthMismatch } from "../../common/CommonErrors.sol";
 import {
     FreezeAmountExceedsAvailableBalance,
     InsufficientFrozenTokens,
@@ -21,8 +21,8 @@ import {
     RecoveryTargetAddressFrozen,
     RecipientAddressFrozen,
     SenderAddressFrozen
-} from "./../SMARTCustodianErrors.sol";
-import { AddressFrozen, TokensFrozen, TokensUnfrozen, RecoverySuccess } from "./../SMARTCustodianEvents.sol";
+} from "../SMARTCustodianErrors.sol";
+import { AddressFrozen, TokensFrozen, TokensUnfrozen, RecoverySuccess } from "../SMARTCustodianEvents.sol";
 import { ISMARTCustodian } from "../ISMARTCustodian.sol";
 
 /// @title Internal Core Logic for SMART Custodian Extension

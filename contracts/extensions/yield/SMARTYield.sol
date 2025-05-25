@@ -5,8 +5,8 @@ pragma solidity ^0.8.28;
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 
 // Base contract imports
-import { SMARTExtension } from "./../common/SMARTExtension.sol";
-import { SMARTHooks } from "./../common/SMARTHooks.sol";
+import { SMARTExtension } from "../common/SMARTExtension.sol";
+import { SMARTHooks } from "../common/SMARTHooks.sol";
 
 // Internal implementation imports
 import { _SMARTYieldLogic } from "./internal/_SMARTYieldLogic.sol";

@@ -12,7 +12,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // import { Context } from "@openzeppelin/contracts/utils/Context.sol"; // Context is inherited via SMARTExtension
 
 // Base contract imports
-import { SMARTExtension } from "./../common/SMARTExtension.sol"; // Provides common functionalities for SMART
+import { SMARTExtension } from "../common/SMARTExtension.sol"; // Provides common functionalities for SMART
     // extensions.
 
 // Internal implementation imports

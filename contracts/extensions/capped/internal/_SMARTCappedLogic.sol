@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
-import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
-import { ISMARTCapped } from "./../ISMARTCapped.sol";
-import { SMARTInvalidCap, SMARTExceededCap } from "./../SMARTCappedErrors.sol";
+import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
+import { ISMARTCapped } from "../ISMARTCapped.sol";
+import { SMARTInvalidCap, SMARTExceededCap } from "../SMARTCappedErrors.sol";
 
 /// @title Internal Logic for SMART Capped Token Extension
 /// @notice This abstract contract provides the core, shared logic and storage for implementing
