@@ -49,3 +49,43 @@ templates:
         - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
           handler: handleRoleRevoked
       file: ./src/access-control/access-control.ts
+  - kind: ethereum
+    name: System
+    network: settlemint
+    source:
+      abi: System
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: System
+          file: ../artifacts/contracts/system/ISMARTSystem.sol/ISMARTSystem.json
+      eventHandlers:
+        - event: Bootstrapped(indexed address,indexed address,indexed
+            address,address,address,address)
+          handler: handleBootstrapped
+        - event: ComplianceImplementationUpdated(indexed address,indexed address)
+          handler: handleComplianceImplementationUpdated
+        - event: IdentityFactoryImplementationUpdated(indexed address,indexed address)
+          handler: handleIdentityFactoryImplementationUpdated
+        - event: IdentityImplementationUpdated(indexed address,indexed address)
+          handler: handleIdentityImplementationUpdated
+        - event: IdentityRegistryImplementationUpdated(indexed address,indexed address)
+          handler: handleIdentityRegistryImplementationUpdated
+        - event: IdentityRegistryStorageImplementationUpdated(indexed address,indexed
+            address)
+          handler: handleIdentityRegistryStorageImplementationUpdated
+        - event: TokenAccessManagerImplementationUpdated(indexed address,indexed address)
+          handler: handleTokenAccessManagerImplementationUpdated
+        - event: TokenFactoryCreated(indexed address,string,address,address,uint256)
+          handler: handleTokenFactoryCreated
+        - event: TokenIdentityImplementationUpdated(indexed address,indexed address)
+          handler: handleTokenIdentityImplementationUpdated
+        - event: TrustedIssuersRegistryImplementationUpdated(indexed address,indexed
+            address)
+          handler: handleTrustedIssuersRegistryImplementationUpdated
+      file: ./src/system/system.ts

@@ -61,6 +61,7 @@
     "viem": "2.30.1",
     "@graphprotocol/graph-cli": "0.97.1",
     "@graphprotocol/graph-ts": "0.38.1"
+
   },
   "overrides": {
     "elliptic": "6.6.1",
@@ -78,5 +79,6 @@
     "protobufjs",
     "secp256k1"
   ],
-  "devDependencies": {}
+  "devDependencies": {
+  }
 }
