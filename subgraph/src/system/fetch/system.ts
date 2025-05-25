@@ -10,11 +10,10 @@ export function fetchSystem(address: Address): System {
 
   if (!system) {
     system = new System(address);
-    const accessControl = fetchAccessControl(
+    system.accessControl = fetchAccessControl(
       address,
       SystemContract.bind(address)
-    );
-    system.accessControl = accessControl.id;
+    ).id;
     system.account = fetchAccount(address).id;
     system.save();
     SystemTemplate.create(address);
