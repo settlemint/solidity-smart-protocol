@@ -1,37 +1,16 @@
 import { Address, Bytes, ethereum, Value } from "@graphprotocol/graph-ts";
 import { AccessControl } from "../../../../generated/schema";
 import { AccessControl as AccessControlTemplate } from "../../../../generated/templates";
-import { fetchAccount } from "../../account/fetch/account";
 import { Roles } from "../utils/role";
 
-export function fetchAccessControl(
-  address: Address,
-  contract: ethereum.SmartContract | null = null
-): AccessControl {
+export function fetchAccessControl(address: Address): AccessControl {
   const id = address.concat(Bytes.fromUTF8("accesscontrol"));
   let accessControlEntity = AccessControl.load(id);
 
   if (!accessControlEntity) {
     accessControlEntity = new AccessControl(id);
-
-    // This depends on the contract implementing AccessControlEnumerable, it falls back to an empty array if the call fails
-    if (contract) {
-      for (let i = 0; i < Roles.length; i++) {
-        const addresses = getRoleMembers(contract, Roles[i].hexString);
-        const accountIds: Bytes[] = [];
-        for (let j = 0; j < addresses.length; j++) {
-          const accountId = fetchAccount(addresses[j]).id;
-          accountIds.push(accountId);
-        }
-        accessControlEntity.set(
-          Roles[i].fieldName,
-          Value.fromBytesArray(accountIds)
-        );
-      }
-    } else {
-      for (let i = 0; i < Roles.length; i++) {
-        accessControlEntity.set(Roles[i].fieldName, Value.fromBytesArray([]));
-      }
+    for (let i = 0; i < Roles.length; i++) {
+      accessControlEntity.set(Roles[i].fieldName, Value.fromBytesArray([]));
     }
     accessControlEntity.save();
     AccessControlTemplate.create(address);

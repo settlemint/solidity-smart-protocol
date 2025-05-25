@@ -21,6 +21,8 @@ dataSources:
       abis:
         - name: SystemFactory
           file: ../artifacts/contracts/system/ISMARTSystemFactory.sol/ISMARTSystemFactory.json
+        - name: System
+          file: ../artifacts/contracts/system/ISMARTSystem.sol/ISMARTSystem.json
       eventHandlers:
         - event: SMARTSystemCreated(indexed address,indexed address)
           handler: handleSMARTSystemCreated
