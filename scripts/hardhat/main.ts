@@ -9,7 +9,9 @@ import { claimIssuer } from "./utils/claim-issuer";
 
 async function main() {
   // Setup the smart protocol
-  await smartProtocolDeployer.setUp();
+  await smartProtocolDeployer.setUp({
+    displayUi: true,
+  });
 
   // Set up the claim issuer as a trusted issuer
   const trustedIssuersRegistry =

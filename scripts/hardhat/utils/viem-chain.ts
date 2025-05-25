@@ -9,6 +9,11 @@ export function getViemChain(): viemChains.Chain {
     return viemChainInstance;
   }
 
+  if (hre.network.name === "localhost") {
+    viemChainInstance = viemChains.hardhat;
+    return viemChainInstance;
+  }
+
   const chainId = hre.network.config?.chainId;
   if (typeof chainId !== "number") {
     throw new Error(

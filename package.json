@@ -39,7 +39,7 @@
     "deploy:remote": "settlemint scs hardhat deploy remote --deployment-id smart-protocol",
     "deploy:local": "settlemint scs hardhat deploy local --deployment-id smart-protocol-local --reset",
     "deploy:local:onboarding": "settlemint scs hardhat deploy local --deployment-id smart-protocol-local --reset -m ignition/modules/onboarding.ts",
-    "deploy:local:test": "npm run deploy:local &&npx hardhat run scripts/hardhat/main.ts",
+    "deploy:local:test": "rm -Rf ignition/deployments/smart-protocol-local && HARDHAT_NETWORK=localhost npx hardhat run scripts/hardhat/main.ts",
     "lint": "solhint --config .solhint.json ./contracts/**/*.sol",
     "format": "settlemint scs foundry format && prettier --write .",
     "compile:forge": "settlemint scs foundry build --sizes",
