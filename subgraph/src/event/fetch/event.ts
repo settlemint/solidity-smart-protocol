@@ -1,14 +1,21 @@
 import { Bytes, ethereum } from "@graphprotocol/graph-ts";
-import { Event, Internal_EventValue } from "../../../generated/schema";
-import { fetchAccount } from "../account/fetch-account";
+import { Event, EventValue } from "../../../../generated/schema";
+import { fetchAccount } from "../../account/fetch/account";
 
-export function processEvent(event: ethereum.Event, eventType: string): Event {
+export function fetchEvent(event: ethereum.Event, eventType: string): Event {
+  const id = event.transaction.hash
+    .concatI32(event.logIndex.toI32())
+    .concat(Bytes.fromUTF8(eventType));
+  let eventEntity = Event.load(id);
+
+  if (eventEntity) {
+    return eventEntity;
+  }
+
   const emitter = fetchAccount(event.address);
   const txSender = fetchAccount(event.transaction.from);
 
-  const entry = new Event(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  );
+  const entry = new Event(id);
   entry.eventName = eventType;
   entry.blockNumber = event.block.number;
   entry.blockTimestamp = event.block.timestamp;
@@ -83,7 +90,7 @@ export function processEvent(event: ethereum.Event, eventType: string): Event {
       value = param.value.toString();
     }
 
-    const entryValue = new Internal_EventValue(
+    const entryValue = new EventValue(
       event.transaction.hash
         .concatI32(event.logIndex.toI32())
         .concat(Bytes.fromUTF8(name))

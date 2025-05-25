@@ -1,17 +1,18 @@
 import { Address, Bytes, ethereum, Value } from "@graphprotocol/graph-ts";
-import { Internal_AccessControl } from "../../../generated/schema";
-import { fetchAccount } from "../account/fetch-account";
-import { Roles } from "./role";
+import { AccessControl } from "../../../../generated/schema";
+import { AccessControl as AccessControlTemplate } from "../../../../generated/templates";
+import { fetchAccount } from "../../account/fetch/account";
+import { Roles } from "../utils/role";
 
 export function fetchAccessControl(
   address: Address,
   contract: ethereum.SmartContract | null = null
-): Internal_AccessControl {
+): AccessControl {
   const id = address.concat(Bytes.fromUTF8("accesscontrol"));
-  let accessControlEntity = Internal_AccessControl.load(id);
+  let accessControlEntity = AccessControl.load(id);
 
   if (!accessControlEntity) {
-    accessControlEntity = new Internal_AccessControl(id);
+    accessControlEntity = new AccessControl(id);
 
     // This depends on the contract implementing AccessControlEnumerable, it falls back to an empty array if the call fails
     if (contract) {
@@ -33,6 +34,7 @@ export function fetchAccessControl(
       }
     }
     accessControlEntity.save();
+    AccessControlTemplate.create(address);
   }
 
   return accessControlEntity;

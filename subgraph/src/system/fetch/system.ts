@@ -1,9 +1,9 @@
 import { Address } from "@graphprotocol/graph-ts";
-import { System } from "../../generated/schema";
-import { System as SystemTemplate } from "../../generated/templates";
-import { System as SystemContract } from "../../generated/templates/System/System";
-import { fetchAccessControl } from "../shared/accesscontrol/fetch-accesscontrol";
-import { fetchAccount } from "../shared/account/fetch-account";
+import { System } from "../../../../generated/schema";
+import { System as SystemTemplate } from "../../../../generated/templates";
+import { System as SystemContract } from "../../../../generated/templates/System/System";
+import { fetchAccessControl } from "../../access-control/fetch/accesscontrol";
+import { fetchAccount } from "../../account/fetch/account";
 
 export function fetchSystem(address: Address): System {
   let system = System.load(address);

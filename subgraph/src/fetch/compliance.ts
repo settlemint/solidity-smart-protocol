@@ -1,7 +1,7 @@
 import { Address } from "@graphprotocol/graph-ts";
 import { System_Compliance } from "../../generated/schema";
 import { Compliance as ComplianceTemplate } from "../../generated/templates";
-import { fetchAccount } from "../shared/account/fetch-account";
+import { fetchAccount } from "../account/fetch/account";
 export function fetchCompliance(address: Address): System_Compliance {
   let compliance = System_Compliance.load(address);
 

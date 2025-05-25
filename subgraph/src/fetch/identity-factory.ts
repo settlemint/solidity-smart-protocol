@@ -1,8 +1,8 @@
 import { Address } from "@graphprotocol/graph-ts";
 import { System_IdentityFactory } from "../../generated/schema";
 import { IdentityFactory as IdentityFactoryTemplate } from "../../generated/templates";
-import { fetchAccessControl } from "../shared/accesscontrol/fetch-accesscontrol";
-import { fetchAccount } from "../shared/account/fetch-account";
+import { fetchAccount } from "../account/fetch/account";
+import { fetchAccessControl } from "../event-handlers/access-control/fetch/accesscontrol";
 
 export function fetchIdentityFactory(address: Address): System_IdentityFactory {
   let identityFactory = System_IdentityFactory.load(address);
