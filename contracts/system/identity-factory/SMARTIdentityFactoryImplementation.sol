@@ -605,7 +605,7 @@ contract SMARTIdentityFactoryImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable)
+        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable, IERC165)
         returns (bool)
     {
         return interfaceId == type(ISMARTIdentityFactory).interfaceId || super.supportsInterface(interfaceId);

@@ -595,7 +595,7 @@ contract SMARTIdentityRegistryImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable) // Overrides the one in AccessControlEnumerableUpgradeable
+        override(AccessControlEnumerableUpgradeable, IERC165) // Overrides the one in AccessControlEnumerableUpgradeable
         returns (bool)
     {
         // Check for ISMARTIdentityRegistry interface and then delegate to parent contracts.

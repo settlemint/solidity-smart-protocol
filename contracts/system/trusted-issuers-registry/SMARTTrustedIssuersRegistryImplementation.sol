@@ -621,7 +621,8 @@ contract SMARTTrustedIssuersRegistryImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable) // Specifies primary parents being extended.
+        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable, IERC165) // Specifies primary parents being
+            // extended.
         returns (bool)
     {
         return interfaceId == type(IERC3643TrustedIssuersRegistry).interfaceId || super.supportsInterface(interfaceId);

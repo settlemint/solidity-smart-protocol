@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
+// OpenZeppelin imports
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 // OnchainID imports
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 
@@ -24,7 +27,8 @@ import { IERC3643TrustedIssuersRegistry } from "./ERC-3643/IERC3643TrustedIssuer
 ///         whose attestations (claims) about an identity are considered valid.
 ///      Operations like registering a new identity or checking if an identity is verified are performed through this
 /// interface.
-interface ISMARTIdentityRegistry {
+/// This interface extends IERC165 for interface detection support.
+interface ISMARTIdentityRegistry is IERC165 {
     // --- Events ---
 
     /// @notice Emitted when the address of the `IdentityRegistryStorage` contract is successfully set or updated.

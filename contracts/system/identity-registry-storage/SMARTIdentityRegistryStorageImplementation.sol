@@ -627,7 +627,8 @@ contract SMARTIdentityRegistryStorageImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable) // Specifies which parent's supportsInterface is being primarily
+        override(AccessControlEnumerableUpgradeable, IERC165) // Specifies which parent's supportsInterface is being
+            // primarily
             // extended.
         returns (bool)
     {

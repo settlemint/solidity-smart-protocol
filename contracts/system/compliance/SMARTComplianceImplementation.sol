@@ -259,7 +259,13 @@ contract SMARTComplianceImplementation is
     /// (via `super.supportsInterface`).
     /// @param interfaceId The interface identifier (bytes4) to check.
     /// @return `true` if the contract supports the interfaceId, `false` otherwise.
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC165Upgradeable, IERC165)
+        returns (bool)
+    {
         return interfaceId == type(ISMARTCompliance).interfaceId || super.supportsInterface(interfaceId);
     }
 }
