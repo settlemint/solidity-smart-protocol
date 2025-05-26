@@ -20,6 +20,7 @@ async function main() {
 
 	// Add the claim issuer as a trusted issuer
 	const claimIssuerIdentity = await claimIssuer.getIdentity();
+	console.log("Claim issuer identity:", claimIssuerIdentity);
 	await addTrustedIssuer(claimIssuerIdentity, [
 		SMARTTopics.kyc,
 		SMARTTopics.aml,

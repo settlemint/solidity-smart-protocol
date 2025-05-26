@@ -15,6 +15,7 @@ class Owner extends AbstractActor {
 			throw new Error("Could not get a default wallet client from Hardhat.");
 		}
 		this.walletClient = defaultSigner;
+		this._address = defaultSigner.account.address;
 	}
 
 	/**

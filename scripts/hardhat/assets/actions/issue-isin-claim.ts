@@ -3,7 +3,6 @@ import { claimIssuer } from "../../actors/claim-issuer";
 import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
 import SMARTTopics from "../../constants/topics";
-import { getContractInstance } from "../../utils/get-contract";
 
 export const issueIsinClaim = async (
 	tokenIdentityAddress: Address,

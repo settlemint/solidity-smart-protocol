@@ -13,8 +13,8 @@ import { abi as complianceAbiJson } from "../../../artifacts/contracts/interface
 import { abi as identityRegistryAbiJson } from "../../../artifacts/contracts/interface/ISMARTIdentityRegistry.sol/ISMARTIdentityRegistry.json";
 import { abi as systemAbiJson } from "../../../artifacts/contracts/system/ISMARTSystem.sol/ISMARTSystem.json";
 import { abi as identityFactoryAbiJson } from "../../../artifacts/contracts/system/identity-factory/ISMARTIdentityFactory.sol/ISMARTIdentityFactory.json";
-import { abi as identityAbiJson } from "../../../artifacts/contracts/system/identity-factory/identities/ISMARTIdentity.sol/ISMARTIdentity.json";
-import { abi as tokenIdentityAbiJson } from "../../../artifacts/contracts/system/identity-factory/identities/ISMARTTokenIdentity.sol/ISMARTTokenIdentity.json";
+import { abi as identityAbiJson } from "../../../artifacts/contracts/system/identity-factory/identities/SMARTIdentityImplementation.sol/SMARTIdentityImplementation.json";
+import { abi as tokenIdentityAbiJson } from "../../../artifacts/contracts/system/identity-factory/identities/SMARTTokenIdentityImplementation.sol/SMARTTokenIdentityImplementation.json";
 
 const asAbi = (abi: unknown): Abi => abi as Abi;
 
