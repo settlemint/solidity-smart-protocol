@@ -1,9 +1,11 @@
 import type { Address, Hex } from "viem";
-import { claimIssuer } from "../actors/claim-issuer";
+
 import { owner } from "../actors/owner";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
-import { grantClaimManagerRole } from "./actions/grant-claim-manager-role";
+
+import SMARTRoles from "../constants/roles";
+import { grantRole } from "./actions/grant-role";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
 
 export const createStablecoin = async () => {
@@ -36,7 +38,7 @@ export const createStablecoin = async () => {
 		console.log("[Stablecoin] access manager:", accessManager);
 
 		// needs to be done so that he can add the claims
-		await grantClaimManagerRole(accessManager, owner.address);
+		await grantRole(accessManager, owner.address, SMARTRoles.claimManagerRole);
 		// issue isin claim
 		await issueIsinClaim(tokenIdentity, "12345678901234567890");
 

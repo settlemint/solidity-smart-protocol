@@ -1,5 +1,7 @@
 import { addTrustedIssuer } from "./actions/add-trusted-issuer";
+import { issueVerificationClaims } from "./actions/issue-verification-claims";
 import { claimIssuer } from "./actors/claim-issuer";
+import { investorA, investorB } from "./actors/investors";
 import { owner } from "./actors/owner";
 import { createBond } from "./assets/bond";
 import { createDeposit } from "./assets/deposit";
@@ -16,7 +18,12 @@ async function main() {
 	});
 
 	// Initialize the actors
-	await Promise.all([owner.initialize(), claimIssuer.initialize()]);
+	await Promise.all([
+		owner.initialize(),
+		claimIssuer.initialize(),
+		investorA.initialize(),
+		investorB.initialize(),
+	]);
 
 	// Add the claim issuer as a trusted issuer
 	const claimIssuerIdentity = await claimIssuer.getIdentity();
@@ -25,6 +32,10 @@ async function main() {
 		SMARTTopics.aml,
 		SMARTTopics.collateral,
 	]);
+
+	// Make sure the investor has a kyc claim
+	await issueVerificationClaims(investorA);
+	await issueVerificationClaims(investorB);
 
 	// Create the assets
 	const deposit = await createDeposit();
