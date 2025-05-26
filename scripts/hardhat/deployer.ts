@@ -10,10 +10,8 @@ import type {
 } from "viem";
 
 import SMARTOnboardingModule from "../../ignition/modules/onboarding";
+import { owner } from "./actors/owner";
 import { SMARTContracts } from "./constants/contracts";
-
-import { getDefaultWalletClient } from "./utils/default-signer";
-import { getContractInstance } from "./utils/get-contract";
 // --- Utility Imports ---
 
 // Type for the keys of CONTRACT_METADATA, e.g., "system" | "compliance" | ...
@@ -71,12 +69,10 @@ export interface DeployerOptions {
  */
 export class SmartProtocolDeployer {
 	private _deployedContractAddresses: DeployedContractAddresses | undefined;
-	private _defaultWalletClient: WalletClient | undefined;
 	private _deploymentId: string;
 
 	public constructor() {
 		this._deployedContractAddresses = undefined;
-		this._defaultWalletClient = undefined;
 		this._deploymentId = "smart-protocol-local"; // Default deployment ID
 	}
 
@@ -119,7 +115,6 @@ export class SmartProtocolDeployer {
 			this.clearDeployment(this._deploymentId);
 			// Also clear internal state
 			this._deployedContractAddresses = undefined;
-			this._defaultWalletClient = undefined;
 		}
 
 		if (this._deployedContractAddresses && !reset) {
@@ -142,10 +137,7 @@ export class SmartProtocolDeployer {
 				},
 			)) as DeployedContractAddresses;
 
-			// 2. Initialize the default wallet client
-			this._defaultWalletClient = await getDefaultWalletClient();
-
-			// 3. Store deployed addresses
+			// 2. Store deployed addresses
 			this._deployedContractAddresses = deploymentAddresses;
 
 			console.log(
@@ -215,22 +207,10 @@ export class SmartProtocolDeployer {
 			);
 		}
 
-		const walletToUse = explicitWalletClient || this._defaultWalletClient;
-
-		if (!walletToUse) {
-			throw new Error(
-				"Wallet client could not be determined. Ensure SMARTOnboardingModule is set up correctly or provide an explicit wallet client.",
-			);
-		}
-
-		return getContractInstance({
+		return owner.getContractInstance({
 			address: contractInfo.address,
 			abi: SMARTContracts[contractName],
-			walletClient: walletToUse,
-		}) as ViemContract<
-			(typeof SMARTContracts)[K],
-			{ public: PublicClient; wallet: WalletClient }
-		>;
+		});
 	}
 
 	// --- Unified Contract Accessor Methods ---

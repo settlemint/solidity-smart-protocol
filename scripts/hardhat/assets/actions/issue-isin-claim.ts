@@ -1,12 +1,13 @@
 import { type Address, encodeAbiParameters, parseAbiParameters } from "viem";
+import { claimIssuer } from "../../actors/claim-issuer";
+import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
 import SMARTTopics from "../../constants/topics";
-import { claimIssuer } from "../../utils/claim-issuer";
 import { getContractInstance } from "../../utils/get-contract";
 
 export const issueIsinClaim = async (
-  tokenIdentityAddress: Address,
-  isin: string
+	tokenIdentityAddress: Address,
+	isin: string,
 ) => {
 	const encodedIsinData = encodeAbiParameters(
 		parseAbiParameters("string isinValue"),
@@ -22,14 +23,13 @@ export const issueIsinClaim = async (
 
 	console.log("Isin claim:", isinClaimData, isinClaimSignature);
 
-	const tokenIdentityContract = await getContractInstance({
+	const tokenIdentityContract = owner.getContractInstance({
 		address: tokenIdentityAddress,
 		abi: SMARTContracts.tokenIdentity,
-		walletClient: claimIssuer.getWalletClient(),
 	});
 
 	// TODO: Add claim
-	const claimIssuerIdentity = await claimIssuer.getOrCreateIdentity();
+	const claimIssuerIdentity = await claimIssuer.getIdentity();
 	await tokenIdentityContract.write.addClaim([
 		SMARTTopics.isin,
 		1, // ECDSA
