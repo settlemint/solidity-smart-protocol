@@ -71,7 +71,7 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         assertEq(impl.isTrustedForwarder(forwarder), true);
     }
 
-    function test_Initialize() public {
+    function test_Initialize() public view {
         assertTrue(storageContract.hasRole(SMARTSystemRoles.DEFAULT_ADMIN_ROLE, admin));
         assertTrue(storageContract.hasRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE, admin));
         assertTrue(storageContract.hasRole(SMARTSystemRoles.MANAGE_REGISTRIES_ROLE, system));
@@ -304,17 +304,17 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         storageContract.storedInvestorCountry(user1);
     }
 
-    function test_GetIdentityWallets_EmptyArray() public {
+    function test_GetIdentityWallets_EmptyArray() public view {
         address[] memory wallets = storageContract.getIdentityWallets();
         assertEq(wallets.length, 0);
     }
 
-    function test_LinkedIdentityRegistries_EmptyArray() public {
+    function test_LinkedIdentityRegistries_EmptyArray() public view {
         address[] memory linkedRegistries = storageContract.linkedIdentityRegistries();
         assertEq(linkedRegistries.length, 0);
     }
 
-    function test_SupportsInterface() public {
+    function test_SupportsInterface() public view {
         assertTrue(storageContract.supportsInterface(type(IERC3643IdentityRegistryStorage).interfaceId));
         assertTrue(storageContract.supportsInterface(type(IAccessControl).interfaceId));
         assertTrue(storageContract.supportsInterface(type(IERC165).interfaceId));
@@ -391,7 +391,7 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         assertEq(linkedRegistries.length, 0);
     }
 
-    function test_TrustedForwarder() public {
+    function test_TrustedForwarder() public view {
         assertTrue(implementation.isTrustedForwarder(forwarder));
         assertFalse(implementation.isTrustedForwarder(user1));
     }

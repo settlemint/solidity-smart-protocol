@@ -304,7 +304,7 @@ contract SMARTSystemFactoryTest is Test {
         assertTrue(vm.getRecordedLogs().length > 0);
     }
 
-    function test_ERC2771ContextIntegration() public {
+    function test_ERC2771ContextIntegration() public view {
         // Verify forwarder is set correctly
         assertEq(factory.factoryForwarder(), forwarder);
 

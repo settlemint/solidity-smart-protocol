@@ -229,7 +229,6 @@ contract SMARTBondReentrancyTest is AbstractSMARTAssetTest {
      */
     function test_MultipleRedemptionCallsProtected() public {
         uint256 redeemAmount = 5 * 10 ** DECIMALS; // 5 bonds
-        uint256 underlyingNeeded = redeemAmount * faceValue / (10 ** DECIMALS);
         uint256 totalUnderlyingNeeded = initialSupply * faceValue / (10 ** DECIMALS); // For all bonds
 
         vm.startPrank(owner);
@@ -445,7 +444,6 @@ contract SMARTBondReentrancyTest is AbstractSMARTAssetTest {
      */
     function test_GasConsumptionWithReentrancyProtection() public {
         uint256 redeemAmount = 1 * 10 ** DECIMALS;
-        uint256 underlyingNeeded = redeemAmount * faceValue / (10 ** DECIMALS);
         uint256 totalUnderlyingNeeded = initialSupply * faceValue / (10 ** DECIMALS);
 
         vm.startPrank(owner);

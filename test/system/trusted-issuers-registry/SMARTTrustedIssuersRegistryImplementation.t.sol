@@ -396,7 +396,7 @@ contract SMARTTrustedIssuersRegistryImplementationTest is Test {
         assertNotEq(address(implementation), address(0));
     }
 
-    function test_AccessControlEnumeration() public {
+    function test_AccessControlEnumeration() public view {
         // Verify role enumeration works
         assertEq(
             AccessControlEnumerableUpgradeable(address(registry)).getRoleMemberCount(

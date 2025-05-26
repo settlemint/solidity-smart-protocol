@@ -73,11 +73,11 @@ contract TestableOnChainIdentityWithRevocation is OnChainIdentityWithRevocation 
         return keysByPurpose[_purpose];
     }
 
-    function execute(address _to, uint256 _value, bytes calldata _data) external payable override returns (uint256) {
+    function execute(address /* _to */, uint256 /* _value */, bytes calldata /* _data */) external payable override returns (uint256) {
         return 0; // Mock implementation
     }
 
-    function approve(uint256 _id, bool _approve) external override returns (bool) {
+    function approve(uint256 /* _id */, bool /* _approve */) external pure override returns (bool) {
         return true; // Mock implementation
     }
 
@@ -308,7 +308,7 @@ contract OnChainIdentityWithRevocationTest is Test {
         assertTrue(identity.isClaimRevoked(testSignature));
     }
 
-    function test_GetRecoveredAddressValidSignature() public {
+    function test_GetRecoveredAddressValidSignature() public view {
         // Create a valid signature for testing
         bytes32 dataHash = keccak256("test data");
         bytes32 prefixedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", dataHash));
@@ -419,7 +419,7 @@ contract OnChainIdentityWithRevocationTest is Test {
         assertTrue(identity.revokedClaims(signatureHash));
     }
 
-    function test_GetClaimFunctionality() public {
+    function test_GetClaimFunctionality() public view {
         (uint256 topic, uint256 scheme, address issuer, bytes memory signature, bytes memory data, string memory uri) =
             identity.getClaim(TEST_CLAIM_ID);
 

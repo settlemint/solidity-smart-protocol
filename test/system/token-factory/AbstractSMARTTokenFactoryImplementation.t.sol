@@ -89,7 +89,7 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
         assertTrue(factory.supportsInterface(type(IAccessControlEnumerable).interfaceId));
     }
 
-    function testCalculateSaltDeterministic() public {
+    function testCalculateSaltDeterministic() public view {
         bytes32 salt1 = factory.exposedCalculateSalt("TestToken", "TEST");
         bytes32 salt2 = factory.exposedCalculateSalt("TestToken", "TEST");
 
@@ -97,14 +97,14 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
         assertTrue(salt1 != bytes32(0));
     }
 
-    function testCalculateSaltDifferentInputs() public {
+    function testCalculateSaltDifferentInputs() public view {
         bytes32 salt1 = factory.exposedCalculateSalt("TestToken1", "TEST1");
         bytes32 salt2 = factory.exposedCalculateSalt("TestToken2", "TEST2");
 
         assertTrue(salt1 != salt2);
     }
 
-    function testPredictProxyAddressDeterministic() public {
+    function testPredictProxyAddressDeterministic() public view {
         bytes memory proxyCode = type(MockProxy).creationCode;
         bytes memory constructorArgs = abi.encode(123);
 
@@ -116,7 +116,7 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
         assertTrue(predicted1 != address(0));
     }
 
-    function testPredictProxyAddressDifferentSalts() public {
+    function testPredictProxyAddressDifferentSalts() public view {
         bytes memory proxyCode = type(MockProxy).creationCode;
         bytes memory constructorArgs = abi.encode(123);
 
