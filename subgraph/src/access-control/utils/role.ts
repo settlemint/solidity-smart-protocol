@@ -39,17 +39,30 @@ class RoleConfig {
 
 export const Roles = [
   new RoleConfig("DEFAULT_ADMIN_ROLE", "admin"),
-  new RoleConfig("SIGNER_ROLE", "signer"),
-  new RoleConfig("DEPLOYMENT_OWNER_ROLE", "deploymentOwner"),
+  new RoleConfig("REGISTRAR_ROLE", "registrar"),
+  new RoleConfig("REGISTRAR_ADMIN_ROLE", "registrarAdmin"),
+  new RoleConfig("REGISTRAR_GOVERNOR_ROLE", "registrarGovernor"),
+  new RoleConfig("CLAIM_MANAGER_ROLE", "claimManager"),
+  new RoleConfig("IDENTITY_ISSUER_ROLE", "identityIssuer"),
+  new RoleConfig("TOKEN_IDENTITY_ISSUER_ROLE", "tokenIdentityIssuer"),
+  new RoleConfig("TOKEN_IDENTITY_ISSUER_ADMIN_ROLE", "tokenIdentityIssuerAdmin"),
+  new RoleConfig("TOKEN_DEPLOYER_ROLE", "tokenDeployer"),
   new RoleConfig("STORAGE_MODIFIER_ROLE", "storageModifier"),
+  new RoleConfig("MANAGE_REGISTRIES_ROLE", "manageRegistries"),
+  new RoleConfig("TOKEN_GOVERNANCE_ROLE", "tokenGovernance"),
+  new RoleConfig("SUPPLY_MANAGEMENT_ROLE", "supplyManagement"),
+  new RoleConfig("CUSTODIAN_ROLE", "custodian"),
+  new RoleConfig("EMERGENCY_ROLE", "emergency"),
+  new RoleConfig("TOKEN_ADMIN_ROLE", "tokenAdmin"),
   new RoleConfig("COMPLIANCE_ADMIN_ROLE", "complianceAdmin"),
   new RoleConfig("VERIFICATION_ADMIN_ROLE", "verificationAdmin"),
-  new RoleConfig("BURNER_ROLE", "burner"),
   new RoleConfig("MINTER_ROLE", "minter"),
+  new RoleConfig("BURNER_ROLE", "burner"),
   new RoleConfig("FREEZER_ROLE", "freezer"),
   new RoleConfig("FORCED_TRANSFER_ROLE", "forcedTransfer"),
   new RoleConfig("RECOVERY_ROLE", "recovery"),
   new RoleConfig("PAUSER_ROLE", "pauser"),
+  new RoleConfig("GLOBAL_LIST_MANAGER_ROLE", "globalListManager"),
 ];
 
 export function getRoleConfigFromBytes(bytes: Bytes): RoleConfig {

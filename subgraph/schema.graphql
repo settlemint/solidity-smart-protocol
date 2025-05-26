@@ -30,17 +30,30 @@ type EventValue @entity(immutable: true) {
 type AccessControl @entity(immutable: false) {
   id: Bytes!
   admin: [Account!]!
-  burner: [Account!]!
+  registrar: [Account!]!
+  registrarAdmin: [Account!]!
+  registrarGovernor: [Account!]!
+  claimManager: [Account!]!
+  identityIssuer: [Account!]!
+  tokenIdentityIssuer: [Account!]!
+  tokenIdentityIssuerAdmin: [Account!]!
+  tokenDeployer: [Account!]!
+  storageModifier: [Account!]!
+  manageRegistries: [Account!]!
+  tokenGovernance: [Account!]!
+  supplyManagement: [Account!]!
+  custodian: [Account!]!
+  emergency: [Account!]!
+  tokenAdmin: [Account!]!
   complianceAdmin: [Account!]!
-  deploymentOwner: [Account!]!
+  verificationAdmin: [Account!]!
+  minter: [Account!]!
+  burner: [Account!]!
   freezer: [Account!]!
   forcedTransfer: [Account!]!
-  minter: [Account!]!
-  pauser: [Account!]!
   recovery: [Account!]!
-  signer: [Account!]!
-  storageModifier: [Account!]!
-  verificationAdmin: [Account!]!
+  pauser: [Account!]!
+  globalListManager: [Account!]!
 }
 
 type System @entity(immutable: false) {
