@@ -3,17 +3,16 @@ pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 // Interface imports
-import { ISMARTCompliance } from "./../../interface/ISMARTCompliance.sol";
-import { ISMARTComplianceModule } from "./../../interface/ISMARTComplianceModule.sol";
-import { ISMART } from "./../../interface/ISMART.sol";
-import { SMARTComplianceModuleParamPair } from "./../../interface/structs/SMARTComplianceModuleParamPair.sol";
-import { ZeroAddressNotAllowed } from "./../../extensions/common/CommonErrors.sol";
+import { ISMARTCompliance } from "../../interface/ISMARTCompliance.sol";
+import { ISMARTComplianceModule } from "../../interface/ISMARTComplianceModule.sol";
+import { ISMART } from "../../interface/ISMART.sol";
+import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
+import { ZeroAddressNotAllowed } from "../../extensions/common/CommonErrors.sol";
 
 /// @title SMART Compliance Contract Implementation
 /// @author SettleMint Tokenization Services
@@ -167,6 +166,7 @@ contract SMARTComplianceImplementation is
         override
     {
         uint256 pairsLength = _pairs.length;
+        // aderyn-fp-next-line(require-revert-in-loop)
         for (uint256 i = 0; i < pairsLength;) {
             _validateModuleAndParams(_pairs[i].module, _pairs[i].params);
             unchecked {
@@ -259,7 +259,13 @@ contract SMARTComplianceImplementation is
     /// (via `super.supportsInterface`).
     /// @param interfaceId The interface identifier (bytes4) to check.
     /// @return `true` if the contract supports the interfaceId, `false` otherwise.
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC165Upgradeable, IERC165)
+        returns (bool)
+    {
         return interfaceId == type(ISMARTCompliance).interfaceId || super.supportsInterface(interfaceId);
     }
 }

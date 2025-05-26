@@ -1,0 +1,434 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Cursor Rules for SMART Protocol Solidity Development
+
+## Project Overview
+
+This is a professional Solidity smart contract project implementing the SMART (Security Market Access & Regulatory Technology) protocol for compliant security tokens. The project emphasizes security, upgradability, and compliance with ERC-3643 standards.
+
+## Core Technologies & T8.28
+- **Foundry**: Primary development framework ary tooling and deployment
+- **OpenZeppelin**: Contracts v5.2.0 and upgradeability patterns
+- **OnchainID**: Identity management v2.2.1 (ERC-734, ERC-735)
+- **The Graph**: Suboldeer**: Packa**: Security analysis
+# Building & Comph
+# Build with Foun--sizes
+
+# Build with npx hardhat compindencies
+npm inst # Installs Soldeer demmands
+
+```bash
+#tests with verbovv
+
+# Run specific testh test/assets/stStableCoinImplementatioreporting
+forge test - specific iterati-runs 1000
+
+# Run Hardhat tests
+npx hardhat test
+
+# Generate coverage report
+t lcov --report summary --ir# Security Analysis
+
+```bash
+# Run Slither wifilters
+slither . --filter-paths "lib/" --fils "node_modules/" --filter-paths "dependencide calls-loop,dead-code,naming-convention
+rep security analysis
+semgrep --config=auto contracnt Commands
+
+```bash
+# Deploy to locanpx hardhat ignition deploy --network localhost igns/main.ts
+
+# Deploy with specific moduhardhat ignition deploy --network localhost ignition/modules/onboarding/assets/bond.ts
+```
+
+## Code Style & Standards
+
+### Requi// SPDX-License-Identifier: Impoterfaface.sol";
+import { Accesscts/access/AccessControl.nchainid/contracts/interface/IIdentity.som "./LocalContract.sol";
+```
+
+### Naming ConactImplementation`, `SMARTContractProxy`
+`, `IERC3643`
+- **Functions**: `initializeContract()`, `transferWithance()`
+- **Variables**: `_privateVar`, `publicVar`, `CONSTANT_VALUE`
+- **Events**:d`, `ed`
+- **Errors**: `InvalidAdcientBalance(uint256 required, uint256 available)`
+
+### Required Documentation Pattern
+
+```solidity
+/// @title Contract Title
+/// @author SettleMint Tokenization Services
+/// @notice User-facing description
+/// @dev Technical implementation details
+contract SMARTExample {
+    /// @notice Transfers tokens with compliance checks
+    /// @dev Implements ERC-3643 compliance verification
+    /// @param to The recipient address
+    /// @param amount The amount to transfer
+    /// @return success Whether the transfer succeeded
+    function transferWithCompliance(address to, uint256 amount)
+        external
+        returns (bool success) {
+        // Implementation
+    }
+}
+```
+
+## Architecture Patterns
+
+### 1. Upgradeable Proxy Pattern
+
+```solidity
+// Implementation contract
+contract SMARTTokenImplementation is Initializable, SMART {
+    function initialize(
+        string memory name,
+        string memory symbol,
+        address accessManager
+    ) external initializer {
+        __SMART_init(name, symbol, accessManager);
+    }
+}
+
+// Deployment pattern
+ERC1967Proxy proxy = new ERC1967Proxy(
+    address(implementation),
+    abi.encodeCall(implementation.initialize, (name, symbol, accessManager))
+);
+```
+
+### 2. Extension System Pattern
+
+```solidity
+// Extension interface
+interface ISMARTBurnable {
+    function burn(uint256 amount) external;
+    function burnFrom(address account, uint256 amount) external;
+}
+
+// Extension implementation
+contract SMARTBurnable is ISMARTBurnable, SMARTExtension {
+    // Implementation using _SMARTBurnableLogic
+}
+```
+
+### 3. Factory Pattern
+
+```solidity
+contract SMARTAssetFactory {
+    function createAsset(
+        string memory name,
+        string memory symbol,
+        bytes memory initData
+    ) external onlyRole(FACTORY_ROLE) returns (address) {
+        // Deploy implementation and proxy
+        // Return proxy address
+    }
+}
+```
+
+## Testing Standards
+
+### Test File Structure
+
+```solidity
+// test/assets/bond/SMARTBondImplementation.t.sol
+contract SMARTBondImplementationTest is Test {
+    SystemUtils public systemUtils;
+    IdentityUtils public identityUtils;
+    SMARTBondImplementation public implementation;
+    ISMARTBond public bond;
+
+    function setUp() public {
+  = nes(admin);
+        identityUentityUtils(admin, systemUtils);
+
+        implementation = new SM);
+        ERC1967Proxy proxy = new ERC1967Proxy(  bond = ISMARTBond(address(proxy));
+    }
+
+    function test_mint_shouldMintTokens_whenCallerHasMinterRole() public {
+        // Test implementation
+    }
+
+    function testFuzz_transfer_shouldFail_whenAmountExceedsBalance(uint256 amount) public {
+        // Fuzz test implementation
+    }
+}
+```
+
+### Test Execution Workflow
+
+```bash
+# 1. Run unit tests for specific module
+forge test --match-path test/assets/bond/
+
+# 2. Run integration tests
+forge test --match-path test/tests/
+
+# 3. Check gas usage
+forge test --gas-report --match-contract SMARTBondTest
+
+# 4. Run coverage analysis
+forge coverage --report summary
+```
+
+## Security Requirements
+
+### Pre-commit Security Checklist
+
+```bash
+# 1. Build without errors
+forge build --sizes
+
+# 2. All tests pass
+forge test
+
+# 3. Security analysis passes
+slither . --filter-paths "lib/" --filter-paths "dependencies/" --exclude calls-loop,dead-code,naming-convention
+
+# 4. No high/medium findings in new code
+semgrep --config=auto contracts/ --severity=ERROR
+```
+
+### Required Security Patterns
+
+```solidity
+// 1. Custom errors instead of strings
+error InsufficientBalance(uint256 requested, uint256 available);
+
+// 2. Access control on all administrative functions
+function mintTokens(address to, uint256 amount) external {
+    _checkRole(SMARTRoles.MINTER_ROLE);
+    _mint(to, amount);
+}
+
+// 3. Input validation
+function transfer(address to, uint256 amount) external {
+    if (to == address(0)) revert InvalidRecipient();
+    if (amount == 0) revert InvalidAmount();
+    // Implementation
+}
+
+// 4. Reentrancy protection where needed
+function withdraw() external nonReentrant {
+    // Implementation
+}
+```
+
+## File Organization Requirements
+
+### Contract Structure Template
+
+```solidity
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.28;
+
+// 1. Imports (ordered)
+import { Interface } from "./interfaces/Interface.sol";
+import { OpenZeppelin } from "@openzeppelin/contracts/Contract.sol";
+import { OnchainID } from "@onchainid/contracts/Contract.sol";
+import { Local } from "./Local.sol";
+
+/// @title Contract Title
+/// @author SettleMint Tokenization Services
+contract ContractName {
+    // 2. State variables
+    uint256 private _privateVar;
+    uint256 public publicVar;
+    uint256 public constant CONSTANT_VAR = 100;
+
+    // 3. Events
+    event SomethingHappened(address indexed user, uint256 amount);
+
+    // 4. Custom errors
+    error InvalidOperation();
+
+    // 5. Modifiers
+    modifier onlyAuthorized() {
+        _checkRole(AUTHORIZED_ROLE);
+        _;
+    }
+
+    // 6. Constructor
+    constructor(address _param) {
+        // Initialization
+    }
+
+    // 7. External functions
+    // 8. Public functions
+    // 9. Internal functions
+    // 10. Private functions
+}
+```
+
+### Directory Structure Rules
+
+```
+contracts/
+├── assets/                    # Asset-specific implementations
+│   ├── bond/                 # Bond contracts
+│   ├── equity/               # Equity contracts
+│   └── stable-coin/          # Stable coin contracts
+├── extensions/               # Modular extensions
+│   ├── burnable/            # Burning functionality
+│   ├── pausable/            # Pause functionality
+│   └── yield/               # Yield distribution
+├── interface/               # Interface definitions
+│   ├── ERC-3643/           # ERC-3643 interfaces
+│   └── structs/            # Struct definitions
+├── system/                  # Core system contracts
+│   ├── compliance/         # Compliance modules
+│   ├── identity-registry/  # Identity management
+│   └── access-manager/     # Access control
+└── vendor/                 # Third-party integrations
+
+test/
+├── assets/                 # Asset contract tests
+├── system/                 # System contract tests
+├── utils/                  # Test utilities
+│   ├── SystemUtils.sol    # System setup helpers
+│   └── IdentityUtils.sol  # Identity helpers
+└── tests/                 # Integration tests
+```
+
+## Development Workflow
+
+### Feature Development Process
+
+```bash
+# 1. Create feature branch
+git checkout -b feature/smart-bond-improvements
+
+# 2. Install dependencies
+npm install && npm run dependencies
+
+# 3. Develop with continuous testing
+forge test --watch --match-contract SMARTBond
+
+# 4. Pre-commit checks
+forge build --sizes
+forge test
+slither . --filter-paths "lib/" --filter-paths "dependencies/"
+
+# 5. Generate documentation
+forge doc --build
+
+# 6. Create pull request with test results
+```
+
+### Deployment Workflow
+
+```bash
+# 1. Local deployment testing
+npx hardhat ignition deploy --network localhost ignition/modules/main.ts
+
+# 2. Testnet deployment
+npx hardhat ignition deploy --network sepolia ignition/modules/main.ts
+
+# 3. Mainnet deployment (production)
+npx hardhat ignition deploy --network mainnet ignition/modules/main.ts --verify
+```
+
+## Integration Requirements
+
+### Subgraph Integration
+
+```bash
+# Build subgraph
+npx graph-compiler --config subgraph/subgraph.config.json --export-schema --export-subgraph
+
+# Test subgraph locally
+npx graph codegen generated/scs.subgraph.yaml
+npx graph build generated/scs.subgraph.yaml
+```
+
+### Package Management
+
+```bash
+# Add Soldeer dependency
+forge soldeer install smart-contracts~1.0.0
+
+# Update dependencies
+npm run dependencies
+
+# Publish to Soldeer (production)
+forge soldeer push smart-protocol~1.0.0
+```
+
+## Performance & Gas Optimization
+
+### Gas Optimization Rules
+
+- Use `uint256` instead of smaller uints unless packing
+- Prefer `memory` over `storage` for temporary data
+- Use custom errors instead of require strings
+- Batch operations when possible
+- Avoid unnecessary external calls
+
+### Gas Testing Commands
+
+```bash
+# Generate gas report
+forge test --gas-report
+
+# Snapshot gas usage
+forge snapshot
+
+# Compare gas changes
+forge snapshot --diff .gas-snapshot
+```
+
+## Error Handling Standards
+
+### Required Error Patterns
+
+```solidity
+// Parameter validation errors
+error InvalidAddress(address provided);
+error InvalidAmount(uint256 provided);
+error ArrayLengthMismatch(uint256 length1, uint256 length2);
+
+// Business logic errors
+error InsufficientBalance(uint256 requested, uint256 available);
+error TransferNotCompliant(address from, address to, uint256 amount);
+error UnauthorizedAccess(address caller, bytes32 requiredRole);
+
+// State errors
+error ContractPaused();
+error AlreadyInitialized();
+error InvalidState(uint8 current, uint8 required);
+```
+
+## Compliance & Standards
+
+### ERC-3643 Implementation Requirements
+
+- All transfers must pass compliance checks
+- Identity verification required for token holders
+- Claim-based access control for operations
+- Country-based transfer restrictions support
+
+### Required Interfaces
+
+```solidity
+// Must implement for all tokens
+interface IERC3643 {
+    function transfer(address to, uint256 amount) external returns (bool);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    // Additional ERC-3643 functions
+}
+
+// Must implement for identity contracts
+interface IERC734 {
+    function addKey(bytes32 key, uint256 purpose, uint256 keyType) external returns (bool);
+    function removeKey(bytes32 key, uint256 purpose) external returns (bool);
+    // Additional key management functions
+}
+```
+
+Remember: Every line of code will be audited. Prioritize security, gas efficiency, and regulatory compliance in all implementations.

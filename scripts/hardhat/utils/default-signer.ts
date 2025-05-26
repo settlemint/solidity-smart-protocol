@@ -11,14 +11,14 @@ let defaultWalletClientInstance: WalletClient | null = null;
  * @throws Error if the client has not been initialized via `initializeDefaultWalletClient`.
  */
 export async function getDefaultWalletClient(): Promise<WalletClient> {
-	if (defaultWalletClientInstance) {
-		return defaultWalletClientInstance;
-	}
+  if (defaultWalletClientInstance) {
+    return defaultWalletClientInstance;
+  }
 
-	const [defaultSigner] = await hre.viem.getWalletClients();
-	if (!defaultSigner) {
-		throw new Error("Could not get a default wallet client from Hardhat.");
-	}
-	defaultWalletClientInstance = defaultSigner;
-	return defaultWalletClientInstance;
+  const [defaultSigner] = await hre.viem.getWalletClients();
+  if (!defaultSigner) {
+    throw new Error("Could not get a default wallet client from Hardhat.");
+  }
+  defaultWalletClientInstance = defaultSigner;
+  return defaultWalletClientInstance;
 }

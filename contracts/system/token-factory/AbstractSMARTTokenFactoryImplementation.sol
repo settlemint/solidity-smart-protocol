@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity 0.8.28;
 
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
@@ -30,7 +30,7 @@ import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 abstract contract AbstractSMARTTokenFactoryImplementation is
     ERC2771ContextUpgradeable,
     ERC165Upgradeable,
-    AccessControlEnumerableUpgradeable,
+    AccessControlUpgradeable,
     ISMARTTokenFactory
 {
     /// @notice Error when a predicted CREATE2 address is already marked as deployed by this factory.
@@ -70,7 +70,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
 
     /// @notice Constructor for the token factory implementation.
     /// @param forwarder The address of the trusted forwarder for meta-transactions (ERC2771).
-    constructor(address forwarder) payable ERC2771ContextUpgradeable(forwarder) {
+    constructor(address forwarder) ERC2771ContextUpgradeable(forwarder) {
         _disableInitializers();
     }
 
@@ -137,18 +137,45 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
 
     /// @notice Calculates the salt for CREATE2 deployment.
     /// @dev Can be overridden by derived contracts for custom salt calculation.
+    /// @param systemAddress The system address to prevent cross-system collisions.
     /// @param saltInputData The ABI encoded data to be used for salt calculation.
     /// @return The calculated salt for CREATE2 deployment.
-    function _calculateSalt(bytes memory saltInputData) internal view returns (bytes32) {
-        return keccak256(abi.encodePacked(saltInputData, address(this)));
+    function _calculateSalt(address systemAddress, bytes memory saltInputData) internal pure returns (bytes32) {
+        return keccak256(abi.encode(systemAddress, saltInputData));
     }
 
     /// @notice Calculates the salt for CREATE2 deployment of an access manager.
-    /// @dev Prepends "AccessManagerSalt" to the provided saltInputData and appends address(this).
+    /// @dev Prepends "AccessManagerSalt" to the provided saltInputData.
+    /// @param systemAddress The system address to prevent cross-system collisions.
     /// @param saltInputData The ABI encoded data to be used for salt calculation.
     /// @return The calculated salt for access manager CREATE2 deployment.
-    function _calculateAccessManagerSalt(bytes memory saltInputData) internal view returns (bytes32) {
-        return keccak256(abi.encodePacked("AccessManagerSalt", saltInputData, address(this)));
+    function _calculateAccessManagerSalt(
+        address systemAddress,
+        bytes memory saltInputData
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encode(systemAddress, "AccessManagerSalt", saltInputData));
+    }
+
+    /// @notice Builds salt input data for token creation.
+    /// @dev Internal helper to build the salt input for access manager and related operations.
+    /// @param name_ The name of the token.
+    /// @param symbol_ The symbol of the token.
+    /// @param decimals_ The number of decimals for the token.
+    /// @return The ABI encoded salt input data.
+    function _buildSaltInput(
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_
+    )
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encode(name_, symbol_, decimals_);
     }
 
     /// @notice Prepares the data required for access manager creation using CREATE2.
@@ -161,7 +188,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         view
         returns (bytes32 salt, bytes memory fullCreationCode)
     {
-        salt = _calculateAccessManagerSalt(accessManagerSaltInputData);
+        salt = _calculateAccessManagerSalt(_systemAddress, accessManagerSaltInputData);
         address[] memory initialAdmins = new address[](1); // Factory is initial admin
         initialAdmins[0] = address(this);
         bytes memory constructorArgs = abi.encode(_systemAddress, initialAdmins);
@@ -193,9 +220,25 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         onlyRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE)
         returns (ISMARTTokenAccessManager)
     {
-        (bytes32 salt, bytes memory fullCreationCode) = _prepareAccessManagerCreationData(accessManagerSaltInputData);
+        // Calculate salt and creation code once
+        bytes32 salt = _calculateAccessManagerSalt(_systemAddress, accessManagerSaltInputData);
 
-        address predictedAccessManagerAddress = Create2.computeAddress(salt, keccak256(fullCreationCode), address(this));
+        // Use inline array assembly for gas efficiency
+        address[] memory initialAdmins;
+        assembly {
+            initialAdmins := mload(0x40)
+            mstore(0x40, add(initialAdmins, 0x40))
+            mstore(initialAdmins, 1)
+            mstore(add(initialAdmins, 0x20), address())
+        }
+
+        bytes memory constructorArgs = abi.encode(_systemAddress, initialAdmins);
+        bytes memory bytecode = type(SMARTTokenAccessManagerProxy).creationCode;
+        bytes memory fullCreationCode = bytes.concat(bytecode, constructorArgs);
+
+        // Predict address using pre-calculated data
+        bytes32 bytecodeHash = keccak256(fullCreationCode);
+        address predictedAccessManagerAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
 
         if (isFactoryAccessManager[predictedAccessManagerAddress]) {
             revert AccessManagerAlreadyDeployed(predictedAccessManagerAddress);
@@ -231,14 +274,17 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         onlyRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE)
         returns (address deployedAddress)
     {
-        address predictedAddress = _predictProxyAddress(proxyCreationCode, encodedConstructorArgs, tokenSaltInputData);
+        // Calculate salt and creation code once
+        bytes32 salt = _calculateSalt(_systemAddress, tokenSaltInputData);
+        bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
+
+        // Predict address using pre-calculated data
+        bytes32 bytecodeHash = keccak256(fullCreationCode);
+        address predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
 
         if (isFactoryToken[predictedAddress]) {
             revert AddressAlreadyDeployed(predictedAddress);
         }
-
-        bytes32 salt = _calculateSalt(tokenSaltInputData);
-        bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
 
         deployedAddress = Create2.deploy(0, salt, fullCreationCode);
 
@@ -269,7 +315,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         view
         returns (address predictedAddress)
     {
-        bytes32 salt = _calculateSalt(tokenSaltInputData);
+        bytes32 salt = _calculateSalt(_systemAddress, tokenSaltInputData);
         bytes memory fullCreationCode = bytes.concat(proxyCreationCode, encodedConstructorArgs);
         bytes32 bytecodeHash = keccak256(fullCreationCode);
         predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
@@ -308,7 +354,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable)
+        override(AccessControlUpgradeable, ERC165Upgradeable, IERC165)
         returns (bool)
     {
         return interfaceId == type(ISMARTTokenFactory).interfaceId || super.supportsInterface(interfaceId);

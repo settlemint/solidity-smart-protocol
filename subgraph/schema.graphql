@@ -1,0 +1,50 @@
+# --------------------------------------------------
+# SMART Indexer
+# --------------------------------------------------
+
+type Account @entity(immutable: true) {
+  id: Bytes!
+  isContract: Boolean!
+}
+
+type Event @entity(immutable: true) {
+  id: Bytes!
+  eventName: String!
+  txIndex: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  emitter: Account!
+  sender: Account!
+  involved: [Account!]!
+  values: [EventValue!]! @derivedFrom(field: "entry")
+}
+
+type EventValue @entity(immutable: true) {
+  id: Bytes!
+  name: String!
+  value: String!
+  entry: Event!
+}
+
+type AccessControl @entity(immutable: false) {
+  id: Bytes!
+  admin: [Account!]!
+  burner: [Account!]!
+  complianceAdmin: [Account!]!
+  deploymentOwner: [Account!]!
+  freezer: [Account!]!
+  forcedTransfer: [Account!]!
+  minter: [Account!]!
+  pauser: [Account!]!
+  recovery: [Account!]!
+  signer: [Account!]!
+  storageModifier: [Account!]!
+  verificationAdmin: [Account!]!
+}
+
+type System @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account
+}

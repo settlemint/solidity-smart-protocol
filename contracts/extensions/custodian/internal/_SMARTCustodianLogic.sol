@@ -12,7 +12,7 @@ import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistr
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 
 // Internal implementation imports
-import { LengthMismatch } from "./../../common/CommonErrors.sol";
+import { LengthMismatch } from "../../common/CommonErrors.sol";
 import {
     FreezeAmountExceedsAvailableBalance,
     InsufficientFrozenTokens,
@@ -21,8 +21,8 @@ import {
     RecoveryTargetAddressFrozen,
     RecipientAddressFrozen,
     SenderAddressFrozen
-} from "./../SMARTCustodianErrors.sol";
-import { AddressFrozen, TokensFrozen, TokensUnfrozen, RecoverySuccess } from "./../SMARTCustodianEvents.sol";
+} from "../SMARTCustodianErrors.sol";
+import { AddressFrozen, TokensFrozen, TokensUnfrozen, RecoverySuccess } from "../SMARTCustodianEvents.sol";
 import { ISMARTCustodian } from "../ISMARTCustodian.sol";
 
 /// @title Internal Core Logic for SMART Custodian Extension
@@ -300,7 +300,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
         returns (bool)
     {
         uint256 balance = __custodian_getBalance(lostWallet);
-        if (balance == 0) revert NoTokensToRecover();
+        if (balance <= 0) revert NoTokensToRecover();
 
         ISMARTIdentityRegistry registry = this.identityRegistry();
         uint256[] memory topics = this.requiredClaimTopics();

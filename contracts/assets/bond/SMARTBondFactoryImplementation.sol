@@ -20,7 +20,7 @@ import { SMARTBondProxy } from "./SMARTBondProxy.sol";
 contract SMARTBondFactoryImplementation is ISMARTBondFactory, AbstractSMARTTokenFactoryImplementation {
     /// @notice Constructor for the SMARTBondFactoryImplementation.
     /// @param forwarder The address of the trusted forwarder for meta-transactions.
-    constructor(address forwarder) payable AbstractSMARTTokenFactoryImplementation(forwarder) { }
+    constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
 
     /// @notice Creates a new SMART Bond.
     /// @param name_ The name of the bond.
@@ -48,8 +48,7 @@ contract SMARTBondFactoryImplementation is ISMARTBondFactory, AbstractSMARTToken
         override
         returns (address deployedBondAddress)
     {
-        // slither-disable-next-line encode-packed-collision
-        bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
+        bytes memory salt = _buildSaltInput(name_, symbol_, decimals_);
         // Create the access manager for the token
         ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
 
@@ -113,8 +112,7 @@ contract SMARTBondFactoryImplementation is ISMARTBondFactory, AbstractSMARTToken
         override
         returns (address predictedAddress)
     {
-        // slither-disable-next-line encode-packed-collision
-        bytes memory salt = abi.encodePacked(name_, symbol_, decimals_);
+        bytes memory salt = _buildSaltInput(name_, symbol_, decimals_);
         address accessManagerAddress_ = _predictAccessManagerAddress(salt);
         bytes memory constructorArgs = abi.encode(
             address(this),

@@ -2,13 +2,14 @@
 pragma solidity 0.8.28;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { ISMARTFixedYieldSchedule } from "./ISMARTFixedYieldSchedule.sol";
-import { ISMARTYield } from "./../../ISMARTYield.sol";
+import { ISMARTYield } from "../../ISMARTYield.sol";
 
 /// @title SMART Fixed Yield Schedule Contract
 /// @notice This contract implements a fixed yield schedule for an associated SMART token (which must implement
@@ -40,6 +41,7 @@ contract SMARTFixedYieldSchedule is
     ISMARTFixedYieldSchedule, // The interface this contract implements.
     ReentrancyGuard // To prevent reentrancy attacks.
 {
+    using SafeERC20 for IERC20;
     /// @notice Defines custom error types for more gas-efficient and descriptive error handling.
     /// @dev Using custom errors (Solidity 0.8.4+) saves gas compared to `require` with string messages.
 
@@ -67,13 +69,12 @@ contract SMARTFixedYieldSchedule is
     error InvalidUnderlyingAsset();
     /// @dev Reverted by `withdrawUnderlyingAsset` if the withdrawal `amount` is zero.
     error InvalidAmount();
-    /// @dev Reverted by `claimYield` if the transfer of `_underlyingAsset` to the claimant fails.
-    error YieldTransferFailed();
     /// @dev Reverted by `periodEnd` if an invalid period number (0 or out of bounds) is requested.
     error InvalidPeriod();
 
     /// @notice The denominator used for rate calculations. `10_000` represents 100% (since rate is in basis points).
     /// @dev For example, a `_rate` of 500 means 500 / 10,000 = 0.05 or 5%.
+    // aderyn-fp-next-line(large-numeric-literal)
     uint256 public constant RATE_BASIS_POINTS = 10_000;
 
     /// @notice The SMART token contract (implementing `ISMARTYield`) for which this schedule distributes yield.
@@ -181,6 +182,7 @@ contract SMARTFixedYieldSchedule is
         if (interval_ == 0) revert InvalidInterval(); // Interval must be positive.
 
         _token = ISMARTYield(tokenAddress); // Store the associated SMART token contract.
+        // aderyn-fp-next-line(reentrancy-state-change)
         _underlyingAsset = _token.yieldToken(); // Determine the payment token from the SMART token.
         if (address(_underlyingAsset) == address(0)) revert InvalidUnderlyingAsset(); // Payment token cannot be zero
             // address.
@@ -416,7 +418,7 @@ contract SMARTFixedYieldSchedule is
     /// for the current period.
     /// @dev Convenience function so callers don't have to pass their own address.
     /// @return The total accrued yield amount for the caller.
-    function calculateAccruedYield() public view returns (uint256) {
+    function calculateAccruedYield() external view returns (uint256) {
         return calculateAccruedYield(_msgSender());
     }
 
@@ -432,6 +434,7 @@ contract SMARTFixedYieldSchedule is
         uint256 fromPeriod = _lastClaimedPeriod[sender] + 1; // First period to claim for this user.
         if (fromPeriod > lastPeriod) revert NoYieldAvailable(); // All completed periods already claimed.
 
+        // aderyn-fp-next-line(reentrancy-state-change)
         uint256 basis = _token.yieldBasisPerUnit(sender); // Holder-specific basis.
         uint256 totalAmountToClaim = 0;
 
@@ -441,6 +444,7 @@ contract SMARTFixedYieldSchedule is
         // Calculate yield for each unclaimed, completed period.
         for (uint256 period = fromPeriod; period <= lastPeriod; ++period) {
             // Fetch holder's balance at the end of the specific period.
+            // aderyn-fp-next-line(reentrancy-state-change)
             uint256 balance = _token.balanceOfAt(sender, _periodEndTimestamps[period - 1]);
             if (balance > 0) {
                 uint256 periodYield = (balance * basis * _rate) / RATE_BASIS_POINTS;
@@ -450,15 +454,14 @@ contract SMARTFixedYieldSchedule is
             // If balance is 0 for a period, its corresponding entry in periodAmounts remains 0.
         }
 
-        if (totalAmountToClaim == 0) revert NoYieldAvailable(); // No yield accrued in the claimable periods.
+        if (totalAmountToClaim <= 0) revert NoYieldAvailable(); // No yield accrued in the claimable periods.
 
         // State updates *before* external call (transfer).
         _lastClaimedPeriod[sender] = lastPeriod; // Update the last period claimed by the user.
         _totalClaimed += totalAmountToClaim; // Increment total yield claimed in the contract.
 
         // Perform the transfer of the underlying asset to the claimant.
-        bool success = _underlyingAsset.transfer(sender, totalAmountToClaim);
-        if (!success) revert YieldTransferFailed(); // Revert if transfer fails.
+        _underlyingAsset.safeTransfer(sender, totalAmountToClaim);
 
         // Calculate the remaining total unclaimed yield in the contract for the event.
         uint256 remainingUnclaimed = totalUnclaimedYield();
@@ -471,8 +474,7 @@ contract SMARTFixedYieldSchedule is
     /// `_underlyingAsset` tokens.
     function topUpUnderlyingAsset(uint256 amount) external override nonReentrant whenNotPaused {
         // Transfer `_underlyingAsset` from the caller to this contract.
-        bool success = _underlyingAsset.transferFrom(_msgSender(), address(this), amount);
-        if (!success) revert InsufficientUnderlyingBalance(); // Or generic transfer failed error.
+        _underlyingAsset.safeTransferFrom(_msgSender(), address(this), amount);
 
         emit UnderlyingAssetTopUp(_msgSender(), amount);
     }
@@ -495,9 +497,7 @@ contract SMARTFixedYieldSchedule is
         uint256 balance = _underlyingAsset.balanceOf(address(this));
         if (amount > balance) revert InsufficientUnderlyingBalance(); // Not enough funds in contract.
 
-        bool success = _underlyingAsset.transfer(to, amount);
-        if (!success) revert InsufficientUnderlyingBalance(); // Or generic transfer failed. Consider a more specific
-            // error if OZ SafeERC20 were used for `transfer`.
+        _underlyingAsset.safeTransfer(to, amount);
 
         emit UnderlyingAssetWithdrawn(to, amount);
     }
@@ -514,10 +514,9 @@ contract SMARTFixedYieldSchedule is
         if (to == address(0)) revert InvalidUnderlyingAsset(); // Cannot withdraw to zero address.
 
         uint256 balance = _underlyingAsset.balanceOf(address(this));
-        if (balance == 0) revert InsufficientUnderlyingBalance(); // No funds to withdraw.
+        if (balance <= 0) revert InsufficientUnderlyingBalance(); // No funds to withdraw.
 
-        bool success = _underlyingAsset.transfer(to, balance);
-        if (!success) revert InsufficientUnderlyingBalance(); // Or generic transfer failed.
+        _underlyingAsset.safeTransfer(to, balance);
 
         emit UnderlyingAssetWithdrawn(to, balance);
     }

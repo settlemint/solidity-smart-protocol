@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 /// @title ISMARTIdentityFactory Interface
 /// @author SettleMint Tokenization Services
 /// @notice This interface defines the functions for a factory contract responsible for creating and managing
@@ -8,7 +10,8 @@ pragma solidity ^0.8.28;
 /// @dev These identities are typically based on standards like ERC725 (OnchainID) and are deployed as proxy contracts
 ///      to allow for upgradeability. The factory pattern ensures that identities are created in a consistent and
 /// predictable manner.
-interface ISMARTIdentityFactory {
+/// This interface extends IERC165 for interface detection support.
+interface ISMARTIdentityFactory is IERC165 {
     // --- Events ---
     /// @notice Emitted when a new identity contract is successfully created and registered for an investor wallet.
     /// @param sender The address that initiated the identity creation (e.g., an address with `REGISTRAR_ROLE`).

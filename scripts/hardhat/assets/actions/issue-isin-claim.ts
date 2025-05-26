@@ -5,8 +5,8 @@ import { claimIssuer } from "../../utils/claim-issuer";
 import { getContractInstance } from "../../utils/get-contract";
 
 export const issueIsinClaim = async (
-	tokenIdentityAddress: Address,
-	isin: string,
+  tokenIdentityAddress: Address,
+  isin: string
 ) => {
 	const encodedIsinData = encodeAbiParameters(
 		parseAbiParameters("string isinValue"),

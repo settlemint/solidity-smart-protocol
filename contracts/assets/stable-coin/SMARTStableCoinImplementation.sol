@@ -7,6 +7,7 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 // Constants
@@ -368,7 +369,13 @@ contract SMARTStableCoinImplementation is
     }
 
     /// @inheritdoc SMARTUpgradeable
-    function supportsInterface(bytes4 interfaceId) public view virtual override(SMARTUpgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(SMARTUpgradeable, IERC165)
+        returns (bool)
+    {
         return interfaceId == type(ISMARTStableCoin).interfaceId || super.supportsInterface(interfaceId);
     }
 

@@ -3,8 +3,8 @@ pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -17,7 +17,7 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 
 // Interface imports
-import { IERC3643IdentityRegistryStorage } from "./../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { IERC3643IdentityRegistryStorage } from "../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
 
 // --- Errors ---
 /// @notice Error triggered if an attempt is made to register or operate on an identity with a zero address for the
@@ -63,7 +63,7 @@ error IdentityRegistryNotBound(address registryAddress);
 /// @dev This contract implements `IERC3643IdentityRegistryStorage`, a standard interface for storing data related to
 /// ERC-3643 compliant identity registries. This includes mapping user wallet addresses to their `IIdentity` contracts
 /// (which hold identity claims like KYC/AML status) and their country codes (for compliance purposes).
-/// It uses `AccessControlEnumerableUpgradeable` to manage permissions:
+/// It uses `AccessControlUpgradeable` to manage permissions:
 ///    - `DEFAULT_ADMIN_ROLE`: This role has the highest level of control. It can grant or revoke any other role,
 ///      including `MANAGE_REGISTRIES_ROLE`. Typically held by a secure multi-signature wallet or a DAO.
 ///    - `MANAGE_REGISTRIES_ROLE`: This role is responsible for managing which `SMARTIdentityRegistry` contracts
@@ -82,7 +82,7 @@ error IdentityRegistryNotBound(address registryAddress);
 contract SMARTIdentityRegistryStorageImplementation is
     Initializable,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable,
+    AccessControlUpgradeable,
     IERC3643IdentityRegistryStorage
 {
     // --- Storage Variables ---
@@ -240,7 +240,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// receive the `STORAGE_MODIFIER_ROLE` initially, though this might be delegated later.
     function initialize(address system, address initialAdmin) public initializer {
         __ERC165_init_unchained(); // Base for AccessControl, initializes ERC165 detection.
-        __AccessControlEnumerable_init_unchained(); // Sets up role-based access control.
+        __AccessControl_init_unchained(); // Sets up role-based access control.
         // ERC2771Context is initialized by its own constructor when this contract is created.
 
         _grantRole(SMARTSystemRoles.DEFAULT_ADMIN_ROLE, initialAdmin); // Admin for managing roles.
@@ -617,7 +617,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// It checks if the `interfaceId` matches:
     /// 1.  `type(IERC3643IdentityRegistryStorage).interfaceId`: This confirms that the contract adheres to the
     ///     standard interface for ERC-3643 compliant identity registry storage.
-    /// 2.  Any interfaces supported by its parent contracts (e.g., `AccessControlEnumerableUpgradeable`,
+    /// 2.  Any interfaces supported by its parent contracts (e.g., `AccessControlUpgradeable`,
     ///     `ERC165Upgradeable` itself) by calling `super.supportsInterface(interfaceId)`.
     /// This is crucial for interoperability within the ecosystem, allowing, for example, a `SMARTIdentityRegistry`
     /// to verify that it's interacting with a compatible storage contract.
@@ -627,7 +627,8 @@ contract SMARTIdentityRegistryStorageImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable) // Specifies which parent's supportsInterface is being primarily
+        override(AccessControlUpgradeable, IERC165) // Specifies which parent's supportsInterface is being
+            // primarily
             // extended.
         returns (bool)
     {

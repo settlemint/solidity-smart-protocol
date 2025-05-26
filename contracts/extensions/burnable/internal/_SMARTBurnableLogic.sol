@@ -3,8 +3,8 @@ pragma solidity ^0.8.28;
 
 import { LengthMismatch } from "../../common/CommonErrors.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
-import { BurnCompleted } from "./../SMARTBurnableEvents.sol";
-import { ISMARTBurnable } from "./../ISMARTBurnable.sol";
+import { BurnCompleted } from "../SMARTBurnableEvents.sol";
+import { ISMARTBurnable } from "../ISMARTBurnable.sol";
 
 /// @title Internal Logic for SMART Burnable Extension
 /// @notice This abstract contract encapsulates the core, shared logic for token burning operations
