@@ -18,7 +18,6 @@ import {
     InsufficientTokenBalance,
     InvalidDecimals
 } from "../SMARTErrors.sol";
-import { TokenRecovered } from "../SMARTEvents.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 
 // Error imports
@@ -290,7 +289,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
         if (balance < amount) revert InsufficientTokenBalance(); // Not enough tokens to recover
 
         SafeERC20.safeTransfer(IERC20(token), to, amount);
-        emit TokenRecovered(_smartSender(), token, to, amount);
+        emit ISMART.TokenRecovered(_smartSender(), token, to, amount);
     }
 
     // -- View Functions --
