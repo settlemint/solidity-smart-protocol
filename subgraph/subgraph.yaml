@@ -88,3 +88,24 @@ templates:
         - event: TrustedIssuersRegistryImplementationUpdated(indexed address,indexed address)
           handler: handleTrustedIssuersRegistryImplementationUpdated
       file: ./src/system/system.ts
+  - kind: ethereum
+    name: TokenFactory
+    network: settlemint
+    source:
+      abi: TokenFactory
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - TokenAssetCreated
+        - TokenImplementationUpdated
+      abis:
+        - name: TokenFactory
+          file: ../artifacts/contracts/system/token-factory/ISMARTTokenFactory.sol/ISMARTTokenFactory.json
+      eventHandlers:
+        - event: TokenAssetCreated(indexed address,indexed address,indexed address,address)
+          handler: handleTokenAssetCreated
+        - event: TokenImplementationUpdated(indexed address,indexed address,indexed address)
+          handler: handleTokenImplementationUpdated
+      file: ./src/token-factory/token-factory.ts

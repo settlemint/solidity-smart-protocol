@@ -6,36 +6,24 @@ import {
   beforeAll,
   afterAll
 } from "matchstick-as/assembly/index"
-import { Address } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { ExampleEntity } from "../generated/schema"
-import { TokenAssetCreated } from "../generated/TokenFactory/TokenFactory"
-import { handleTokenAssetCreated } from "../src/token-factory"
-import { createTokenAssetCreatedEvent } from "./token-factory-utils"
+import { Approval } from "../generated/Token/Token"
+import { handleApproval } from "../src/token"
+import { createApprovalEvent } from "./token-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/subgraphs/developing/creating/unit-testing-framework/#tests-structure
 
 describe("Describe entity assertions", () => {
   beforeAll(() => {
-    let sender = Address.fromString(
+    let owner = Address.fromString("0x0000000000000000000000000000000000000001")
+    let spender = Address.fromString(
       "0x0000000000000000000000000000000000000001"
     )
-    let tokenAddress = Address.fromString(
-      "0x0000000000000000000000000000000000000001"
-    )
-    let tokenIdentity = Address.fromString(
-      "0x0000000000000000000000000000000000000001"
-    )
-    let accessManager = Address.fromString(
-      "0x0000000000000000000000000000000000000001"
-    )
-    let newTokenAssetCreatedEvent = createTokenAssetCreatedEvent(
-      sender,
-      tokenAddress,
-      tokenIdentity,
-      accessManager
-    )
-    handleTokenAssetCreated(newTokenAssetCreatedEvent)
+    let value = BigInt.fromI32(234)
+    let newApprovalEvent = createApprovalEvent(owner, spender, value)
+    handleApproval(newApprovalEvent)
   })
 
   afterAll(() => {
@@ -52,26 +40,20 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "ExampleEntity",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a",
-      "sender",
+      "owner",
       "0x0000000000000000000000000000000000000001"
     )
     assert.fieldEquals(
       "ExampleEntity",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a",
-      "tokenAddress",
+      "spender",
       "0x0000000000000000000000000000000000000001"
     )
     assert.fieldEquals(
       "ExampleEntity",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a",
-      "tokenIdentity",
-      "0x0000000000000000000000000000000000000001"
-    )
-    assert.fieldEquals(
-      "ExampleEntity",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a",
-      "accessManager",
-      "0x0000000000000000000000000000000000000001"
+      "value",
+      "234"
     )
 
     // More assert options:

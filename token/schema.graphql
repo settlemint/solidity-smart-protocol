@@ -1,6 +1,6 @@
 type ExampleEntity @entity(immutable: true) {
   id: Bytes!
   count: BigInt!
-  sender: Bytes! # address
-  tokenAddress: Bytes! # address
+  owner: Bytes! # address
+  spender: Bytes! # address
 }

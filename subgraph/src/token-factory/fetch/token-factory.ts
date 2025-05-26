@@ -1,5 +1,6 @@
 import { Address } from "@graphprotocol/graph-ts";
 import { TokenFactory } from "../../../../generated/schema";
+import { TokenFactory as TokenFactoryTemplate } from "../../../../generated/templates";
 import { fetchAccessControl } from "../../access-control/fetch/accesscontrol";
 import { fetchAccount } from "../../account/fetch/account";
 
@@ -15,7 +16,7 @@ export function fetchTokenFactory(
     tokenFactory.account = fetchAccount(address).id;
     tokenFactory.type = type;
     tokenFactory.save();
-    // TrustedIssuersRegistryTemplate.create(address);
+    TokenFactoryTemplate.create(address);
   }
 
   return tokenFactory;
