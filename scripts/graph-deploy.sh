@@ -61,7 +61,6 @@ echo ""
 # Function to restore original addresses
 restore_addresses() {
     SYSTEM_FACTORY_ADDRESS="0x5e771e1417100000000000000000000000020088"
-    pwd
     yq -i "(.dataSources[] | select(.name == \"SystemFactory\").source.address) = \"$SYSTEM_FACTORY_ADDRESS\"" ./subgraph/subgraph.yaml
     echo "Original addresses restored."
 }

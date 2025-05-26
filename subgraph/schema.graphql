@@ -54,6 +54,7 @@ type AccessControl @entity(immutable: false) {
   recovery: [Account!]!
   pauser: [Account!]!
   globalListManager: [Account!]!
+  operator: [Account!]!
 }
 
 type System @entity(immutable: false) {
