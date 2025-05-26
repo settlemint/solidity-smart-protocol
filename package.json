@@ -58,7 +58,7 @@
     "@nomicfoundation/hardhat-ignition-viem": "0.15.11",
     "@nomicfoundation/hardhat-toolbox-viem": "3.0.0",
     "@nomiclabs/hardhat-solhint": "4.0.1",
-    "@settlemint/sdk-cli": "^2.3.3",
+    "@settlemint/sdk-cli": "^2.3.4",
     "hardhat": "2.24.0",
     "solhint": "5.1.0",
     "viem": "2.30.1"
