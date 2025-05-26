@@ -130,30 +130,19 @@ jobs:
 
       - name: Run Forge build
         run: |
-          forge --version
-          forge build --sizes
+          npm run compile:forge
 
       - name: Run Hardhat build
         run: |
-          npx hardhat compile
+          npm run compile:hardhat
 
       - name: Run Forge tests
         run: |
-          forge test -vvv
-
-      - name: Run Hardhat test
-        run: |
-          npx hardhat test
-
-      - name: Run Forge Coverage
-        if: github.ref_name != 'main'
-        run: |
-          forge coverage --report lcov --report summary --ir-minimum
-        id: coverage
+          npm run test
 
       - name: Deploy to the local node
         run: |
-          npx hardhat ignition deploy --network localhost ignition/modules/main.ts
+          npm run deploy:local:test
 
       - name: Install YQ
         uses: alexellis/arkade-get@master
@@ -162,36 +151,9 @@ jobs:
           yq: latest
 
       - name: Build the subgraph
+        working-directory: subgraph
         run: |
-          if [ ! -d "subgraph" ] || [ -z "$(ls -A subgraph)" ]; then
-            echo "Subgraph directory is missing or empty"
-            exit 0
-          fi
-          if [ -f "subgraph/subgraph.config.json" ]; then
-            npx graph-compiler --config subgraph/subgraph.config.json --include node_modules/@openzeppelin/subgraphs/src/datasources subgraph/datasources --export-schema --export-subgraph
-            yq -i e '.specVersion = "1.2.0"' generated/scs.subgraph.yaml
-            yq -i e '.features = ["nonFatalErrors", "fullTextSearch", "ipfsOnEthereumContracts"]' generated/scs.subgraph.yaml
-            yq -i e '.dataSources[].mapping.apiVersion = "0.0.7"' generated/scs.subgraph.yaml
-            yq -i e '.dataSources[].network = "localhost"' generated/scs.subgraph.yaml
-            yq -i e '.templates[].mapping.apiVersion = "0.0.7"' generated/scs.subgraph.yaml
-            yq -i e '.templates[].network = "localhost"' generated/scs.subgraph.yaml
-            npx graph codegen generated/scs.subgraph.yaml
-            npx graph build --ipfs=https://ipfs.network.thegraph.com generated/scs.subgraph.yaml | tee build_output.txt
-          else
-            cd subgraph
-            npx graph codegen subgraph.yaml
-            npx graph build --ipfs=https://ipfs.network.thegraph.com subgraph.yaml | tee build_output.txt
-
-            cat build_output.txt
-
-            # Extract and process IPFS hashes from the file
-            ipfs_hashes=$(grep -oP 'Qm[a-zA-Z0-9]{44}' build_output.txt)
-
-            echo "IPFS hashes: $ipfs_hashes"
-
-            # Write IPFS hashes to a file
-            echo "$ipfs_hashes" | sed 's/^/"/;s/$/"/' | paste -sd ',' > ipfs_hashes.txt
-          fi
+          npm run subgraph:deploy:local
 
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v5
@@ -227,28 +189,6 @@ jobs:
           zsh --version
           which zsh
 
-      - name: Generate README.md
-        if: github.repository == 'settlemint/solidity-predeployed'
-        run: |
-          rm -Rf README.md
-          cp .github/BASE.md README.md
-          ./genesis-output
-          echo "" >> README.md
-          echo "\`\`\`json" >> README.md
-          cat all_allocations.json >> README.md
-          echo "\`\`\`" >> README.md
-          cat all_allocations.json
-
-      - name: Add IPFS hashes to README if exists
-        run: |
-          if [ -f ipfs_hashes.txt ]; then
-            echo "" >> README.md
-            echo "## IPFS Hashes" >> README.md
-            echo "\`\`\`" >> README.md
-            cat ipfs_hashes.txt >> README.md
-            echo "\`\`\`" >> README.md
-          fi
-
       - uses: JS-DevTools/npm-publish@v3
         if: env.TAG == 'latest'
         with:
@@ -265,30 +205,12 @@ jobs:
           forge soldeer login --email ${{ env.SOLDEER_EMAIL }} --password ${{ env.SOLDEER_PASSWORD }}
           forge soldeer push smart-protocol~${VERSION} --skip-warnings
 
-      - name: Create or update a comment
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: taoliujun/action-unique-comment@v1
-        with:
-          uniqueIdentifier: ${{ github.workflow }}
-          body: |
-            # 📦 Packages
-            | Package | Install |
-            | ------- | -------------------- |
-            | Template Set | `bun add @${{ github.repository_owner }}/${{ github.repository }}@${{ env.VERSION }}` |
-
       - uses: stefanzweifel/git-auto-commit-action@v5
         if: env.TAG == 'latest'
         with:
           commit_message: "chore: update package versions [skip ci]"
           branch: main
           file_pattern: "package.json README.md"
-
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        if: env.TAG == 'latest'
-        with:
-          commit_message: "chore: update package versions [skip ci]"
-          branch: main
-          file_pattern: "package.json README.md all_allocations.json"
 
       # - name: Set up Docker Buildx
       #   if: env.TAG == 'latest'
