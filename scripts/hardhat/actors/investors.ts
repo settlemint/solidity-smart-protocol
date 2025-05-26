@@ -1,8 +1,9 @@
 import hre from "hardhat";
-import { type WalletClient, createWalletClient, custom } from "viem";
+import { type WalletClient, createWalletClient, custom, toHex } from "viem";
 import type { LocalAccount } from "viem/accounts"; // viem signer type
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
+import { getPublicClient } from "../utils/public-client";
 import { getViemChain } from "../utils/viem-chain";
 import { AbstractActor } from "./abstract-actor";
 
@@ -25,6 +26,15 @@ class Investor extends AbstractActor {
 	}
 
 	public async initialize(): Promise<void> {
+		// TODO: do i need this?
+		const balanceInHex = toHex(1_000_000n);
+
+		await getPublicClient().request({
+			method: "anvil_setBalance",
+			params: [this._address, balanceInHex],
+			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+		} as any);
+
 		await super.initialize();
 	}
 
