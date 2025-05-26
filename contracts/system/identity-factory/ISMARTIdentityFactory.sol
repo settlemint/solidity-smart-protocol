@@ -12,6 +12,18 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 /// predictable manner.
 /// This interface extends IERC165 for interface detection support.
 interface ISMARTIdentityFactory is IERC165 {
+    // --- Events ---
+    /// @notice Emitted when a new identity contract is successfully created and registered for an investor wallet.
+    /// @param sender The address that initiated the identity creation (e.g., an address with `REGISTRAR_ROLE`).
+    /// @param identity The address of the newly deployed `SMARTIdentityProxy` contract.
+    /// @param wallet The investor wallet address for which the identity was created.
+    event IdentityCreated(address indexed sender, address indexed identity, address indexed wallet);
+    /// @notice Emitted when a new identity contract is successfully created and registered for a token contract.
+    /// @param sender The address that initiated the token identity creation (e.g., an address with `REGISTRAR_ROLE`).
+    /// @param identity The address of the newly deployed `SMARTTokenIdentityProxy` contract.
+    /// @param token The address of the token contract for which the identity was created.
+    event TokenIdentityCreated(address indexed sender, address indexed identity, address indexed token);
+
     // --- State-Changing Functions ---
 
     /// @notice Creates a new on-chain identity for a given user wallet address.
