@@ -42,3 +42,6 @@ ignition/deployments
 /dependencies
 .DS_Store
 .claude
+temp_calc_script.s.sol
+temp_interface_calculator.sol
+subgraph/src/erc165/utils/interfaceids.ts

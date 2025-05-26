@@ -4,6 +4,7 @@ import { Token as TokenTemplate } from "../../../../generated/templates";
 import { Token as TokenContract } from "../../../../generated/templates/Token/Token";
 import { fetchAccount } from "../../account/fetch/account";
 import { setBigNumber } from "../../bignumber/bignumber";
+import { InterfaceIds } from "../../erc165/utils/InterfaceIds";
 
 export function fetchToken(address: Address): Token {
   let token = Token.load(address);
@@ -25,6 +26,9 @@ export function fetchToken(address: Address): Token {
     );
     token.save();
     TokenTemplate.create(address);
+
+    if (tokenContract.supportsInterface(InterfaceIds.ISMARTPausable)) {
+    }
   }
 
   return token;

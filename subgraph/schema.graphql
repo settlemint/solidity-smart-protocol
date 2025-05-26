@@ -117,4 +117,10 @@ type Token @entity(immutable: false) {
   decimals: Int!
   totalSupply: BigDecimal!
   totalSupplyExact: BigInt!
+  collateral: TokenCollateral
+}
+
+type TokenPausable @entity(immutable: false) {
+  id: Bytes!
+  paused: Boolean!
 }
