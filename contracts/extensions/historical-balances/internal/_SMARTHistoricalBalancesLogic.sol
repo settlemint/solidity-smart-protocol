@@ -4,7 +4,6 @@ pragma solidity ^0.8.28;
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 import { FutureLookup } from "../SMARTHistoricalBalancesErrors.sol";
 import { ISMARTHistoricalBalances } from "../ISMARTHistoricalBalances.sol";
-import { CheckpointUpdated } from "../SMARTHistoricalBalancesEvents.sol";
 
 import { Checkpoints } from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -124,7 +123,7 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
 
         _writeCheckpointAdd(_totalSupplyCheckpoints, castAmount); // Update total supply checkpoint
         (uint208 previousBalance, uint208 newBalance) = _writeCheckpointAdd(_balanceCheckpoints[to], castAmount);
-        emit CheckpointUpdated(_smartSender(), to, previousBalance, newBalance);
+        emit ISMARTHistoricalBalances.CheckpointUpdated(_smartSender(), to, previousBalance, newBalance);
     }
 
     /// @notice Internal logic to be executed *after* a burn operation.
@@ -138,7 +137,7 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
 
         _writeCheckpointSubtract(_totalSupplyCheckpoints, castAmount); // Update total supply checkpoint
         (uint208 previousBalance, uint208 newBalance) = _writeCheckpointSubtract(_balanceCheckpoints[from], castAmount);
-        emit CheckpointUpdated(_smartSender(), from, previousBalance, newBalance);
+        emit ISMARTHistoricalBalances.CheckpointUpdated(_smartSender(), from, previousBalance, newBalance);
     }
 
     /// @notice Internal logic to be executed *after* a transfer operation.
@@ -155,10 +154,10 @@ abstract contract _SMARTHistoricalBalancesLogic is _SMARTExtension, ISMARTHistor
 
         (uint208 previousFromBalance, uint208 newFromBalance) =
             _writeCheckpointSubtract(_balanceCheckpoints[from], castAmount);
-        emit CheckpointUpdated(sender, from, previousFromBalance, newFromBalance);
+        emit ISMARTHistoricalBalances.CheckpointUpdated(sender, from, previousFromBalance, newFromBalance);
 
         (uint208 previousToBalance, uint208 newToBalance) = _writeCheckpointAdd(_balanceCheckpoints[to], castAmount);
-        emit CheckpointUpdated(sender, to, previousToBalance, newToBalance);
+        emit ISMARTHistoricalBalances.CheckpointUpdated(sender, to, previousToBalance, newToBalance);
     }
 
     // -- Internal Helper Functions for Checkpoint Writing --

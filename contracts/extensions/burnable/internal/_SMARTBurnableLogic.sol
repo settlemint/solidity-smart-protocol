@@ -3,7 +3,6 @@ pragma solidity ^0.8.28;
 
 import { LengthMismatch } from "../../common/CommonErrors.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
-import { BurnCompleted } from "../SMARTBurnableEvents.sol";
 import { ISMARTBurnable } from "../ISMARTBurnable.sol";
 
 /// @title Internal Logic for SMART Burnable Extension
@@ -57,7 +56,7 @@ abstract contract _SMARTBurnableLogic is _SMARTExtension, ISMARTBurnable {
     /// @param amount The amount of tokens to burn.
     function _smart_burn(address from, uint256 amount) internal virtual {
         __burnable_executeBurn(from, amount); // Execute the actual burn via the hook
-        emit BurnCompleted(_smartSender(), from, amount); // Emit the event
+        emit ISMARTBurnable.BurnCompleted(_smartSender(), from, amount); // Emit the event
     }
 
     /// @notice Internal core function to perform a batch burn operation.

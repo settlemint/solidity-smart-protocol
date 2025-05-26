@@ -112,6 +112,13 @@ interface ISMART is IERC20, IERC20Metadata, IERC165 {
     /// @param amount The quantity of tokens minted.
     event MintCompleted(address indexed sender, address indexed to, uint256 amount);
 
+    /// @notice Emitted when mistakenly sent ERC20 tokens are recovered from the contract.
+    /// @param sender The address that initiated the recovery operation.
+    /// @param token The address of the ERC20 token recovered.
+    /// @param to The address to which the tokens were recovered.
+    /// @param amount The amount of tokens recovered.
+    event TokenRecovered(address indexed sender, address indexed token, address indexed to, uint256 amount);
+
     // --- Configuration Setters (Admin/Authorized) ---
 
     /// @notice Sets or updates the optional on-chain identifier (e.g., an `IIdentity` contract) associated with the

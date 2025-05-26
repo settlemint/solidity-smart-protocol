@@ -15,6 +15,20 @@ import { ISMARTHistoricalBalances } from "../historical-balances/ISMARTHistorica
 /// tokens.
 /// The functions are external, allowing them to be called from other contracts or off-chain applications.
 interface ISMARTYield is ISMARTHistoricalBalances {
+    /// @notice Emitted when a new yield schedule is successfully set or updated for a token.
+    /// @dev This event is critical for transparency and tracking changes to how a token generates and distributes yield.
+    /// When this event is emitted, it signifies that the `schedule` address is now the authoritative contract dictating
+    /// the terms of yield for this token.
+    /// The `indexed` keyword for `sender` and `schedule` allows for efficient searching and filtering of these events based
+    /// on these addresses.
+    /// For example, one could easily find all tokens for which a specific yield schedule was set, or all schedules set by a
+    /// particular admin.
+    /// @param sender The address of the account (e.g., an admin or owner) that initiated the transaction to set the yield
+    /// schedule.
+    /// @param schedule The address of the newly set yield schedule contract. This contract implements `ISMARTYieldSchedule`
+    /// and contains the yield logic.
+    event YieldScheduleSet(address indexed sender, address indexed schedule);
+
     /// @notice Sets or updates the yield schedule contract for this token.
     /// @dev This function is crucial for configuring how yield is generated and distributed for the token.
     /// The `schedule` address points to another smart contract that implements the `ISMARTYieldSchedule` interface (or

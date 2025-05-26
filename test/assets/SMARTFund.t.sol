@@ -15,7 +15,7 @@ import { SMARTComplianceModuleParamPair } from "../../contracts/interface/struct
 import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
-import { TokenRecovered } from "../../contracts/extensions/core/SMARTEvents.sol";
+import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { TokenPaused } from "../../contracts/extensions/pausable/SMARTPausableErrors.sol";
 
@@ -169,7 +169,7 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
 
         vm.startPrank(owner);
         vm.expectEmit(true, true, true, true);
-        emit TokenRecovered(owner, mockToken, investor1, withdrawAmount);
+        emit ISMART.TokenRecovered(owner, mockToken, investor1, withdrawAmount);
         fund.recoverERC20(mockToken, investor1, withdrawAmount);
         vm.stopPrank();
     }
