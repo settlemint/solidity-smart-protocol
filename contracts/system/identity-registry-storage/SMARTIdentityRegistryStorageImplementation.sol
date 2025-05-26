@@ -3,8 +3,8 @@ pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -82,7 +82,7 @@ error IdentityRegistryNotBound(address registryAddress);
 contract SMARTIdentityRegistryStorageImplementation is
     Initializable,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable,
+    AccessControlUpgradeable,
     IERC3643IdentityRegistryStorage
 {
     // --- Storage Variables ---
@@ -240,7 +240,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// receive the `STORAGE_MODIFIER_ROLE` initially, though this might be delegated later.
     function initialize(address system, address initialAdmin) public initializer {
         __ERC165_init_unchained(); // Base for AccessControl, initializes ERC165 detection.
-        __AccessControlEnumerable_init_unchained(); // Sets up role-based access control.
+        __AccessControl_init_unchained(); // Sets up role-based access control.
         // ERC2771Context is initialized by its own constructor when this contract is created.
 
         _grantRole(SMARTSystemRoles.DEFAULT_ADMIN_ROLE, initialAdmin); // Admin for managing roles.
@@ -627,7 +627,7 @@ contract SMARTIdentityRegistryStorageImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable, IERC165) // Specifies which parent's supportsInterface is being
+        override(AccessControlUpgradeable, IERC165) // Specifies which parent's supportsInterface is being
             // primarily
             // extended.
         returns (bool)

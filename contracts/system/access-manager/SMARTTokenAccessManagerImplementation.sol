@@ -7,8 +7,8 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 // Interface import
 import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
@@ -28,7 +28,7 @@ import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMART
 contract SMARTTokenAccessManagerImplementation is
     Initializable,
     ISMARTTokenAccessManager,
-    AccessControlEnumerableUpgradeable,
+    AccessControlUpgradeable,
     ERC2771ContextUpgradeable
 {
     /// @notice Constructor for the SMARTTokenAccessManager.
@@ -47,7 +47,7 @@ contract SMARTTokenAccessManagerImplementation is
     ///      It grants the `DEFAULT_ADMIN_ROLE` to each address in `initialAdmins`.
     /// @param initialAdmins Addresses of the initial admins for the token.
     function initialize(address[] memory initialAdmins) public initializer {
-        __AccessControlEnumerable_init();
+        __AccessControl_init();
         // Grant standard admin role (can manage other roles) to each initial admin
         for (uint256 i = 0; i < initialAdmins.length; ++i) {
             _grantRole(DEFAULT_ADMIN_ROLE, initialAdmins[i]);
@@ -73,7 +73,7 @@ contract SMARTTokenAccessManagerImplementation is
         public
         view
         virtual
-        override(ISMARTTokenAccessManager, AccessControlUpgradeable, IAccessControl)
+        override(ISMARTTokenAccessManager, AccessControlUpgradeable)
         returns (bool)
     {
         return super.hasRole(role, account);
@@ -167,7 +167,7 @@ contract SMARTTokenAccessManagerImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable)
+        override(AccessControlUpgradeable)
         returns (bool)
     {
         return interfaceId == type(ISMARTTokenAccessManager).interfaceId || super.supportsInterface(interfaceId);

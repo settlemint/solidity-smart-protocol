@@ -4,8 +4,8 @@ pragma solidity ^0.8.28;
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 // import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -39,7 +39,7 @@ import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 contract SMARTIdentityRegistryImplementation is
     Initializable,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable,
+    AccessControlUpgradeable,
     ISMARTIdentityRegistry
 {
     // --- Storage References ---
@@ -139,7 +139,7 @@ contract SMARTIdentityRegistryImplementation is
         // Initialize ERC165 for interface detection support in an upgradeable context.
         __ERC165_init_unchained();
         // Initialize AccessControl for role-based permissions in an upgradeable context.
-        __AccessControlEnumerable_init_unchained();
+        __AccessControl_init_unchained();
         // ERC2771Context is initialized by its constructor during contract creation.
 
         // Grant the caller (initialAdmin) the default admin role, allowing them to manage other roles.
@@ -595,7 +595,7 @@ contract SMARTIdentityRegistryImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable, IERC165) // Overrides the one in AccessControlEnumerableUpgradeable
+        override(AccessControlUpgradeable, IERC165) // Overrides the one in AccessControlUpgradeable
         returns (bool)
     {
         // Check for ISMARTIdentityRegistry interface and then delegate to parent contracts.
