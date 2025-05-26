@@ -28,7 +28,7 @@ cleanup() {
 }
 
 # Set trap to cleanup on exit (success or failure)
-trap cleanup EXIT
+# trap cleanup EXIT  # Temporarily disabled for debugging
 
 echo -e "${BLUE}🔍 SMART Protocol Interface ID Calculator${NC}"
 echo -e "${BLUE}===========================================${NC}"
@@ -134,7 +134,7 @@ EOF
 
 # Add console.log statements for each interface
 for interface_name in "${INTERFACE_NAMES[@]}"; do
-    echo "        console.log(\"$interface_name: %s\", vm.toString(type($interface_name).interfaceId));" >> "$TEMP_CONTRACT"
+    echo "        console.log(\"$interface_name: %s\", vm.toString(bytes4(type($interface_name).interfaceId)));" >> "$TEMP_CONTRACT"
 done
 
 # Add TypeScript format section
@@ -150,9 +150,9 @@ for i in "${!INTERFACE_NAMES[@]}"; do
     interface_name="${INTERFACE_NAMES[$i]}"
     if [ $i -eq $((${#INTERFACE_NAMES[@]} - 1)) ]; then
         # Last item, no comma
-        echo "        console.log('  static $interface_name: Bytes = Bytes.fromHexString(\"%s\");', vm.toString(type($interface_name).interfaceId));" >> "$TEMP_CONTRACT"
+        echo "        console.log('  static $interface_name: Bytes = Bytes.fromHexString(\"%s\");', vm.toString(bytes4(type($interface_name).interfaceId)));" >> "$TEMP_CONTRACT"
     else
-        echo "        console.log('  static $interface_name: Bytes = Bytes.fromHexString(\"%s\");', vm.toString(type($interface_name).interfaceId));" >> "$TEMP_CONTRACT"
+        echo "        console.log('  static $interface_name: Bytes = Bytes.fromHexString(\"%s\");', vm.toString(bytes4(type($interface_name).interfaceId)));" >> "$TEMP_CONTRACT"
     fi
 done
 
@@ -176,8 +176,8 @@ if [ -z "$SCRIPT_OUTPUT" ]; then
     exit 1
 fi
 
-# Display the interface IDs
-echo "$SCRIPT_OUTPUT" | grep -A 1000 "=== SMART Protocol Interface IDs ===" | grep -B 1000 "=== TypeScript Format ==="
+# Display the interface IDs (truncated to 4 bytes)
+echo "$SCRIPT_OUTPUT" | grep -A 1000 "=== SMART Protocol Interface IDs ===" | grep -B 1000 "=== TypeScript Format ===" | sed 's/0x\([0-9a-fA-F]\{8\}\)[0-9a-fA-F]*/0x\1/g'
 
 # Create output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
@@ -185,8 +185,8 @@ mkdir -p "$OUTPUT_DIR"
 # Extract and save TypeScript
 TS_START_LINE=$(echo "$SCRIPT_OUTPUT" | grep -n "=== TypeScript Format ===" | cut -d: -f1)
 if [ -n "$TS_START_LINE" ]; then
-    # Extract everything after "=== TypeScript Format ===" and before any other section
-    TS_CONTENT=$(echo "$SCRIPT_OUTPUT" | tail -n +$((TS_START_LINE + 1)) | sed '/^$/,$d')
+    # Extract everything after "=== TypeScript Format ===" and before any other section, truncate to 4 bytes
+    TS_CONTENT=$(echo "$SCRIPT_OUTPUT" | tail -n +$((TS_START_LINE + 1)) | sed '/^$/,$d' | sed 's/0x\([0-9a-fA-F]\{8\}\)[0-9a-fA-F]*/0x\1/g')
 
         # Add header comment to TypeScript file
     cat > "$OUTPUT_FILE" << EOF
