@@ -185,7 +185,7 @@ Tests are organized by layer:
 
 - We use conventional commits WITHOUT a scope, so please follow the following format:
 
-```
+```text
 <type>: <description>
 
 [optional body]
@@ -197,9 +197,9 @@ Tests are organized by layer:
 
   - fix -> if we are fixing a bug
   - feat -> if we are adding a new feature
-  - chore -> if we are doing a small change that doesn't fit in the other categories
+  - chore -> if we are making a small change that doesn't fit in the other categories
 
-- The description should be a short description of the change.
+- The description should be a brief description of the change.
 - The body should be used to provide more context about the change.
-- The footer is optional and can be used to provide more information about the change.
+- The footer is optional and can be used to provide additional context about the change.
 - Never use breaking changes!

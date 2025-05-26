@@ -2,6 +2,36 @@ import { Bytes, ethereum, log } from "@graphprotocol/graph-ts";
 import { Event, EventValue } from "../../../../generated/schema";
 import { fetchAccount } from "../../account/fetch/account";
 
+function convertEthereumValue(value: ethereum.Value): string {
+  if (value.kind == ethereum.ValueKind.ADDRESS) {
+    return value.toAddress().toHexString();
+  } else if (value.kind == ethereum.ValueKind.BOOL) {
+    return value.toBoolean().toString();
+  } else if (value.kind == ethereum.ValueKind.BYTES) {
+    return value.toBytes().toString();
+  } else if (value.kind == ethereum.ValueKind.FIXED_BYTES) {
+    return value.toBytes().toHexString();
+  } else if (value.kind == ethereum.ValueKind.INT) {
+    return value.toBigInt().toString();
+  } else if (value.kind == ethereum.ValueKind.UINT) {
+    return value.toBigInt().toString();
+  } else if (value.kind == ethereum.ValueKind.STRING) {
+    return value.toString();
+  } else if (
+    value.kind == ethereum.ValueKind.ARRAY ||
+    value.kind == ethereum.ValueKind.FIXED_ARRAY
+  ) {
+    const arrayValue = value.toArray();
+    const stringValues: string[] = [];
+    for (let j = 0; j < arrayValue.length; j++) {
+      stringValues.push(convertEthereumValue(arrayValue[j]));
+    }
+    return "[" + stringValues.join(", ") + "]";
+  } else {
+    return value.toString();
+  }
+}
+
 export function fetchEvent(event: ethereum.Event, eventType: string): Event {
   const id = event.transaction.hash
     .concatI32(event.logIndex.toI32())
@@ -26,7 +56,7 @@ export function fetchEvent(event: ethereum.Event, eventType: string): Event {
   entry.emitter = emitter.id;
   entry.sender = txSender.id;
 
-  const involvedAccounts = [txSender.id, emitter.id];
+  const involvedAccounts: Bytes[] = [txSender.id, emitter.id];
 
   for (let i = 0; i < event.parameters.length; i++) {
     const param = event.parameters[i];
@@ -35,7 +65,19 @@ export function fetchEvent(event: ethereum.Event, eventType: string): Event {
       if (param.name == "sender") {
         entry.sender = address.id;
       }
-      involvedAccounts.push(address.id);
+
+      // Check if address is already in the array to avoid duplicates
+      let alreadyExists = false;
+      for (let j = 0; j < involvedAccounts.length; j++) {
+        if (involvedAccounts[j].equals(address.id)) {
+          alreadyExists = true;
+          break;
+        }
+      }
+
+      if (!alreadyExists) {
+        involvedAccounts.push(address.id);
+      }
     }
   }
 
@@ -45,52 +87,7 @@ export function fetchEvent(event: ethereum.Event, eventType: string): Event {
   for (let i = 0; i < event.parameters.length; i++) {
     const param = event.parameters[i];
     const name = param.name;
-
-    let value = "";
-    if (param.value.kind == ethereum.ValueKind.ADDRESS) {
-      value = param.value.toAddress().toHexString();
-    } else if (param.value.kind == ethereum.ValueKind.BOOL) {
-      value = param.value.toBoolean().toString();
-    } else if (param.value.kind == ethereum.ValueKind.BYTES) {
-      value = param.value.toBytes().toString();
-    } else if (param.value.kind == ethereum.ValueKind.FIXED_BYTES) {
-      value = param.value.toBytes().toHexString();
-    } else if (param.value.kind == ethereum.ValueKind.INT) {
-      value = param.value.toBigInt().toString();
-    } else if (param.value.kind == ethereum.ValueKind.UINT) {
-      value = param.value.toBigInt().toString();
-    } else if (param.value.kind == ethereum.ValueKind.STRING) {
-      value = param.value.toString();
-    } else if (
-      param.value.kind == ethereum.ValueKind.ARRAY ||
-      param.value.kind == ethereum.ValueKind.FIXED_ARRAY
-    ) {
-      const arrayValue = param.value.toArray();
-      const stringValues: string[] = [];
-      for (let j = 0; j < arrayValue.length; j++) {
-        const item = arrayValue[j];
-        if (item.kind == ethereum.ValueKind.ADDRESS) {
-          stringValues.push(item.toAddress().toHexString());
-        } else if (item.kind == ethereum.ValueKind.BOOL) {
-          stringValues.push(item.toBoolean().toString());
-        } else if (item.kind == ethereum.ValueKind.BYTES) {
-          stringValues.push(item.toBytes().toString());
-        } else if (item.kind == ethereum.ValueKind.FIXED_BYTES) {
-          stringValues.push(item.toBytes().toHexString());
-        } else if (item.kind == ethereum.ValueKind.INT) {
-          stringValues.push(item.toBigInt().toString());
-        } else if (item.kind == ethereum.ValueKind.UINT) {
-          stringValues.push(item.toBigInt().toString());
-        } else if (item.kind == ethereum.ValueKind.STRING) {
-          stringValues.push(item.toString());
-        } else {
-          stringValues.push(item.toString());
-        }
-      }
-      value = "[" + stringValues.join(", ") + "]";
-    } else {
-      value = param.value.toString();
-    }
+    const value = convertEthereumValue(param.value);
 
     const entryValue = new EventValue(
       event.transaction.hash

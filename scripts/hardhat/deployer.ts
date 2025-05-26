@@ -134,7 +134,6 @@ export class SmartProtocolDeployer {
 
     try {
       // 1. Deploy contracts and get their addresses
-      hre.network.name = "localhost";
       const deploymentAddresses = (await hre.ignition.deploy(
         SMARTOnboardingModule,
         {

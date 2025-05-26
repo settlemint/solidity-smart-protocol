@@ -63,6 +63,6 @@ export function handleRoleRevoked(event: RoleRevoked): void {
       newAdmins.push(newValue[i]);
     }
   }
-  accessControl.set(roleConfig.fieldName, Value.fromBytesArray(newValue));
+  accessControl.set(roleConfig.fieldName, Value.fromBytesArray(newAdmins));
   accessControl.save();
 }
