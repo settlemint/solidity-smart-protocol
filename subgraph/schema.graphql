@@ -47,4 +47,43 @@ type System @entity(immutable: false) {
   id: Bytes!
   accessControl: AccessControl!
   account: Account
+  compliance: Compliance
+  identityRegistryStorage: IdentityRegistryStorage
+  identityFactory: IdentityFactory
+  identityRegistry: IdentityRegistry
+  trustedIssuersRegistry: TrustedIssuersRegistry
+}
+
+type Compliance @entity(immutable: false) {
+  id: Bytes!
+  account: Account
+  implementation: Account
+}
+
+type IdentityRegistryStorage @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account
+  implementation: Account
+}
+
+type IdentityFactory @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account
+  implementation: Account
+}
+
+type IdentityRegistry @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account
+  implementation: Account
+}
+
+type TrustedIssuersRegistry @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account
+  implementation: Account
 }

@@ -56,10 +56,12 @@ fi
 
 echo "All validation checks passed."
 echo "---"
+echo ""
 
 # Function to restore original addresses
 restore_addresses() {
     SYSTEM_FACTORY_ADDRESS="0x5e771e1417100000000000000000000000020088"
+    pwd
     yq -i "(.dataSources[] | select(.name == \"SystemFactory\").source.address) = \"$SYSTEM_FACTORY_ADDRESS\"" ./subgraph/subgraph.yaml
     echo "Original addresses restored."
 }
@@ -86,14 +88,11 @@ echo "  SMARTSystemFactory: $SYSTEM_FACTORY_ADDRESS"
 echo "---"
 echo
 
-cd subgraph
+npm run subgraph:codegen
 
-npx graph codegen
 if [ "$DEPLOY_ENV" == "local" ]; then
 npx graph create --node http://localhost:8020 smart
-npx graph deploy --version-label "v1.0.$(date +%s)" --node http://localhost:8020 --ipfs https://ipfs.console.settlemint.com smart subgraph.yaml
+npx graph deploy --version-label "v1.0.$(date +%s)" --node http://localhost:8020 --ipfs https://ipfs.console.settlemint.com smart ./subgraph/subgraph.yaml
 elif [ "$DEPLOY_ENV" == "remote" ]; then
 npx settlemint scs subgraph deploy
 fi
-
-cd ..
