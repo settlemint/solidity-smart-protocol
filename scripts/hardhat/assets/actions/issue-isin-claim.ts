@@ -20,15 +20,13 @@ export const issueIsinClaim = async (
 			encodedIsinData,
 		);
 
-	console.log("Isin claim:", isinClaimData, isinClaimSignature);
-
 	const tokenIdentityContract = owner.getContractInstance({
 		address: tokenIdentityAddress,
 		abi: SMARTContracts.tokenIdentity,
 	});
 
-	// TODO: Add claim
 	const claimIssuerIdentity = await claimIssuer.getIdentity();
+
 	await tokenIdentityContract.write.addClaim([
 		SMARTTopics.isin,
 		1, // ECDSA

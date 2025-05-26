@@ -2,20 +2,22 @@ import hre from "hardhat";
 import type { WalletClient } from "viem";
 import { AbstractActor } from "./abstract-actor";
 
-const defaultWalletClientInstance: WalletClient | null = null;
-
 class Owner extends AbstractActor {
 	private walletClient: WalletClient | null = null;
 
-	public async initialize(): Promise<void> {
-		await super.initialize();
+	constructor() {
+		super("Owner");
+	}
 
+	public async initialize(): Promise<void> {
 		const [defaultSigner] = await hre.viem.getWalletClients();
 		if (!defaultSigner) {
 			throw new Error("Could not get a default wallet client from Hardhat.");
 		}
 		this.walletClient = defaultSigner;
 		this._address = defaultSigner.account.address;
+
+		await super.initialize();
 	}
 
 	/**

@@ -1,64 +1,27 @@
-import type { Signer } from "ethers";
-import {
-	concat,
-	encodeAbiParameters,
-	keccak256,
-	parseAbiParameters,
-	toBytes,
-} from "viem";
-import type { LocalAccount } from "viem/accounts";
+import { encodeAbiParameters, keccak256, parseAbiParameters } from "viem";
+import type { Address, LocalAccount } from "viem";
 
-/**
- * Creates a claim signed by the provided signer
- * @param signer - Either a viem LocalAccount or an ethers Signer
- * @param subjectIdentityAddress - The address of the identity to attach the claim to
- * @param claimTopic - The topic of the claim
- * @param claimData - The data of the claim
- * @returns The claim data and signature
- */
 export async function createClaim(
-	signer: LocalAccount | Signer,
+	signer: LocalAccount,
 	subjectIdentityAddress: `0x${string}`,
 	claimTopic: bigint,
 	claimData: `0x${string}`,
 ): Promise<{ data: `0x${string}`; signature: `0x${string}` }> {
-	// Solidity-style hash: keccak256(abi.encode(address, uint256, bytes))
+	// Encode data to match Solidity's abi.encode(address, uint256, bytes)
 	const dataToSign = encodeAbiParameters(
 		parseAbiParameters(
 			"address subject, uint256 topicValue, bytes memory dataBytes",
 		),
 		[subjectIdentityAddress, claimTopic, claimData],
 	);
+
+	// Hash the encoded data
 	const dataHash = keccak256(dataToSign);
 
-	// Ethereum Signed Message hash
-	const prefixedHash = keccak256(
-		concat([toBytes("\x19Ethereum Signed Message:\n32"), toBytes(dataHash)]),
-	);
-
-	let signatureHex: `0x${string}`;
-
-	// Check if it's a viem signer or an ethers signer
-	if (
-		"signMessage" in signer &&
-		typeof signer.signMessage === "function" &&
-		"address" in signer
-	) {
-		// viem signer
-		signatureHex = await signer.signMessage({
-			message: { raw: toBytes(prefixedHash) },
-		});
-	} else {
-		// ethers signer
-		const ethersSigner = signer as Signer;
-		const signature = await ethersSigner.signMessage(toBytes(prefixedHash));
-		signatureHex = signature as `0x${string}`;
-	}
-
-	// The signatureHex is already a complete hex string (r + s + v)
-	// No need to extract r, s, v separately if the contract expects a flat bytes signature.
-	// If the contract expects r, s, v separately, then the extraction is needed.
-	// Assuming the contract's addClaim function expects `bytes memory signature` which can be a flat hex string.
+	// Sign the dataHash directly. Viem's signMessage with a raw Hex message (`{ raw: dataHash }`)
+	// will correctly apply the EIP-191 prefix "\x19Ethereum Signed Message:\n32" before hashing and signing,
+	// aligning with Solidity's `keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", dataHash))`.
+	const signatureHex = await signer.signMessage({ message: { raw: dataHash } });
 
 	return {
 		data: claimData,

@@ -17,7 +17,7 @@ class ClaimIssuer extends AbstractActor {
 	 * @param privateKey - Optional private key for the signer. If not provided, a random one will be generated.
 	 */
 	constructor(privateKey?: `0x${string}`) {
-		super();
+		super("Claim issuer");
 
 		const pk = privateKey ?? generatePrivateKey();
 		this.signer = privateKeyToAccount(pk);

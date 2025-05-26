@@ -18,8 +18,15 @@ import { waitForEvent } from "../utils/wait-for-event";
  */
 export abstract class AbstractActor {
 	protected initialized = false;
+
 	protected _address: Address | undefined;
 	protected _identity: `0x${string}` | undefined;
+
+	protected readonly name: string;
+
+	constructor(name: string) {
+		this.name = name;
+	}
 	/**
 	 * Abstract method to be implemented by subclasses.
 	 * It should retrieve or create an ethers.js Signer instance representing the actor's wallet.
@@ -35,6 +42,8 @@ export abstract class AbstractActor {
 	 * @throws Error if the wallet client cannot be initialized.
 	 */
 	async initialize(): Promise<void> {
+		console.log(`[${this.name}] Address: ${this.address}`);
+
 		this.initialized = true;
 	}
 
@@ -76,6 +85,8 @@ export abstract class AbstractActor {
 		})) as unknown as { identity: `0x${string}` };
 
 		this._identity = identity;
+
+		console.log(`[${this.name}] identity: ${identity}`);
 
 		return identity;
 	}
