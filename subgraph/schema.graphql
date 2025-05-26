@@ -30,21 +30,74 @@ type EventValue @entity(immutable: true) {
 type AccessControl @entity(immutable: false) {
   id: Bytes!
   admin: [Account!]!
-  burner: [Account!]!
+  registrar: [Account!]!
+  registrarAdmin: [Account!]!
+  registrarGovernor: [Account!]!
+  claimManager: [Account!]!
+  identityIssuer: [Account!]!
+  tokenIdentityIssuer: [Account!]!
+  tokenIdentityIssuerAdmin: [Account!]!
+  tokenDeployer: [Account!]!
+  storageModifier: [Account!]!
+  manageRegistries: [Account!]!
+  tokenGovernance: [Account!]!
+  supplyManagement: [Account!]!
+  custodian: [Account!]!
+  emergency: [Account!]!
+  tokenAdmin: [Account!]!
   complianceAdmin: [Account!]!
-  deploymentOwner: [Account!]!
+  verificationAdmin: [Account!]!
+  minter: [Account!]!
+  burner: [Account!]!
   freezer: [Account!]!
   forcedTransfer: [Account!]!
-  minter: [Account!]!
-  pauser: [Account!]!
   recovery: [Account!]!
-  signer: [Account!]!
-  storageModifier: [Account!]!
-  verificationAdmin: [Account!]!
+  pauser: [Account!]!
+  globalListManager: [Account!]!
+  operator: [Account!]!
 }
 
 type System @entity(immutable: false) {
   id: Bytes!
   accessControl: AccessControl!
   account: Account
+  compliance: Compliance
+  identityRegistryStorage: IdentityRegistryStorage
+  identityFactory: IdentityFactory
+  identityRegistry: IdentityRegistry
+  trustedIssuersRegistry: TrustedIssuersRegistry
+}
+
+type Compliance @entity(immutable: false) {
+  id: Bytes!
+  account: Account
+  implementation: Account
+}
+
+type IdentityRegistryStorage @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account
+  implementation: Account
+}
+
+type IdentityFactory @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account
+  implementation: Account
+}
+
+type IdentityRegistry @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account
+  implementation: Account
+}
+
+type TrustedIssuersRegistry @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account
+  implementation: Account
 }

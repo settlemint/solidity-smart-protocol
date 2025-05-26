@@ -48,8 +48,8 @@
     "coverage": "forge coverage --ir-minimum",
     "subgraph:codegen": "settlemint scs subgraph codegen",
     "subgraph:build": "settlemint scs subgraph build",
-    "subgraph:deploy:local": "bash scripts/graph-deploy.sh --local",
-    "subgraph:deploy:remote": "bash scripts/graph-deploy.sh --remote"
+    "subgraph:deploy:local": "bash ./scripts/graph-deploy.sh --local",
+    "subgraph:deploy:remote": "bash ./scripts/graph-deploy.sh --remote"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.97.1",

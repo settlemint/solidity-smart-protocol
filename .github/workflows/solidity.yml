@@ -149,7 +149,6 @@ jobs:
           yq: latest
 
       - name: Build the subgraph
-        working-directory: subgraph
         run: |
           npm run subgraph:deploy:local
 

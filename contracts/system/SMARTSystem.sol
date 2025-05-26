@@ -189,48 +189,56 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         if (complianceImplementation_ == address(0)) revert ComplianceImplementationNotSet();
         _checkInterface(complianceImplementation_, _ISMART_COMPLIANCE_ID); // Ensure it supports ISMARTCompliance
         _complianceImplementation = complianceImplementation_;
+        emit ComplianceImplementationUpdated(initialAdmin_, _complianceImplementation);
 
         // Validate and set the identity registry implementation address.
         if (identityRegistryImplementation_ == address(0)) revert IdentityRegistryImplementationNotSet();
         _checkInterface(identityRegistryImplementation_, _ISMART_IDENTITY_REGISTRY_ID); // Ensure it supports
             // ISMARTIdentityRegistry
         _identityRegistryImplementation = identityRegistryImplementation_;
+        emit IdentityRegistryImplementationUpdated(initialAdmin_, _identityRegistryImplementation);
 
         // Validate and set the identity registry storage implementation address.
         if (identityRegistryStorageImplementation_ == address(0)) revert IdentityRegistryStorageImplementationNotSet();
         _checkInterface(identityRegistryStorageImplementation_, _IERC3643_IDENTITY_REGISTRY_STORAGE_ID); // Ensure it
             // supports IERC3643IdentityRegistryStorage
         _identityRegistryStorageImplementation = identityRegistryStorageImplementation_;
+        emit IdentityRegistryStorageImplementationUpdated(initialAdmin_, _identityRegistryStorageImplementation);
 
         // Validate and set the trusted issuers registry implementation address.
         if (trustedIssuersRegistryImplementation_ == address(0)) revert TrustedIssuersRegistryImplementationNotSet();
         _checkInterface(trustedIssuersRegistryImplementation_, _IERC3643_TRUSTED_ISSUERS_REGISTRY_ID); // Ensure it
             // supports IERC3643TrustedIssuersRegistry
         _trustedIssuersRegistryImplementation = trustedIssuersRegistryImplementation_;
+        emit TrustedIssuersRegistryImplementationUpdated(initialAdmin_, _trustedIssuersRegistryImplementation);
 
         // Validate and set the identity factory implementation address.
         if (identityFactoryImplementation_ == address(0)) revert IdentityFactoryImplementationNotSet();
         _checkInterface(identityFactoryImplementation_, _ISMART_IDENTITY_FACTORY_ID); // Ensure it supports
             // ISMARTIdentityFactory
         _identityFactoryImplementation = identityFactoryImplementation_;
+        emit IdentityFactoryImplementationUpdated(initialAdmin_, _identityFactoryImplementation);
 
         // Validate and set the token access manager implementation address.
         if (tokenAccessManagerImplementation_ == address(0)) revert TokenAccessManagerImplementationNotSet();
         _checkInterface(tokenAccessManagerImplementation_, _ISMART_TOKEN_ACCESS_MANAGER_ID); // Ensure it supports
             // ISMARTTokenAccessManager
         _tokenAccessManagerImplementation = tokenAccessManagerImplementation_;
+        emit TokenAccessManagerImplementationUpdated(initialAdmin_, _tokenAccessManagerImplementation);
 
         // Validate and set the standard identity implementation address.
         if (identityImplementation_ == address(0)) revert IdentityImplementationNotSet();
         _checkInterface(identityImplementation_, _IIDENTITY_ID); // Ensure it supports OnchainID's
             // IIdentity
         _identityImplementation = identityImplementation_;
+        emit IdentityImplementationUpdated(initialAdmin_, _identityImplementation);
 
         // Validate and set the token identity implementation address.
         if (tokenIdentityImplementation_ == address(0)) revert TokenIdentityImplementationNotSet();
         _checkInterface(tokenIdentityImplementation_, _IIDENTITY_ID); // Ensure it supports OnchainID's
             // IIdentity
         _tokenIdentityImplementation = tokenIdentityImplementation_;
+        emit TokenIdentityImplementationUpdated(initialAdmin_, _tokenIdentityImplementation);
     }
 
     // --- Bootstrap Function ---
