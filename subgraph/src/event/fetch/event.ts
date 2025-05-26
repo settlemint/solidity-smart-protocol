@@ -1,5 +1,5 @@
 import { Bytes, ethereum, log } from "@graphprotocol/graph-ts";
-import { Event, EventValue } from "../../../../generated/schema";
+import { Event, EventValue } from "../../../generated/schema";
 import { fetchAccount } from "../../account/fetch/account";
 
 function convertEthereumValue(value: ethereum.Value): string {

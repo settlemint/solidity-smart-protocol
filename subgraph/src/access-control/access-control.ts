@@ -3,7 +3,7 @@ import {
   RoleAdminChanged,
   RoleGranted,
   RoleRevoked,
-} from "../../../generated/templates/AccessControl/AccessControl";
+} from "../../generated/templates/AccessControl/AccessControl";
 import { fetchAccount } from "../account/fetch/account";
 import { fetchEvent } from "../event/fetch/event";
 import { fetchAccessControl } from "./fetch/accesscontrol";

@@ -9,7 +9,7 @@ import {
   TokenFactoryCreated,
   TokenIdentityImplementationUpdated,
   TrustedIssuersRegistryImplementationUpdated,
-} from "../../../generated/templates/System/System";
+} from "../../generated/templates/System/System";
 import { fetchEvent } from "../event/fetch/event";
 
 export function handleBootstrapped(event: Bootstrapped): void {
