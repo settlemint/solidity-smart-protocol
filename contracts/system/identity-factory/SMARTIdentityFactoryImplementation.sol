@@ -38,7 +38,7 @@ import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 ///      `SMARTTokenIdentityProxy` for tokens) at deterministic addresses. These proxies point to logic implementations
 ///      whose addresses are provided by the central `ISMARTSystem` contract, enabling upgradeability of the identity
 /// logic.
-///      The factory uses `AccessControlEnumerableUpgradeable` for role-based access control, notably the
+///      The factory uses `AccessControlUpgradeable` for role-based access control, notably the
 /// `REGISTRAR_ROLE`
 ///      for creating identities. It is also `ERC2771ContextUpgradeable` for meta-transaction support.
 ///      The identities created are based on the ERC725 (OnchainID) standard, managed via ERC734 for key management.
@@ -598,7 +598,7 @@ contract SMARTIdentityFactoryImplementation is
     /// contract implements.
     /// It declares support for the `ISMARTIdentityFactory` interface and any interfaces supported by its parent
     /// contracts
-    /// (like `AccessControlEnumerableUpgradeable` and `ERC165Upgradeable`).
+    /// (like `AccessControlUpgradeable` and `ERC165Upgradeable`).
     /// @param interfaceId The interface identifier (bytes4) to check.
     /// @return `true` if the contract supports the `interfaceId`, `false` otherwise.
     function supportsInterface(bytes4 interfaceId)

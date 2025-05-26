@@ -7,8 +7,6 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { AccessControlUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 // Interface import
 import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
@@ -19,9 +17,9 @@ import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMART
 ///         delegate these checks to an instance of this `SMARTTokenAccessManager`.
 ///         This promotes consistency, simplifies role management (as roles are managed in one place),
 ///         and can save gas by deploying this logic once and reusing it.
-/// @dev This contract inherits from OpenZeppelin's `AccessControlEnumerableUpgradeable` to get robust
-///      role-based access control features (like granting, revoking, renouncing roles, and enumerating
-///      role members) and `ERC2771ContextUpgradeable` to support meta-transactions.
+/// @dev This contract inherits from OpenZeppelin's `AccessControlUpgradeable` to get robust
+///      role-based access control features (like granting, revoking, renouncing roles) and 
+///      `ERC2771ContextUpgradeable` to support meta-transactions.
 ///      It is designed to be upgradeable using a Transparent Proxy Pattern.
 ///      Meta-transactions allow users to interact with contracts without needing ETH for gas fees,
 ///      as a trusted "forwarder" can relay their transactions.
@@ -159,8 +157,8 @@ contract SMARTTokenAccessManagerImplementation is
     /// @dev This function allows other contracts to query if this contract implements a specific interface,
     ///      adhering to the ERC165 standard (Standard Interface Detection).
     ///      It checks if the given `interfaceId` matches `type(ISMARTTokenAccessManager).interfaceId`
-    ///      or any interface supported by its parent `AccessControlEnumerableUpgradeable` (which includes ERC165 itself
-    ///      and `IAccessControlEnumerableUpgradeable`).
+    ///      or any interface supported by its parent `AccessControlUpgradeable` (which includes ERC165 itself
+    ///      and `IAccessControl`).
     /// @param interfaceId The bytes4 identifier of the interface to check for support.
     /// @return `true` if the contract supports the interface, `false` otherwise.
     function supportsInterface(bytes4 interfaceId)

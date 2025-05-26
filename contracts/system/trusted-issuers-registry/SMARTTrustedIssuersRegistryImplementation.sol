@@ -31,7 +31,7 @@ import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 /// Key features:
 /// -   **Upgradeable:** Uses the UUPS (Universal Upgradeable Proxy Standard) pattern, allowing the logic to be
 ///     updated without changing the contract address or losing data.
-/// -   **Access Control:** Leverages `AccessControlEnumerableUpgradeable` from OpenZeppelin. A `REGISTRAR_ROLE` is
+/// -   **Access Control:** Leverages `AccessControlUpgradeable` from OpenZeppelin. A `REGISTRAR_ROLE` is
 ///     defined, which grants permission to add, remove, and update trusted issuers and their claim topics.
 ///     The `DEFAULT_ADMIN_ROLE` can manage who holds the `REGISTRAR_ROLE`.
 /// -   **Efficient Lookups:** Maintains mappings to quickly find all trusted issuers for a given claim topic
@@ -612,7 +612,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
     /// It checks for:
     /// 1.  `type(IERC3643TrustedIssuersRegistry).interfaceId`: Confirms adherence to the ERC-3643 standard for
     ///     trusted issuer registries.
-    /// 2.  Interfaces supported by parent contracts (e.g., `AccessControlEnumerableUpgradeable`, `ERC165Upgradeable`)
+    /// 2.  Interfaces supported by parent contracts (e.g., `AccessControlUpgradeable`, `ERC165Upgradeable`)
     ///     via `super.supportsInterface(interfaceId)`.
     /// Crucial for interoperability, allowing other components to verify compatibility.
     /// @param interfaceId The EIP-165 interface identifier (`bytes4`) to check.

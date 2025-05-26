@@ -63,7 +63,7 @@ error IdentityRegistryNotBound(address registryAddress);
 /// @dev This contract implements `IERC3643IdentityRegistryStorage`, a standard interface for storing data related to
 /// ERC-3643 compliant identity registries. This includes mapping user wallet addresses to their `IIdentity` contracts
 /// (which hold identity claims like KYC/AML status) and their country codes (for compliance purposes).
-/// It uses `AccessControlEnumerableUpgradeable` to manage permissions:
+/// It uses `AccessControlUpgradeable` to manage permissions:
 ///    - `DEFAULT_ADMIN_ROLE`: This role has the highest level of control. It can grant or revoke any other role,
 ///      including `MANAGE_REGISTRIES_ROLE`. Typically held by a secure multi-signature wallet or a DAO.
 ///    - `MANAGE_REGISTRIES_ROLE`: This role is responsible for managing which `SMARTIdentityRegistry` contracts
@@ -617,7 +617,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// It checks if the `interfaceId` matches:
     /// 1.  `type(IERC3643IdentityRegistryStorage).interfaceId`: This confirms that the contract adheres to the
     ///     standard interface for ERC-3643 compliant identity registry storage.
-    /// 2.  Any interfaces supported by its parent contracts (e.g., `AccessControlEnumerableUpgradeable`,
+    /// 2.  Any interfaces supported by its parent contracts (e.g., `AccessControlUpgradeable`,
     ///     `ERC165Upgradeable` itself) by calling `super.supportsInterface(interfaceId)`.
     /// This is crucial for interoperability within the ecosystem, allowing, for example, a `SMARTIdentityRegistry`
     /// to verify that it's interacting with a compatible storage contract.

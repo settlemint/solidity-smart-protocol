@@ -32,7 +32,7 @@ import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 /// and their associated data, adhering to the ERC-3643 standard for tokenized assets.
 /// @dev This implementation relies on separate contracts for storing identity data (`IERC3643IdentityRegistryStorage`)
 /// and for managing trusted claim issuers (`IERC3643TrustedIssuersRegistry`).
-/// It uses OpenZeppelin's `AccessControlEnumerableUpgradeable` for role-based access control,
+/// It uses OpenZeppelin's `AccessControlUpgradeable` for role-based access control,
 /// `ERC2771ContextUpgradeable` for meta-transaction support (allowing transactions to be relayed by a trusted
 /// forwarder),
 /// and is designed to be upgradeable using the UUPS (Universal Upgradeable Proxy Standard) pattern.
@@ -113,7 +113,7 @@ contract SMARTIdentityRegistryImplementation is
     /// (typically called via a proxy).
     /// @dev This function sets up the core components of the identity registry:
     /// 1.  Initializes `ERC165Upgradeable` for interface detection.
-    /// 2.  Initializes `AccessControlEnumerableUpgradeable` for role-based access management.
+    /// 2.  Initializes `AccessControlUpgradeable` for role-based access management.
     /// 3.  Grants the `DEFAULT_ADMIN_ROLE` and `REGISTRAR_ROLE` to the `initialAdmin` address.
     ///     The `DEFAULT_ADMIN_ROLE` allows managing other roles and system parameters.
     ///     The `REGISTRAR_ROLE` allows managing identities.
