@@ -5,7 +5,6 @@ import { Test } from "forge-std/Test.sol";
 import { AbstractComplianceModule } from "../../../../contracts/system/compliance/modules/AbstractComplianceModule.sol";
 import { ISMARTComplianceModule } from "../../../../contracts/interface/ISMARTComplianceModule.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { IAccessControlEnumerable } from "@openzeppelin/contracts/access/extensions/IAccessControlEnumerable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 contract TestComplianceModule is AbstractComplianceModule {

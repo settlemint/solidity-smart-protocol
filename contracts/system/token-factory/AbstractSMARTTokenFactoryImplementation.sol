@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity 0.8.28;
 
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
@@ -30,7 +30,7 @@ import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 abstract contract AbstractSMARTTokenFactoryImplementation is
     ERC2771ContextUpgradeable,
     ERC165Upgradeable,
-    AccessControlEnumerableUpgradeable,
+    AccessControlUpgradeable,
     ISMARTTokenFactory
 {
     /// @notice Error when a predicted CREATE2 address is already marked as deployed by this factory.
@@ -354,7 +354,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable, IERC165)
+        override(AccessControlUpgradeable, ERC165Upgradeable, IERC165)
         returns (bool)
     {
         return interfaceId == type(ISMARTTokenFactory).interfaceId || super.supportsInterface(interfaceId);

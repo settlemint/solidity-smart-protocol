@@ -4,8 +4,8 @@ pragma solidity ^0.8.28;
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 // import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -31,7 +31,7 @@ import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 /// Key features:
 /// -   **Upgradeable:** Uses the UUPS (Universal Upgradeable Proxy Standard) pattern, allowing the logic to be
 ///     updated without changing the contract address or losing data.
-/// -   **Access Control:** Leverages `AccessControlEnumerableUpgradeable` from OpenZeppelin. A `REGISTRAR_ROLE` is
+/// -   **Access Control:** Leverages `AccessControlUpgradeable` from OpenZeppelin. A `REGISTRAR_ROLE` is
 ///     defined, which grants permission to add, remove, and update trusted issuers and their claim topics.
 ///     The `DEFAULT_ADMIN_ROLE` can manage who holds the `REGISTRAR_ROLE`.
 /// -   **Efficient Lookups:** Maintains mappings to quickly find all trusted issuers for a given claim topic
@@ -47,7 +47,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
     Initializable,
     ERC165Upgradeable,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable,
+    AccessControlUpgradeable,
     IERC3643TrustedIssuersRegistry
 {
     // --- Storage Variables ---
@@ -197,7 +197,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
     /// This address will have full control over the registry's setup and initial population of trusted issuers.
     function initialize(address initialAdmin) public initializer {
         __ERC165_init_unchained();
-        __AccessControlEnumerable_init_unchained();
+        __AccessControl_init_unchained();
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin); // Manually grant DEFAULT_ADMIN_ROLE
         _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
@@ -612,7 +612,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
     /// It checks for:
     /// 1.  `type(IERC3643TrustedIssuersRegistry).interfaceId`: Confirms adherence to the ERC-3643 standard for
     ///     trusted issuer registries.
-    /// 2.  Interfaces supported by parent contracts (e.g., `AccessControlEnumerableUpgradeable`, `ERC165Upgradeable`)
+    /// 2.  Interfaces supported by parent contracts (e.g., `AccessControlUpgradeable`, `ERC165Upgradeable`)
     ///     via `super.supportsInterface(interfaceId)`.
     /// Crucial for interoperability, allowing other components to verify compatibility.
     /// @param interfaceId The EIP-165 interface identifier (`bytes4`) to check.
@@ -621,7 +621,7 @@ contract SMARTTrustedIssuersRegistryImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable, IERC165) // Specifies primary parents being
+        override(AccessControlUpgradeable, ERC165Upgradeable, IERC165) // Specifies primary parents being
             // extended.
         returns (bool)
     {

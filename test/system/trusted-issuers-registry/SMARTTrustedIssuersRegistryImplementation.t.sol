@@ -11,8 +11,6 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { SMARTSystemRoles } from "../../../contracts/system/SMARTSystemRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 
 // Mock claim issuer for testing
 contract MockClaimIssuer {
@@ -396,23 +394,6 @@ contract SMARTTrustedIssuersRegistryImplementationTest is Test {
         assertNotEq(address(implementation), address(0));
     }
 
-    function test_AccessControlEnumeration() public view {
-        // Verify role enumeration works
-        assertEq(
-            AccessControlEnumerableUpgradeable(address(registry)).getRoleMemberCount(
-                SMARTSystemRoles.DEFAULT_ADMIN_ROLE
-            ),
-            1
-        );
-        assertEq(
-            AccessControlEnumerableUpgradeable(address(registry)).getRoleMemberCount(SMARTSystemRoles.REGISTRAR_ROLE), 2
-        ); // admin + registrar
-
-        assertEq(
-            AccessControlEnumerableUpgradeable(address(registry)).getRoleMember(SMARTSystemRoles.DEFAULT_ADMIN_ROLE, 0),
-            admin
-        );
-    }
 
     function test_RemovalWithSwapAndPop() public {
         // Test the internal swap-and-pop logic by adding multiple issuers to same topic

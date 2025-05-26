@@ -6,7 +6,6 @@ import "../../../contracts/system/token-factory/AbstractSMARTTokenFactoryImpleme
 import "../../../contracts/system/token-factory/ISMARTTokenFactory.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
-import "@openzeppelin/contracts/access/extensions/IAccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 
 // Simple concrete implementation for testing
@@ -86,7 +85,6 @@ contract AbstractSMARTTokenFactoryImplementationSimpleTest is Test {
     function testInheritanceStructure() public view {
         // Test that the contract supports expected interfaces from inheritance
         assertTrue(factory.supportsInterface(type(IAccessControl).interfaceId));
-        assertTrue(factory.supportsInterface(type(IAccessControlEnumerable).interfaceId));
     }
 
     function testCalculateSaltDeterministic() public view {

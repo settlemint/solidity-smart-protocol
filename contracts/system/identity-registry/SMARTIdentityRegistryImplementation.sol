@@ -4,8 +4,8 @@ pragma solidity ^0.8.28;
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 // import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -32,14 +32,14 @@ import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 /// and their associated data, adhering to the ERC-3643 standard for tokenized assets.
 /// @dev This implementation relies on separate contracts for storing identity data (`IERC3643IdentityRegistryStorage`)
 /// and for managing trusted claim issuers (`IERC3643TrustedIssuersRegistry`).
-/// It uses OpenZeppelin's `AccessControlEnumerableUpgradeable` for role-based access control,
+/// It uses OpenZeppelin's `AccessControlUpgradeable` for role-based access control,
 /// `ERC2771ContextUpgradeable` for meta-transaction support (allowing transactions to be relayed by a trusted
 /// forwarder),
 /// and is designed to be upgradeable using the UUPS (Universal Upgradeable Proxy Standard) pattern.
 contract SMARTIdentityRegistryImplementation is
     Initializable,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable,
+    AccessControlUpgradeable,
     ISMARTIdentityRegistry
 {
     // --- Storage References ---
@@ -113,7 +113,7 @@ contract SMARTIdentityRegistryImplementation is
     /// (typically called via a proxy).
     /// @dev This function sets up the core components of the identity registry:
     /// 1.  Initializes `ERC165Upgradeable` for interface detection.
-    /// 2.  Initializes `AccessControlEnumerableUpgradeable` for role-based access management.
+    /// 2.  Initializes `AccessControlUpgradeable` for role-based access management.
     /// 3.  Grants the `DEFAULT_ADMIN_ROLE` and `REGISTRAR_ROLE` to the `initialAdmin` address.
     ///     The `DEFAULT_ADMIN_ROLE` allows managing other roles and system parameters.
     ///     The `REGISTRAR_ROLE` allows managing identities.
@@ -139,7 +139,7 @@ contract SMARTIdentityRegistryImplementation is
         // Initialize ERC165 for interface detection support in an upgradeable context.
         __ERC165_init_unchained();
         // Initialize AccessControl for role-based permissions in an upgradeable context.
-        __AccessControlEnumerable_init_unchained();
+        __AccessControl_init_unchained();
         // ERC2771Context is initialized by its constructor during contract creation.
 
         // Grant the caller (initialAdmin) the default admin role, allowing them to manage other roles.
@@ -595,7 +595,7 @@ contract SMARTIdentityRegistryImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable, IERC165) // Overrides the one in AccessControlEnumerableUpgradeable
+        override(AccessControlUpgradeable, IERC165) // Overrides the one in AccessControlUpgradeable
         returns (bool)
     {
         // Check for ISMARTIdentityRegistry interface and then delegate to parent contracts.
