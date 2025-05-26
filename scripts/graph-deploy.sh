@@ -95,3 +95,5 @@ npx graph deploy --version-label "v1.0.$(date +%s)" --node http://localhost:8020
 elif [ "$DEPLOY_ENV" == "remote" ]; then
 npx settlemint scs subgraph deploy
 fi
+
+cd ..
