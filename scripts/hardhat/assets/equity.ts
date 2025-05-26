@@ -32,9 +32,9 @@ export const createEquity = async () => {
 	};
 
 	if (tokenAddress && tokenIdentity && accessManager) {
-		console.log("Equity address:", tokenAddress);
-		console.log("Equity identity:", tokenIdentity);
-		console.log("Equity access manager:", accessManager);
+		console.log("[Equity] address:", tokenAddress);
+		console.log("[Equity] identity:", tokenIdentity);
+		console.log("[Equity] access manager:", accessManager);
 
 		// needs to be done so that he can add the claims
 		await grantClaimManagerRole(accessManager, owner.address);

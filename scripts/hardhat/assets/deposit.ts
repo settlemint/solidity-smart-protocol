@@ -30,9 +30,9 @@ export const createDeposit = async () => {
 	};
 
 	if (tokenAddress && tokenIdentity && accessManager) {
-		console.log("Deposit address:", tokenAddress);
-		console.log("Deposit identity:", tokenIdentity);
-		console.log("Deposit access manager:", accessManager);
+		console.log("[Deposit] address:", tokenAddress);
+		console.log("[Deposit] identity:", tokenIdentity);
+		console.log("[Deposit] access manager:", accessManager);
 
 		// needs to be done so that he can add the claims
 		await grantClaimManagerRole(accessManager, owner.address);

@@ -31,9 +31,9 @@ export const createStablecoin = async () => {
 	};
 
 	if (tokenAddress && tokenIdentity && accessManager) {
-		console.log("Stablecoin address:", tokenAddress);
-		console.log("Stablecoin identity:", tokenIdentity);
-		console.log("Stablecoin access manager:", accessManager);
+		console.log("[Stablecoin] address:", tokenAddress);
+		console.log("[Stablecoin] identity:", tokenIdentity);
+		console.log("[Stablecoin] access manager:", accessManager);
 
 		// needs to be done so that he can add the claims
 		await grantClaimManagerRole(accessManager, owner.address);

@@ -33,9 +33,9 @@ export const createFund = async () => {
 	};
 
 	if (tokenAddress && tokenIdentity && accessManager) {
-		console.log("Fund address:", tokenAddress);
-		console.log("Fund identity:", tokenIdentity);
-		console.log("Fund access manager:", accessManager);
+		console.log("[Fund] address:", tokenAddress);
+		console.log("[Fund] identity:", tokenIdentity);
+		console.log("[Fund] access manager:", accessManager);
 
 		// needs to be done so that he can add the claims
 		await grantClaimManagerRole(accessManager, owner.address);

@@ -34,9 +34,9 @@ export const createBond = async (depositToken: Address) => {
 	};
 
 	if (tokenAddress && tokenIdentity && accessManager) {
-		console.log("Bond address:", tokenAddress);
-		console.log("Bond identity:", tokenIdentity);
-		console.log("Bond access manager:", accessManager);
+		console.log("[Bond] address:", tokenAddress);
+		console.log("[Bond] identity:", tokenIdentity);
+		console.log("[Bond] access manager:", accessManager);
 
 		// needs to be done so that he can add the claims
 		await grantClaimManagerRole(accessManager, owner.address);
