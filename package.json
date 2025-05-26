@@ -38,7 +38,7 @@
 		"deploy:local:test": "rm -Rf ignition/deployments/smart-protocol-local && settlemint scs hardhat script local --script scripts/hardhat/main.ts",
 		"lint": "solhint --config .solhint.json ./contracts/**/*.sol",
 		"format": "settlemint scs foundry format && prettier --write .",
-		"compile:forge": "settlemint scs foundry build --sizes",
+		"compile:forge": "settlemint scs foundry build --sizes && ./scripts/interfaceid.sh",
 		"compile:hardhat": "settlemint scs hardhat build",
 		"test": "forge test -vvv",
 		"coverage": "forge coverage --ir-minimum",

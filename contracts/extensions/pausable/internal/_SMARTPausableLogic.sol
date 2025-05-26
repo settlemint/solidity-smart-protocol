@@ -5,8 +5,6 @@ pragma solidity ^0.8.28;
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 // Custom errors for pausable logic
 import { TokenPaused, ExpectedPause } from "../SMARTPausableErrors.sol";
-// Events emitted on pause/unpause
-import { Paused, Unpaused } from "../SMARTPausableEvents.sol";
 // Interface for ERC165 registration and type compatibility
 import { ISMARTPausable } from "../ISMARTPausable.sol";
 

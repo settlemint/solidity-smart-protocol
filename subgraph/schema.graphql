@@ -104,4 +104,23 @@ type TokenFactory @entity(immutable: false) {
   type: String!
   system: System
   account: Account!
+  tokens: [Token!]! @derivedFrom(field: "tokenFactory")
+}
+
+type Token @entity(immutable: false) {
+  id: Bytes!
+  account: Account!
+  type: String!
+  tokenFactory: TokenFactory
+  name: String!
+  symbol: String!
+  decimals: Int!
+  totalSupply: BigDecimal!
+  totalSupplyExact: BigInt!
+  pausable: TokenPausable
+}
+
+type TokenPausable @entity(immutable: false) {
+  id: Bytes!
+  paused: Boolean!
 }
