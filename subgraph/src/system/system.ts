@@ -9,11 +9,33 @@ import {
   TokenFactoryCreated,
   TokenIdentityImplementationUpdated,
   TrustedIssuersRegistryImplementationUpdated,
-} from "../../generated/templates/System/System";
+} from "../../../generated/templates/System/System";
 import { fetchEvent } from "../event/fetch/event";
+import { fetchCompliance } from "./fetch/compliance";
+import { fetchIdentityFactory } from "./fetch/identity-factory";
+import { fetchIdentityRegistry } from "./fetch/identity-registry";
+import { fetchIdentityRegistryStorage } from "./fetch/identity-registry-storage";
+import { fetchSystem } from "./fetch/system";
+import { fetchTokenFactory } from "./fetch/token-factory";
+import { fetchTrustedIssuersRegistry } from "./fetch/trusted-issuers-registry";
 
 export function handleBootstrapped(event: Bootstrapped): void {
   fetchEvent(event, "Bootstrapped");
+  const system = fetchSystem(event.address);
+  system.compliance = fetchCompliance(event.params.complianceProxy).id;
+  system.identityRegistry = fetchIdentityRegistry(
+    event.params.identityRegistryProxy
+  ).id;
+  system.identityRegistryStorage = fetchIdentityRegistryStorage(
+    event.params.identityRegistryStorageProxy
+  ).id;
+  system.trustedIssuersRegistry = fetchTrustedIssuersRegistry(
+    event.params.trustedIssuersRegistryProxy
+  ).id;
+  system.identityFactory = fetchIdentityFactory(
+    event.params.identityFactoryProxy
+  ).id;
+  system.save();
 }
 
 export function handleComplianceImplementationUpdated(
@@ -54,6 +76,12 @@ export function handleTokenAccessManagerImplementationUpdated(
 
 export function handleTokenFactoryCreated(event: TokenFactoryCreated): void {
   fetchEvent(event, "TokenFactoryCreated");
+  const tokenFactory = fetchTokenFactory(
+    event.params.proxyAddress,
+    event.params.typeName
+  );
+  tokenFactory.system = fetchSystem(event.address).id;
+  tokenFactory.save();
 }
 
 export function handleTokenIdentityImplementationUpdated(
