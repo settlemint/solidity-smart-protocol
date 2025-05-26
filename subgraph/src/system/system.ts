@@ -10,13 +10,13 @@ import {
   TokenIdentityImplementationUpdated,
   TrustedIssuersRegistryImplementationUpdated,
 } from "../../../generated/templates/System/System";
-import { fetchAccount } from "../account/fetch/account";
 import { fetchEvent } from "../event/fetch/event";
 import { fetchCompliance } from "./fetch/compliance";
 import { fetchIdentityFactory } from "./fetch/identity-factory";
 import { fetchIdentityRegistry } from "./fetch/identity-registry";
 import { fetchIdentityRegistryStorage } from "./fetch/identity-registry-storage";
 import { fetchSystem } from "./fetch/system";
+import { fetchTokenFactory } from "./fetch/token-factory";
 import { fetchTrustedIssuersRegistry } from "./fetch/trusted-issuers-registry";
 
 export function handleBootstrapped(event: Bootstrapped): void {
@@ -42,20 +42,12 @@ export function handleComplianceImplementationUpdated(
   event: ComplianceImplementationUpdated
 ): void {
   fetchEvent(event, "ComplianceImplementationUpdated");
-  const compliance = fetchCompliance(event.address);
-  compliance.implementation = fetchAccount(event.params.newImplementation).id;
-  compliance.save();
 }
 
 export function handleIdentityFactoryImplementationUpdated(
   event: IdentityFactoryImplementationUpdated
 ): void {
   fetchEvent(event, "IdentityFactoryImplementationUpdated");
-  const identityFactory = fetchIdentityFactory(event.address);
-  identityFactory.implementation = fetchAccount(
-    event.params.newImplementation
-  ).id;
-  identityFactory.save();
 }
 
 export function handleIdentityImplementationUpdated(
@@ -68,22 +60,12 @@ export function handleIdentityRegistryImplementationUpdated(
   event: IdentityRegistryImplementationUpdated
 ): void {
   fetchEvent(event, "IdentityRegistryImplementationUpdated");
-  const identityRegistry = fetchIdentityRegistry(event.address);
-  identityRegistry.implementation = fetchAccount(
-    event.params.newImplementation
-  ).id;
-  identityRegistry.save();
 }
 
 export function handleIdentityRegistryStorageImplementationUpdated(
   event: IdentityRegistryStorageImplementationUpdated
 ): void {
   fetchEvent(event, "IdentityRegistryStorageImplementationUpdated");
-  const identityRegistryStorage = fetchIdentityRegistryStorage(event.address);
-  identityRegistryStorage.implementation = fetchAccount(
-    event.params.newImplementation
-  ).id;
-  identityRegistryStorage.save();
 }
 
 export function handleTokenAccessManagerImplementationUpdated(
@@ -94,6 +76,12 @@ export function handleTokenAccessManagerImplementationUpdated(
 
 export function handleTokenFactoryCreated(event: TokenFactoryCreated): void {
   fetchEvent(event, "TokenFactoryCreated");
+  const tokenFactory = fetchTokenFactory(
+    event.params.proxyAddress,
+    event.params.typeName
+  );
+  tokenFactory.system = fetchSystem(event.address).id;
+  tokenFactory.save();
 }
 
 export function handleTokenIdentityImplementationUpdated(
