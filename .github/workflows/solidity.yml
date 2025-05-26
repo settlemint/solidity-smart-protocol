@@ -79,11 +79,6 @@ jobs:
         if: always()
 
   test:
-    services:
-      foundry:
-        image: ghcr.io/settlemint/btp-anvil-test-node:latest
-        ports:
-          - "8545:8545"
     name: Build Set
     #runs-on: ubuntu-latest
     runs-on: namespace-profile-btp-scs
@@ -113,6 +108,9 @@ jobs:
             ./node_modules
             ~/.npm
             ~/.bun/install/cache
+
+      - name: Start Docker Compose
+        run: docker compose up -d
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
