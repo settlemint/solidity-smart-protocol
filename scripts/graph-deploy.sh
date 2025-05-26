@@ -91,7 +91,7 @@ cd subgraph
 npx graph codegen
 if [ "$DEPLOY_ENV" == "local" ]; then
 npx graph create --node http://localhost:8020 smart
-npx graph deploy --version-label "v1.0.$(date +%s)" --node http://localhost:8020 --ipfs https://ipfs.console.settlemint.com smart ./subgraph/subgraph.yaml
+npx graph deploy --version-label "v1.0.$(date +%s)" --node http://localhost:8020 --ipfs https://ipfs.console.settlemint.com smart subgraph.yaml
 elif [ "$DEPLOY_ENV" == "remote" ]; then
 npx settlemint scs subgraph deploy
 fi
