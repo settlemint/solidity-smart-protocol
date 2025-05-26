@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
-import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
-import { Redeemed } from "./../SMARTRedeemableEvents.sol";
-import { ISMARTRedeemable } from "./../ISMARTRedeemable.sol";
+import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
+import { Redeemed } from "../SMARTRedeemableEvents.sol";
+import { ISMARTRedeemable } from "../ISMARTRedeemable.sol";
 /// @title Internal Logic for SMART Redeemable Extension
 /// @notice This abstract contract provides the core, reusable logic for the redeemable token functionality.
 /// It allows token holders to burn (redeem) their own tokens.

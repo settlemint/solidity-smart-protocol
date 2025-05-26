@@ -1,4 +1,6 @@
+import { existsSync, rmSync } from "fs";
 import hre from "hardhat";
+import { join } from "path";
 import type {
   Abi,
   Address,
@@ -13,7 +15,6 @@ import { SMARTContracts } from "./constants/contracts";
 import { getDefaultWalletClient } from "./utils/default-signer";
 import { getContractInstance } from "./utils/get-contract";
 // --- Utility Imports ---
-import { getPublicClient } from "./utils/public-client";
 
 // Type for the keys of CONTRACT_METADATA, e.g., "system" | "compliance" | ...
 type ContractName = keyof Pick<
@@ -54,34 +55,91 @@ type DeployedContractAddresses = {
 };
 
 /**
+ * Configuration options for the SmartProtocolDeployer
+ */
+export interface DeployerOptions {
+  /** Whether to reset (clear) existing deployment before deploying */
+  reset?: boolean;
+  /** Custom deployment ID to use instead of default */
+  deploymentId?: string;
+  /** Whether to display deployment UI */
+  displayUi?: boolean;
+}
+
+/**
  * A singleton class to manage the deployment and access of SMART Protocol contracts.
  */
 export class SmartProtocolDeployer {
   private _deployedContractAddresses: DeployedContractAddresses | undefined;
   private _defaultWalletClient: WalletClient | undefined;
+  private _deploymentId: string;
 
   public constructor() {
     this._deployedContractAddresses = undefined;
     this._defaultWalletClient = undefined;
+    this._deploymentId = "smart-protocol-local"; // Default deployment ID
+  }
+
+  /**
+   * Clears the deployment folder for the given deployment ID
+   * @param deploymentId - The deployment ID to clear
+   */
+  private clearDeployment(deploymentId: string): void {
+    const deploymentPath = join(
+      hre.config.paths?.ignition || "ignition",
+      "deployments",
+      deploymentId
+    );
+
+    if (existsSync(deploymentPath)) {
+      console.log(`🧹 Clearing existing deployment: ${deploymentPath}`);
+      rmSync(deploymentPath, { recursive: true, force: true });
+      console.log(`✅ Deployment cleared successfully`);
+    } else {
+      console.log(`ℹ️ No existing deployment found at: ${deploymentPath}`);
+    }
   }
 
   /**
    * Deploys the SMARTOnboardingModule contracts using Hardhat Ignition.
    * Stores the Viem-typed contract instances internally.
-   * This method should only be called once.
+   * This method should only be called once unless reset is used.
    */
-  public async setUp(): Promise<void> {
-    if (this._deployedContractAddresses) {
+  public async setUp(options: DeployerOptions = {}): Promise<void> {
+    const { reset = false, deploymentId, displayUi = false } = options;
+
+    // Set deployment ID
+    if (deploymentId) {
+      this._deploymentId = deploymentId;
+    }
+
+    // Handle reset functionality
+    if (reset) {
+      console.log("🔄 Reset flag enabled - clearing existing deployment...");
+      this.clearDeployment(this._deploymentId);
+      // Also clear internal state
+      this._deployedContractAddresses = undefined;
+      this._defaultWalletClient = undefined;
+    }
+
+    if (this._deployedContractAddresses && !reset) {
       console.warn(
-        "SMARTOnboardingModule has already been deployed. Skipping setup."
+        "SMARTOnboardingModule has already been deployed. Skipping setup. Use reset option to redeploy."
       );
       return;
     }
-    console.log("Starting deployment of SMARTOnboardingModule...");
+
+    console.log("🚀 Starting deployment of SMARTOnboardingModule...");
+    console.log(`📁 Using deployment ID: ${this._deploymentId}`);
+
     try {
       // 1. Deploy contracts and get their addresses
       const deploymentAddresses = (await hre.ignition.deploy(
-        SMARTOnboardingModule
+        SMARTOnboardingModule,
+        {
+          deploymentId: this._deploymentId,
+          displayUi,
+        }
       )) as DeployedContractAddresses;
 
       // 2. Initialize the default wallet client
@@ -91,10 +149,14 @@ export class SmartProtocolDeployer {
       this._deployedContractAddresses = deploymentAddresses;
 
       console.log(
-        "SMARTOnboardingModule deployed successfully! Contract addresses and default signer initialized."
+        "✅ SMARTOnboardingModule deployed successfully! Contract addresses and default signer initialized."
       );
+      console.log(
+        `📂 Deployment artifacts stored in: ignition/deployments/${this._deploymentId}`
+      );
+
       if (this._deployedContractAddresses) {
-        console.log("Deployed Contracts Addresses:");
+        console.log("📋 Deployed Contract Addresses:");
         for (const [name, contractInfo] of Object.entries(
           this._deployedContractAddresses
         )) {
@@ -104,9 +166,30 @@ export class SmartProtocolDeployer {
         }
       }
     } catch (error) {
-      console.error("Failed to deploy SMARTOnboardingModule:", error);
+      console.error("❌ Failed to deploy SMARTOnboardingModule:", error);
       throw error; // Re-throw the error to indicate failure
     }
+  }
+
+  /**
+   * Gets the current deployment ID
+   */
+  public getDeploymentId(): string {
+    return this._deploymentId;
+  }
+
+  /**
+   * Sets a new deployment ID (useful for switching between different deployments)
+   */
+  public setDeploymentId(deploymentId: string): void {
+    this._deploymentId = deploymentId;
+  }
+
+  /**
+   * Checks if contracts are currently deployed
+   */
+  public isDeployed(): boolean {
+    return this._deployedContractAddresses !== undefined;
   }
 
   private getContract<K extends ContractName>(

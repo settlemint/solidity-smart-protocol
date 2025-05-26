@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 // OpenZeppelin imports
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // SMART interfaces
 import { ISMARTIdentityRegistry } from "./ISMARTIdentityRegistry.sol";
@@ -28,7 +29,8 @@ import { SMARTComplianceModuleParamPair } from "./structs/SMARTComplianceModuleP
 /// - Events for all significant state changes and operations.
 /// - Custom errors for specific failure conditions.
 /// This interface is intended to be implemented by concrete SMART token contracts.
-interface ISMART is IERC20, IERC20Metadata {
+/// This interface extends IERC165 for interface detection support.
+interface ISMART is IERC20, IERC20Metadata, IERC165 {
     // --- Custom Errors ---
     /// @notice Reverted when a token operation (like transfer or mint) is attempted, but the recipient
     ///         (or potentially sender, depending on the operation) does not meet the required identity verification

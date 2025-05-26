@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ISMARTHistoricalBalances } from "./../historical-balances/ISMARTHistoricalBalances.sol";
+import { ISMARTHistoricalBalances } from "../historical-balances/ISMARTHistoricalBalances.sol";
 
 /// @title Interface for the SMART Yield Extension
 /// @notice This interface defines the functions that a SMART Yield token extension must implement.

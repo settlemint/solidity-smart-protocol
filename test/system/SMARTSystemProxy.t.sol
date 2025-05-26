@@ -194,7 +194,7 @@ contract TestableSMARTSystemProxy is SMARTSystemProxy {
 
         // Only initialize if we have a valid implementation and not skipping
         if (!skipInitialization) {
-            try this.getImplementationPublic() returns (address implementation) {
+            try TestableSMARTSystemProxy(this).getImplementationPublic() returns (address implementation) {
                 if (implementation != address(0)) {
                     bytes memory initData = abi.encodeWithSelector(MockImplementation.initialize.selector, msg.sender);
                     _performInitializationDelegatecall(implementation, initData);

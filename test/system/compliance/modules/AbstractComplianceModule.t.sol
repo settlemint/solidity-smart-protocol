@@ -61,7 +61,7 @@ contract AbstractComplianceModuleTest is Test {
         module = new TestComplianceModule("Test Module");
     }
 
-    function test_Constructor() public {
+    function test_Constructor() public view {
         assertTrue(module.hasRole(module.DEFAULT_ADMIN_ROLE(), admin));
     }
 
@@ -73,7 +73,7 @@ contract AbstractComplianceModuleTest is Test {
         assertFalse(newModule.hasRole(newModule.DEFAULT_ADMIN_ROLE(), admin));
     }
 
-    function test_Name() public {
+    function test_Name() public view {
         assertEq(module.name(), "Test Module");
     }
 
@@ -119,7 +119,7 @@ contract AbstractComplianceModuleTest is Test {
         module.destroyed(tokenContract, user1, 100, "");
     }
 
-    function test_SupportsInterface() public {
+    function test_SupportsInterface() public view {
         assertTrue(module.supportsInterface(type(ISMARTComplianceModule).interfaceId));
         assertTrue(module.supportsInterface(type(IAccessControl).interfaceId));
         assertTrue(module.supportsInterface(type(IERC165).interfaceId));
@@ -167,7 +167,7 @@ contract AbstractComplianceModuleTest is Test {
         assertFalse(module.hasRole(newRole, user1));
     }
 
-    function test_GetRoleAdmin() public {
+    function test_GetRoleAdmin() public view {
         bytes32 newRole = keccak256("NEW_ROLE");
         assertEq(module.getRoleAdmin(newRole), module.DEFAULT_ADMIN_ROLE());
     }

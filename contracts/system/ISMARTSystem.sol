@@ -12,6 +12,71 @@ pragma solidity ^0.8.28;
 /// because they enable these components to be upgraded in the future without altering the addresses that other parts
 /// of the system use to interact with them, ensuring stability and maintainability.
 interface ISMARTSystem {
+    // --- Events ---
+    // Events are signals emitted by the contract that can be listened to by external applications or other contracts.
+    // They are a way to log important state changes or actions.
+
+    /// @notice Emitted when the implementation (logic contract) for the compliance module is updated.
+    /// @param sender The address that called the `updateComplianceImplementation` function.
+    /// @param newImplementation The address of the new compliance module implementation contract.
+    event ComplianceImplementationUpdated(address indexed sender, address indexed newImplementation);
+    /// @notice Emitted when the implementation (logic contract) for the identity registry module is updated.
+    /// @param sender The address that called the `updateIdentityRegistryImplementation` function.
+    /// @param newImplementation The address of the new identity registry module implementation contract.
+    event IdentityRegistryImplementationUpdated(address indexed sender, address indexed newImplementation);
+    /// @notice Emitted when the implementation (logic contract) for the identity registry storage module is updated.
+    /// @param sender The address that called the `updateIdentityRegistryStorageImplementation` function.
+    /// @param newImplementation The address of the new identity registry storage module implementation contract.
+    event IdentityRegistryStorageImplementationUpdated(address indexed sender, address indexed newImplementation);
+    /// @notice Emitted when the implementation (logic contract) for the trusted issuers registry module is updated.
+    /// @param sender The address that called the `updateTrustedIssuersRegistryImplementation` function.
+    /// @param newImplementation The address of the new trusted issuers registry module implementation contract.
+    event TrustedIssuersRegistryImplementationUpdated(address indexed sender, address indexed newImplementation);
+    /// @notice Emitted when the implementation (logic contract) for the identity factory module is updated.
+    /// @param sender The address that called the `updateIdentityFactoryImplementation` function.
+    /// @param newImplementation The address of the new identity factory module implementation contract.
+    event IdentityFactoryImplementationUpdated(address indexed sender, address indexed newImplementation);
+    /// @notice Emitted when the implementation (logic contract) for the standard identity module is updated.
+    /// @dev Standard identity contracts are typically used to represent users or general entities.
+    /// @param sender The address that called the `updateIdentityImplementation` function.
+    /// @param newImplementation The address of the new standard identity module implementation contract.
+    event IdentityImplementationUpdated(address indexed sender, address indexed newImplementation);
+    /// @notice Emitted when the implementation (logic contract) for the token identity module is updated.
+    /// @dev Token identity contracts might be specialized identities associated with specific tokens.
+    /// @param sender The address that called the `updateTokenIdentityImplementation` function.
+    /// @param newImplementation The address of the new token identity module implementation contract.
+    event TokenIdentityImplementationUpdated(address indexed sender, address indexed newImplementation);
+    /// @notice Emitted when the implementation (logic contract) for the token access manager module is updated.
+    /// @param sender The address that called the `updateTokenAccessManagerImplementation` function.
+    /// @param newImplementation The address of the new token access manager module implementation contract.
+    event TokenAccessManagerImplementationUpdated(address indexed sender, address indexed newImplementation);
+    /// @notice Emitted when the `bootstrap` function has been successfully executed, creating and linking proxy
+    /// contracts
+    /// for all core modules of the SMARTSystem.
+    /// @param sender The address that called the `bootstrap` function.
+    /// @param complianceProxy The address of the deployed SMARTComplianceProxy contract.
+    /// @param identityRegistryProxy The address of the deployed SMARTIdentityRegistryProxy contract.
+    /// @param identityRegistryStorageProxy The address of the deployed SMARTIdentityRegistryStorageProxy contract.
+    /// @param trustedIssuersRegistryProxy The address of the deployed SMARTTrustedIssuersRegistryProxy contract.
+    /// @param identityFactoryProxy The address of the deployed SMARTIdentityFactoryProxy contract.
+    event Bootstrapped(
+        address indexed sender,
+        address indexed complianceProxy,
+        address indexed identityRegistryProxy,
+        address identityRegistryStorageProxy,
+        address trustedIssuersRegistryProxy,
+        address identityFactoryProxy
+    );
+
+    /// @notice Emitted when a SMARTTokenFactory is registered.
+    /// @param sender The address that registered the token factory.
+    /// @param typeName The human-readable type name of the token factory.
+    /// @param proxyAddress The address of the deployed token factory proxy.
+    /// @param implementationAddress The address of the deployed token factory implementation.
+    event TokenFactoryCreated(
+        address indexed sender, string typeName, address proxyAddress, address implementationAddress, uint256 timestamp
+    );
+
     /// @notice Initializes and sets up the entire SMART Protocol system.
     /// @dev This function is responsible for the initial deployment and configuration of the SMART Protocol.
     /// This involves deploying necessary smart contracts, setting initial parameters, and defining the relationships

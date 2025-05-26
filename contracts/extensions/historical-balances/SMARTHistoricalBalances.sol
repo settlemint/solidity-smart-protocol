@@ -5,8 +5,8 @@ pragma solidity ^0.8.28;
 // import { Context } from "@openzeppelin/contracts/utils/Context.sol"; // Context is inherited via SMARTExtension
 
 // Base contract imports
-import { SMARTExtension } from "./../common/SMARTExtension.sol"; // Provides base functionalities for SMART extensions
-import { SMARTHooks } from "./../common/SMARTHooks.sol"; // Defines common hooks like _afterMint, _afterBurn
+import { SMARTExtension } from "../common/SMARTExtension.sol"; // Provides base functionalities for SMART extensions
+import { SMARTHooks } from "../common/SMARTHooks.sol"; // Defines common hooks like _afterMint, _afterBurn
 
 // Internal implementation imports
 import { _SMARTHistoricalBalancesLogic } from "./internal/_SMARTHistoricalBalancesLogic.sol"; // Contains core logic

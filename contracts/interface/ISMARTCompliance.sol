@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { SMARTComplianceModuleParamPair } from "./structs/SMARTComplianceModuleParamPair.sol";
 
 /// @title ISMART Compliance Oracle Interface
@@ -15,7 +16,8 @@ import { SMARTComplianceModuleParamPair } from "./structs/SMARTComplianceModuleP
 /// - Module Validation: Functions to validate compliance modules before they are added to a token's configuration.
 /// This contract itself usually doesn't implement specific rules but delegates them to individual
 /// `ISMARTComplianceModule` contracts.
-interface ISMARTCompliance {
+/// This interface extends IERC165 for interface detection support.
+interface ISMARTCompliance is IERC165 {
     // --- Errors ---
     /// @notice Error indicating that a provided address is not a valid compliance module.
     /// @dev This error is typically reverted when a contract address provided as a compliance module

@@ -144,7 +144,7 @@ contract SMARTSystemTest is Test {
     function test_SetComplianceImplementation() public {
         vm.prank(admin);
         vm.expectEmit(true, true, false, false);
-        emit SMARTSystem.ComplianceImplementationUpdated(admin, address(complianceImpl));
+        emit ISMARTSystem.ComplianceImplementationUpdated(admin, address(complianceImpl));
 
         smartSystem.setComplianceImplementation(address(complianceImpl));
         assertEq(smartSystem.complianceImplementation(), address(complianceImpl));
@@ -171,7 +171,7 @@ contract SMARTSystemTest is Test {
     function test_SetIdentityRegistryImplementation() public {
         vm.prank(admin);
         vm.expectEmit(true, true, false, false);
-        emit SMARTSystem.IdentityRegistryImplementationUpdated(admin, address(identityRegistryImpl));
+        emit ISMARTSystem.IdentityRegistryImplementationUpdated(admin, address(identityRegistryImpl));
 
         smartSystem.setIdentityRegistryImplementation(address(identityRegistryImpl));
         assertEq(smartSystem.identityRegistryImplementation(), address(identityRegistryImpl));
@@ -192,7 +192,7 @@ contract SMARTSystemTest is Test {
     function test_SetIdentityRegistryStorageImplementation() public {
         vm.prank(admin);
         vm.expectEmit(true, true, false, false);
-        emit SMARTSystem.IdentityRegistryStorageImplementationUpdated(admin, address(identityRegistryStorageImpl));
+        emit ISMARTSystem.IdentityRegistryStorageImplementationUpdated(admin, address(identityRegistryStorageImpl));
 
         smartSystem.setIdentityRegistryStorageImplementation(address(identityRegistryStorageImpl));
         assertEq(smartSystem.identityRegistryStorageImplementation(), address(identityRegistryStorageImpl));
@@ -201,7 +201,7 @@ contract SMARTSystemTest is Test {
     function test_SetTrustedIssuersRegistryImplementation() public {
         vm.prank(admin);
         vm.expectEmit(true, true, false, false);
-        emit SMARTSystem.TrustedIssuersRegistryImplementationUpdated(admin, address(trustedIssuersRegistryImpl));
+        emit ISMARTSystem.TrustedIssuersRegistryImplementationUpdated(admin, address(trustedIssuersRegistryImpl));
 
         smartSystem.setTrustedIssuersRegistryImplementation(address(trustedIssuersRegistryImpl));
         assertEq(smartSystem.trustedIssuersRegistryImplementation(), address(trustedIssuersRegistryImpl));
@@ -210,7 +210,7 @@ contract SMARTSystemTest is Test {
     function test_SetIdentityFactoryImplementation() public {
         vm.prank(admin);
         vm.expectEmit(true, true, false, false);
-        emit SMARTSystem.IdentityFactoryImplementationUpdated(admin, address(identityFactoryImpl));
+        emit ISMARTSystem.IdentityFactoryImplementationUpdated(admin, address(identityFactoryImpl));
 
         smartSystem.setIdentityFactoryImplementation(address(identityFactoryImpl));
         assertEq(smartSystem.identityFactoryImplementation(), address(identityFactoryImpl));
@@ -219,7 +219,7 @@ contract SMARTSystemTest is Test {
     function test_SetIdentityImplementation() public {
         vm.prank(admin);
         vm.expectEmit(true, true, false, false);
-        emit SMARTSystem.IdentityImplementationUpdated(admin, address(identityImpl));
+        emit ISMARTSystem.IdentityImplementationUpdated(admin, address(identityImpl));
 
         smartSystem.setIdentityImplementation(address(identityImpl));
         assertEq(smartSystem.identityImplementation(), address(identityImpl));
@@ -228,7 +228,7 @@ contract SMARTSystemTest is Test {
     function test_SetTokenIdentityImplementation() public {
         vm.prank(admin);
         vm.expectEmit(true, true, false, false);
-        emit SMARTSystem.TokenIdentityImplementationUpdated(admin, address(tokenIdentityImpl));
+        emit ISMARTSystem.TokenIdentityImplementationUpdated(admin, address(tokenIdentityImpl));
 
         smartSystem.setTokenIdentityImplementation(address(tokenIdentityImpl));
         assertEq(smartSystem.tokenIdentityImplementation(), address(tokenIdentityImpl));
@@ -237,7 +237,7 @@ contract SMARTSystemTest is Test {
     function test_SetTokenAccessManagerImplementation() public {
         vm.prank(admin);
         vm.expectEmit(true, true, false, false);
-        emit SMARTSystem.TokenAccessManagerImplementationUpdated(admin, address(tokenAccessManagerImpl));
+        emit ISMARTSystem.TokenAccessManagerImplementationUpdated(admin, address(tokenAccessManagerImpl));
 
         smartSystem.setTokenAccessManagerImplementation(address(tokenAccessManagerImpl));
         assertEq(smartSystem.tokenAccessManagerImplementation(), address(tokenAccessManagerImpl));

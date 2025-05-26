@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 // Base contract imports
-import { SMARTExtension } from "./../common/SMARTExtension.sol";
+import { SMARTExtension } from "../common/SMARTExtension.sol";
 
 // Internal implementation imports
 import { _SMARTBurnableLogic } from "./internal/_SMARTBurnableLogic.sol";

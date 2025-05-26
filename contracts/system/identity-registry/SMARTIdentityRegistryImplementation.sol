@@ -16,11 +16,11 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 
 // Interface imports
-import { ISMARTIdentityRegistry } from "./../../interface/ISMARTIdentityRegistry.sol";
-import { ISMART } from "./../../interface/ISMART.sol";
+import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
+import { ISMART } from "../../interface/ISMART.sol";
 
-import { IERC3643IdentityRegistryStorage } from "./../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
-import { IERC3643TrustedIssuersRegistry } from "./../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { IERC3643IdentityRegistryStorage } from "../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { IERC3643TrustedIssuersRegistry } from "../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 
 // Constants
 import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
@@ -595,7 +595,7 @@ contract SMARTIdentityRegistryImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable) // Overrides the one in AccessControlEnumerableUpgradeable
+        override(AccessControlEnumerableUpgradeable, IERC165) // Overrides the one in AccessControlEnumerableUpgradeable
         returns (bool)
     {
         // Check for ISMARTIdentityRegistry interface and then delegate to parent contracts.

@@ -354,7 +354,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable)
+        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable, IERC165)
         returns (bool)
     {
         return interfaceId == type(ISMARTTokenFactory).interfaceId || super.supportsInterface(interfaceId);

@@ -3,7 +3,7 @@ pragma solidity 0.8.28;
 
 import { SMARTFixedYieldSchedule } from "./SMARTFixedYieldSchedule.sol";
 import { ISMARTFixedYieldSchedule } from "./ISMARTFixedYieldSchedule.sol";
-import { ISMARTYield } from "./../../ISMARTYield.sol";
+import { ISMARTYield } from "../../ISMARTYield.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 

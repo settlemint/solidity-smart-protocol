@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
-import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
-import { FutureLookup } from "./../SMARTHistoricalBalancesErrors.sol";
-import { ISMARTHistoricalBalances } from "./../ISMARTHistoricalBalances.sol";
-import { CheckpointUpdated } from "./../SMARTHistoricalBalancesEvents.sol";
+import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
+import { FutureLookup } from "../SMARTHistoricalBalancesErrors.sol";
+import { ISMARTHistoricalBalances } from "../ISMARTHistoricalBalances.sol";
+import { CheckpointUpdated } from "../SMARTHistoricalBalancesEvents.sol";
 
 import { Checkpoints } from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";

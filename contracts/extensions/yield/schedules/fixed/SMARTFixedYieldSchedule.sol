@@ -9,7 +9,7 @@ import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.so
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { ISMARTFixedYieldSchedule } from "./ISMARTFixedYieldSchedule.sol";
-import { ISMARTYield } from "./../../ISMARTYield.sol";
+import { ISMARTYield } from "../../ISMARTYield.sol";
 
 /// @title SMART Fixed Yield Schedule Contract
 /// @notice This contract implements a fixed yield schedule for an associated SMART token (which must implement

@@ -7,8 +7,8 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
     // completeness, though _SMARTYieldLogic itself doesn't inherit Initializable directly for its own init
 
 // Base contract imports
-import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
-import { SMARTHooks } from "./../common/SMARTHooks.sol"; // Note: For upgradeable, hooks might be handled by
+import { SMARTExtensionUpgradeable } from "../common/SMARTExtensionUpgradeable.sol";
+import { SMARTHooks } from "../common/SMARTHooks.sol"; // Note: For upgradeable, hooks might be handled by
     // SMARTUpgradeable which inherits SMARTHooks indirectly.
 
 // Internal implementation imports

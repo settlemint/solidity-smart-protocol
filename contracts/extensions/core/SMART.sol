@@ -6,6 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 // Interface imports
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 
@@ -225,7 +226,7 @@ abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
      * @return bool `true` if the contract implements `interfaceId` (either through SMART logic or standard ERC165),
      *         `false` otherwise. Interface ID `0xffffffff` always returns `false`.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         // Check SMART-specific interfaces first (custom extensions + ISMART itself)
         // Then, fall back to OpenZeppelin's ERC165 check (which includes IERC165 itself).
         return __smart_supportsInterface(interfaceId) || super.supportsInterface(interfaceId);

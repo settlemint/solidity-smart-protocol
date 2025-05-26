@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity 0.8.28;
 
-interface ISMARTTokenFactory {
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
+/// @title ISMARTTokenFactory Interface
+/// @author SettleMint Tokenization Services
+/// @notice This interface defines the functions for a factory contract responsible for creating SMART tokens.
+/// @dev This interface extends IERC165 for interface detection support.
+interface ISMARTTokenFactory is IERC165 {
     /// @notice Emitted when the token implementation address is updated.
     /// @param oldImplementation The address of the old token implementation.
     /// @param newImplementation The address of the new token implementation.
