@@ -24,6 +24,7 @@ export function handleAddressFrozen(event: AddressFrozen): void {
   const custodianContract = CustodianContract.bind(event.address);
 
   if (event.params.isFrozen) {
+    // If an address is frozen, set the total frozen amount to the balance value
     const balance = fetchTokenBalance(token.id, event.params.userAddress);
     updateTokenBalanceFrozen(
       token,
@@ -32,6 +33,7 @@ export function handleAddressFrozen(event: AddressFrozen): void {
       event.block.timestamp
     );
   } else {
+    // Restore the original frozen amount from the custodian contract
     const frozenTokens = custodianContract.getFrozenTokens(
       event.params.userAddress
     );
