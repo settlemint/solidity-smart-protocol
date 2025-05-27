@@ -7,12 +7,14 @@ function toDecimals(value: BigInt, decimals: number): BigDecimal {
   return value.divDecimal(precision);
 }
 
-export function setBigNumber(
-  entity: Entity,
-  fieldName: string,
+export function setBigNumber<T extends Entity>(
+  entity: T,
+  fieldName: keyof T,
   value: BigInt,
   decimals: number
 ): void {
-  entity.setBigInt(fieldName.concat("Exact"), value);
-  entity.setBigDecimal(fieldName, toDecimals(value, decimals));
+  if (typeof fieldName === "string") {
+    entity.setBigInt(fieldName.concat("Exact"), value);
+    entity.setBigDecimal(fieldName, toDecimals(value, decimals));
+  }
 }

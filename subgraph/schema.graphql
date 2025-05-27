@@ -5,6 +5,7 @@
 type Account @entity(immutable: true) {
   id: Bytes!
   isContract: Boolean!
+  balances: [TokenBalance!]! @derivedFrom(field: "account")
 }
 
 type Event @entity(immutable: true) {
@@ -110,6 +111,7 @@ type TokenFactory @entity(immutable: false) {
 type Token @entity(immutable: false) {
   id: Bytes!
   account: Account!
+  balances: [TokenBalance!]! @derivedFrom(field: "token")
   type: String!
   tokenFactory: TokenFactory
   name: String!
@@ -118,9 +120,27 @@ type Token @entity(immutable: false) {
   totalSupply: BigDecimal!
   totalSupplyExact: BigInt!
   pausable: TokenPausable
+  custodian: TokenCustodian
+}
+
+type TokenBalance @entity(immutable: false) {
+  id: Bytes!
+  token: Token!
+  account: Account!
+  value: BigDecimal!
+  valueExact: BigInt!
+  frozen: BigDecimal!
+  frozenExact: BigInt!
+  lastActivity: BigInt!
 }
 
 type TokenPausable @entity(immutable: false) {
   id: Bytes!
   paused: Boolean!
+}
+
+type TokenCustodian @entity(immutable: false) {
+  id: Bytes!
+  frozen: BigDecimal!
+  frozenExact: BigInt!
 }
