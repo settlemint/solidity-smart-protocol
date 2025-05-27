@@ -110,6 +110,7 @@ type TokenFactory @entity(immutable: false) {
 type Token @entity(immutable: false) {
   id: Bytes!
   account: Account!
+  accessControl: AccessControl!
   identity: TokenIdentity
   type: String!
   tokenFactory: TokenFactory
