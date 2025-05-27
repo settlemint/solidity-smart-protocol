@@ -11,9 +11,9 @@ import {
   TrustedIssuersRegistryImplementationUpdated,
 } from "../../../generated/templates/System/System";
 import { fetchEvent } from "../event/fetch/event";
+import { fetchIdentityFactory } from "../identity-factory/fetch/identity-factory";
 import { fetchTokenFactory } from "../token-factory/fetch/token-factory";
 import { fetchCompliance } from "./fetch/compliance";
-import { fetchIdentityFactory } from "./fetch/identity-factory";
 import { fetchIdentityRegistry } from "./fetch/identity-registry";
 import { fetchIdentityRegistryStorage } from "./fetch/identity-registry-storage";
 import { fetchSystem } from "./fetch/system";

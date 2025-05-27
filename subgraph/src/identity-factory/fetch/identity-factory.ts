@@ -1,5 +1,6 @@
 import { Address } from "@graphprotocol/graph-ts";
 import { IdentityFactory } from "../../../../generated/schema";
+import { IdentityFactory as IdentityFactoryTemplate } from "../../../../generated/templates";
 import { fetchAccessControl } from "../../access-control/fetch/accesscontrol";
 import { fetchAccount } from "../../account/fetch/account";
 
@@ -11,7 +12,7 @@ export function fetchIdentityFactory(address: Address): IdentityFactory {
     identityFactory.accessControl = fetchAccessControl(address).id;
     identityFactory.account = fetchAccount(address).id;
     identityFactory.save();
-    // IdentityFactoryTemplate.create(address);
+    IdentityFactoryTemplate.create(address);
   }
 
   return identityFactory;

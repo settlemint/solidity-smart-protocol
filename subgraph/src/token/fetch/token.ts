@@ -29,6 +29,7 @@ export function fetchToken(address: Address): Token {
       tokenContract.totalSupply(),
       token.decimals
     );
+
     token.save();
     TokenTemplate.create(address);
 

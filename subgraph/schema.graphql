@@ -2,7 +2,7 @@
 # SMART Indexer
 # --------------------------------------------------
 
-type Account @entity(immutable: true) {
+type Account @entity(immutable: false) {
   id: Bytes!
   isContract: Boolean!
   identity: Identity
@@ -100,7 +100,7 @@ type TokenFactory @entity(immutable: false) {
 type Token @entity(immutable: false) {
   id: Bytes!
   account: Account!
-  accessControl: AccessControl!
+  accessControl: AccessControl
   identity: Identity
   type: String!
   tokenFactory: TokenFactory
