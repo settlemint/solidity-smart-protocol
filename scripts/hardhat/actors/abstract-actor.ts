@@ -153,10 +153,9 @@ export abstract class AbstractActor {
 
 	async getBalance() {
 		const publicClient = getPublicClient();
-		const ethBalance = await publicClient.getBalance({
+		return publicClient.getBalance({
 			address: this.address,
 		});
-		return ethBalance;
 	}
 
 	async printBalance() {
