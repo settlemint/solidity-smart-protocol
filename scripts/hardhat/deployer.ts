@@ -22,6 +22,7 @@ type ContractName = keyof Pick<
 	| "identityRegistry"
 	| "identityRegistryStorage"
 	| "trustedIssuersRegistry"
+	| "topicSchemeRegistry"
 	| "identityFactory"
 	| "bondFactory"
 	| "depositFactory"
@@ -243,6 +244,12 @@ export class SmartProtocolDeployer {
 		walletClient?: WalletClient,
 	): SMARTOnboardingContracts["trustedIssuersRegistry"] {
 		return this.getContract("trustedIssuersRegistry", walletClient);
+	}
+
+	public getTopicSchemeRegistryContract(
+		walletClient?: WalletClient,
+	): SMARTOnboardingContracts["topicSchemeRegistry"] {
+		return this.getContract("topicSchemeRegistry", walletClient);
 	}
 
 	public getIdentityFactoryContract(
