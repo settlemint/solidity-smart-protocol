@@ -9,20 +9,20 @@ import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Interface imports
-import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
-import { SMART } from "./extensions/core/SMART.sol";
-import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
+import { SMART } from "../../contracts/extensions/core/SMART.sol";
+import { SMARTHooks } from "../../contracts/extensions/common/SMARTHooks.sol";
 
 // Feature extensions
-import { SMARTPausable } from "./extensions/pausable/SMARTPausable.sol";
-import { SMARTBurnable } from "./extensions/burnable/SMARTBurnable.sol";
-import { SMARTCustodian } from "./extensions/custodian/SMARTCustodian.sol";
-import { SMARTRedeemable } from "./extensions/redeemable/SMARTRedeemable.sol";
-import { SMARTCollateral } from "./extensions/collateral/SMARTCollateral.sol";
-import { SMARTHistoricalBalances } from "./extensions/historical-balances/SMARTHistoricalBalances.sol";
-import { SMARTTokenAccessManaged } from "./extensions/access-managed/SMARTTokenAccessManaged.sol";
+import { SMARTPausable } from "../../contracts/extensions/pausable/SMARTPausable.sol";
+import { SMARTBurnable } from "../../contracts/extensions/burnable/SMARTBurnable.sol";
+import { SMARTCustodian } from "../../contracts/extensions/custodian/SMARTCustodian.sol";
+import { SMARTRedeemable } from "../../contracts/extensions/redeemable/SMARTRedeemable.sol";
+import { SMARTCollateral } from "../../contracts/extensions/collateral/SMARTCollateral.sol";
+import { SMARTHistoricalBalances } from "../../contracts/extensions/historical-balances/SMARTHistoricalBalances.sol";
+import { SMARTTokenAccessManaged } from "../../contracts/extensions/access-managed/SMARTTokenAccessManaged.sol";
 /// @title SMARTToken
 /// @author SettleMint
 /// @notice This contract is a comprehensive implementation of a "SMART" (Secure, Managable, Accountable, Regulated,

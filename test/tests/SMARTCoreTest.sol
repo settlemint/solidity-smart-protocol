@@ -12,7 +12,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { ZeroAddressNotAllowed } from "../../contracts/extensions/common/CommonErrors.sol";
 import { CannotRecoverSelf, InsufficientTokenBalance } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
-import { SMARTToken } from "../../contracts/SMARTToken.sol";
+import { SMARTToken } from "../examples/SMARTToken.sol";
 
 abstract contract SMARTCoreTest is AbstractSMARTTest {
     using SafeERC20 for IERC20;
