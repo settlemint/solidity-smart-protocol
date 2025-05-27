@@ -5,6 +5,7 @@ import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
 
 import SMARTRoles from "../constants/roles";
+import SMARTTopics from "../constants/topics";
 import { grantRole } from "./actions/grant-role";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
 
@@ -20,7 +21,7 @@ export const createBond = async (depositToken: Address) => {
 		Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60, // 1 year
 		123,
 		depositToken,
-		[], // TODO: fill in with the setup for ATK
+		[SMARTTopics.kyc, SMARTTopics.aml],
 		[], // TODO: fill in with the setup for ATK
 	]);
 

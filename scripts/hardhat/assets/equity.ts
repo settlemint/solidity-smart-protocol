@@ -2,6 +2,7 @@ import type { Address, Hex } from "viem";
 
 import { owner } from "../actors/owner";
 import SMARTRoles from "../constants/roles";
+import SMARTTopics from "../constants/topics";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
 import { grantRole } from "./actions/grant-role";
@@ -17,7 +18,7 @@ export const createEquity = async () => {
 		18,
 		"Class A",
 		"Category A",
-		[], // TODO: fill in with the setup for ATK
+		[SMARTTopics.kyc, SMARTTopics.aml],
 		[], // TODO: fill in with the setup for ATK
 	]);
 

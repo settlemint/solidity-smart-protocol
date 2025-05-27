@@ -42,9 +42,12 @@ async function main() {
 		SMARTTopics.collateral,
 	]);
 
-	// Make sure the investor has a kyc claim
-	await issueVerificationClaims(investorA);
-	await issueVerificationClaims(investorB);
+	// make sure every actor is verified
+	await Promise.all([
+		issueVerificationClaims(owner),
+		issueVerificationClaims(investorA),
+		issueVerificationClaims(investorB),
+	]);
 
 	// Create the assets and print balances after each creation
 	const deposit = await createDeposit();

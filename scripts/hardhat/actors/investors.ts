@@ -1,69 +1,53 @@
 import hre from "hardhat";
-import { type WalletClient, createWalletClient, custom, toHex } from "viem";
-import type { LocalAccount } from "viem/accounts"; // viem signer type
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-
-import { getPublicClient } from "../utils/public-client";
-import { getViemChain } from "../utils/viem-chain";
+import type { WalletClient } from "viem";
 import { AbstractActor } from "./abstract-actor";
 
 /**
  * Class representing a claim issuer that can generate and sign claims
  */
 class Investor extends AbstractActor {
-	private readonly signer: LocalAccount;
+	private accountIndex: number;
+	private walletClient: WalletClient | null = null;
 	/**
 	 * Create a new claim issuer
 	 * @param name - The name of the investor
 	 * @param privateKey - Optional private key for the signer. If not provided, a random one will be generated.
 	 */
-	constructor(name: string, privateKey?: `0x${string}`) {
+	constructor(name: string, accountIndex: number) {
 		super(name);
-
-		const pk = privateKey ?? generatePrivateKey();
-		this.signer = privateKeyToAccount(pk);
-		this._address = this.signer.address;
+		this.accountIndex = accountIndex;
 	}
 
 	public async initialize(): Promise<void> {
-		// TODO: do i need this?
-		const balanceInHex = toHex(1_000_000n);
-
-		await getPublicClient().request({
-			method: "anvil_setBalance",
-			params: [this._address, balanceInHex],
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-		} as any);
+		const wallets = await hre.viem.getWalletClients();
+		if (!wallets[this.accountIndex]) {
+			throw new Error("Could not get a default wallet client from Hardhat.");
+		}
+		this.walletClient = wallets[this.accountIndex];
+		this._address = wallets[this.accountIndex].account.address;
 
 		await super.initialize();
 	}
 
 	/**
-	 * Get a viem WalletClient for this issuer's account.
-	 * @returns A WalletClient instance.
-	 * @example
-	 * ```ts
-	 * import { sepolia } from "viem/chains";
-	 * import { http } from "viem";
-	 * const issuer = new ClaimIssuer();
-	 * const walletClient = issuer.getWalletClient({
-	 *   chain: sepolia,
-	 *   transport: http("https://rpc.sepolia.org")
-	 * });
-	 * ```
+	 * Synchronously returns the singleton WalletClient instance for the default signer.
+	 * Ensure `initializeDefaultWalletClient` has been called and completed before using this.
+	 *
+	 * @returns The default WalletClient instance.
+	 * @throws Error if the client has not been initialized via `initializeDefaultWalletClient`.
 	 */
 	public getWalletClient(): WalletClient {
-		const viemChain = getViemChain();
-		return createWalletClient({
-			account: this.signer,
-			chain: viemChain,
-			transport: custom(hre.network.provider), // Use Hardhat's EIP-1193 provider
-		});
+		if (!this.walletClient) {
+			throw new Error("Wallet client not initialized");
+		}
+
+		return this.walletClient;
 	}
 }
 
 /**
  * A reusable instance of the ClaimIssuer with a consistent address
  */
-export const investorA = new Investor("Investor A");
-export const investorB = new Investor("Investor B");
+
+export const investorA = new Investor("Investor A", 1);
+export const investorB = new Investor("Investor B", 2);

@@ -5,6 +5,7 @@ import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
 
 import SMARTRoles from "../constants/roles";
+import SMARTTopics from "../constants/topics";
 import { grantRole } from "./actions/grant-role";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
 
@@ -17,7 +18,7 @@ export const createStablecoin = async () => {
 		"Tether",
 		"USDT",
 		6,
-		[], // TODO: fill in with the setup for ATK
+		[SMARTTopics.kyc, SMARTTopics.aml],
 		[], // TODO: fill in with the setup for ATK
 	]);
 

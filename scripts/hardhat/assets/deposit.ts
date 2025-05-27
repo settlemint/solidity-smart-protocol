@@ -1,8 +1,10 @@
 import type { Address, Hex } from "viem";
 import { claimIssuer } from "../actors/claim-issuer";
+import { investorA } from "../actors/investors";
 import { owner } from "../actors/owner";
 import { SMARTContracts } from "../constants/contracts";
 import SMARTRoles from "../constants/roles";
+import SMARTTopics from "../constants/topics";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
 import { grantRole } from "./actions/grant-role";
@@ -18,7 +20,7 @@ export const createDeposit = async () => {
 		"Euro Deposits",
 		"EURD",
 		6,
-		[], // TODO: fill in with the setup for ATK
+		[SMARTTopics.kyc, SMARTTopics.aml],
 		[], // TODO: fill in with the setup for ATK
 	]);
 
@@ -59,7 +61,7 @@ export const createDeposit = async () => {
 			SMARTRoles.supplyManagementRole,
 		);
 
-		await mint(tokenAddress, 1000n, owner.address);
+		await mint(tokenAddress, 1000n, investorA.address);
 
 		// create some users with identity claims
 		// mint
