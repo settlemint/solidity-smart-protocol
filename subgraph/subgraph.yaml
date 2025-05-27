@@ -189,10 +189,10 @@ templates:
           handler: handleBurnCompleted
       file: ./src/burnable/burnable.ts
   - kind: ethereum
-    name: TokenIdentity
+    name: Identity
     network: settlemint
     source:
-      abi: TokenIdentity
+      abi: Identity
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -201,8 +201,8 @@ templates:
         - Address
         - Event
       abis:
-        - name: TokenIdentity
-          file: ../artifacts/contracts/system/identity-factory/identities/ISMARTTokenIdentity.sol/ISMARTTokenIdentity.json
+        - name: Identity
+          file: ../artifacts/@onchainid/contracts/interface/IIdentity.sol/IIdentity.json
       eventHandlers:
         - event: Approved(indexed uint256,bool)
           handler: handleApproved
@@ -222,4 +222,27 @@ templates:
           handler: handleKeyAdded
         - event: KeyRemoved(indexed bytes32,indexed uint256,indexed uint256)
           handler: handleKeyRemoved
-      file: ./src/token-identity/token-identity.ts
+      file: ./src/identity/identity.ts
+  - kind: ethereum
+    name: IdentityFactory
+    network: settlemint
+    source:
+      abi: IdentityFactory
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: IdentityFactory
+          file: ../artifacts/contracts/system/identity-factory/ISMARTIdentityFactory.sol/ISMARTIdentityFactory.json
+        - name: Token
+          file: ../artifacts/contracts/interface/ISMART.sol/ISMART.json
+      eventHandlers:
+        - event: IdentityCreated(indexed address,indexed address,indexed address)
+          handler: handleIdentityCreated
+        - event: TokenIdentityCreated(indexed address,indexed address,indexed address)
+          handler: handleTokenIdentityCreated
+      file: ./src/identity-factory/identity-factory.ts

@@ -2,9 +2,10 @@
 # SMART Indexer
 # --------------------------------------------------
 
-type Account @entity(immutable: true) {
+type Account @entity(immutable: false) {
   id: Bytes!
   isContract: Boolean!
+  identity: Identity
 }
 
 type Event @entity(immutable: true) {
@@ -99,8 +100,8 @@ type TokenFactory @entity(immutable: false) {
 type Token @entity(immutable: false) {
   id: Bytes!
   account: Account!
-  accessControl: AccessControl!
-  identity: TokenIdentity
+  accessControl: AccessControl
+  identity: Identity
   type: String!
   tokenFactory: TokenFactory
   name: String!
@@ -116,14 +117,14 @@ type TokenPausable @entity(immutable: false) {
   paused: Boolean!
 }
 
-type TokenIdentity @entity(immutable: true) {
+type Identity @entity(immutable: true) {
   id: Bytes!
-  claims: [TokenIdentityClaim!]! @derivedFrom(field: "tokenIdentity")
+  claims: [IdentityClaim!]! @derivedFrom(field: "identity")
 }
 
-type TokenIdentityClaim @entity(immutable: false) {
+type IdentityClaim @entity(immutable: false) {
   id: Bytes!
-  tokenIdentity: TokenIdentity!
+  identity: Identity!
   topic: BigInt
   scheme: BigInt
   issuer: Account
