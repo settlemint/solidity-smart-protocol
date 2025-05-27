@@ -1,14 +1,16 @@
 import type { Address, Hex } from "viem";
-import { investorA } from "../actors/investors";
+import { investorA, investorB } from "../actors/investors";
 import { owner } from "../actors/owner";
 import { SMARTRoles } from "../constants/roles";
 import { SMARTTopics } from "../constants/topics";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
+import { burn } from "./actions/burn";
 import { grantRole } from "./actions/grant-role";
 import { issueCollateralClaim } from "./actions/issue-collateral-claim";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
 import { mint } from "./actions/mint";
+import { transfer } from "./actions/transfer";
 
 export const createDeposit = async () => {
 	const depositFactory = smartProtocolDeployer.getDepositFactoryContract();
@@ -59,11 +61,11 @@ export const createDeposit = async () => {
 			SMARTRoles.supplyManagementRole,
 		);
 
-		await mint(tokenAddress, 1000n, 6, investorA.address);
+		await mint(tokenAddress, investorA, 1000n, 6);
+		await transfer(tokenAddress, investorA, investorB, 500n, 6);
+		await burn(tokenAddress, investorB, 250n, 6);
 
 		// create some users with identity claims
-		// mint
-		// transfer
 		// burn
 
 		// TODO: execute all other functions of the deposit

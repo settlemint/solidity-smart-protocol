@@ -12,6 +12,7 @@ import { abi as fundFactoryAbiJson } from "../../../artifacts/contracts/assets/f
 import { abi as stablecoinAbiJson } from "../../../artifacts/contracts/assets/stable-coin/ISMARTStableCoin.sol/ISMARTStableCoin.json";
 import { abi as stablecoinFactoryAbiJson } from "../../../artifacts/contracts/assets/stable-coin/ISMARTStableCoinFactory.sol/ISMARTStableCoinFactory.json";
 import { abi as accessManagerAbiJson } from "../../../artifacts/contracts/extensions/access-managed/ISMARTTokenAccessManager.sol/ISMARTTokenAccessManager.json";
+import { abi as ismartBurnableAbiJson } from "../../../artifacts/contracts/extensions/burnable/ISMARTBurnable.sol/ISMARTBurnable.json";
 import { abi as identityRegistryStorageAbiJson } from "../../../artifacts/contracts/interface/ERC-3643/IERC3643IdentityRegistryStorage.sol/IERC3643IdentityRegistryStorage.json";
 import { abi as trustedIssuersRegistryAbiJson } from "../../../artifacts/contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol/IERC3643TrustedIssuersRegistry.json";
 import { abi as ismartAbiJson } from "../../../artifacts/contracts/interface/ISMART.sol/ISMART.json";
@@ -44,10 +45,12 @@ export const SMARTContracts = {
 	identity: asAbi(identityAbiJson),
 	tokenIdentity: asAbi(tokenIdentityAbiJson),
 	// tokens
-	ismart: asAbi(ismartAbiJson),
 	deposit: asAbi(depositAbiJson),
 	equity: asAbi(equityAbiJson),
 	fund: asAbi(fundAbiJson),
 	stablecoin: asAbi(stablecoinAbiJson),
 	bond: asAbi(bondAbiJson),
+	// smart
+	ismart: asAbi(ismartAbiJson),
+	ismartBurnable: asAbi(ismartBurnableAbiJson),
 } as const;

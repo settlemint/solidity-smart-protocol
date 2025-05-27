@@ -1,15 +1,17 @@
 import type { Address, Hex } from "viem";
 
-import { investorA } from "../actors/investors";
+import { investorA, investorB } from "../actors/investors";
 import { owner } from "../actors/owner";
 import { SMARTRoles } from "../constants/roles";
 import { SMARTTopics } from "../constants/topics";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
+import { burn } from "./actions/burn";
 import { grantRole } from "./actions/grant-role";
 import { issueCollateralClaim } from "./actions/issue-collateral-claim";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
 import { mint } from "./actions/mint";
+import { transfer } from "./actions/transfer";
 
 export const createEquity = async () => {
 	const equityFactory = smartProtocolDeployer.getEquityFactoryContract();
@@ -53,7 +55,9 @@ export const createEquity = async () => {
 			SMARTRoles.supplyManagementRole,
 		);
 
-		await mint(tokenAddress, 100n, 18, investorA.address);
+		await mint(tokenAddress, investorA, 100n, 18);
+		await transfer(tokenAddress, investorA, investorB, 50n, 18);
+		await burn(tokenAddress, investorB, 25n, 18);
 
 		// TODO: execute all other functions of the equity
 

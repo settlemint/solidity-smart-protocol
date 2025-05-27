@@ -4,12 +4,14 @@ import { owner } from "../actors/owner";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
 
-import { investorA } from "../actors/investors";
+import { investorA, investorB } from "../actors/investors";
 import { SMARTRoles } from "../constants/roles";
 import { SMARTTopics } from "../constants/topics";
+import { burn } from "./actions/burn";
 import { grantRole } from "./actions/grant-role";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
 import { mint } from "./actions/mint";
+import { transfer } from "./actions/transfer";
 
 export const createFund = async () => {
 	const fundFactory = smartProtocolDeployer.getFundFactoryContract();
@@ -54,7 +56,9 @@ export const createFund = async () => {
 			SMARTRoles.supplyManagementRole,
 		);
 
-		await mint(tokenAddress, 10n, 8, investorA.address);
+		await mint(tokenAddress, investorA, 10n, 8);
+		await transfer(tokenAddress, investorA, investorB, 5n, 8);
+		await burn(tokenAddress, investorB, 2n, 8);
 
 		// TODO: execute all other functions of the fund
 
