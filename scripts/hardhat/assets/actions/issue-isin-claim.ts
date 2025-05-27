@@ -2,7 +2,8 @@ import { type Address, encodeAbiParameters, parseAbiParameters } from "viem";
 import { claimIssuer } from "../../actors/claim-issuer";
 import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
-import SMARTTopics from "../../constants/topics";
+import { SMARTTopics } from "../../constants/topics";
+import { waitForSuccess } from "../../utils/wait-for-success";
 
 export const issueIsinClaim = async (
 	tokenIdentityAddress: Address,
@@ -27,7 +28,7 @@ export const issueIsinClaim = async (
 
 	const claimIssuerIdentity = await claimIssuer.getIdentity();
 
-	await tokenIdentityContract.write.addClaim([
+	const transactionHash = await tokenIdentityContract.write.addClaim([
 		SMARTTopics.isin,
 		1, // ECDSA
 		claimIssuerIdentity,
@@ -35,4 +36,10 @@ export const issueIsinClaim = async (
 		isinClaimData,
 		"",
 	]);
+
+	await waitForSuccess(transactionHash);
+
+	console.log(
+		`[ISIN claim] issued for token identity ${tokenIdentityAddress} with ISIN ${isin}.`,
+	);
 };

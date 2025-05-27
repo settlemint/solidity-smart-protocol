@@ -1,12 +1,13 @@
 import hre from "hardhat";
 import type { WalletClient } from "viem";
+import { Countries } from "../constants/countries";
 import { AbstractActor } from "./abstract-actor";
 
 class Owner extends AbstractActor {
 	private walletClient: WalletClient | null = null;
 
 	constructor() {
-		super("Owner");
+		super("Owner", Countries.BE);
 	}
 
 	public async initialize(): Promise<void> {
