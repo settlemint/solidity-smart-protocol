@@ -9,20 +9,20 @@ import { waitForSuccess } from "../utils/wait-for-success";
 export const issueVerificationClaims = async (actor: AbstractActor) => {
 	const claimIssuerIdentity = await claimIssuer.getIdentity();
 
-	await Promise.all([
-		_issueClaim(
-			actor,
-			claimIssuerIdentity,
-			SMARTTopics.kyc,
-			`KYC verified by ${claimIssuerIdentity}`,
-		),
-		_issueClaim(
-			actor,
-			claimIssuerIdentity,
-			SMARTTopics.aml,
-			`AML verified by ${claimIssuerIdentity}`,
-		),
-	]);
+	// await Promise.all([
+	await _issueClaim(
+		actor,
+		claimIssuerIdentity,
+		SMARTTopics.kyc,
+		`KYC verified by ${claimIssuerIdentity}`,
+	);
+	await _issueClaim(
+		actor,
+		claimIssuerIdentity,
+		SMARTTopics.aml,
+		`AML verified by ${claimIssuerIdentity}`,
+	);
+	// ]);
 };
 
 async function _issueClaim(
@@ -53,13 +53,13 @@ async function _issueClaim(
 		1, // ECDSA
 		claimIssuerIdentity,
 		claimSignature,
-		claimData,
+		encodedClaimData,
 		"",
 	]);
 
 	await waitForSuccess(transactionHash);
 
 	console.log(
-		`[Verification claims] ${claimTopic} issued for identity ${identityAddress}.`,
+		`[Verification claims] "${claimData}"" issued for identity ${identityAddress}.`,
 	);
 }

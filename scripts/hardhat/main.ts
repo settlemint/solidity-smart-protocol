@@ -1,3 +1,4 @@
+import { type Address, formatEther, formatUnits } from "viem";
 import { addTrustedIssuer } from "./actions/add-trusted-issuer";
 import { issueVerificationClaims } from "./actions/issue-verification-claims";
 import { claimIssuer } from "./actors/claim-issuer";
@@ -8,8 +9,10 @@ import { createDeposit } from "./assets/deposit";
 import { createEquity } from "./assets/equity";
 import { createFund } from "./assets/fund";
 import { createStablecoin } from "./assets/stablecoin";
+import { SMARTContracts } from "./constants/contracts";
 import SMARTTopics from "./constants/topics";
 import { smartProtocolDeployer } from "./deployer";
+import { getPublicClient } from "./utils/public-client";
 
 async function main() {
 	// Setup the smart protocol
@@ -25,6 +28,12 @@ async function main() {
 		investorB.initialize(),
 	]);
 
+	// Print initial balances
+	await owner.printBalance();
+	await claimIssuer.printBalance();
+	await investorA.printBalance();
+	await investorB.printBalance();
+
 	// Add the claim issuer as a trusted issuer
 	const claimIssuerIdentity = await claimIssuer.getIdentity();
 	await addTrustedIssuer(claimIssuerIdentity, [
@@ -37,7 +46,7 @@ async function main() {
 	await issueVerificationClaims(investorA);
 	await issueVerificationClaims(investorB);
 
-	// Create the assets
+	// Create the assets and print balances after each creation
 	const deposit = await createDeposit();
 	const equity = await createEquity();
 	const bond = await createBond(deposit);

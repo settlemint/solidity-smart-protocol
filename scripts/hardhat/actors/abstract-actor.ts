@@ -5,8 +5,13 @@ import {
 	type Hex,
 	type PublicClient,
 	type WalletClient,
+	encodeAbiParameters,
+	formatEther,
 	getContract as getViemContract,
+	keccak256,
+	parseAbiParameters,
 } from "viem";
+import { SMARTContracts } from "../constants/contracts";
 import { smartProtocolDeployer } from "../deployer";
 import { getPublicClient } from "../utils/public-client";
 import { waitForEvent } from "../utils/wait-for-event";
@@ -20,9 +25,10 @@ export abstract class AbstractActor {
 	protected initialized = false;
 
 	protected _address: Address | undefined;
+	protected _identityPromise: Promise<`0x${string}`> | undefined;
 	protected _identity: `0x${string}` | undefined;
 
-	protected readonly name: string;
+	public readonly name: string;
 
 	constructor(name: string) {
 		this.name = name;
@@ -68,53 +74,99 @@ export abstract class AbstractActor {
 	}
 
 	async getIdentity(): Promise<`0x${string}`> {
-		if (this._identity) {
-			return this._identity;
+		if (this._identityPromise) {
+			return this._identityPromise;
 		}
 
-		const identityFactory = smartProtocolDeployer.getIdentityFactoryContract();
-		const transactionHash: Hex = await identityFactory.write.createIdentity([
-			this.address,
-			[],
-		]);
+		this._identityPromise = new Promise((resolve, reject) => {
+			(async () => {
+				try {
+					const identityFactory =
+						smartProtocolDeployer.getIdentityFactoryContract();
+					const transactionHash: Hex =
+						await identityFactory.write.createIdentity([this.address, []]);
 
-		const { identity } = (await waitForEvent({
-			transactionHash,
-			contract: identityFactory,
-			eventName: "IdentityCreated",
-		})) as unknown as { identity: `0x${string}` };
+					console.log(`[${this.name}] transactionHash: ${transactionHash}`);
+					const { identity } = (await waitForEvent({
+						transactionHash,
+						contract: identityFactory,
+						eventName: "IdentityCreated",
+					})) as unknown as { identity: `0x${string}` };
 
-		this._identity = identity;
+					this._identity = identity;
 
-		console.log(`[${this.name}] identity: ${identity}`);
+					console.log(`[${this.name}] identity: ${identity}`);
 
-		return identity;
+					const contract = this.getContractInstance({
+						address: identity,
+						abi: SMARTContracts.identity,
+					});
+
+					const hashedKey = keccak256(
+						encodeAbiParameters(parseAbiParameters("address"), [this.address]),
+					);
+					const keyHasPurpose = await contract.read.keyHasPurpose([
+						hashedKey,
+						1,
+					]);
+
+					console.log(`[${this.name}] keyHasPurpose: ${keyHasPurpose}`);
+
+					resolve(identity);
+				} catch (error) {
+					reject(error);
+				}
+			})();
+		});
+
+		return this._identityPromise;
 	}
 
 	/**
 	 * Creates a Viem contract instance.
+	 * For zero gas, pass { gas: 0n } as the second argument to write calls.
+	 * Set useGasEstimation to true for standard gas estimation.
 	 *
 	 * @template TAbi - The ABI of the contract.
 	 * @param {Object} params - The parameters for creating the contract instance.
 	 * @param {Address} params.address - The address of the contract.
 	 * @param {TAbi} params.abi - The ABI of the contract.
-	 * @param {PublicClient} params.publicClient - The Viem PublicClient.
+	 * @param {boolean} params.useGasEstimation - Whether to use gas estimation instead of zero gas (default: false).
 	 * @returns {GetContractReturnType<TAbi, { public: PublicClient; wallet: WalletClient }>} The Viem contract instance.
 	 */
 	getContractInstance<TAbi extends Abi>({
 		address,
 		abi,
+		useGasEstimation = false,
 	}: {
 		address: Address;
 		abi: TAbi;
+		useGasEstimation?: boolean;
 	}): GetContractReturnType<
 		TAbi,
 		{ public: PublicClient; wallet: WalletClient }
 	> {
+		const walletClient = this.getWalletClient();
+
+		// Create and return the base contract instance
+		// Note: For zero gas, manually pass { gas: 0n } to write calls
 		return getViemContract({
 			address,
 			abi,
-			client: { public: getPublicClient(), wallet: this.getWalletClient() },
+			client: { public: getPublicClient(), wallet: walletClient },
 		});
+	}
+
+	async getBalance() {
+		const publicClient = getPublicClient();
+		const ethBalance = await publicClient.getBalance({
+			address: this.address,
+		});
+		return ethBalance;
+	}
+
+	async printBalance() {
+		const ethBalance = await this.getBalance();
+		console.log(`[${this.name}] ETH Balance: ${formatEther(ethBalance)} ETH`);
 	}
 }
