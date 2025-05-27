@@ -2,10 +2,9 @@ import type { Address, Hex } from "viem";
 
 import { investorA } from "../actors/investors";
 import { owner } from "../actors/owner";
-import SMARTRoles from "../constants/roles";
-import SMARTTopics from "../constants/topics";
+import { SMARTRoles } from "../constants/roles";
+import { SMARTTopics } from "../constants/topics";
 import { smartProtocolDeployer } from "../deployer";
-import { toDecimals } from "../utils/to-decimals";
 import { waitForEvent } from "../utils/wait-for-event";
 import { grantRole } from "./actions/grant-role";
 import { issueCollateralClaim } from "./actions/issue-collateral-claim";

@@ -9,7 +9,7 @@ import { createDeposit } from "./assets/deposit";
 import { createEquity } from "./assets/equity";
 import { createFund } from "./assets/fund";
 import { createStablecoin } from "./assets/stablecoin";
-import SMARTTopics from "./constants/topics";
+import { SMARTTopics } from "./constants/topics";
 import { smartProtocolDeployer } from "./deployer";
 
 async function main() {
@@ -50,7 +50,7 @@ async function main() {
 		issueVerificationClaims(investorB),
 	]);
 
-	// Create the assets and print balances after each creation
+	// Create the assets
 	const deposit = await createDeposit();
 	const equity = await createEquity();
 	const bond = await createBond(deposit);

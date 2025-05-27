@@ -2,7 +2,7 @@ import { type Address, encodeAbiParameters, parseAbiParameters } from "viem";
 import { claimIssuer } from "../../actors/claim-issuer";
 import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
-import SMARTTopics from "../../constants/topics";
+import { SMARTTopics } from "../../constants/topics";
 import { formatDecimals } from "../../utils/format-decimals";
 import { toDecimals } from "../../utils/to-decimals";
 import { waitForSuccess } from "../../utils/wait-for-success";

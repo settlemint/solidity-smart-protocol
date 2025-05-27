@@ -1,5 +1,5 @@
 import type { Address, Hex } from "viem";
-import SMARTTopics from "../constants/topics";
+import { SMARTTopics } from "../constants/topics";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForSuccess } from "../utils/wait-for-success";
 export const addTrustedIssuer = async (

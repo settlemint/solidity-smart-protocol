@@ -3,7 +3,7 @@ import { type Hex, type WalletClient, createWalletClient, custom } from "viem";
 import type { LocalAccount } from "viem/accounts"; // viem signer type
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-import Countries from "../constants/countries";
+import { Countries } from "../constants/countries";
 import { createClaim } from "../utils/create-claim";
 import { getViemChain } from "../utils/viem-chain";
 import { AbstractActor } from "./abstract-actor";

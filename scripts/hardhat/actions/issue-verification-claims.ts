@@ -2,7 +2,7 @@ import { type Address, encodeAbiParameters, parseAbiParameters } from "viem";
 import type { AbstractActor } from "../actors/abstract-actor";
 import { claimIssuer } from "../actors/claim-issuer";
 import { SMARTContracts } from "../constants/contracts";
-import SMARTTopics from "../constants/topics";
+import { SMARTTopics } from "../constants/topics";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForSuccess } from "../utils/wait-for-success";
 
@@ -10,13 +10,13 @@ export const issueVerificationClaims = async (actor: AbstractActor) => {
 	const claimIssuerIdentity = await claimIssuer.getIdentity();
 
 	await Promise.all([
-		await _issueClaim(
+		_issueClaim(
 			actor,
 			claimIssuerIdentity,
 			SMARTTopics.kyc,
 			`KYC verified by ${claimIssuer.name} (${claimIssuerIdentity})`,
 		),
-		await _issueClaim(
+		_issueClaim(
 			actor,
 			claimIssuerIdentity,
 			SMARTTopics.aml,

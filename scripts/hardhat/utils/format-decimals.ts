@@ -6,7 +6,7 @@
  *
  * @example
  * formatDecimals(1234567n, 4) // "123.4567"
- * formatDecimals(1000000000000000000n, 18) // "1.0"
+ * formatDecimals(1000000000000000000n, 18) // "1"
  * formatDecimals(1500000n, 6) // "1.5"
  */
 export function formatDecimals(amount: bigint, decimals: number): string {

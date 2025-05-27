@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import type { WalletClient } from "viem";
-import Countries from "../constants/countries";
+import { Countries } from "../constants/countries";
 import { AbstractActor } from "./abstract-actor";
 
 class Owner extends AbstractActor {

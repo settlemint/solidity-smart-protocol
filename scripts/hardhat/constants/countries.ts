@@ -9,5 +9,3 @@ export const Countries = {
 	ES: 724,
 	NL: 528,
 } as const;
-
-export default Countries;

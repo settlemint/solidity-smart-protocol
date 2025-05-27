@@ -5,9 +5,8 @@ import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
 
 import { investorA } from "../actors/investors";
-import SMARTRoles from "../constants/roles";
-import SMARTTopics from "../constants/topics";
-import { toDecimals } from "../utils/to-decimals";
+import { SMARTRoles } from "../constants/roles";
+import { SMARTTopics } from "../constants/topics";
 import { grantRole } from "./actions/grant-role";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
 import { mint } from "./actions/mint";

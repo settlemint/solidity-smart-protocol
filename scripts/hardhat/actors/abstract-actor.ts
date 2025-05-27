@@ -128,17 +128,14 @@ export abstract class AbstractActor {
 	 * @param {Object} params - The parameters for creating the contract instance.
 	 * @param {Address} params.address - The address of the contract.
 	 * @param {TAbi} params.abi - The ABI of the contract.
-	 * @param {boolean} params.useGasEstimation - Whether to use gas estimation instead of zero gas (default: false).
 	 * @returns {GetContractReturnType<TAbi, { public: PublicClient; wallet: WalletClient }>} The Viem contract instance.
 	 */
 	getContractInstance<TAbi extends Abi>({
 		address,
 		abi,
-		useGasEstimation = false,
 	}: {
 		address: Address;
 		abi: TAbi;
-		useGasEstimation?: boolean;
 	}): GetContractReturnType<
 		TAbi,
 		{ public: PublicClient; wallet: WalletClient }
