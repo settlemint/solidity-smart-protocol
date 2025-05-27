@@ -111,6 +111,7 @@ type TokenFactory @entity(immutable: false) {
 type Token @entity(immutable: false) {
   id: Bytes!
   account: Account!
+  identity: TokenIdentity
   balances: [TokenBalance!]! @derivedFrom(field: "token")
   type: String!
   tokenFactory: TokenFactory
@@ -137,6 +138,23 @@ type TokenBalance @entity(immutable: false) {
 type TokenPausable @entity(immutable: false) {
   id: Bytes!
   paused: Boolean!
+}
+
+type TokenIdentity @entity(immutable: true) {
+  id: Bytes!
+  claims: [TokenIdentityClaim!]! @derivedFrom(field: "tokenIdentity")
+}
+
+type TokenIdentityClaim @entity(immutable: false) {
+  id: Bytes!
+  tokenIdentity: TokenIdentity!
+  topic: BigInt
+  scheme: BigInt
+  issuer: Account
+  signature: Bytes
+  data: Bytes
+  uri: String
+  revoked: Boolean!
 }
 
 type TokenCustodian @entity(immutable: false) {

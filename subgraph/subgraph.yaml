@@ -195,6 +195,41 @@ templates:
           handler: handleBurnCompleted
       file: ./src/burnable/burnable.ts
   - kind: ethereum
+    name: TokenIdentity
+    network: settlemint
+    source:
+      abi: TokenIdentity
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: TokenIdentity
+          file: ../artifacts/contracts/system/identity-factory/identities/ISMARTTokenIdentity.sol/ISMARTTokenIdentity.json
+      eventHandlers:
+        - event: Approved(indexed uint256,bool)
+          handler: handleApproved
+        - event: ClaimAdded(indexed bytes32,indexed uint256,uint256,indexed address,bytes,bytes,string)
+          handler: handleClaimAdded
+        - event: ClaimChanged(indexed bytes32,indexed uint256,uint256,indexed address,bytes,bytes,string)
+          handler: handleClaimChanged
+        - event: ClaimRemoved(indexed bytes32,indexed uint256,uint256,indexed address,bytes,bytes,string)
+          handler: handleClaimRemoved
+        - event: Executed(indexed uint256,indexed address,indexed uint256,bytes)
+          handler: handleExecuted
+        - event: ExecutionFailed(indexed uint256,indexed address,indexed uint256,bytes)
+          handler: handleExecutionFailed
+        - event: ExecutionRequested(indexed uint256,indexed address,indexed uint256,bytes)
+          handler: handleExecutionRequested
+        - event: KeyAdded(indexed bytes32,indexed uint256,indexed uint256)
+          handler: handleKeyAdded
+        - event: KeyRemoved(indexed bytes32,indexed uint256,indexed uint256)
+          handler: handleKeyRemoved
+      file: ./src/token-identity/token-identity.ts
+  - kind: ethereum
     name: Custodian
     network: settlemint
     source:
