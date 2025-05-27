@@ -88,3 +88,103 @@ templates:
         - event: TrustedIssuersRegistryImplementationUpdated(indexed address,indexed address)
           handler: handleTrustedIssuersRegistryImplementationUpdated
       file: ./src/system/system.ts
+  - kind: ethereum
+    name: TokenFactory
+    network: settlemint
+    source:
+      abi: TokenFactory
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: TokenFactory
+          file: ../artifacts/contracts/system/token-factory/ISMARTTokenFactory.sol/ISMARTTokenFactory.json
+        - name: Token
+          file: ../artifacts/contracts/interface/ISMART.sol/ISMART.json
+      eventHandlers:
+        - event: TokenAssetCreated(indexed address,indexed address,indexed address,address)
+          handler: handleTokenAssetCreated
+        - event: TokenImplementationUpdated(indexed address,indexed address,indexed address)
+          handler: handleTokenImplementationUpdated
+      file: ./src/token-factory/token-factory.ts
+  - kind: ethereum
+    name: Token
+    network: settlemint
+    source:
+      abi: Token
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: Token
+          file: ../artifacts/contracts/interface/ISMART.sol/ISMART.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleApproval
+        - event: ComplianceAdded(indexed address,indexed address)
+          handler: handleComplianceAdded
+        - event: ComplianceModuleAdded(indexed address,indexed address,bytes)
+          handler: handleComplianceModuleAdded
+        - event: ComplianceModuleRemoved(indexed address,indexed address)
+          handler: handleComplianceModuleRemoved
+        - event: IdentityRegistryAdded(indexed address,indexed address)
+          handler: handleIdentityRegistryAdded
+        - event: MintCompleted(indexed address,indexed address,uint256)
+          handler: handleMintCompleted
+        - event: ModuleParametersUpdated(indexed address,indexed address,bytes)
+          handler: handleModuleParametersUpdated
+        - event: RequiredClaimTopicsUpdated(indexed address,uint256[])
+          handler: handleRequiredClaimTopicsUpdated
+        - event: TransferCompleted(indexed address,indexed address,indexed address,uint256)
+          handler: handleTransferCompleted
+        - event: UpdatedTokenInformation(indexed address,uint8,indexed address)
+          handler: handleUpdatedTokenInformation
+      file: ./src/token/token.ts
+  - kind: ethereum
+    name: Pausable
+    network: settlemint
+    source:
+      abi: Pausable
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: Pausable
+          file: ../artifacts/contracts/extensions/pausable/ISMARTPausable.sol/ISMARTPausable.json
+      eventHandlers:
+        - event: Paused(indexed address)
+          handler: handlePaused
+        - event: Unpaused(indexed address)
+          handler: handleUnpaused
+      file: ./src/pausable/pausable.ts
+  - kind: ethereum
+    name: Burnable
+    network: settlemint
+    source:
+      abi: Burnable
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: Burnable
+          file: ../artifacts/contracts/extensions/burnable/ISMARTBurnable.sol/ISMARTBurnable.json
+      eventHandlers:
+        - event: BurnCompleted(indexed address,indexed address,uint256)
+          handler: handleBurnCompleted
+      file: ./src/burnable/burnable.ts

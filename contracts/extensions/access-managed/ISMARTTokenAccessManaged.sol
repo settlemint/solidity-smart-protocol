@@ -9,6 +9,17 @@ pragma solidity ^0.8.28;
 ///         Other contracts can then interact with any contract that implements this
 ///         interface, knowing that these functions will be available.
 interface ISMARTTokenAccessManaged {
+    /// @notice Emitted when the address of the access manager contract is successfully changed or set.
+    /// @dev This event is crucial for transparency and monitoring. It allows external observers
+    ///      to know when the authority managing roles and permissions for a token has been updated.
+    ///      The `indexed` keyword for `sender` and `manager` allows these addresses to be efficiently
+    ///      searched for in event logs.
+    /// @param sender The address of the account that initiated the change of the access manager.
+    ///               This is typically an administrator or an account with special privileges.
+    /// @param manager The new address of the `SMARTTokenAccessManager` contract that will now
+    ///                oversee access control for the token.
+    event AccessManagerSet(address indexed sender, address indexed manager);
+
     /// @notice Checks if a given account has a specific role.
     /// @dev This function is crucial for permissioned systems, where certain actions
     ///      can only be performed by accounts holding specific roles (e.g., an admin role,

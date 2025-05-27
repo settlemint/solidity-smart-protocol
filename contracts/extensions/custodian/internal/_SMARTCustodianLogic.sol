@@ -22,7 +22,6 @@ import {
     RecipientAddressFrozen,
     SenderAddressFrozen
 } from "../SMARTCustodianErrors.sol";
-import { AddressFrozen, TokensFrozen, TokensUnfrozen, RecoverySuccess } from "../SMARTCustodianEvents.sol";
 import { ISMARTCustodian } from "../ISMARTCustodian.sol";
 
 /// @title Internal Core Logic for SMART Custodian Extension
@@ -97,7 +96,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     /// @param freeze `true` to freeze the address, `false` to unfreeze.
     function _smart_setAddressFrozen(address userAddress, bool freeze) internal virtual {
         __frozen[userAddress] = freeze;
-        emit AddressFrozen(_smartSender(), userAddress, freeze);
+        emit ISMARTCustodian.AddressFrozen(_smartSender(), userAddress, freeze);
     }
 
     /// @notice Internal logic to set the "full freeze" status for multiple addresses in a batch.
@@ -130,7 +129,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
             revert FreezeAmountExceedsAvailableBalance(availableBalance, amount);
         }
         __frozenTokens[userAddress] = currentFrozen + amount;
-        emit TokensFrozen(_smartSender(), userAddress, amount);
+        emit ISMARTCustodian.TokensFrozen(_smartSender(), userAddress, amount);
     }
 
     /// @notice Internal logic to partially freeze tokens for multiple addresses in a batch.
@@ -167,7 +166,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
             revert InsufficientFrozenTokens(currentFrozen, amount);
         }
         __frozenTokens[userAddress] = currentFrozen - amount;
-        emit TokensUnfrozen(_smartSender(), userAddress, amount);
+        emit ISMARTCustodian.TokensUnfrozen(_smartSender(), userAddress, amount);
     }
 
     /// @notice Internal logic to unfreeze partially frozen tokens for multiple addresses in a batch.
@@ -221,7 +220,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
                 // We know currentFrozen >= neededFromFrozen because currentBalance >= amount
                 uint256 newAmountFrozen = currentFrozen - neededFromFrozen;
                 __frozenTokens[from] = newAmountFrozen;
-                emit TokensUnfrozen(_smartSender(), from, neededFromFrozen);
+                emit ISMARTCustodian.TokensUnfrozen(_smartSender(), from, neededFromFrozen);
             }
         }
 
@@ -327,26 +326,26 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
 
         // Migrate partial freeze state.
         if (frozenTokens > 0) {
-            emit TokensUnfrozen(_smartSender(), lostWallet, frozenTokens);
+            emit ISMARTCustodian.TokensUnfrozen(_smartSender(), lostWallet, frozenTokens);
             __frozenTokens[lostWallet] = 0;
             __frozenTokens[newWallet] = frozenTokens;
-            emit TokensFrozen(_smartSender(), newWallet, frozenTokens);
+            emit ISMARTCustodian.TokensFrozen(_smartSender(), newWallet, frozenTokens);
         }
 
         // Migrate full freeze state.
         if (walletFrozen) {
             __frozen[newWallet] = true;
             __frozen[lostWallet] = false; // Ensure old wallet is explicitly unfrozen.
-            emit AddressFrozen(_smartSender(), newWallet, true);
-            emit AddressFrozen(_smartSender(), lostWallet, false);
+            emit ISMARTCustodian.AddressFrozen(_smartSender(), newWallet, true);
+            emit ISMARTCustodian.AddressFrozen(_smartSender(), lostWallet, false);
         } else if (__frozen[newWallet]) {
             // Defensive: If newWallet was somehow frozen but old wasn't, ensure newWallet is unfrozen post-recovery.
             __frozen[newWallet] = false;
-            emit AddressFrozen(_smartSender(), newWallet, false);
+            emit ISMARTCustodian.AddressFrozen(_smartSender(), newWallet, false);
         }
 
         // Emit event *before* external calls to identity registry (reentrancy guard best practice).
-        emit RecoverySuccess(_smartSender(), lostWallet, newWallet, investorOnchainID);
+        emit ISMARTCustodian.RecoverySuccess(_smartSender(), lostWallet, newWallet, investorOnchainID);
 
         // Update identity registry (Requires this contract to have REGISTRAR_ROLE on the registry).
         if (lostWalletVerified) {

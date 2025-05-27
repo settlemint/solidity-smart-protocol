@@ -2,7 +2,6 @@
 pragma solidity ^0.8.28;
 
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
-import { Redeemed } from "../SMARTRedeemableEvents.sol";
 import { ISMARTRedeemable } from "../ISMARTRedeemable.sol";
 /// @title Internal Logic for SMART Redeemable Extension
 /// @notice This abstract contract provides the core, reusable logic for the redeemable token functionality.
@@ -105,6 +104,6 @@ abstract contract _SMARTRedeemableLogic is _SMARTExtension, ISMARTRedeemable {
         __redeemable_redeem(owner, amount); // Abstract burn execution: child contract implements the actual burn
         _afterRedeem(owner, amount); // Standard SMARTHook: actions after redeeming tokens
 
-        emit Redeemed(owner, amount); // Logs the event that tokens have been redeemed
+        emit ISMARTRedeemable.Redeemed(owner, amount); // Logs the event that tokens have been redeemed
     }
 }

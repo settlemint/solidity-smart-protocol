@@ -5,7 +5,6 @@ import { ZeroAddressNotAllowed } from "../../common/CommonErrors.sol";
 import { ISMARTTokenAccessManaged } from "../ISMARTTokenAccessManaged.sol";
 import { ISMARTTokenAccessManager } from "../ISMARTTokenAccessManager.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
-import { AccessManagerSet } from "../SMARTTokenAccessManagedEvents.sol";
 import { AccessControlUnauthorizedAccount } from "../SMARTTokenAccessManagedErrors.sol";
 
 /// @title Internal Logic for SMART Token Access Management Extension
@@ -43,7 +42,7 @@ abstract contract _SMARTTokenAccessManagedLogic is _SMARTExtension, ISMARTTokenA
         _accessManager = accessManager_;
 
         _registerInterface(type(ISMARTTokenAccessManaged).interfaceId);
-        emit AccessManagerSet(_smartSender(), accessManager_);
+        emit ISMARTTokenAccessManaged.AccessManagerSet(_smartSender(), accessManager_);
     }
 
     /// @dev Modifier: Restricts access to a function to only accounts that have a specific role
