@@ -33,7 +33,7 @@ export function decreaseTokenBalanceValue(
   setBigNumber(
     balance,
     "value",
-    balance.valueExact.plus(value),
+    balance.valueExact.minus(value),
     token.decimals
   );
   balance.lastActivity = timestamp;
