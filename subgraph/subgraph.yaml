@@ -169,3 +169,22 @@ templates:
         - event: Unpaused(indexed address)
           handler: handleUnpaused
       file: ./src/pausable/pausable.ts
+  - kind: ethereum
+    name: Burnable
+    network: settlemint
+    source:
+      abi: Burnable
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: Burnable
+          file: ../artifacts/contracts/extensions/burnable/ISMARTBurnable.sol/ISMARTBurnable.json
+      eventHandlers:
+        - event: BurnCompleted(indexed address,indexed address,uint256)
+          handler: handleBurnCompleted
+      file: ./src/burnable/burnable.ts
