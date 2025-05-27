@@ -16,6 +16,7 @@ import {
 } from "../token-balance/token-balance";
 import { Custodian as CustodianContract } from "../../../generated/templates/Custodian/Custodian";
 import { fetchTokenBalance } from "../token-balance/fetch/token-balance";
+import { Custodian } from "../../../generated/templates";
 
 export function handleAddressFrozen(event: AddressFrozen): void {
   fetchEvent(event, "AddressFrozen");
