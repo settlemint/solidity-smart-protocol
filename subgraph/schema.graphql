@@ -88,6 +88,12 @@ type TrustedIssuersRegistry @entity(immutable: false) {
   account: Account!
 }
 
+type TopicSchemeRegistry @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account!
+}
+
 type TokenFactory @entity(immutable: false) {
   id: Bytes!
   accessControl: AccessControl!

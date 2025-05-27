@@ -8,6 +8,7 @@ import {
   TokenAccessManagerImplementationUpdated,
   TokenFactoryCreated,
   TokenIdentityImplementationUpdated,
+  TopicSchemeRegistryImplementationUpdated,
   TrustedIssuersRegistryImplementationUpdated,
 } from "../../../generated/templates/System/System";
 import { fetchEvent } from "../event/fetch/event";
@@ -92,4 +93,10 @@ export function handleTrustedIssuersRegistryImplementationUpdated(
   event: TrustedIssuersRegistryImplementationUpdated
 ): void {
   fetchEvent(event, "TrustedIssuersRegistryImplementationUpdated");
+}
+
+export function handleTopicSchemeRegistryImplementationUpdated(
+  event: TopicSchemeRegistryImplementationUpdated
+): void {
+  fetchEvent(event, "TopicSchemeRegistryImplementationUpdated");
 }
