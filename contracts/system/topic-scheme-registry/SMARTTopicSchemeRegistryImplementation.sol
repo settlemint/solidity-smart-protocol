@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
 // OpenZeppelin imports
@@ -134,6 +134,14 @@ contract SMARTTopicSchemeRegistryImplementation is
         if (topicIdsLength == 0) revert EmptyArraysProvided();
         if (topicIdsLength != signaturesLength) revert ArrayLengthMismatch(topicIdsLength, signaturesLength);
 
+        // Cache the current length to avoid reading from storage in each iteration
+        uint256 currentArrayLength = _topicIds.length;
+
+        // Cache storage variables accessed in loop
+        mapping(uint256 => TopicScheme) storage topicSchemes_ = _topicSchemes;
+        uint256[] storage topicIds_ = _topicIds;
+        mapping(uint256 => uint256) storage topicIdIndex_ = _topicIdIndex;
+
         // Process each topic scheme registration
         for (uint256 i = 0; i < topicIdsLength;) {
             uint256 topicId = topicIds[i];
@@ -142,14 +150,15 @@ contract SMARTTopicSchemeRegistryImplementation is
             // Validate individual topic scheme (same validation as single register)
             if (topicId == 0) revert InvalidTopicId();
             if (bytes(signature).length == 0) revert EmptySignature();
-            if (_topicSchemes[topicId].exists) revert TopicSchemeAlreadyExists(topicId);
+            if (topicSchemes_[topicId].exists) revert TopicSchemeAlreadyExists(topicId);
 
             // Store the topic scheme
-            _topicSchemes[topicId] = TopicScheme({ topicId: topicId, signature: signature, exists: true });
+            topicSchemes_[topicId] = TopicScheme({ topicId: topicId, signature: signature, exists: true });
 
             // Add to enumeration array
-            _topicIds.push(topicId);
-            _topicIdIndex[topicId] = _topicIds.length; // Store index + 1
+            topicIds_.push(topicId);
+            currentArrayLength++;
+            topicIdIndex_[topicId] = currentArrayLength; // Use cached length instead of reading from storage
 
             // Emit individual event for each registration
             emit TopicSchemeRegistered(_msgSender(), topicId, signature);

@@ -418,6 +418,10 @@ contract SMARTIdentityRegistryImplementation is
         // If there are no required claim topics, the identity is considered verified by default.
         if (requiredClaimTopics.length == 0) return true;
 
+        // Cache state variables as local variables to avoid repeated reads in loops
+        ISMARTTopicSchemeRegistry topicSchemeRegistry_ = _topicSchemeRegistry;
+        IERC3643TrustedIssuersRegistry trustedIssuersRegistry = _trustedIssuersRegistry;
+
         // Retrieve the user's identity contract from storage.
         IIdentity identityToVerify = _identityStorage.storedIdentity(_userAddress);
         uint256 requiredClaimTopicsLength = requiredClaimTopics.length;
@@ -434,14 +438,14 @@ contract SMARTIdentityRegistryImplementation is
             }
 
             // Check if the topic is registered in the topic scheme registry
-            if (!_topicSchemeRegistry.hasTopicScheme(currentTopic)) {
+            if (!topicSchemeRegistry_.hasTopicScheme(currentTopic)) {
                 return false; // Topic is not registered, verification fails
             }
 
             bool topicVerified = false; // Flag to track if the current topic is satisfied.
 
             // Get the list of trusted issuers for the current claim topic.
-            IClaimIssuer[] memory relevantIssuers = _trustedIssuersRegistry.getTrustedIssuersForClaimTopic(currentTopic);
+            IClaimIssuer[] memory relevantIssuers = trustedIssuersRegistry.getTrustedIssuersForClaimTopic(currentTopic);
             uint256 relevantIssuersLength = relevantIssuers.length;
 
             // Iterate over each trusted issuer for this topic.

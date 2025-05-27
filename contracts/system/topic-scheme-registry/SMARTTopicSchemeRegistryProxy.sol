@@ -16,7 +16,7 @@ import { TopicSchemeRegistryImplementationNotSet } from "../SMARTSystemErrors.so
 /// Upgrade logic resides in the implementation contract (UUPS pattern).
 /// This proxy primarily forwards calls and prevents accidental Ether transfers.
 contract SMARTTopicSchemeRegistryProxy is SMARTSystemProxy {
-    constructor(address systemAddress, address initialAdmin) SMARTSystemProxy(systemAddress) {
+    constructor(address systemAddress, address initialAdmin) payable SMARTSystemProxy(systemAddress) {
         ISMARTSystem system_ = _getSystem();
 
         address implementation = _getSpecificImplementationAddress(system_);

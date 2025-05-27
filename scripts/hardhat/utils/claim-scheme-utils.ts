@@ -88,22 +88,3 @@ export function encodeClaimData(
 	const parameterTypes = getClaimParameterTypes(claimTopic);
 	return encodeAbiParameters(parseAbiParameters(parameterTypes), values);
 }
-
-/**
- * Type-safe helper for decoding collateral claim data
- * @param encodedData The encoded collateral claim data
- * @returns Object with amount and expiryTimestamp
- */
-export function decodeCollateralClaimData(encodedData: Hex): {
-	amount: bigint;
-	expiryTimestamp: bigint;
-} {
-	const [amount, expiryTimestamp] = decodeClaimData(
-		SMARTTopics.collateral,
-		encodedData,
-	);
-	return {
-		amount: amount as bigint,
-		expiryTimestamp: expiryTimestamp as bigint,
-	};
-}
