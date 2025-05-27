@@ -6,27 +6,27 @@ import { formatDecimals } from "../../utils/format-decimals";
 import { toDecimals } from "../../utils/to-decimals";
 import { waitForSuccess } from "../../utils/wait-for-success";
 
-export const mint = async (
+export const burn = async (
 	tokenAddress: Address,
-	to: AbstractActor,
+	from: AbstractActor,
 	amount: bigint,
 	decimals: number,
 ) => {
 	const tokenContract = owner.getContractInstance({
 		address: tokenAddress,
-		abi: SMARTContracts.ismart,
+		abi: SMARTContracts.ismartBurnable,
 	});
 
 	const tokenAmount = toDecimals(amount, decimals);
 
-	const transactionHash = await tokenContract.write.mint([
-		to.address,
+	const transactionHash = await tokenContract.write.burn([
+		from.address,
 		tokenAmount,
 	]);
 
 	await waitForSuccess(transactionHash);
 
 	console.log(
-		`[Mint] ${formatDecimals(tokenAmount, decimals)} tokens to ${to.name} (${to.address})`,
+		`[Burn] ${formatDecimals(tokenAmount, decimals)} tokens from ${from.name} (${from.address})`,
 	);
 };
