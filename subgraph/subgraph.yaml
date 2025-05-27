@@ -67,7 +67,8 @@ templates:
         - name: System
           file: ../artifacts/contracts/system/ISMARTSystem.sol/ISMARTSystem.json
       eventHandlers:
-        - event: Bootstrapped(indexed address,indexed address,indexed address,address,address,address)
+        - event: Bootstrapped(indexed address,indexed address,indexed
+            address,address,address,address)
           handler: handleBootstrapped
         - event: ComplianceImplementationUpdated(indexed address,indexed address)
           handler: handleComplianceImplementationUpdated
@@ -77,7 +78,8 @@ templates:
           handler: handleIdentityImplementationUpdated
         - event: IdentityRegistryImplementationUpdated(indexed address,indexed address)
           handler: handleIdentityRegistryImplementationUpdated
-        - event: IdentityRegistryStorageImplementationUpdated(indexed address,indexed address)
+        - event: IdentityRegistryStorageImplementationUpdated(indexed address,indexed
+            address)
           handler: handleIdentityRegistryStorageImplementationUpdated
         - event: TokenAccessManagerImplementationUpdated(indexed address,indexed address)
           handler: handleTokenAccessManagerImplementationUpdated
@@ -85,7 +87,8 @@ templates:
           handler: handleTokenFactoryCreated
         - event: TokenIdentityImplementationUpdated(indexed address,indexed address)
           handler: handleTokenIdentityImplementationUpdated
-        - event: TrustedIssuersRegistryImplementationUpdated(indexed address,indexed address)
+        - event: TrustedIssuersRegistryImplementationUpdated(indexed address,indexed
+            address)
           handler: handleTrustedIssuersRegistryImplementationUpdated
       file: ./src/system/system.ts
   - kind: ethereum
@@ -106,9 +109,11 @@ templates:
         - name: Token
           file: ../artifacts/contracts/interface/ISMART.sol/ISMART.json
       eventHandlers:
-        - event: TokenAssetCreated(indexed address,indexed address,indexed address,address)
+        - event: TokenAssetCreated(indexed address,indexed address,indexed
+            address,address)
           handler: handleTokenAssetCreated
-        - event: TokenImplementationUpdated(indexed address,indexed address,indexed address)
+        - event: TokenImplementationUpdated(indexed address,indexed address,indexed
+            address)
           handler: handleTokenImplementationUpdated
       file: ./src/token-factory/token-factory.ts
   - kind: ethereum
@@ -143,7 +148,8 @@ templates:
           handler: handleModuleParametersUpdated
         - event: RequiredClaimTopicsUpdated(indexed address,uint256[])
           handler: handleRequiredClaimTopicsUpdated
-        - event: TransferCompleted(indexed address,indexed address,indexed address,uint256)
+        - event: TransferCompleted(indexed address,indexed address,indexed
+            address,uint256)
           handler: handleTransferCompleted
         - event: UpdatedTokenInformation(indexed address,uint8,indexed address)
           handler: handleUpdatedTokenInformation
@@ -188,3 +194,28 @@ templates:
         - event: BurnCompleted(indexed address,indexed address,uint256)
           handler: handleBurnCompleted
       file: ./src/burnable/burnable.ts
+  - kind: ethereum
+    name: Custodian
+    network: settlemint
+    source:
+      abi: Custodian
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: Custodian
+          file: ../artifacts/contracts/extensions/custodian/ISMARTCustodian.sol/ISMARTCustodian.json
+      eventHandlers:
+        - event: AddressFrozen(indexed address,indexed address,indexed bool)
+          handler: handleAddressFrozen
+        - event: RecoverySuccess(indexed address,indexed address,indexed address,address)
+          handler: handleRecoverySuccess
+        - event: TokensFrozen(indexed address,indexed address,uint256)
+          handler: handleTokensFrozen
+        - event: TokensUnfrozen(indexed address,indexed address,uint256)
+          handler: handleTokensUnfrozen
+      file: ./src/custodian/custodian.ts
