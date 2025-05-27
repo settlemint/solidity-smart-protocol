@@ -44,17 +44,6 @@ type AccessControl @entity(immutable: false) {
   supplyManagement: [Account!]!
   custodian: [Account!]!
   emergency: [Account!]!
-  tokenAdmin: [Account!]!
-  complianceAdmin: [Account!]!
-  verificationAdmin: [Account!]!
-  minter: [Account!]!
-  burner: [Account!]!
-  freezer: [Account!]!
-  forcedTransfer: [Account!]!
-  recovery: [Account!]!
-  pauser: [Account!]!
-  globalListManager: [Account!]!
-  operator: [Account!]!
 }
 
 type System @entity(immutable: false) {
@@ -110,6 +99,7 @@ type TokenFactory @entity(immutable: false) {
 type Token @entity(immutable: false) {
   id: Bytes!
   account: Account!
+  accessControl: AccessControl!
   identity: TokenIdentity
   type: String!
   tokenFactory: TokenFactory

@@ -2,6 +2,7 @@ import {
   TokenAssetCreated,
   TokenImplementationUpdated,
 } from "../../../generated/templates/TokenFactory/TokenFactory";
+import { fetchAccessControl } from "../access-control/fetch/accesscontrol";
 import { fetchEvent } from "../event/fetch/event";
 import { fetchTokenIdentity } from "../token-identity/fetch/token-identity";
 import { fetchToken } from "../token/fetch/token";
@@ -14,6 +15,7 @@ export function handleTokenAssetCreated(event: TokenAssetCreated): void {
   token.tokenFactory = tokenFactory.id;
   token.type = tokenFactory.type;
   token.identity = fetchTokenIdentity(event.params.tokenIdentity).id;
+  token.accessControl = fetchAccessControl(event.params.accessManager).id;
   token.save();
 }
 
