@@ -1,14 +1,13 @@
-import { Address, Bytes, Value } from "@graphprotocol/graph-ts";
+import { Address, Value } from "@graphprotocol/graph-ts";
 import { AccessControl } from "../../../../generated/schema";
 import { AccessControl as AccessControlTemplate } from "../../../../generated/templates";
 import { Roles } from "../utils/role";
 
 export function fetchAccessControl(address: Address): AccessControl {
-  const id = address.concat(Bytes.fromUTF8("accesscontrol"));
-  let accessControlEntity = AccessControl.load(id);
+  let accessControlEntity = AccessControl.load(address);
 
   if (!accessControlEntity) {
-    accessControlEntity = new AccessControl(id);
+    accessControlEntity = new AccessControl(address);
     for (let i = 0; i < Roles.length; i++) {
       accessControlEntity.set(Roles[i].fieldName, Value.fromBytesArray([]));
     }
