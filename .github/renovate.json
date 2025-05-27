@@ -24,7 +24,7 @@
     },
     {
       "groupName": "Hardhat packages",
-      "matchPackageNames": ["/hardhat/"]
+      "matchPackageNames": ["/hardhat/", "/^@nomicfoundation//"]
     },
     {
       "groupName": "The Graph packages",
