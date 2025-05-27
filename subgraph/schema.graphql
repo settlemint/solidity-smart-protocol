@@ -134,10 +134,11 @@ type TokenIdentity @entity(immutable: true) {
 type TokenIdentityClaim @entity(immutable: false) {
   id: Bytes!
   tokenIdentity: TokenIdentity!
-  topic: BigInt!
-  scheme: BigInt!
-  issuer: Account!
-  signature: Bytes!
-  data: Bytes!
-  uri: String!
+  topic: BigInt
+  scheme: BigInt
+  issuer: Account
+  signature: Bytes
+  data: Bytes
+  uri: String
+  revoked: Boolean!
 }
