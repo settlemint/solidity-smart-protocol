@@ -15,7 +15,7 @@ import { TokenUtils } from "../utils/TokenUtils.sol";
 import { SystemUtils } from "../utils/SystemUtils.sol";
 import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { SMARTToken } from "../../contracts/SMARTToken.sol";
+import { SMARTToken } from "../examples/SMARTToken.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 

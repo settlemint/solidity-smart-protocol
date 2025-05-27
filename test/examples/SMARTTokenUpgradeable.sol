@@ -10,21 +10,22 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 // Interface imports
-import { SMARTComplianceModuleParamPair } from "./interface/structs/SMARTComplianceModuleParamPair.sol";
+import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 
 // Core extensions
-import { SMARTUpgradeable } from "./extensions/core/SMARTUpgradeable.sol";
-import { SMARTHooks } from "./extensions/common/SMARTHooks.sol";
+import { SMARTUpgradeable } from "../../contracts/extensions/core/SMARTUpgradeable.sol";
+import { SMARTHooks } from "../../contracts/extensions/common/SMARTHooks.sol";
 
 // Feature extensions
-import { SMARTPausableUpgradeable } from "./extensions/pausable/SMARTPausableUpgradeable.sol";
-import { SMARTBurnableUpgradeable } from "./extensions/burnable/SMARTBurnableUpgradeable.sol";
-import { SMARTCustodianUpgradeable } from "./extensions/custodian/SMARTCustodianUpgradeable.sol";
-import { SMARTRedeemableUpgradeable } from "./extensions/redeemable/SMARTRedeemableUpgradeable.sol";
-import { SMARTCollateralUpgradeable } from "./extensions/collateral/SMARTCollateralUpgradeable.sol";
+import { SMARTPausableUpgradeable } from "../../contracts/extensions/pausable/SMARTPausableUpgradeable.sol";
+import { SMARTBurnableUpgradeable } from "../../contracts/extensions/burnable/SMARTBurnableUpgradeable.sol";
+import { SMARTCustodianUpgradeable } from "../../contracts/extensions/custodian/SMARTCustodianUpgradeable.sol";
+import { SMARTRedeemableUpgradeable } from "../../contracts/extensions/redeemable/SMARTRedeemableUpgradeable.sol";
+import { SMARTCollateralUpgradeable } from "../../contracts/extensions/collateral/SMARTCollateralUpgradeable.sol";
 import { SMARTHistoricalBalancesUpgradeable } from
-    "./extensions/historical-balances/SMARTHistoricalBalancesUpgradeable.sol";
-import { SMARTTokenAccessManagedUpgradeable } from "./extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
+    "../../contracts/extensions/historical-balances/SMARTHistoricalBalancesUpgradeable.sol";
+import { SMARTTokenAccessManagedUpgradeable } from
+    "../../contracts/extensions/access-managed/SMARTTokenAccessManagedUpgradeable.sol";
 /// @title SMARTTokenUpgradeable
 /// @author SettleMint
 /// @notice This contract is an upgradeable version of the SMARTToken, designed to be used with a UUPS (Universal
