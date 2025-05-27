@@ -24,7 +24,8 @@ import {
     InvalidTokenImplementationAddress,
     InvalidTokenImplementationInterface,
     TokenAccessManagerImplementationNotSet,
-    SystemAlreadyBootstrapped
+    SystemAlreadyBootstrapped,
+    TopicSchemeRegistryImplementationNotSet
 } from "./SMARTSystemErrors.sol";
 
 // Constants
@@ -38,10 +39,12 @@ import { IERC3643TrustedIssuersRegistry } from "../interface/ERC-3643/IERC3643Tr
 import { IERC3643IdentityRegistryStorage } from "../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { ISMARTIdentityRegistry } from "../interface/ISMARTIdentityRegistry.sol";
 import { ISMARTTokenAccessManager } from "../extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { ISMARTTopicSchemeRegistry } from "./topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
 import { SMARTComplianceProxy } from "./compliance/SMARTComplianceProxy.sol";
 import { SMARTIdentityRegistryProxy } from "./identity-registry/SMARTIdentityRegistryProxy.sol";
 import { SMARTIdentityRegistryStorageProxy } from "./identity-registry-storage/SMARTIdentityRegistryStorageProxy.sol";
 import { SMARTTrustedIssuersRegistryProxy } from "./trusted-issuers-registry/SMARTTrustedIssuersRegistryProxy.sol";
+import { SMARTTopicSchemeRegistryProxy } from "./topic-scheme-registry/SMARTTopicSchemeRegistryProxy.sol";
 import { SMARTIdentityFactoryProxy } from "./identity-factory/SMARTIdentityFactoryProxy.sol";
 import { SMARTTokenFactoryProxy } from "./token-factory/SMARTTokenFactoryProxy.sol";
 
@@ -68,6 +71,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     bytes4 private constant _ISMART_IDENTITY_REGISTRY_ID = type(ISMARTIdentityRegistry).interfaceId;
     bytes4 private constant _IERC3643_IDENTITY_REGISTRY_STORAGE_ID = type(IERC3643IdentityRegistryStorage).interfaceId;
     bytes4 private constant _IERC3643_TRUSTED_ISSUERS_REGISTRY_ID = type(IERC3643TrustedIssuersRegistry).interfaceId;
+    bytes4 private constant _ISMART_TOPIC_SCHEME_REGISTRY_ID = type(ISMARTTopicSchemeRegistry).interfaceId;
     bytes4 private constant _ISMART_IDENTITY_FACTORY_ID = type(ISMARTIdentityFactory).interfaceId;
     bytes4 private constant _IIDENTITY_ID = type(IIdentity).interfaceId;
     bytes4 private constant _ISMART_TOKEN_FACTORY_ID = type(ISMARTTokenFactory).interfaceId;
@@ -99,6 +103,12 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// @dev Stores the address of the current trusted issuers registry logic contract.
     address private _trustedIssuersRegistryProxy;
     /// @dev Stores the address of the trusted issuers registry module's proxy contract.
+
+    // Addresses for the topic scheme registry module.
+    address private _topicSchemeRegistryImplementation;
+    /// @dev Stores the address of the current topic scheme registry logic contract.
+    address private _topicSchemeRegistryProxy;
+    /// @dev Stores the address of the topic scheme registry module's proxy contract.
 
     // Addresses for the identity factory module.
     address private _identityFactoryImplementation;
@@ -159,6 +169,8 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// logic contract.
     /// @param trustedIssuersRegistryImplementation_ The initial address of the trusted issuers registry module's logic
     /// contract.
+    /// @param topicSchemeRegistryImplementation_ The initial address of the topic scheme registry module's logic
+    /// contract.
     /// @param identityFactoryImplementation_ The initial address of the identity factory module's logic contract.
     /// @param identityImplementation_ The initial address of the standard identity contract's logic (template). Must be
     /// IERC734/IIdentity compliant.
@@ -173,6 +185,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         address identityRegistryImplementation_,
         address identityRegistryStorageImplementation_,
         address trustedIssuersRegistryImplementation_,
+        address topicSchemeRegistryImplementation_,
         address identityFactoryImplementation_,
         address identityImplementation_, // Expected to be IERC734/IIdentity compliant
         address tokenIdentityImplementation_, // Expected to be IERC734/IIdentity compliant
@@ -211,6 +224,13 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
             // supports IERC3643TrustedIssuersRegistry
         _trustedIssuersRegistryImplementation = trustedIssuersRegistryImplementation_;
         emit TrustedIssuersRegistryImplementationUpdated(initialAdmin_, _trustedIssuersRegistryImplementation);
+
+        // Validate and set the topic scheme registry implementation address.
+        if (topicSchemeRegistryImplementation_ == address(0)) revert TopicSchemeRegistryImplementationNotSet();
+        _checkInterface(topicSchemeRegistryImplementation_, _ISMART_TOPIC_SCHEME_REGISTRY_ID); // Ensure it supports
+            // ISMARTTopicSchemeRegistry
+        _topicSchemeRegistryImplementation = topicSchemeRegistryImplementation_;
+        emit TopicSchemeRegistryImplementationUpdated(initialAdmin_, _topicSchemeRegistryImplementation);
 
         // Validate and set the identity factory implementation address.
         if (identityFactoryImplementation_ == address(0)) revert IdentityFactoryImplementationNotSet();
@@ -257,12 +277,11 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// factory)
     /// is not set (i.e., is the zero address) before calling this function.
     function bootstrap() external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        // --- Pre-condition Checks ---
         // Check if system is already bootstrapped by verifying if any proxy is already deployed
         if (
             _complianceProxy != address(0) || _identityRegistryProxy != address(0)
                 || _identityRegistryStorageProxy != address(0) || _trustedIssuersRegistryProxy != address(0)
-                || _identityFactoryProxy != address(0)
+                || _topicSchemeRegistryProxy != address(0) || _identityFactoryProxy != address(0)
         ) {
             revert SystemAlreadyBootstrapped();
         }
@@ -272,6 +291,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         if (_identityRegistryImplementation == address(0)) revert IdentityRegistryImplementationNotSet();
         if (_identityRegistryStorageImplementation == address(0)) revert IdentityRegistryStorageImplementationNotSet();
         if (_trustedIssuersRegistryImplementation == address(0)) revert TrustedIssuersRegistryImplementationNotSet();
+        if (_topicSchemeRegistryImplementation == address(0)) revert TopicSchemeRegistryImplementationNotSet();
         if (_identityFactoryImplementation == address(0)) revert IdentityFactoryImplementationNotSet();
 
         // The caller of this bootstrap function (who must be an admin) will also be set as the initial admin
@@ -294,12 +314,19 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         address localTrustedIssuersRegistryProxy =
             address(new SMARTTrustedIssuersRegistryProxy(address(this), initialAdmin));
 
+        // Deploy the SMARTTopicSchemeRegistryProxy, linking it to this SMARTSystem and setting an initial admin.
+        address localTopicSchemeRegistryProxy = address(new SMARTTopicSchemeRegistryProxy(address(this), initialAdmin));
+
         // Deploy the SMARTIdentityRegistryProxy. Its constructor requires the addresses of other newly created proxies
         // (storage and trusted issuers) and an initial admin.
         // Passing these as local variables is safe as they don't rely on this contract's state being prematurely read.
         address localIdentityRegistryProxy = address(
             new SMARTIdentityRegistryProxy(
-                address(this), initialAdmin, localIdentityRegistryStorageProxy, localTrustedIssuersRegistryProxy
+                address(this),
+                initialAdmin,
+                localIdentityRegistryStorageProxy,
+                localTrustedIssuersRegistryProxy,
+                localTopicSchemeRegistryProxy
             )
         );
 
@@ -311,6 +338,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         _complianceProxy = localComplianceProxy;
         _identityRegistryStorageProxy = localIdentityRegistryStorageProxy;
         _trustedIssuersRegistryProxy = localTrustedIssuersRegistryProxy;
+        _topicSchemeRegistryProxy = localTopicSchemeRegistryProxy;
         _identityRegistryProxy = localIdentityRegistryProxy;
         _identityFactoryProxy = localIdentityFactoryProxy;
 
@@ -330,6 +358,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
             _identityRegistryProxy,
             _identityRegistryStorageProxy,
             _trustedIssuersRegistryProxy,
+            _topicSchemeRegistryProxy,
             _identityFactoryProxy
         );
     }
@@ -437,6 +466,18 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         emit TrustedIssuersRegistryImplementationUpdated(_msgSender(), implementation);
     }
 
+    /// @notice Sets (updates) the address of the topic scheme registry module's implementation (logic) contract.
+    /// @dev Only callable by an address with the `DEFAULT_ADMIN_ROLE`.
+    /// Reverts if `implementation` is zero or doesn't support `ISMARTTopicSchemeRegistry`.
+    /// Emits a `TopicSchemeRegistryImplementationUpdated` event.
+    /// @param implementation The new address for the topic scheme registry logic contract.
+    function setTopicSchemeRegistryImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (implementation == address(0)) revert TopicSchemeRegistryImplementationNotSet();
+        _checkInterface(implementation, _ISMART_TOPIC_SCHEME_REGISTRY_ID);
+        _topicSchemeRegistryImplementation = implementation;
+        emit TopicSchemeRegistryImplementationUpdated(_msgSender(), implementation);
+    }
+
     /// @notice Sets (updates) the address of the identity factory module's implementation (logic) contract.
     /// @dev Only callable by an address with the `DEFAULT_ADMIN_ROLE`.
     /// Reverts if `implementation` is zero or doesn't support `ISMARTIdentityFactory`.
@@ -514,6 +555,12 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         return _trustedIssuersRegistryImplementation;
     }
 
+    /// @notice Gets the current address of the topic scheme registry module's implementation (logic) contract.
+    /// @return The address of the topic scheme registry logic contract.
+    function topicSchemeRegistryImplementation() public view override returns (address) {
+        return _topicSchemeRegistryImplementation;
+    }
+
     /// @notice Gets the current address of the identity factory module's implementation (logic) contract.
     /// @return The address of the identity factory logic contract.
     function identityFactoryImplementation() public view override returns (address) {
@@ -569,6 +616,12 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// @return The address of the trusted issuers registry proxy contract.
     function trustedIssuersRegistryProxy() public view override returns (address) {
         return _trustedIssuersRegistryProxy;
+    }
+
+    /// @notice Gets the address of the topic scheme registry module's proxy contract.
+    /// @return The address of the topic scheme registry proxy contract.
+    function topicSchemeRegistryProxy() public view override returns (address) {
+        return _topicSchemeRegistryProxy;
     }
 
     /// @notice Gets the address of the identity factory module's proxy contract.

@@ -63,6 +63,15 @@ abstract contract AbstractSMARTAssetTest is Test {
         uint256[] memory claimTopics = new uint256[](2);
         claimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
         claimTopics[1] = SMARTTopics.CLAIM_TOPIC_COLLATERAL;
+
+        string[] memory claimSchemes = new string[](2);
+        claimSchemes[0] = "string claim";
+        claimSchemes[1] = "string claim";
+
+        vm.startPrank(platformAdmin);
+        systemUtils.topicSchemeRegistry().batchRegisterTopicSchemes(claimTopics, claimSchemes);
+        vm.stopPrank();
+
         // Use claimIssuer address directly, createIssuerIdentity handles creating the on-chain identity
         vm.label(claimIssuer, "Claim Issuer");
         address claimIssuerIdentity = identityUtils.createIssuerIdentity(claimIssuer, claimTopics);
