@@ -8,13 +8,14 @@ export function fetchTokenBalance(
   tokenId: Bytes,
   accountAddress: Address
 ): TokenBalance {
-  const id = tokenId.concat(accountAddress);
+  const tokenAddress = Address.fromBytes(tokenId);
+  const id = tokenAddress.concat(accountAddress);
 
   let tokenBalance = TokenBalance.load(id);
 
   if (!tokenBalance) {
     tokenBalance = new TokenBalance(id);
-    const token = fetchToken(Address.fromBytes(tokenId));
+    const token = fetchToken(tokenAddress);
     tokenBalance.token = token.id;
     tokenBalance.account = fetchAccount(accountAddress).id;
     setBigNumber(tokenBalance, "value", BigInt.fromI32(0), token.decimals);

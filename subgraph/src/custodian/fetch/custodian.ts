@@ -6,7 +6,7 @@ import { fetchToken } from "../../token/fetch/token";
 export function fetchCustodian(address: Address): TokenCustodian {
   const id = address.concat(Bytes.fromUTF8("custodian"));
 
-  let custodian = TokenCustodian.load(address);
+  let custodian = TokenCustodian.load(id);
 
   if (!custodian) {
     custodian = new TokenCustodian(id);
