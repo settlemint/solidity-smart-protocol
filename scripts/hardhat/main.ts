@@ -1,4 +1,4 @@
-import { type Address, formatEther, formatUnits } from "viem";
+import { batchAddToRegistry } from "./actions/add-to-registry";
 import { addTrustedIssuer } from "./actions/add-trusted-issuer";
 import { issueVerificationClaims } from "./actions/issue-verification-claims";
 import { claimIssuer } from "./actors/claim-issuer";
@@ -9,10 +9,8 @@ import { createDeposit } from "./assets/deposit";
 import { createEquity } from "./assets/equity";
 import { createFund } from "./assets/fund";
 import { createStablecoin } from "./assets/stablecoin";
-import { SMARTContracts } from "./constants/contracts";
 import SMARTTopics from "./constants/topics";
 import { smartProtocolDeployer } from "./deployer";
-import { getPublicClient } from "./utils/public-client";
 
 async function main() {
 	// Setup the smart protocol
@@ -41,6 +39,9 @@ async function main() {
 		SMARTTopics.aml,
 		SMARTTopics.collateral,
 	]);
+
+	// Add the actors to the registry
+	await batchAddToRegistry([owner, investorA, investorB]);
 
 	// make sure every actor is verified
 	await Promise.all([

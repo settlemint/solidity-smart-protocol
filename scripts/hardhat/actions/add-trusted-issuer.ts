@@ -21,4 +21,8 @@ export const addTrustedIssuer = async (
 		]);
 
 	await waitForSuccess(transactionHash);
+
+	console.log(
+		`[Add trusted issuer] ${trustedIssuerIdentity} added to registry`,
+	);
 };

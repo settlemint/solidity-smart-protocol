@@ -4,10 +4,14 @@ import { owner } from "../actors/owner";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
 
+import { investorA } from "../actors/investors";
 import SMARTRoles from "../constants/roles";
 import SMARTTopics from "../constants/topics";
+import { toDecimals } from "../utils/to-decimals";
 import { grantRole } from "./actions/grant-role";
+import { issueCollateralClaim } from "./actions/issue-collateral-claim";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
+import { mint } from "./actions/mint";
 
 export const createStablecoin = async () => {
 	const stablecoinFactory =
@@ -41,7 +45,25 @@ export const createStablecoin = async () => {
 		// needs to be done so that he can add the claims
 		await grantRole(accessManager, owner.address, SMARTRoles.claimManagerRole);
 		// issue isin claim
-		await issueIsinClaim(tokenIdentity, "12345678901234567890");
+		await issueIsinClaim(tokenIdentity, "JP3902900004");
+
+		// Update collateral
+		const now = new Date();
+		const oneYearFromNow = new Date(
+			now.getFullYear() + 1,
+			now.getMonth(),
+			now.getDate(),
+		);
+		await issueCollateralClaim(tokenIdentity, 1000n, 6, oneYearFromNow);
+
+		// needs supply management role to mint
+		await grantRole(
+			accessManager,
+			owner.address,
+			SMARTRoles.supplyManagementRole,
+		);
+
+		await mint(tokenAddress, 1000n, 6, investorA.address);
 
 		// TODO: execute all other functions of the stablecoin
 

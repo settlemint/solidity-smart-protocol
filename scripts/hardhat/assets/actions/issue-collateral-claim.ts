@@ -3,6 +3,8 @@ import { claimIssuer } from "../../actors/claim-issuer";
 import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
 import SMARTTopics from "../../constants/topics";
+import { formatDecimals } from "../../utils/format-decimals";
+import { toDecimals } from "../../utils/to-decimals";
 import { waitForSuccess } from "../../utils/wait-for-success";
 
 /**
@@ -11,11 +13,13 @@ import { waitForSuccess } from "../../utils/wait-for-success";
  *
  * @param tokenIdentityAddress The address of the token's identity contract.
  * @param amount The collateral amount (as a BigInt).
+ * @param decimals The number of decimals of the token.
  * @param expiryTimestamp The expiry timestamp of the collateral as a JavaScript `Date` object.
  */
 export const issueCollateralClaim = async (
 	tokenIdentityAddress: Address,
 	amount: bigint,
+	decimals: number,
 	expiryTimestamp: Date,
 ) => {
 	// Convert Date object to Unix timestamp (seconds) and then to bigint
@@ -23,11 +27,13 @@ export const issueCollateralClaim = async (
 		Math.floor(expiryTimestamp.getTime() / 1000),
 	);
 
+	const tokenAmount = toDecimals(amount, decimals);
+
 	// 1. Encode the collateral claim data (amount, expiryTimestamp)
 	// Corresponds to abi.encode(amount, expiryTimestamp) in Solidity
 	const encodedCollateralData = encodeAbiParameters(
 		parseAbiParameters("uint256 amount, uint256 expiryTimestamp"),
-		[amount, expiryTimestampBigInt],
+		[tokenAmount, expiryTimestampBigInt],
 	);
 
 	// 2. Create the claim using the claimIssuer's identity/key
@@ -63,6 +69,6 @@ export const issueCollateralClaim = async (
 
 	// Log with the original Date object for better readability if desired, or the timestamp
 	console.log(
-		`[Collateral claim] issued for token identity ${tokenIdentityAddress} with amount ${amount} and expiry ${expiryTimestamp.toISOString()} (Unix: ${expiryTimestampBigInt}).`,
+		`[Collateral claim] issued for token identity ${tokenIdentityAddress} with amount ${formatDecimals(tokenAmount, decimals)} and expiry ${expiryTimestamp.toISOString()} (Unix: ${expiryTimestampBigInt}).`,
 	);
 };

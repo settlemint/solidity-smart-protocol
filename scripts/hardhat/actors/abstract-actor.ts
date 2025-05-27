@@ -5,16 +5,16 @@ import {
 	type Hex,
 	type PublicClient,
 	type WalletClient,
-	encodeAbiParameters,
 	formatEther,
 	getContract as getViemContract,
-	keccak256,
-	parseAbiParameters,
 } from "viem";
-import { SMARTContracts } from "../constants/contracts";
 import { smartProtocolDeployer } from "../deployer";
 import { getPublicClient } from "../utils/public-client";
 import { waitForEvent } from "../utils/wait-for-event";
+
+// Chain to ensure identity creation operations are serialized across all actors
+// To avoid replacement transactions when in sync
+let identityCreationQueue: Promise<void> = Promise.resolve();
 
 /**
  * Abstract base class for actors interacting with the blockchain.
@@ -29,9 +29,10 @@ export abstract class AbstractActor {
 	protected _identity: `0x${string}` | undefined;
 
 	public readonly name: string;
-
-	constructor(name: string) {
+	public readonly countryCode: number;
+	constructor(name: string, countryCode: number) {
 		this.name = name;
+		this.countryCode = countryCode;
 	}
 	/**
 	 * Abstract method to be implemented by subclasses.
@@ -79,44 +80,40 @@ export abstract class AbstractActor {
 		}
 
 		this._identityPromise = new Promise((resolve, reject) => {
-			(async () => {
-				try {
-					const identityFactory =
-						smartProtocolDeployer.getIdentityFactoryContract();
-					const transactionHash: Hex =
-						await identityFactory.write.createIdentity([this.address, []]);
+			// Internal function to create the identity
+			const createIdentity = async (): Promise<`0x${string}`> => {
+				const identityFactory =
+					smartProtocolDeployer.getIdentityFactoryContract();
+				const transactionHash: Hex = await identityFactory.write.createIdentity(
+					[this.address, []],
+				);
 
-					console.log(`[${this.name}] transactionHash: ${transactionHash}`);
-					const { identity } = (await waitForEvent({
-						transactionHash,
-						contract: identityFactory,
-						eventName: "IdentityCreated",
-					})) as unknown as { identity: `0x${string}` };
+				const { identity } = (await waitForEvent({
+					transactionHash,
+					contract: identityFactory,
+					eventName: "IdentityCreated",
+				})) as unknown as { identity: `0x${string}` };
 
-					this._identity = identity;
+				this._identity = identity;
+				console.log(`[${this.name}] identity: ${identity}`);
 
-					console.log(`[${this.name}] identity: ${identity}`);
+				return identity;
+			};
 
-					const contract = this.getContractInstance({
-						address: identity,
-						abi: SMARTContracts.identity,
-					});
-
-					const hashedKey = keccak256(
-						encodeAbiParameters(parseAbiParameters("address"), [this.address]),
-					);
-					const keyHasPurpose = await contract.read.keyHasPurpose([
-						hashedKey,
-						1,
-					]);
-
-					console.log(`[${this.name}] keyHasPurpose: ${keyHasPurpose}`);
-
-					resolve(identity);
-				} catch (error) {
+			// Chain this identity creation to the queue
+			identityCreationQueue = identityCreationQueue
+				.then(async () => {
+					try {
+						const identity = await createIdentity();
+						resolve(identity);
+					} catch (error) {
+						console.error(`[${this.name}] Failed to create identity:`, error);
+						reject(error);
+					}
+				})
+				.catch((error) => {
 					reject(error);
-				}
-			})();
+				});
 		});
 
 		return this._identityPromise;

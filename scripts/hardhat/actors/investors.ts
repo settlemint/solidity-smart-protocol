@@ -1,5 +1,6 @@
 import hre from "hardhat";
 import type { WalletClient } from "viem";
+import Countries from "../constants/countries";
 import { AbstractActor } from "./abstract-actor";
 
 /**
@@ -13,8 +14,8 @@ class Investor extends AbstractActor {
 	 * @param name - The name of the investor
 	 * @param privateKey - Optional private key for the signer. If not provided, a random one will be generated.
 	 */
-	constructor(name: string, accountIndex: number) {
-		super(name);
+	constructor(name: string, accountIndex: number, countryCode: number) {
+		super(name, countryCode);
 		this.accountIndex = accountIndex;
 	}
 
@@ -49,5 +50,5 @@ class Investor extends AbstractActor {
  * A reusable instance of the ClaimIssuer with a consistent address
  */
 
-export const investorA = new Investor("Investor A", 1);
-export const investorB = new Investor("Investor B", 2);
+export const investorA = new Investor("Investor A", 1, Countries.BE);
+export const investorB = new Investor("Investor B", 2, Countries.NL);

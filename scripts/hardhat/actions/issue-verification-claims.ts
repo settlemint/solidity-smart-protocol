@@ -3,6 +3,7 @@ import type { AbstractActor } from "../actors/abstract-actor";
 import { claimIssuer } from "../actors/claim-issuer";
 import { SMARTContracts } from "../constants/contracts";
 import SMARTTopics from "../constants/topics";
+import { smartProtocolDeployer } from "../deployer";
 import { waitForSuccess } from "../utils/wait-for-success";
 
 export const issueVerificationClaims = async (actor: AbstractActor) => {
@@ -22,6 +23,16 @@ export const issueVerificationClaims = async (actor: AbstractActor) => {
 			`AML verified by ${claimIssuer.name} (${claimIssuerIdentity})`,
 		),
 	]);
+
+	const isVerified = await smartProtocolDeployer
+		.getIdentityRegistryContract()
+		.read.isVerified([actor.address, [SMARTTopics.kyc, SMARTTopics.aml]]);
+
+	if (!isVerified) {
+		throw new Error("Identity is not verified");
+	}
+
+	console.log(`[Verification claims] ${isVerified}`);
 };
 
 async function _issueClaim(

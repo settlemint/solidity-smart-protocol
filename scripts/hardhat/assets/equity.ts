@@ -1,12 +1,16 @@
 import type { Address, Hex } from "viem";
 
+import { investorA } from "../actors/investors";
 import { owner } from "../actors/owner";
 import SMARTRoles from "../constants/roles";
 import SMARTTopics from "../constants/topics";
 import { smartProtocolDeployer } from "../deployer";
+import { toDecimals } from "../utils/to-decimals";
 import { waitForEvent } from "../utils/wait-for-event";
 import { grantRole } from "./actions/grant-role";
+import { issueCollateralClaim } from "./actions/issue-collateral-claim";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
+import { mint } from "./actions/mint";
 
 export const createEquity = async () => {
 	const equityFactory = smartProtocolDeployer.getEquityFactoryContract();
@@ -41,7 +45,16 @@ export const createEquity = async () => {
 		// needs to be done so that he can add the claims
 		await grantRole(accessManager, owner.address, SMARTRoles.claimManagerRole);
 		// issue isin claim
-		await issueIsinClaim(tokenIdentity, "12345678901234567890");
+		await issueIsinClaim(tokenIdentity, "DE000BAY0017");
+
+		// needs supply management role to mint
+		await grantRole(
+			accessManager,
+			owner.address,
+			SMARTRoles.supplyManagementRole,
+		);
+
+		await mint(tokenAddress, 100n, 18, investorA.address);
 
 		// TODO: execute all other functions of the equity
 

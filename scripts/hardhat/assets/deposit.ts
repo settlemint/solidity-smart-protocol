@@ -6,6 +6,7 @@ import { SMARTContracts } from "../constants/contracts";
 import SMARTRoles from "../constants/roles";
 import SMARTTopics from "../constants/topics";
 import { smartProtocolDeployer } from "../deployer";
+import { toDecimals } from "../utils/to-decimals";
 import { waitForEvent } from "../utils/wait-for-event";
 import { grantRole } from "./actions/grant-role";
 import { issueCollateralClaim } from "./actions/issue-collateral-claim";
@@ -43,7 +44,7 @@ export const createDeposit = async () => {
 		// needs to be done so that he can add the claims
 		await grantRole(accessManager, owner.address, SMARTRoles.claimManagerRole);
 		// issue isin claim
-		await issueIsinClaim(tokenIdentity, "12345678901234567890");
+		await issueIsinClaim(tokenIdentity, "US1234567890");
 
 		// Update collateral
 		const now = new Date();
@@ -52,7 +53,7 @@ export const createDeposit = async () => {
 			now.getMonth(),
 			now.getDate(),
 		);
-		await issueCollateralClaim(tokenIdentity, 1000n, oneYearFromNow);
+		await issueCollateralClaim(tokenIdentity, 1000n, 6, oneYearFromNow);
 
 		// needs supply management role to mint
 		await grantRole(
@@ -61,7 +62,7 @@ export const createDeposit = async () => {
 			SMARTRoles.supplyManagementRole,
 		);
 
-		await mint(tokenAddress, 1000n, investorA.address);
+		await mint(tokenAddress, 1000n, 6, investorA.address);
 
 		// create some users with identity claims
 		// mint
