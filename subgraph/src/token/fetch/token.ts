@@ -1,6 +1,7 @@
 import { Address } from "@graphprotocol/graph-ts";
 import { Token } from "../../../../generated/schema";
 import {
+  Burnable as BurnableTemplate,
   Pausable as PausableTemplate,
   Token as TokenTemplate,
 } from "../../../../generated/templates";
@@ -35,6 +36,9 @@ export function fetchToken(address: Address): Token {
       token.pausable = fetchPausable(address).id;
       token.save();
       PausableTemplate.create(address);
+    }
+    if (tokenContract.supportsInterface(InterfaceIds.ISMARTBurnable)) {
+      BurnableTemplate.create(address);
     }
   }
 
