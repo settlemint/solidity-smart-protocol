@@ -17,6 +17,7 @@ import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/I
 import { IERC3643TrustedIssuersRegistry } from "../../contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 import { IERC3643IdentityRegistryStorage } from "../../contracts/interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
+import { ISMARTTopicSchemeRegistry } from "../../contracts/system/topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { ISMARTTokenFactory } from "../../contracts/system/token-factory/ISMARTTokenFactory.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
@@ -41,6 +42,8 @@ import { SMARTTokenIdentityImplementation } from
     "../../contracts/system/identity-factory/identities/SMARTTokenIdentityImplementation.sol";
 import { SMARTTokenAccessManagerImplementation } from
     "../../contracts/system/access-manager/SMARTTokenAccessManagerImplementation.sol";
+import { SMARTTopicSchemeRegistryImplementation } from
+    "../../contracts/system/topic-scheme-registry/SMARTTopicSchemeRegistryImplementation.sol";
 
 // Mock contracts for testing edge cases that require invalid contracts
 contract MockInvalidContract {
@@ -60,6 +63,7 @@ contract SMARTSystemTest is Test {
     SMARTIdentityRegistryImplementation public identityRegistryImpl;
     SMARTIdentityRegistryStorageImplementation public identityRegistryStorageImpl;
     SMARTTrustedIssuersRegistryImplementation public trustedIssuersRegistryImpl;
+    SMARTTopicSchemeRegistryImplementation public topicSchemeRegistryImpl;
     SMARTIdentityFactoryImplementation public identityFactoryImpl;
     SMARTIdentityImplementation public identityImpl;
     SMARTTokenIdentityImplementation public tokenIdentityImpl;
@@ -77,6 +81,7 @@ contract SMARTSystemTest is Test {
         identityRegistryImpl = new SMARTIdentityRegistryImplementation(forwarder);
         identityRegistryStorageImpl = new SMARTIdentityRegistryStorageImplementation(forwarder);
         trustedIssuersRegistryImpl = new SMARTTrustedIssuersRegistryImplementation(forwarder);
+        topicSchemeRegistryImpl = new SMARTTopicSchemeRegistryImplementation(forwarder);
         identityFactoryImpl = new SMARTIdentityFactoryImplementation(forwarder);
         identityImpl = new SMARTIdentityImplementation(forwarder);
         tokenIdentityImpl = new SMARTTokenIdentityImplementation(forwarder);
@@ -89,6 +94,7 @@ contract SMARTSystemTest is Test {
         assertTrue(smartSystem.identityRegistryImplementation() != address(0));
         assertTrue(smartSystem.identityRegistryStorageImplementation() != address(0));
         assertTrue(smartSystem.trustedIssuersRegistryImplementation() != address(0));
+        assertTrue(smartSystem.topicSchemeRegistryImplementation() != address(0));
         assertTrue(smartSystem.identityFactoryImplementation() != address(0));
         assertTrue(smartSystem.identityImplementation() != address(0));
         assertTrue(smartSystem.tokenIdentityImplementation() != address(0));
@@ -99,6 +105,7 @@ contract SMARTSystemTest is Test {
         assertTrue(smartSystem.identityRegistryProxy() != address(0));
         assertTrue(smartSystem.identityRegistryStorageProxy() != address(0));
         assertTrue(smartSystem.trustedIssuersRegistryProxy() != address(0));
+        assertTrue(smartSystem.topicSchemeRegistryProxy() != address(0));
         assertTrue(smartSystem.identityFactoryProxy() != address(0));
 
         // Admin should have default admin role
@@ -111,6 +118,7 @@ contract SMARTSystemTest is Test {
         address newIdentityRegistryImpl = address(new SMARTIdentityRegistryImplementation(forwarder));
         address newIdentityStorageImpl = address(new SMARTIdentityRegistryStorageImplementation(forwarder));
         address newTrustedIssuersImpl = address(new SMARTTrustedIssuersRegistryImplementation(forwarder));
+        address newTopicSchemeRegistryImpl = address(new SMARTTopicSchemeRegistryImplementation(forwarder));
         address newIdentityFactoryImpl = address(new SMARTIdentityFactoryImplementation(forwarder));
         address newIdentityImplAddr = address(new SMARTIdentityImplementation(forwarder));
         address newTokenIdentityImpl = address(new SMARTTokenIdentityImplementation(forwarder));
@@ -122,6 +130,7 @@ contract SMARTSystemTest is Test {
             newIdentityRegistryImpl,
             newIdentityStorageImpl,
             newTrustedIssuersImpl,
+            newTopicSchemeRegistryImpl,
             newIdentityFactoryImpl,
             newIdentityImplAddr,
             newTokenIdentityImpl,
@@ -277,6 +286,7 @@ contract SMARTSystemTest is Test {
             address(identityRegistryImpl),
             address(identityRegistryStorageImpl),
             address(trustedIssuersRegistryImpl),
+            address(topicSchemeRegistryImpl),
             address(identityFactoryImpl),
             address(identityImpl),
             address(tokenIdentityImpl),
@@ -291,6 +301,7 @@ contract SMARTSystemTest is Test {
             address(0), // identity registry
             address(identityRegistryStorageImpl),
             address(trustedIssuersRegistryImpl),
+            address(topicSchemeRegistryImpl),
             address(identityFactoryImpl),
             address(identityImpl),
             address(tokenIdentityImpl),
@@ -307,6 +318,7 @@ contract SMARTSystemTest is Test {
             address(identityRegistryImpl),
             address(identityRegistryStorageImpl),
             address(trustedIssuersRegistryImpl),
+            address(topicSchemeRegistryImpl),
             address(identityFactoryImpl),
             address(identityImpl),
             address(tokenIdentityImpl),
@@ -323,6 +335,8 @@ contract SMARTSystemTest is Test {
             IERC3643IdentityRegistryStorage(smartSystem.identityRegistryStorageProxy());
         IERC3643TrustedIssuersRegistry trustedIssuers =
             IERC3643TrustedIssuersRegistry(smartSystem.trustedIssuersRegistryProxy());
+        ISMARTTopicSchemeRegistry topicSchemeRegistry =
+            ISMARTTopicSchemeRegistry(smartSystem.topicSchemeRegistryProxy());
         ISMARTIdentityFactory identityFactory = ISMARTIdentityFactory(smartSystem.identityFactoryProxy());
 
         // Verify contracts are properly deployed and functioning
@@ -330,6 +344,7 @@ contract SMARTSystemTest is Test {
         assertTrue(address(identityRegistry) != address(0));
         assertTrue(address(identityStorage) != address(0));
         assertTrue(address(trustedIssuers) != address(0));
+        assertTrue(address(topicSchemeRegistry) != address(0));
         assertTrue(address(identityFactory) != address(0));
 
         // Test interface support
@@ -339,6 +354,7 @@ contract SMARTSystemTest is Test {
             IERC165(address(identityStorage)).supportsInterface(type(IERC3643IdentityRegistryStorage).interfaceId)
         );
         assertTrue(IERC165(address(trustedIssuers)).supportsInterface(type(IERC3643TrustedIssuersRegistry).interfaceId));
+        assertTrue(IERC165(address(topicSchemeRegistry)).supportsInterface(type(ISMARTTopicSchemeRegistry).interfaceId));
         assertTrue(IERC165(address(identityFactory)).supportsInterface(type(ISMARTIdentityFactory).interfaceId));
     }
 
@@ -364,6 +380,7 @@ contract SMARTSystemTest is Test {
         smartSystem.setIdentityRegistryImplementation(address(identityRegistryImpl));
         smartSystem.setIdentityRegistryStorageImplementation(address(identityRegistryStorageImpl));
         smartSystem.setTrustedIssuersRegistryImplementation(address(trustedIssuersRegistryImpl));
+        smartSystem.setTopicSchemeRegistryImplementation(address(topicSchemeRegistryImpl));
         smartSystem.setIdentityFactoryImplementation(address(identityFactoryImpl));
         smartSystem.setIdentityImplementation(address(identityImpl));
         smartSystem.setTokenIdentityImplementation(address(tokenIdentityImpl));
@@ -374,11 +391,39 @@ contract SMARTSystemTest is Test {
         assertEq(smartSystem.identityRegistryImplementation(), address(identityRegistryImpl));
         assertEq(smartSystem.identityRegistryStorageImplementation(), address(identityRegistryStorageImpl));
         assertEq(smartSystem.trustedIssuersRegistryImplementation(), address(trustedIssuersRegistryImpl));
+        assertEq(smartSystem.topicSchemeRegistryImplementation(), address(topicSchemeRegistryImpl));
         assertEq(smartSystem.identityFactoryImplementation(), address(identityFactoryImpl));
         assertEq(smartSystem.identityImplementation(), address(identityImpl));
         assertEq(smartSystem.tokenIdentityImplementation(), address(tokenIdentityImpl));
         assertEq(smartSystem.tokenAccessManagerImplementation(), address(tokenAccessManagerImpl));
 
         vm.stopPrank();
+    }
+
+    function test_SetTopicSchemeRegistryImplementation() public {
+        vm.prank(admin);
+        vm.expectEmit(true, true, false, false);
+        emit ISMARTSystem.TopicSchemeRegistryImplementationUpdated(admin, address(topicSchemeRegistryImpl));
+
+        smartSystem.setTopicSchemeRegistryImplementation(address(topicSchemeRegistryImpl));
+        assertEq(smartSystem.topicSchemeRegistryImplementation(), address(topicSchemeRegistryImpl));
+    }
+
+    function test_SetTopicSchemeRegistryImplementation_OnlyAdmin() public {
+        vm.prank(user);
+        vm.expectRevert();
+        smartSystem.setTopicSchemeRegistryImplementation(address(topicSchemeRegistryImpl));
+    }
+
+    function test_SetTopicSchemeRegistryImplementation_ZeroAddress() public {
+        vm.prank(admin);
+        vm.expectRevert();
+        smartSystem.setTopicSchemeRegistryImplementation(address(0));
+    }
+
+    function test_SetTopicSchemeRegistryImplementation_InvalidInterface() public {
+        vm.prank(admin);
+        vm.expectRevert();
+        smartSystem.setTopicSchemeRegistryImplementation(address(mockInvalidContract));
     }
 }

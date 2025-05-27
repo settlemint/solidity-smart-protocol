@@ -10,6 +10,7 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 // Interface imports
 import { IERC3643IdentityRegistryStorage } from "./ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { ISMARTTopicSchemeRegistry } from "../system/topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
 
 /// @title ISMARTIdentityRegistry Interface
 /// @author SettleMint
@@ -45,6 +46,12 @@ interface ISMARTIdentityRegistry is IERC165 {
     /// @param sender The address of the account (typically the owner or an admin) that initiated this change.
     /// @param _trustedIssuersRegistry The new address of the contract implementing `IERC3643TrustedIssuersRegistry`.
     event TrustedIssuersRegistrySet(address indexed sender, address indexed _trustedIssuersRegistry);
+
+    /// @notice Emitted when the address of the `TopicSchemeRegistry` contract is successfully set or updated.
+    /// @dev This event signals a change in the topic scheme registry that defines valid claim topics.
+    /// @param sender The address of the account (typically the owner or an admin) that initiated this change.
+    /// @param _topicSchemeRegistry The new address of the contract implementing `ISMARTTopicSchemeRegistry`.
+    event TopicSchemeRegistrySet(address indexed sender, address indexed _topicSchemeRegistry);
 
     /// @notice Emitted when a new identity is successfully registered for an investor's wallet address.
     /// @dev This event marks the creation of an association between a wallet and an on-chain identity contract.
@@ -103,6 +110,17 @@ interface ISMARTIdentityRegistry is IERC165 {
      * @custom:emit TrustedIssuersRegistrySet
      */
     function setTrustedIssuersRegistry(address _trustedIssuersRegistry) external;
+
+    /**
+     * @notice Sets or updates the address of the `TopicSchemeRegistry` contract.
+     * @dev This function is usually restricted to an administrative role (e.g., contract owner).
+     *      The `TopicSchemeRegistry` is responsible for maintaining valid claim topic schemes.
+     *      Updating this address changes which claim topics are considered valid for verification.
+     * @param _topicSchemeRegistry The address of the new contract that implements the
+     * `ISMARTTopicSchemeRegistry` interface.
+     * @custom:emit TopicSchemeRegistrySet
+     */
+    function setTopicSchemeRegistry(address _topicSchemeRegistry) external;
 
     // --- Identity Management (Typically Agent/Registrar Role Restricted) ---
 
@@ -230,4 +248,12 @@ interface ISMARTIdentityRegistry is IERC165 {
      * @return The address of the contract implementing `IERC3643TrustedIssuersRegistry`.
      */
     function issuersRegistry() external view returns (IERC3643TrustedIssuersRegistry);
+
+    /**
+     * @notice Returns the address of the `TopicSchemeRegistry` contract currently being used by this Identity
+     * Registry.
+     * @dev This allows external parties to inspect which topic scheme registry is active for validation.
+     * @return The address of the contract implementing `ISMARTTopicSchemeRegistry`.
+     */
+    function topicSchemeRegistry() external view returns (ISMARTTopicSchemeRegistry);
 }

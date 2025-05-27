@@ -1,6 +1,7 @@
 import { batchAddToRegistry } from "./actions/add-to-registry";
 import { addTrustedIssuer } from "./actions/add-trusted-issuer";
 import { issueVerificationClaims } from "./actions/issue-verification-claims";
+import { registerTopicScheme } from "./actions/register-topic-schemes";
 import { claimIssuer } from "./actors/claim-issuer";
 import { investorA, investorB } from "./actors/investors";
 import { owner } from "./actors/owner";
@@ -31,6 +32,9 @@ async function main() {
 	await claimIssuer.printBalance();
 	await investorA.printBalance();
 	await investorB.printBalance();
+
+	// Register the claim topics
+	await registerTopicScheme();
 
 	// Add the claim issuer as a trusted issuer
 	const claimIssuerIdentity = await claimIssuer.getIdentity();

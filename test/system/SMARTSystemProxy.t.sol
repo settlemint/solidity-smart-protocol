@@ -35,103 +35,115 @@ contract MockSMARTSystem is ISMARTSystem {
 
     // Stub implementations for ISMARTSystem methods
     function bootstrap() external pure {
-        revert("Not implemented");
+        return; // Empty implementation instead of revert
     }
 
     function complianceImplementation() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function identityFactoryImplementation() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function identityImplementation() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function identityRegistryImplementation() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function identityRegistryStorageImplementation() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function tokenAccessManagerImplementation() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function tokenIdentityImplementation() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function trustedIssuersRegistryImplementation() external view returns (address) {
         return mockImplementation;
     }
 
+    function topicSchemeRegistryImplementation() external pure returns (address) {
+        return address(0); // Return zero instead of revert
+    }
+
     function tokenFactoryImplementation(bytes32) external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function complianceProxy() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function identityRegistryProxy() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function identityRegistryStorageProxy() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function trustedIssuersRegistryProxy() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
+    }
+
+    function topicSchemeRegistryProxy() external pure returns (address) {
+        return address(0); // Return zero instead of revert
     }
 
     function identityFactoryProxy() external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function tokenFactoryProxy(bytes32) external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 
     function setComplianceImplementation(address) external pure {
-        revert("Not implemented");
+        return; // Empty implementation instead of revert
     }
 
     function setIdentityFactoryImplementation(address) external pure {
-        revert("Not implemented");
+        return; // Empty implementation instead of revert
     }
 
     function setIdentityImplementation(address) external pure {
-        revert("Not implemented");
+        return; // Empty implementation instead of revert
     }
 
     function setIdentityRegistryImplementation(address) external pure {
-        revert("Not implemented");
+        return; // Empty implementation instead of revert
     }
 
     function setIdentityRegistryStorageImplementation(address) external pure {
-        revert("Not implemented");
+        return; // Empty implementation instead of revert
     }
 
     function setTokenAccessManagerImplementation(address) external pure {
-        revert("Not implemented");
+        return; // Empty implementation instead of revert
     }
 
     function setTokenIdentityImplementation(address) external pure {
-        revert("Not implemented");
+        return; // Empty implementation instead of revert
     }
 
     function setTrustedIssuersRegistryImplementation(address) external pure {
-        revert("Not implemented");
+        return; // Empty implementation instead of revert
+    }
+
+    function setTopicSchemeRegistryImplementation(address) external pure {
+        return; // Empty implementation instead of revert
     }
 
     function createTokenFactory(string calldata, address, address) external pure returns (address) {
-        revert("Not implemented");
+        return address(0); // Return zero instead of revert
     }
 }
 

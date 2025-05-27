@@ -103,6 +103,15 @@ abstract contract AbstractSMARTTest is Test {
         allowedCountries[0] = TestConstants.COUNTRY_CODE_BE;
         allowedCountries[1] = TestConstants.COUNTRY_CODE_JP;
 
+        // Setup claim topics and schemes
+        string[] memory claimSchemes = new string[](2);
+        claimSchemes[0] = "string claim";
+        claimSchemes[1] = "string claim";
+
+        vm.startPrank(platformAdmin);
+        systemUtils.topicSchemeRegistry().batchRegisterTopicSchemes(requiredClaimTopics, claimSchemes);
+        vm.stopPrank();
+
         // --- Setup Identities AFTER requiredClaimTopics is initialized ---
         _setupIdentities();
 

@@ -1,8 +1,9 @@
-import { type Address, encodeAbiParameters, parseAbiParameters } from "viem";
+import type { Address } from "viem";
 import { claimIssuer } from "../../actors/claim-issuer";
 import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
 import { SMARTTopics } from "../../constants/topics";
+import { encodeClaimData } from "../../utils/claim-scheme-utils";
 import { formatDecimals } from "../../utils/format-decimals";
 import { toDecimals } from "../../utils/to-decimals";
 import { waitForSuccess } from "../../utils/wait-for-success";
@@ -31,10 +32,10 @@ export const issueCollateralClaim = async (
 
 	// 1. Encode the collateral claim data (amount, expiryTimestamp)
 	// Corresponds to abi.encode(amount, expiryTimestamp) in Solidity
-	const encodedCollateralData = encodeAbiParameters(
-		parseAbiParameters("uint256 amount, uint256 expiryTimestamp"),
-		[tokenAmount, expiryTimestampBigInt],
-	);
+	const encodedCollateralData = encodeClaimData(SMARTTopics.collateral, [
+		tokenAmount,
+		expiryTimestampBigInt,
+	]);
 
 	// 2. Create the claim using the claimIssuer's identity/key
 	// The claimIssuer signs that this data is valid for the given topic and token identity

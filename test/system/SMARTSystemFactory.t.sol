@@ -12,6 +12,7 @@ import {
     IdentityRegistryImplementationNotSet,
     IdentityRegistryStorageImplementationNotSet,
     TrustedIssuersRegistryImplementationNotSet,
+    TopicSchemeRegistryImplementationNotSet,
     IdentityFactoryImplementationNotSet,
     IdentityImplementationNotSet,
     TokenIdentityImplementationNotSet,
@@ -26,6 +27,8 @@ import { SMARTTrustedIssuersRegistryImplementation } from
     "../../contracts/system/trusted-issuers-registry/SMARTTrustedIssuersRegistryImplementation.sol";
 import { SMARTIdentityRegistryImplementation } from
     "../../contracts/system/identity-registry/SMARTIdentityRegistryImplementation.sol";
+import { SMARTTopicSchemeRegistryImplementation } from
+    "../../contracts/system/topic-scheme-registry/SMARTTopicSchemeRegistryImplementation.sol";
 import { SMARTComplianceImplementation } from "../../contracts/system/compliance/SMARTComplianceImplementation.sol";
 import { SMARTIdentityFactoryImplementation } from
     "../../contracts/system/identity-factory/SMARTIdentityFactoryImplementation.sol";
@@ -44,6 +47,7 @@ contract SMARTSystemFactoryTest is Test {
     address public identityRegistryImpl;
     address public identityRegistryStorageImpl;
     address public trustedIssuersRegistryImpl;
+    address public topicSchemeRegistryImpl;
     address public identityFactoryImpl;
     address public identityImpl;
     address public tokenIdentityImpl;
@@ -65,6 +69,7 @@ contract SMARTSystemFactoryTest is Test {
         identityRegistryImpl = address(new SMARTIdentityRegistryImplementation(forwarder));
         identityRegistryStorageImpl = address(new SMARTIdentityRegistryStorageImplementation(forwarder));
         trustedIssuersRegistryImpl = address(new SMARTTrustedIssuersRegistryImplementation(forwarder));
+        topicSchemeRegistryImpl = address(new SMARTTopicSchemeRegistryImplementation(forwarder));
         identityFactoryImpl = address(new SMARTIdentityFactoryImplementation(forwarder));
         identityImpl = address(new SMARTIdentityImplementation(forwarder));
         tokenIdentityImpl = address(new SMARTTokenIdentityImplementation(forwarder));
@@ -76,6 +81,7 @@ contract SMARTSystemFactoryTest is Test {
             identityRegistryImpl,
             identityRegistryStorageImpl,
             trustedIssuersRegistryImpl,
+            topicSchemeRegistryImpl,
             identityFactoryImpl,
             identityImpl,
             tokenIdentityImpl,
@@ -89,6 +95,7 @@ contract SMARTSystemFactoryTest is Test {
         assertEq(factory.defaultIdentityRegistryImplementation(), identityRegistryImpl);
         assertEq(factory.defaultIdentityRegistryStorageImplementation(), identityRegistryStorageImpl);
         assertEq(factory.defaultTrustedIssuersRegistryImplementation(), trustedIssuersRegistryImpl);
+        assertEq(factory.defaultTopicSchemeRegistryImplementation(), topicSchemeRegistryImpl);
         assertEq(factory.defaultIdentityFactoryImplementation(), identityFactoryImpl);
         assertEq(factory.defaultIdentityImplementation(), identityImpl);
         assertEq(factory.defaultTokenIdentityImplementation(), tokenIdentityImpl);
@@ -104,6 +111,7 @@ contract SMARTSystemFactoryTest is Test {
             identityRegistryImpl,
             identityRegistryStorageImpl,
             trustedIssuersRegistryImpl,
+            topicSchemeRegistryImpl,
             identityFactoryImpl,
             identityImpl,
             tokenIdentityImpl,
@@ -119,6 +127,7 @@ contract SMARTSystemFactoryTest is Test {
             address(0), // Zero identity registry implementation
             identityRegistryStorageImpl,
             trustedIssuersRegistryImpl,
+            topicSchemeRegistryImpl,
             identityFactoryImpl,
             identityImpl,
             tokenIdentityImpl,
@@ -134,6 +143,7 @@ contract SMARTSystemFactoryTest is Test {
             identityRegistryImpl,
             address(0), // Zero identity registry storage implementation
             trustedIssuersRegistryImpl,
+            topicSchemeRegistryImpl,
             identityFactoryImpl,
             identityImpl,
             tokenIdentityImpl,
@@ -149,6 +159,23 @@ contract SMARTSystemFactoryTest is Test {
             identityRegistryImpl,
             identityRegistryStorageImpl,
             address(0), // Zero trusted issuers registry implementation
+            topicSchemeRegistryImpl,
+            identityFactoryImpl,
+            identityImpl,
+            tokenIdentityImpl,
+            tokenAccessManagerImpl,
+            forwarder
+        );
+    }
+
+    function test_ConstructorWithZeroTopicSchemeRegistryImplementation() public {
+        vm.expectRevert(TopicSchemeRegistryImplementationNotSet.selector);
+        new SMARTSystemFactory(
+            complianceImpl,
+            identityRegistryImpl,
+            identityRegistryStorageImpl,
+            trustedIssuersRegistryImpl,
+            address(0), // Zero topic scheme registry implementation
             identityFactoryImpl,
             identityImpl,
             tokenIdentityImpl,
@@ -164,6 +191,7 @@ contract SMARTSystemFactoryTest is Test {
             identityRegistryImpl,
             identityRegistryStorageImpl,
             trustedIssuersRegistryImpl,
+            topicSchemeRegistryImpl,
             address(0), // Zero identity factory implementation
             identityImpl,
             tokenIdentityImpl,
@@ -179,6 +207,7 @@ contract SMARTSystemFactoryTest is Test {
             identityRegistryImpl,
             identityRegistryStorageImpl,
             trustedIssuersRegistryImpl,
+            topicSchemeRegistryImpl,
             identityFactoryImpl,
             address(0), // Zero identity implementation
             tokenIdentityImpl,
@@ -194,6 +223,7 @@ contract SMARTSystemFactoryTest is Test {
             identityRegistryImpl,
             identityRegistryStorageImpl,
             trustedIssuersRegistryImpl,
+            topicSchemeRegistryImpl,
             identityFactoryImpl,
             identityImpl,
             address(0), // Zero token identity implementation
@@ -209,6 +239,7 @@ contract SMARTSystemFactoryTest is Test {
             identityRegistryImpl,
             identityRegistryStorageImpl,
             trustedIssuersRegistryImpl,
+            topicSchemeRegistryImpl,
             identityFactoryImpl,
             identityImpl,
             tokenIdentityImpl,
@@ -319,6 +350,7 @@ contract SMARTSystemFactoryTest is Test {
         assertEq(factory.defaultIdentityRegistryImplementation(), identityRegistryImpl);
         assertEq(factory.defaultIdentityRegistryStorageImplementation(), identityRegistryStorageImpl);
         assertEq(factory.defaultTrustedIssuersRegistryImplementation(), trustedIssuersRegistryImpl);
+        assertEq(factory.defaultTopicSchemeRegistryImplementation(), topicSchemeRegistryImpl);
         assertEq(factory.defaultIdentityFactoryImplementation(), identityFactoryImpl);
         assertEq(factory.defaultIdentityImplementation(), identityImpl);
         assertEq(factory.defaultTokenIdentityImplementation(), tokenIdentityImpl);
@@ -333,6 +365,7 @@ contract SMARTSystemFactoryTest is Test {
             identityRegistryImpl,
             identityRegistryStorageImpl,
             trustedIssuersRegistryImpl,
+            topicSchemeRegistryImpl,
             identityFactoryImpl,
             identityImpl,
             tokenIdentityImpl,

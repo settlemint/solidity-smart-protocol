@@ -1,18 +1,16 @@
-import { type Address, encodeAbiParameters, parseAbiParameters } from "viem";
+import type { Address } from "viem";
 import { claimIssuer } from "../../actors/claim-issuer";
 import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
 import { SMARTTopics } from "../../constants/topics";
+import { encodeClaimData } from "../../utils/claim-scheme-utils";
 import { waitForSuccess } from "../../utils/wait-for-success";
 
 export const issueIsinClaim = async (
 	tokenIdentityAddress: Address,
 	isin: string,
 ) => {
-	const encodedIsinData = encodeAbiParameters(
-		parseAbiParameters("string isinValue"),
-		[isin],
-	);
+	const encodedIsinData = encodeClaimData(SMARTTopics.isin, [isin]);
 
 	const { data: isinClaimData, signature: isinClaimSignature } =
 		await claimIssuer.createClaim(

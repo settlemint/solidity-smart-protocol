@@ -37,6 +37,11 @@ error IdentityRegistryStorageImplementationNotSet();
 /// zero or has not been configured in the `SMARTSystem`.
 error TrustedIssuersRegistryImplementationNotSet();
 
+/// @notice Error indicating that the topic scheme registry implementation address has not been set.
+/// @dev This error is thrown if an operation requires the topic scheme registry, but its logic contract address is
+/// zero or has not been configured in the `SMARTSystem`.
+error TopicSchemeRegistryImplementationNotSet();
+
 /// @notice Error indicating that the identity factory implementation address has not been set.
 /// @dev This error is thrown if an operation requires the identity factory, but its logic contract address is
 /// zero or has not been configured in the `SMARTSystem`.

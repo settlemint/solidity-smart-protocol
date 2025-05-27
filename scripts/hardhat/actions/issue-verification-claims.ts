@@ -1,9 +1,10 @@
-import { type Address, encodeAbiParameters, parseAbiParameters } from "viem";
+import type { Address } from "viem";
 import type { AbstractActor } from "../actors/abstract-actor";
 import { claimIssuer } from "../actors/claim-issuer";
 import { SMARTContracts } from "../constants/contracts";
 import { SMARTTopics } from "../constants/topics";
 import { smartProtocolDeployer } from "../deployer";
+import { encodeClaimData } from "../utils/claim-scheme-utils";
 import { waitForSuccess } from "../utils/wait-for-success";
 
 export const issueVerificationClaims = async (actor: AbstractActor) => {
@@ -31,7 +32,9 @@ export const issueVerificationClaims = async (actor: AbstractActor) => {
 		throw new Error("Identity is not verified");
 	}
 
-	console.log(`[Verification claims] ${isVerified}`);
+	console.log(
+		`[Verification claims] identity for ${actor.name} (${actor.address}) is verified.`,
+	);
 };
 
 async function _issueClaim(
@@ -40,9 +43,7 @@ async function _issueClaim(
 	claimTopic: bigint,
 	claimData: string,
 ) {
-	const encodedClaimData = encodeAbiParameters(parseAbiParameters("string"), [
-		claimData,
-	]);
+	const encodedClaimData = encodeClaimData(claimTopic, [claimData]);
 
 	const identityAddress = await actor.getIdentity();
 

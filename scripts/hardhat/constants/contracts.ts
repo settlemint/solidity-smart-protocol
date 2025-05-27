@@ -21,6 +21,7 @@ import { abi as systemAbiJson } from "../../../artifacts/contracts/system/ISMART
 import { abi as identityFactoryAbiJson } from "../../../artifacts/contracts/system/identity-factory/ISMARTIdentityFactory.sol/ISMARTIdentityFactory.json";
 import { abi as identityAbiJson } from "../../../artifacts/contracts/system/identity-factory/identities/SMARTIdentityImplementation.sol/SMARTIdentityImplementation.json";
 import { abi as tokenIdentityAbiJson } from "../../../artifacts/contracts/system/identity-factory/identities/SMARTTokenIdentityImplementation.sol/SMARTTokenIdentityImplementation.json";
+import { abi as topicSchemeRegistryAbiJson } from "../../../artifacts/contracts/system/topic-scheme-registry/SMARTTopicSchemeRegistryImplementation.sol/SMARTTopicSchemeRegistryImplementation.json";
 
 const asAbi = (abi: unknown): Abi => abi as Abi;
 
@@ -31,6 +32,7 @@ export const SMARTContracts = {
 	identityRegistry: asAbi(identityRegistryAbiJson),
 	identityRegistryStorage: asAbi(identityRegistryStorageAbiJson),
 	trustedIssuersRegistry: asAbi(trustedIssuersRegistryAbiJson),
+	topicSchemeRegistry: asAbi(topicSchemeRegistryAbiJson),
 	identityFactory: asAbi(identityFactoryAbiJson),
 	bondFactory: asAbi(bondFactoryAbiJson),
 	depositFactory: asAbi(depositFactoryAbiJson),
