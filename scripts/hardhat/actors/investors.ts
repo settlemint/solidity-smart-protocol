@@ -4,15 +4,16 @@ import { Countries } from "../constants/countries";
 import { AbstractActor } from "./abstract-actor";
 
 /**
- * Class representing a claim issuer that can generate and sign claims
+ * Class representing an investor that can generate and sign claims
  */
 class Investor extends AbstractActor {
 	private accountIndex: number;
 	private walletClient: WalletClient | null = null;
 	/**
-	 * Create a new claim issuer
+	 * Create a new investor
 	 * @param name - The name of the investor
-	 * @param privateKey - Optional private key for the signer. If not provided, a random one will be generated.
+	 * @param countryCode - The country code of the investor
+	 * @param accountIndex - The index of the account in the wallet clients array
 	 */
 	constructor(name: string, countryCode: number, accountIndex: number) {
 		super(name, countryCode);
