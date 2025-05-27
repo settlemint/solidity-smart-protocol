@@ -9,20 +9,19 @@ import { waitForSuccess } from "../utils/wait-for-success";
 export const issueVerificationClaims = async (actor: AbstractActor) => {
 	const claimIssuerIdentity = await claimIssuer.getIdentity();
 
-	await Promise.all([
-		_issueClaim(
-			actor,
-			claimIssuerIdentity,
-			SMARTTopics.kyc,
-			`KYC verified by ${claimIssuer.name} (${claimIssuerIdentity})`,
-		),
-		_issueClaim(
-			actor,
-			claimIssuerIdentity,
-			SMARTTopics.aml,
-			`AML verified by ${claimIssuer.name} (${claimIssuerIdentity})`,
-		),
-	]);
+	// cannot do these in parallel, else we get issues with the nonce in addClaim
+	await _issueClaim(
+		actor,
+		claimIssuerIdentity,
+		SMARTTopics.kyc,
+		`KYC verified by ${claimIssuer.name} (${claimIssuerIdentity})`,
+	);
+	await _issueClaim(
+		actor,
+		claimIssuerIdentity,
+		SMARTTopics.aml,
+		`AML verified by ${claimIssuer.name} (${claimIssuerIdentity})`,
+	);
 
 	const isVerified = await smartProtocolDeployer
 		.getIdentityRegistryContract()
