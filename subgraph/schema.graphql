@@ -159,6 +159,6 @@ type TokenIdentityClaim @entity(immutable: false) {
 
 type TokenCustodian @entity(immutable: false) {
   id: Bytes!
-  frozen: BigDecimal!
-  frozenExact: BigInt!
+  totalFrozen: BigDecimal!
+  totalFrozenExact: BigInt!
 }

@@ -11,7 +11,7 @@ export function fetchCustodian(address: Address): TokenCustodian {
   if (!custodian) {
     custodian = new TokenCustodian(id);
     const token = fetchToken(address);
-    setBigNumber(custodian, "frozen", BigInt.fromI32(0), token.decimals);
+    setBigNumber(custodian, "totalFrozen", BigInt.fromI32(0), token.decimals);
     custodian.save();
   }
 

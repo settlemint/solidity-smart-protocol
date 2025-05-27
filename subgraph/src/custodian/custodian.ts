@@ -13,10 +13,9 @@ import {
   increaseTokenBalanceFrozen,
   updateTokenBalanceFrozen,
   moveTokenBalanceToNewAccount,
-} from "../token-balance/token-balance";
+} from "../token-balance/token-balance-operations";
 import { Custodian as CustodianContract } from "../../../generated/templates/Custodian/Custodian";
 import { fetchTokenBalance } from "../token-balance/fetch/token-balance";
-import { Custodian } from "../../../generated/templates";
 
 export function handleAddressFrozen(event: AddressFrozen): void {
   fetchEvent(event, "AddressFrozen");
@@ -66,7 +65,7 @@ export function handleTokensFrozen(event: TokensFrozen): void {
     event.params.amount,
     event.block.timestamp
   );
-  const updatedAmount = custodian.frozenExact.plus(event.params.amount);
+  const updatedAmount = custodian.totalFrozenExact.plus(event.params.amount);
   setBigNumber(custodian, "frozen", updatedAmount, token.decimals);
   custodian.save();
 }
@@ -81,7 +80,7 @@ export function handleTokensUnfrozen(event: TokensUnfrozen): void {
     event.params.amount,
     event.block.timestamp
   );
-  const updatedAmount = custodian.frozenExact.minus(event.params.amount);
+  const updatedAmount = custodian.totalFrozenExact.minus(event.params.amount);
   setBigNumber(custodian, "frozen", updatedAmount, token.decimals);
   custodian.save();
 }
