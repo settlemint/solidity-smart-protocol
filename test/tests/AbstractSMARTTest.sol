@@ -99,6 +99,11 @@ abstract contract AbstractSMARTTest is Test {
         requiredClaimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
         requiredClaimTopics[1] = TestConstants.CLAIM_TOPIC_AML;
 
+        allowedCountries = new uint16[](2);
+        allowedCountries[0] = TestConstants.COUNTRY_CODE_BE;
+        allowedCountries[1] = TestConstants.COUNTRY_CODE_JP;
+
+        // Setup claim topics and schemes
         string[] memory claimSchemes = new string[](2);
         claimSchemes[0] = "string claim";
         claimSchemes[1] = "string claim";
@@ -106,10 +111,6 @@ abstract contract AbstractSMARTTest is Test {
         vm.startPrank(platformAdmin);
         systemUtils.topicSchemeRegistry().batchRegisterTopicSchemes(requiredClaimTopics, claimSchemes);
         vm.stopPrank();
-
-        allowedCountries = new uint16[](2);
-        allowedCountries[0] = TestConstants.COUNTRY_CODE_BE;
-        allowedCountries[1] = TestConstants.COUNTRY_CODE_JP;
 
         // --- Setup Identities AFTER requiredClaimTopics is initialized ---
         _setupIdentities();

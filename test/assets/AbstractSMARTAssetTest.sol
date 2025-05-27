@@ -59,14 +59,14 @@ abstract contract AbstractSMARTAssetTest is Test {
             systemUtils.trustedIssuersRegistry()
         );
 
-        // Initialize the claim issuer
+        // Initialize the claim issuer and topic schemes
         uint256[] memory claimTopics = new uint256[](2);
         claimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
         claimTopics[1] = SMARTTopics.CLAIM_TOPIC_COLLATERAL;
 
         string[] memory claimSchemes = new string[](2);
         claimSchemes[0] = "string claim";
-        claimSchemes[1] = "string claim";
+        claimSchemes[1] = "uint256 amount, uint256 expiryTimestamp";
 
         vm.startPrank(platformAdmin);
         systemUtils.topicSchemeRegistry().batchRegisterTopicSchemes(claimTopics, claimSchemes);
