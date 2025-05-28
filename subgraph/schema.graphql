@@ -7,6 +7,7 @@ type Account @entity(immutable: false) {
   isContract: Boolean!
   identity: Identity
   country: Int!
+  balances: [TokenBalance!]! @derivedFrom(field: "account")
 }
 
 type Event @entity(immutable: true) {
@@ -123,6 +124,7 @@ type Token @entity(immutable: false) {
   account: Account!
   accessControl: AccessControl
   identity: Identity
+  balances: [TokenBalance!]! @derivedFrom(field: "token")
   type: String!
   tokenFactory: TokenFactory
   name: String!
@@ -131,6 +133,19 @@ type Token @entity(immutable: false) {
   totalSupply: BigDecimal!
   totalSupplyExact: BigInt!
   pausable: TokenPausable
+}
+
+type TokenBalance @entity(immutable: false) {
+  id: Bytes!
+  token: Token!
+  account: Account!
+  value: BigDecimal!
+  valueExact: BigInt!
+  isFrozen: Boolean!
+  frozen: BigDecimal!
+  frozenExact: BigInt!
+  available: BigDecimal!
+  availableExact: BigInt!
 }
 
 type TokenPausable @entity(immutable: false) {

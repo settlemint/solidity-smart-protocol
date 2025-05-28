@@ -313,3 +313,28 @@ templates:
         - event: TrustedIssuersRegistrySet(indexed address,indexed address)
           handler: handleTrustedIssuersRegistrySet
       file: ./src/identity-registry/identity-registry.ts
+  - kind: ethereum
+    name: Custodian
+    network: settlemint
+    source:
+      abi: Custodian
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: Custodian
+          file: ../artifacts/contracts/extensions/custodian/ISMARTCustodian.sol/ISMARTCustodian.json
+      eventHandlers:
+        - event: AddressFrozen(indexed address,indexed address,indexed bool)
+          handler: handleAddressFrozen
+        - event: RecoverySuccess(indexed address,indexed address,indexed address,address)
+          handler: handleRecoverySuccess
+        - event: TokensFrozen(indexed address,indexed address,uint256)
+          handler: handleTokensFrozen
+        - event: TokensUnfrozen(indexed address,indexed address,uint256)
+          handler: handleTokensUnfrozen
+      file: ./src/custodian/custodian.ts
