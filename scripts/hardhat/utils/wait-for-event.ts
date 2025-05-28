@@ -5,7 +5,7 @@ import {
 	type TransactionReceipt,
 	decodeEventLog,
 } from "viem";
-import type { SMARTOnboardingContracts } from "../deployer";
+import type { SMARTOnboardingContracts } from "../services/deployer";
 import { waitForSuccess } from "./wait-for-success";
 
 // Utility function to find specific event arguments from a transaction

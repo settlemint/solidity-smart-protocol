@@ -10,7 +10,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 interface ISMARTTopicSchemeRegistry is IERC165 {
     // --- Structs ---
     /// @notice Defines a topic scheme with its identifier and signature
-    /// @param topicId The unique identifier for this topic scheme
+    /// @param topicId The unique identifier for this topic scheme (generated from name)
     /// @param signature The signature string used for encoding/decoding claim data
     /// @param exists Flag indicating if this topic scheme is registered
     struct TopicScheme {
@@ -23,61 +23,79 @@ interface ISMARTTopicSchemeRegistry is IERC165 {
     /// @notice Emitted when a new topic scheme is registered
     /// @param sender The address that registered the topic scheme
     /// @param topicId The unique identifier of the registered topic scheme
+    /// @param name The name of the registered topic scheme
     /// @param signature The signature associated with the topic scheme
-    event TopicSchemeRegistered(address indexed sender, uint256 indexed topicId, string signature);
+    event TopicSchemeRegistered(address indexed sender, uint256 indexed topicId, string name, string signature);
 
     /// @notice Emitted when multiple topic schemes are registered in batch
     /// @param sender The address that registered the topic schemes
     /// @param topicIds The unique identifiers of the registered topic schemes
+    /// @param names The names of the registered topic schemes
     /// @param signatures The signatures associated with the topic schemes
-    event TopicSchemesBatchRegistered(address indexed sender, uint256[] topicIds, string[] signatures);
+    event TopicSchemesBatchRegistered(address indexed sender, uint256[] topicIds, string[] names, string[] signatures);
 
     /// @notice Emitted when a topic scheme is updated
     /// @param sender The address that updated the topic scheme
     /// @param topicId The unique identifier of the updated topic scheme
+    /// @param name The name of the updated topic scheme
     /// @param oldSignature The previous signature
     /// @param newSignature The new signature
-    event TopicSchemeUpdated(address indexed sender, uint256 indexed topicId, string oldSignature, string newSignature);
+    event TopicSchemeUpdated(
+        address indexed sender, uint256 indexed topicId, string name, string oldSignature, string newSignature
+    );
 
     /// @notice Emitted when a topic scheme is removed
     /// @param sender The address that removed the topic scheme
     /// @param topicId The unique identifier of the removed topic scheme
-    event TopicSchemeRemoved(address indexed sender, uint256 indexed topicId);
+    /// @param name The name of the removed topic scheme
+    event TopicSchemeRemoved(address indexed sender, uint256 indexed topicId, string name);
 
     // --- Functions ---
-    /// @notice Registers a new topic scheme with its signature
-    /// @param topicId The unique identifier for the topic scheme
+    /// @notice Registers a new topic scheme with its name and signature
+    /// @dev topicId is generated as uint256(keccak256(abi.encodePacked(name)))
+    /// @param name The human-readable name for the topic scheme
     /// @param signature The signature string used for encoding/decoding data
-    function registerTopicScheme(uint256 topicId, string calldata signature) external;
+    function registerTopicScheme(string calldata name, string calldata signature) external;
 
     /// @notice Registers multiple topic schemes in a single transaction
-    /// @param topicIds Array of unique identifiers for the topic schemes
+    /// @dev topicIds are generated from names using keccak256 hash
+    /// @param names Array of human-readable names for the topic schemes
     /// @param signatures Array of signature strings used for encoding/decoding data
-    function batchRegisterTopicSchemes(uint256[] calldata topicIds, string[] calldata signatures) external;
+    function batchRegisterTopicSchemes(string[] calldata names, string[] calldata signatures) external;
 
     /// @notice Updates an existing topic scheme's signature
-    /// @param topicId The unique identifier of the topic scheme to update
+    /// @param name The name of the topic scheme to update
     /// @param newSignature The new signature string
-    function updateTopicScheme(uint256 topicId, string calldata newSignature) external;
+    function updateTopicScheme(string calldata name, string calldata newSignature) external;
 
     /// @notice Removes a topic scheme from the registry
-    /// @param topicId The unique identifier of the topic scheme to remove
-    function removeTopicScheme(uint256 topicId) external;
+    /// @param name The name of the topic scheme to remove
+    function removeTopicScheme(string calldata name) external;
 
-    /// @notice Checks if a topic scheme exists
+    /// @notice Checks if a topic scheme exists by ID
     /// @param topicId The unique identifier to check
     /// @return exists True if the topic scheme is registered, false otherwise
     function hasTopicScheme(uint256 topicId) external view returns (bool exists);
 
-    /// @notice Gets the signature for a specific topic scheme
+    /// @notice Checks if a topic scheme exists by name
+    /// @param name The name to check
+    /// @return exists True if the topic scheme is registered, false otherwise
+    function hasTopicSchemeByName(string calldata name) external view returns (bool exists);
+
+    /// @notice Gets the signature for a specific topic scheme by ID
     /// @param topicId The unique identifier of the topic scheme
     /// @return signature The signature string for the topic scheme
     function getTopicSchemeSignature(uint256 topicId) external view returns (string memory signature);
 
-    /// @notice Gets the complete topic scheme information
-    /// @param topicId The unique identifier of the topic scheme
-    /// @return scheme The complete TopicScheme struct
-    function getTopicScheme(uint256 topicId) external view returns (TopicScheme memory scheme);
+    /// @notice Gets the signature for a specific topic scheme by name
+    /// @param name The name of the topic scheme
+    /// @return signature The signature string for the topic scheme
+    function getTopicSchemeSignatureByName(string calldata name) external view returns (string memory signature);
+
+    /// @notice Gets the topic ID for a given name
+    /// @param name The name of the topic scheme
+    /// @return topicId The unique identifier generated from the name
+    function getTopicId(string calldata name) external pure returns (uint256 topicId);
 
     /// @notice Gets all registered topic IDs
     /// @return topicIds Array of all registered topic scheme identifiers

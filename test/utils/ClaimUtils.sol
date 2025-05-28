@@ -6,6 +6,8 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
+import { ISMARTTopicSchemeRegistry } from "../../contracts/system/topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
+import { SMARTTopics } from "../../contracts/system/SMARTTopics.sol";
 
 contract ClaimUtils is Test {
     // Signature Schemes (ERC735)
@@ -16,10 +18,7 @@ contract ClaimUtils is Test {
     uint256 internal _claimIssuerPrivateKey;
     ISMARTIdentityRegistry internal _identityRegistry;
     ISMARTIdentityFactory internal _identityFactory;
-
-    uint256 internal _collateralClaimTopic;
-    uint256 internal _kycClaimTopic;
-    uint256 internal _amlClaimTopic;
+    ISMARTTopicSchemeRegistry internal _topicSchemeRegistry;
 
     constructor(
         address platformAdmin_,
@@ -27,18 +26,18 @@ contract ClaimUtils is Test {
         uint256 claimIssuerPrivateKey_,
         ISMARTIdentityRegistry identityRegistry_,
         ISMARTIdentityFactory identityFactory_,
-        uint256 collateralClaimTopic_,
-        uint256 kycClaimTopic_,
-        uint256 amlClaimTopic_
+        ISMARTTopicSchemeRegistry topicSchemeRegistry_
     ) {
         _platformAdmin = platformAdmin_;
         _claimIssuer = claimIssuer_;
         _claimIssuerPrivateKey = claimIssuerPrivateKey_;
         _identityRegistry = identityRegistry_;
         _identityFactory = identityFactory_;
-        _collateralClaimTopic = collateralClaimTopic_;
-        _kycClaimTopic = kycClaimTopic_;
-        _amlClaimTopic = amlClaimTopic_;
+        _topicSchemeRegistry = topicSchemeRegistry_;
+    }
+
+    function getTopicId(string memory topicName) public view returns (uint256) {
+        return _topicSchemeRegistry.getTopicId(topicName);
     }
 
     /**
@@ -182,18 +181,18 @@ contract ClaimUtils is Test {
     /**
      * @notice Issues a standard string-based claim from the configured issuer to a client.
      * @param clientWalletAddress_ The wallet address of the client receiving the claim.
-     * @param claimTopic The topic of the claim.
+     * @param claimTopicName The name of the claim topic.
      * @param claimDataString The string data for the claim.
      */
     function issueInvestorClaim(
         address clientWalletAddress_,
-        uint256 claimTopic,
+        string memory claimTopicName,
         string memory claimDataString
     )
         public
     {
         bytes memory encodedData = abi.encode(claimDataString);
-        _issueInvestorIdentityClaimInternal(clientWalletAddress_, claimTopic, encodedData);
+        _issueInvestorIdentityClaimInternal(clientWalletAddress_, getTopicId(claimTopicName), encodedData);
     }
 
     /**
@@ -212,7 +211,9 @@ contract ClaimUtils is Test {
         public
     {
         bytes memory encodedData = abi.encode(amount, expiryTimestamp);
-        _issueTokenIdentityClaimInternal(tokenAddress_, tokenOwner_, _collateralClaimTopic, encodedData);
+        _issueTokenIdentityClaimInternal(
+            tokenAddress_, tokenOwner_, getTopicId(SMARTTopics.TOPIC_COLLATERAL), encodedData
+        );
     }
 
     /**
@@ -221,7 +222,7 @@ contract ClaimUtils is Test {
      */
     function issueKYCClaim(address clientWalletAddress_) public {
         // Use CLAIM_TOPIC_KYC from the constants library
-        issueInvestorClaim(clientWalletAddress_, _kycClaimTopic, "Verified KYC by Issuer");
+        issueInvestorClaim(clientWalletAddress_, SMARTTopics.TOPIC_KYC, "Verified KYC by Issuer");
     }
 
     /**
@@ -230,7 +231,7 @@ contract ClaimUtils is Test {
      */
     function issueAMLClaim(address clientWalletAddress_) public {
         // Use CLAIM_TOPIC_AML from the constants library
-        issueInvestorClaim(clientWalletAddress_, _amlClaimTopic, "Verified AML by Issuer");
+        issueInvestorClaim(clientWalletAddress_, SMARTTopics.TOPIC_AML, "Verified AML by Issuer");
     }
 
     /**

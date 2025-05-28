@@ -3,12 +3,12 @@ import type { Address, Hex } from "viem";
 import { investorA, investorB } from "../actors/investors";
 import { owner } from "../actors/owner";
 import { SMARTRoles } from "../constants/roles";
-import { SMARTTopics } from "../constants/topics";
-import { smartProtocolDeployer } from "../deployer";
+import { SMARTTopic } from "../constants/topics";
+import { smartProtocolDeployer } from "../services/deployer";
+import { topicManager } from "../services/topic-manager";
 import { waitForEvent } from "../utils/wait-for-event";
 import { burn } from "./actions/burn";
 import { grantRole } from "./actions/grant-role";
-import { issueCollateralClaim } from "./actions/issue-collateral-claim";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
 import { mint } from "./actions/mint";
 import { transfer } from "./actions/transfer";
@@ -23,7 +23,10 @@ export const createEquity = async () => {
 		18,
 		"Class A",
 		"Category A",
-		[SMARTTopics.kyc, SMARTTopics.aml],
+		[
+			topicManager.getTopicId(SMARTTopic.kyc),
+			topicManager.getTopicId(SMARTTopic.aml),
+		],
 		[], // TODO: fill in with the setup for ATK
 	]);
 

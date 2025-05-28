@@ -1,7 +1,6 @@
 import { batchAddToRegistry } from "./actions/add-to-registry";
 import { addTrustedIssuer } from "./actions/add-trusted-issuer";
 import { issueVerificationClaims } from "./actions/issue-verification-claims";
-import { registerTopicScheme } from "./actions/register-topic-schemes";
 import { claimIssuer } from "./actors/claim-issuer";
 import { investorA, investorB } from "./actors/investors";
 import { owner } from "./actors/owner";
@@ -10,8 +9,9 @@ import { createDeposit } from "./assets/deposit";
 import { createEquity } from "./assets/equity";
 import { createFund } from "./assets/fund";
 import { createStablecoin } from "./assets/stablecoin";
-import { SMARTTopics } from "./constants/topics";
-import { smartProtocolDeployer } from "./deployer";
+import { SMARTTopic } from "./constants/topics";
+import { smartProtocolDeployer } from "./services/deployer";
+import { topicManager } from "./services/topic-manager";
 
 async function main() {
 	// Setup the smart protocol
@@ -33,15 +33,15 @@ async function main() {
 	await investorA.printBalance();
 	await investorB.printBalance();
 
-	// Register the claim topics
-	await registerTopicScheme();
+	// Initialize the TopicManager with the deployed topic registry
+	await topicManager.initialize();
 
 	// Add the claim issuer as a trusted issuer
 	const claimIssuerIdentity = await claimIssuer.getIdentity();
 	await addTrustedIssuer(claimIssuerIdentity, [
-		SMARTTopics.kyc,
-		SMARTTopics.aml,
-		SMARTTopics.collateral,
+		topicManager.getTopicId(SMARTTopic.kyc),
+		topicManager.getTopicId(SMARTTopic.aml),
+		topicManager.getTopicId(SMARTTopic.collateral),
 	]);
 
 	// Add the actors to the registry

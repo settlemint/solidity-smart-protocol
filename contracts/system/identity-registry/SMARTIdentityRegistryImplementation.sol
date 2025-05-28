@@ -579,7 +579,8 @@ contract SMARTIdentityRegistryImplementation is
         // Add the identity to the external storage contract.
         _identityStorage.addIdentityToStorage(_userAddress, _identity, _country);
         // Emit an event to log the successful registration.
-        emit IdentityRegistered(_msgSender(), _userAddress, _identity);
+        emit IdentityRegistered(_msgSender(), _userAddress, _identity, _country);
+        emit CountryUpdated(_msgSender(), _userAddress, _country);
     }
 
     // --- Context Overrides (ERC2771) ---

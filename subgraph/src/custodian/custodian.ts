@@ -11,7 +11,7 @@ import {
   increaseTokenBalanceFrozen,
   freezeOrUnfreezeTokenBalance,
   moveTokenBalanceToNewAccount,
-} from "../utils/token-balance-utils";
+} from "../token-balance/utils/token-balance-utils";
 
 export function handleAddressFrozen(event: AddressFrozen): void {
   fetchEvent(event, "AddressFrozen");

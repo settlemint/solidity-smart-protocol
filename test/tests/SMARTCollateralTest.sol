@@ -136,9 +136,7 @@ abstract contract SMARTCollateralTest is AbstractSMARTTest {
             untrustedIssuerPK,
             systemUtils.identityRegistry(),
             systemUtils.identityFactory(),
-            TestConstants.CLAIM_TOPIC_COLLATERAL,
-            TestConstants.CLAIM_TOPIC_KYC,
-            TestConstants.CLAIM_TOPIC_AML
+            systemUtils.topicSchemeRegistry()
         );
 
         uint256 expiry = block.timestamp + 1 days;

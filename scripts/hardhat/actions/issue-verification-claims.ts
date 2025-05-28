@@ -2,8 +2,10 @@ import type { Address } from "viem";
 import type { AbstractActor } from "../actors/abstract-actor";
 import { claimIssuer } from "../actors/claim-issuer";
 import { SMARTContracts } from "../constants/contracts";
-import { SMARTTopics } from "../constants/topics";
-import { smartProtocolDeployer } from "../deployer";
+
+import { SMARTTopic } from "../constants/topics";
+import { smartProtocolDeployer } from "../services/deployer";
+import { topicManager } from "../services/topic-manager";
 import { encodeClaimData } from "../utils/claim-scheme-utils";
 import { waitForSuccess } from "../utils/wait-for-success";
 
@@ -14,19 +16,25 @@ export const issueVerificationClaims = async (actor: AbstractActor) => {
 	await _issueClaim(
 		actor,
 		claimIssuerIdentity,
-		SMARTTopics.kyc,
+		SMARTTopic.kyc,
 		`KYC verified by ${claimIssuer.name} (${claimIssuerIdentity})`,
 	);
 	await _issueClaim(
 		actor,
 		claimIssuerIdentity,
-		SMARTTopics.aml,
+		SMARTTopic.aml,
 		`AML verified by ${claimIssuer.name} (${claimIssuerIdentity})`,
 	);
 
 	const isVerified = await smartProtocolDeployer
 		.getIdentityRegistryContract()
-		.read.isVerified([actor.address, [SMARTTopics.kyc, SMARTTopics.aml]]);
+		.read.isVerified([
+			actor.address,
+			[
+				topicManager.getTopicId(SMARTTopic.kyc),
+				topicManager.getTopicId(SMARTTopic.aml),
+			],
+		]);
 
 	if (!isVerified) {
 		throw new Error("Identity is not verified");
@@ -40,14 +48,14 @@ export const issueVerificationClaims = async (actor: AbstractActor) => {
 async function _issueClaim(
 	actor: AbstractActor,
 	claimIssuerIdentity: Address,
-	claimTopic: bigint,
+	claimTopic: SMARTTopic,
 	claimData: string,
 ) {
 	const encodedClaimData = encodeClaimData(claimTopic, [claimData]);
 
 	const identityAddress = await actor.getIdentity();
 
-	const { signature: claimSignature } = await claimIssuer.createClaim(
+	const { signature: claimSignature, topicId } = await claimIssuer.createClaim(
 		identityAddress,
 		claimTopic,
 		encodedClaimData,
@@ -59,7 +67,7 @@ async function _issueClaim(
 	});
 
 	const transactionHash = await identityContract.write.addClaim([
-		claimTopic,
+		topicId,
 		1, // ECDSA
 		claimIssuerIdentity,
 		claimSignature,

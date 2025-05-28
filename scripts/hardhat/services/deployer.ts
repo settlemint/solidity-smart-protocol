@@ -9,9 +9,9 @@ import type {
 	WalletClient,
 } from "viem";
 
-import SMARTOnboardingModule from "../../ignition/modules/onboarding";
-import { owner } from "./actors/owner";
-import { SMARTContracts } from "./constants/contracts";
+import SMARTOnboardingModule from "../../../ignition/modules/onboarding";
+import { owner } from "../actors/owner";
+import { SMARTContracts } from "../constants/contracts";
 // --- Utility Imports ---
 
 // Type for the keys of CONTRACT_METADATA, e.g., "system" | "compliance" | ...
