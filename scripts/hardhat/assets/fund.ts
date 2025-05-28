@@ -18,25 +18,19 @@ import { transfer } from "./actions/transfer";
 export const createFund = async () => {
 	const fundFactory = smartProtocolDeployer.getFundFactoryContract();
 
-	const transactionHash = await fundFactory.write.createFund(
+	const transactionHash = await fundFactory.write.createFund([
+		"Bens Bugs",
+		"BB",
+		8,
+		20,
+		"Class A",
+		"Category A",
 		[
-			"Bens Bugs",
-			"BB",
-			8,
-			20,
-			"Class A",
-			"Category A",
-			[
-				topicManager.getTopicId(SMARTTopic.kyc),
-				topicManager.getTopicId(SMARTTopic.aml),
-			],
-			[], // TODO: fill in with the setup for ATK
+			topicManager.getTopicId(SMARTTopic.kyc),
+			topicManager.getTopicId(SMARTTopic.aml),
 		],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+		[], // TODO: fill in with the setup for ATK
+	]);
 
 	const { tokenAddress, tokenIdentity, accessManager } = (await waitForEvent({
 		transactionHash,

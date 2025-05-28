@@ -19,13 +19,10 @@ export const mint = async (
 
 	const tokenAmount = toDecimals(amount, decimals);
 
-	const transactionHash = await tokenContract.write.mint(
-		[to.address, tokenAmount],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+	const transactionHash = await tokenContract.write.mint([
+		to.address,
+		tokenAmount,
+	]);
 
 	await waitForSuccess(transactionHash);
 

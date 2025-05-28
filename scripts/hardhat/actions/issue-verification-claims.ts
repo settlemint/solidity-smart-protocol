@@ -66,20 +66,14 @@ async function _issueClaim(
 		abi: SMARTContracts.identity,
 	});
 
-	const transactionHash = await identityContract.write.addClaim(
-		[
-			topicId,
-			topicManager.getTopicId(claimTopic),
-			claimIssuerIdentity,
-			claimSignature,
-			encodedClaimData,
-			"",
-		],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+	const transactionHash = await identityContract.write.addClaim([
+		topicId,
+		topicManager.getTopicId(claimTopic),
+		claimIssuerIdentity,
+		claimSignature,
+		encodedClaimData,
+		"",
+	]);
 
 	await waitForSuccess(transactionHash);
 

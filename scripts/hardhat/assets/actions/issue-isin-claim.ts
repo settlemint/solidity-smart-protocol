@@ -30,20 +30,14 @@ export const issueIsinClaim = async (
 
 	const claimIssuerIdentity = await claimIssuer.getIdentity();
 
-	const transactionHash = await tokenIdentityContract.write.addClaim(
-		[
-			topicId,
-			topicManager.getTopicId(SMARTTopic.isin), // ECDSA
-			claimIssuerIdentity,
-			isinClaimSignature,
-			isinClaimData,
-			"",
-		],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+	const transactionHash = await tokenIdentityContract.write.addClaim([
+		topicId,
+		topicManager.getTopicId(SMARTTopic.isin), // ECDSA
+		claimIssuerIdentity,
+		isinClaimSignature,
+		isinClaimData,
+		"",
+	]);
 
 	await waitForSuccess(transactionHash);
 

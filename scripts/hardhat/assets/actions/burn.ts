@@ -19,13 +19,10 @@ export const burn = async (
 
 	const tokenAmount = toDecimals(amount, decimals);
 
-	const transactionHash = await tokenContract.write.burn(
-		[from.address, tokenAmount],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+	const transactionHash = await tokenContract.write.burn([
+		from.address,
+		tokenAmount,
+	]);
 
 	await waitForSuccess(transactionHash);
 

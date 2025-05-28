@@ -16,24 +16,18 @@ import { transfer } from "./actions/transfer";
 export const createEquity = async () => {
 	const equityFactory = smartProtocolDeployer.getEquityFactoryContract();
 
-	const transactionHash = await equityFactory.write.createEquity(
+	const transactionHash = await equityFactory.write.createEquity([
+		"Apple",
+		"AAPL",
+		18,
+		"Class A",
+		"Category A",
 		[
-			"Apple",
-			"AAPL",
-			18,
-			"Class A",
-			"Category A",
-			[
-				topicManager.getTopicId(SMARTTopic.kyc),
-				topicManager.getTopicId(SMARTTopic.aml),
-			],
-			[], // TODO: fill in with the setup for ATK
+			topicManager.getTopicId(SMARTTopic.kyc),
+			topicManager.getTopicId(SMARTTopic.aml),
 		],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+		[], // TODO: fill in with the setup for ATK
+	]);
 
 	const { tokenAddress, tokenIdentity, accessManager } = (await waitForEvent({
 		transactionHash,

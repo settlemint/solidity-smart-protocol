@@ -62,20 +62,14 @@ export const issueCollateralClaim = async (
 
 	// 5. The token owner adds the claim (signed by the claimIssuer) to the token's identity contract
 	// Corresponds to clientIdentity.addClaim(...) in Solidity, called by the token owner
-	const transactionHash = await tokenIdentityContract.write.addClaim(
-		[
-			topicId,
-			topicManager.getTopicId(SMARTTopic.collateral),
-			claimIssuerIdentityAddress,
-			collateralClaimSignature,
-			collateralClaimData,
-			"",
-		],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+	const transactionHash = await tokenIdentityContract.write.addClaim([
+		topicId,
+		topicManager.getTopicId(SMARTTopic.collateral),
+		claimIssuerIdentityAddress,
+		collateralClaimSignature,
+		collateralClaimData,
+		"",
+	]);
 
 	await waitForSuccess(transactionHash);
 

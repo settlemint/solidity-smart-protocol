@@ -1,6 +1,12 @@
 import hre from "hardhat";
-import { type Hex, type WalletClient, createWalletClient, custom } from "viem";
-import type { LocalAccount } from "viem/accounts"; // viem signer type
+import {
+	Chain,
+	Transport,
+	type WalletClient,
+	createWalletClient,
+	custom,
+} from "viem";
+import type { Account, LocalAccount } from "viem/accounts"; // viem signer type
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 import { Countries } from "../constants/countries";
@@ -45,7 +51,7 @@ class ClaimIssuer extends AbstractActor {
 	 * });
 	 * ```
 	 */
-	public getWalletClient(): WalletClient {
+	public getWalletClient(): WalletClient<Transport, Chain, Account> {
 		const viemChain = getViemChain();
 		return createWalletClient({
 			account: this.signer,
@@ -64,7 +70,7 @@ class ClaimIssuer extends AbstractActor {
 	async createClaim(
 		subjectIdentityAddress: `0x${string}`,
 		claimTopic: SMARTTopic,
-		claimData: `0x${string}`,
+		claimData: `0x${string}`
 	): Promise<{
 		data: `0x${string}`;
 		signature: `0x${string}`;
@@ -74,7 +80,7 @@ class ClaimIssuer extends AbstractActor {
 			this.signer,
 			subjectIdentityAddress,
 			topicManager.getTopicId(claimTopic),
-			claimData,
+			claimData
 		);
 	}
 }

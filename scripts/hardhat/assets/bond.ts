@@ -17,23 +17,20 @@ import { transfer } from "./actions/transfer";
 export const createBond = async (depositToken: Address) => {
 	const bondFactory = smartProtocolDeployer.getBondFactoryContract();
 
-	const transactionHash = await bondFactory.write.createBond(
+	const transactionHash = await bondFactory.write.createBond([
+		"Euro Bonds",
+		"EURB",
+		6,
+		BigInt(1000000 * 10 ** 6),
+		BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60), // 1 year
+		BigInt(123),
+		depositToken,
 		[
-			"Euro Bonds",
-			"EURB",
-			6,
-			BigInt(1000000 * 10 ** 6),
-			BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60), // 1 year
-			BigInt(123),
-			depositToken,
-			[
-				topicManager.getTopicId(SMARTTopic.kyc),
-				topicManager.getTopicId(SMARTTopic.aml),
-			],
-			[], // TODO: fill in with the setup for ATK
+			topicManager.getTopicId(SMARTTopic.kyc),
+			topicManager.getTopicId(SMARTTopic.aml),
 		],
-		{ account: null, chain: undefined }
-	);
+		[], // TODO: fill in with the setup for ATK
+	]);
 
 	const { tokenAddress, tokenIdentity, accessManager } = (await waitForEvent({
 		transactionHash,

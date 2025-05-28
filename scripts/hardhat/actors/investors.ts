@@ -1,5 +1,6 @@
 import hre from "hardhat";
-import type { WalletClient } from "viem";
+import { Chain, Transport, WalletClient } from "viem";
+import { Account } from "viem/accounts";
 import { Countries } from "../constants/countries";
 import { AbstractActor } from "./abstract-actor";
 
@@ -8,7 +9,7 @@ import { AbstractActor } from "./abstract-actor";
  */
 class Investor extends AbstractActor {
 	private accountIndex: number;
-	private walletClient: WalletClient | null = null;
+	private walletClient: WalletClient<Transport, Chain, Account> | null = null;
 	/**
 	 * Create a new investor
 	 * @param name - The name of the investor
@@ -38,7 +39,7 @@ class Investor extends AbstractActor {
 	 * @returns The default WalletClient instance.
 	 * @throws Error if the client has not been initialized via `initializeDefaultWalletClient`.
 	 */
-	public getWalletClient(): WalletClient {
+	public getWalletClient(): WalletClient<Transport, Chain, Account> {
 		if (!this.walletClient) {
 			throw new Error("Wallet client not initialized");
 		}

@@ -17,22 +17,16 @@ import { transfer } from "./actions/transfer";
 export const createDeposit = async () => {
 	const depositFactory = smartProtocolDeployer.getDepositFactoryContract();
 
-	const transactionHash = await depositFactory.write.createDeposit(
+	const transactionHash = await depositFactory.write.createDeposit([
+		"Euro Deposits",
+		"EURD",
+		6,
 		[
-			"Euro Deposits",
-			"EURD",
-			6,
-			[
-				topicManager.getTopicId(SMARTTopic.kyc),
-				topicManager.getTopicId(SMARTTopic.aml),
-			],
-			[], // TODO: fill in with the setup for ATK
+			topicManager.getTopicId(SMARTTopic.kyc),
+			topicManager.getTopicId(SMARTTopic.aml),
 		],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+		[], // TODO: fill in with the setup for ATK
+	]);
 
 	const { tokenAddress, tokenIdentity, accessManager } = (await waitForEvent({
 		transactionHash,

@@ -15,13 +15,10 @@ export const addTrustedIssuer = async (
 	const trustedIssuersRegistry =
 		smartProtocolDeployer.getTrustedIssuersRegistryContract();
 
-	const transactionHash = await trustedIssuersRegistry.write.addTrustedIssuer(
-		[trustedIssuerIdentity, claimTopics],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+	const transactionHash = await trustedIssuersRegistry.write.addTrustedIssuer([
+		trustedIssuerIdentity,
+		claimTopics,
+	]);
 
 	await waitForSuccess(transactionHash);
 

@@ -16,13 +16,10 @@ export const grantRole = async (
 		abi: SMARTContracts.accessManager,
 	});
 
-	const transactionHash = await accessManagerContract.write.grantRole(
-		[role, targetAddress],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+	const transactionHash = await accessManagerContract.write.grantRole([
+		role,
+		targetAddress,
+	]);
 
 	await waitForSuccess(transactionHash);
 

@@ -19,13 +19,10 @@ export const transfer = async (
 
 	const tokenAmount = toDecimals(amount, decimals);
 
-	const transactionHash = await tokenContract.write.transfer(
-		[to.address, tokenAmount],
-		{
-			account: null,
-			chain: undefined,
-		}
-	);
+	const transactionHash = await tokenContract.write.transfer([
+		to.address,
+		tokenAmount,
+	]);
 
 	await waitForSuccess(transactionHash);
 
