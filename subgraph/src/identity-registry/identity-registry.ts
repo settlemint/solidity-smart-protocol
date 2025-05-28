@@ -13,6 +13,7 @@ import { fetchIdentity } from "../identity/fetch/identity";
 import { fetchTrustedIssuersRegistry } from "../system/fetch/trusted-issuers-registry";
 import { fetchTopicSchemeRegistry } from "../topic-scheme-registry/fetch/topic-scheme-registry";
 import { fetchIdentityRegistry } from "./fetch/identity-registry";
+import { fetchIdentityRegistryStorage } from "./fetch/identity-registry-storage";
 
 export function handleCountryUpdated(event: CountryUpdated): void {
   fetchEvent(event, "CountryUpdated");
@@ -35,6 +36,12 @@ export function handleIdentityRemoved(event: IdentityRemoved): void {
 
 export function handleIdentityStorageSet(event: IdentityStorageSet): void {
   fetchEvent(event, "IdentityStorageSet");
+  const identityRegistry = fetchIdentityRegistry(event.address);
+  const identityRegistryStorage = fetchIdentityRegistryStorage(
+    event.params._identityStorage
+  );
+  identityRegistry.identityRegistryStorage = identityRegistryStorage.id;
+  identityRegistry.save();
 }
 
 export function handleIdentityUpdated(event: IdentityUpdated): void {
