@@ -8,6 +8,9 @@
   "[typescript]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
+  "[graphql]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "editor.codeActionsOnSave": {
     "quickfix.biome": "explicit",
     "source.organizeImports": "never",

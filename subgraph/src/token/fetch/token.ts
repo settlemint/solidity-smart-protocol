@@ -6,10 +6,11 @@ import {
 } from "../../../../generated/templates";
 import { Token as TokenContract } from "../../../../generated/templates/Token/Token";
 import { fetchAccount } from "../../account/fetch/account";
-import { setBigNumber } from "../../utils/bignumber";
+import { fetchCollateral } from "../../collateral/fetch/collateral";
+import { fetchCustodian } from "../../custodian/fetch/custodian";
 import { InterfaceIds } from "../../erc165/utils/interfaceids";
 import { fetchPausable } from "../../pausable/fetch/pausable";
-import { fetchCustodian } from "../../custodian/fetch/custodian";
+import { setBigNumber } from "../../utils/bignumber";
 
 export function fetchToken(address: Address): Token {
   let token = Token.load(address);
@@ -42,6 +43,10 @@ export function fetchToken(address: Address): Token {
     }
     if (tokenContract.supportsInterface(InterfaceIds.ISMARTCustodian)) {
       fetchCustodian(address);
+    }
+    if (tokenContract.supportsInterface(InterfaceIds.ISMARTCollateral)) {
+      token.collateral = fetchCollateral(address, token.decimals).id;
+      token.save();
     }
   }
 

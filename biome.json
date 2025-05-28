@@ -1,37 +1,37 @@
 {
-	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"organizeImports": {
-		"enabled": true
-	},
-	"formatter": {
-		"enabled": true,
-		"formatWithErrors": false,
-		"attributePosition": "auto",
-		"indentStyle": "tab",
-		"indentWidth": 1,
-		"lineEnding": "lf",
-		"lineWidth": 80
-	},
-	"javascript": {
-		"formatter": {
-			"trailingCommas": "es5"
-		}
-	},
-	"linter": {
-		"enabled": true,
-		"ignore": ["subgraph"],
-		"rules": {
-			"recommended": true,
-			"style": {
-				"noNonNullAssertion": "off"
-			},
-			"suspicious": {
-				"noExplicitAny": "off",
-				"noConsoleLog": "off"
-			},
-			"correctness": {
-				"noUnusedImports": "error"
-			}
-		}
-	}
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "organizeImports": {
+    "enabled": true
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "attributePosition": "auto",
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 80
+  },
+  "javascript": {
+    "formatter": {
+      "trailingCommas": "es5"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "ignore": ["subgraph"],
+    "rules": {
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noConsoleLog": "off"
+      },
+      "correctness": {
+        "noUnusedImports": "error"
+      }
+    }
+  }
 }
