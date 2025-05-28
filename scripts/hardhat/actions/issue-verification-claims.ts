@@ -69,7 +69,7 @@ async function _issueClaim(
 	const transactionHash = await identityContract.write.addClaim(
 		[
 			topicId,
-			BigInt(1), // ECDSA
+			topicManager.getTopicId(claimTopic),
 			claimIssuerIdentity,
 			claimSignature,
 			encodedClaimData,

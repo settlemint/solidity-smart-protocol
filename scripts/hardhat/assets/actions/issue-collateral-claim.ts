@@ -4,6 +4,7 @@ import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
 
 import { SMARTTopic } from "../../constants/topics";
+import { topicManager } from "../../services/topic-manager";
 import { encodeClaimData } from "../../utils/claim-scheme-utils";
 import { formatDecimals } from "../../utils/format-decimals";
 import { toDecimals } from "../../utils/to-decimals";
@@ -64,7 +65,7 @@ export const issueCollateralClaim = async (
 	const transactionHash = await tokenIdentityContract.write.addClaim(
 		[
 			topicId,
-			BigInt(1),
+			topicManager.getTopicId(SMARTTopic.collateral),
 			claimIssuerIdentityAddress,
 			collateralClaimSignature,
 			collateralClaimData,
