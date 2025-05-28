@@ -1,8 +1,8 @@
 import {
-	type Hex,
-	decodeAbiParameters,
-	encodeAbiParameters,
-	parseAbiParameters,
+  type Hex,
+  decodeAbiParameters,
+  encodeAbiParameters,
+  parseAbiParameters,
 } from "viem";
 import { SMARTClaimSchemes, SMARTTopics } from "../constants/topics";
 
@@ -13,20 +13,20 @@ import { SMARTClaimSchemes, SMARTTopics } from "../constants/topics";
  * @throws Error if the claim topic is not found
  */
 export function getClaimScheme(claimTopic: bigint): string {
-	// Create a reverse mapping from topic values to keys
-	const topicToKey: Record<string, keyof typeof SMARTTopics> = {};
+  // Create a reverse mapping from topic values to keys
+  const topicToKey: Record<string, keyof typeof SMARTTopics> = {};
 
-	for (const [key, value] of Object.entries(SMARTTopics)) {
-		topicToKey[value.toString()] = key as keyof typeof SMARTTopics;
-	}
+  for (const [key, value] of Object.entries(SMARTTopics)) {
+    topicToKey[value.toString()] = key as keyof typeof SMARTTopics;
+  }
 
-	const topicKey = topicToKey[claimTopic.toString()];
+  const topicKey = topicToKey[claimTopic.toString()];
 
-	if (!topicKey) {
-		throw new Error(`Unknown claim topic: ${claimTopic}`);
-	}
+  if (!topicKey) {
+    throw new Error(`Unknown claim topic: ${claimTopic}`);
+  }
 
-	return SMARTClaimSchemes[topicKey];
+  return SMARTClaimSchemes[topicKey];
 }
 
 /**
@@ -35,8 +35,8 @@ export function getClaimScheme(claimTopic: bigint): string {
  * @returns The parameter types string for parseAbiParameters
  */
 export function getClaimParameterTypes(claimTopic: bigint): string {
-	const scheme = getClaimScheme(claimTopic);
-	return scheme;
+  const scheme = getClaimScheme(claimTopic);
+  return scheme;
 }
 
 /**
@@ -46,11 +46,11 @@ export function getClaimParameterTypes(claimTopic: bigint): string {
  * @returns The decoded claim data
  */
 export function decodeClaimData(
-	claimTopic: bigint,
-	encodedData: Hex,
+  claimTopic: bigint,
+  encodedData: Hex
 ): readonly unknown[] {
-	const parameterTypes = getClaimParameterTypes(claimTopic);
-	return decodeAbiParameters(parseAbiParameters(parameterTypes), encodedData);
+  const parameterTypes = getClaimParameterTypes(claimTopic);
+  return decodeAbiParameters(parseAbiParameters(parameterTypes), encodedData);
 }
 
 /**
@@ -59,20 +59,20 @@ export function decodeClaimData(
  * @returns The topic key name (e.g., "kyc", "aml", "collateral", "isin")
  */
 export function getTopicKeyName(claimTopic: bigint): keyof typeof SMARTTopics {
-	// Create a reverse mapping from topic values to keys
-	const topicToKey: Record<string, keyof typeof SMARTTopics> = {};
+  // Create a reverse mapping from topic values to keys
+  const topicToKey: Record<string, keyof typeof SMARTTopics> = {};
 
-	for (const [key, value] of Object.entries(SMARTTopics)) {
-		topicToKey[value.toString()] = key as keyof typeof SMARTTopics;
-	}
+  for (const [key, value] of Object.entries(SMARTTopics)) {
+    topicToKey[value.toString()] = key as keyof typeof SMARTTopics;
+  }
 
-	const topicKey = topicToKey[claimTopic.toString()];
+  const topicKey = topicToKey[claimTopic.toString()];
 
-	if (!topicKey) {
-		throw new Error(`Unknown claim topic: ${claimTopic}`);
-	}
+  if (!topicKey) {
+    throw new Error(`Unknown claim topic: ${claimTopic}`);
+  }
 
-	return topicKey;
+  return topicKey;
 }
 
 /**
@@ -82,9 +82,9 @@ export function getTopicKeyName(claimTopic: bigint): keyof typeof SMARTTopics {
  * @returns The encoded claim data as hex string
  */
 export function encodeClaimData(
-	claimTopic: bigint,
-	values: readonly unknown[],
+  claimTopic: bigint,
+  values: readonly unknown[]
 ): Hex {
-	const parameterTypes = getClaimParameterTypes(claimTopic);
-	return encodeAbiParameters(parseAbiParameters(parameterTypes), values);
+  const parameterTypes = getClaimParameterTypes(claimTopic);
+  return encodeAbiParameters(parseAbiParameters(parameterTypes), values);
 }

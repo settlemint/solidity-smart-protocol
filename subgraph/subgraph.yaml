@@ -87,6 +87,8 @@ templates:
           handler: handleTokenIdentityImplementationUpdated
         - event: TrustedIssuersRegistryImplementationUpdated(indexed address,indexed address)
           handler: handleTrustedIssuersRegistryImplementationUpdated
+        - event: TopicSchemeRegistryImplementationUpdated(indexed address,indexed address)
+          handler: handleTopicSchemeRegistryImplementationUpdated
       file: ./src/system/system.ts
   - kind: ethereum
     name: TokenFactory
@@ -246,3 +248,28 @@ templates:
         - event: TokenIdentityCreated(indexed address,indexed address,indexed address)
           handler: handleTokenIdentityCreated
       file: ./src/identity-factory/identity-factory.ts
+  - kind: ethereum
+    name: TopicSchemeRegistry
+    network: settlemint
+    source:
+      abi: TopicSchemeRegistry
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: TopicSchemeRegistry
+          file: ../artifacts/contracts/system/topic-scheme-registry/ISMARTTopicSchemeRegistry.sol/ISMARTTopicSchemeRegistry.json
+      eventHandlers:
+        - event: TopicSchemeRegistered(indexed address,indexed uint256,string)
+          handler: handleTopicSchemeRegistered
+        - event: TopicSchemeRemoved(indexed address,indexed uint256)
+          handler: handleTopicSchemeRemoved
+        - event: TopicSchemeUpdated(indexed address,indexed uint256,string,string)
+          handler: handleTopicSchemeUpdated
+        - event: TopicSchemesBatchRegistered(indexed address,uint256[],string[])
+          handler: handleTopicSchemesBatchRegistered
+      file: ./src/topic-scheme-registry/topic-scheme-registry.ts
