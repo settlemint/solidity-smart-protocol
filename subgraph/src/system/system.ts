@@ -14,6 +14,7 @@ import {
 import { fetchEvent } from "../event/fetch/event";
 import { fetchIdentityFactory } from "../identity-factory/fetch/identity-factory";
 import { fetchTokenFactory } from "../token-factory/fetch/token-factory";
+import { fetchTopicSchemeRegistry } from "../topic-scheme-registry/fetch/topic-scheme-registry";
 import { fetchCompliance } from "./fetch/compliance";
 import { fetchIdentityRegistry } from "./fetch/identity-registry";
 import { fetchIdentityRegistryStorage } from "./fetch/identity-registry-storage";
@@ -35,6 +36,9 @@ export function handleBootstrapped(event: Bootstrapped): void {
   ).id;
   system.identityFactory = fetchIdentityFactory(
     event.params.identityFactoryProxy
+  ).id;
+  system.topicSchemeRegistry = fetchTopicSchemeRegistry(
+    event.params.topicSchemeRegistryProxy
   ).id;
   system.save();
 }

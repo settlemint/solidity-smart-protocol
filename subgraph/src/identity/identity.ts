@@ -13,6 +13,7 @@ import { fetchAccount } from "../account/fetch/account";
 import { fetchEvent } from "../event/fetch/event";
 import { fetchIdentity } from "./fetch/identity";
 import { fetchIdentityClaim } from "./fetch/identity-claim";
+import { decodeClaim } from "./utils/decode-claim";
 
 export function handleApproved(event: Approved): void {
   fetchEvent(event, "Approved");
@@ -22,11 +23,8 @@ export function handleClaimAdded(event: ClaimAdded): void {
   fetchEvent(event, "ClaimAdded");
   const identity = fetchIdentity(event.address);
   const identityClaim = fetchIdentityClaim(identity, event.params.claimId);
-  identityClaim.topic = event.params.topic;
-  identityClaim.scheme = event.params.scheme;
   identityClaim.issuer = fetchAccount(event.params.issuer).id;
-  identityClaim.signature = event.params.signature;
-  identityClaim.data = event.params.data;
+  identityClaim.data = decodeClaim(event.params.topic, event.params.data);
   identityClaim.uri = event.params.uri;
 
   identityClaim.save();
@@ -36,11 +34,8 @@ export function handleClaimChanged(event: ClaimChanged): void {
   fetchEvent(event, "ClaimChanged");
   const identity = fetchIdentity(event.address);
   const identityClaim = fetchIdentityClaim(identity, event.params.claimId);
-  identityClaim.topic = event.params.topic;
-  identityClaim.scheme = event.params.scheme;
   identityClaim.issuer = fetchAccount(event.params.issuer).id;
-  identityClaim.signature = event.params.signature;
-  identityClaim.data = event.params.data;
+  identityClaim.data = decodeClaim(event.params.topic, event.params.data);
   identityClaim.uri = event.params.uri;
 
   identityClaim.save();

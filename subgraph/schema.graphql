@@ -56,6 +56,7 @@ type System @entity(immutable: false) {
   identityFactory: IdentityFactory
   identityRegistry: IdentityRegistry
   trustedIssuersRegistry: TrustedIssuersRegistry
+  topicSchemeRegistry: TopicSchemeRegistry
   tokenFactories: [TokenFactory!]! @derivedFrom(field: "system")
 }
 
@@ -92,6 +93,15 @@ type TopicSchemeRegistry @entity(immutable: false) {
   id: Bytes!
   accessControl: AccessControl!
   account: Account!
+  schemes: [TopicScheme!]! @derivedFrom(field: "registry")
+}
+
+type TopicScheme @entity(immutable: false) {
+  id: Bytes!
+  registry: TopicSchemeRegistry!
+  signature: String!
+  topicId: BigInt!
+  enabled: Boolean!
 }
 
 type TokenFactory @entity(immutable: false) {
@@ -131,11 +141,8 @@ type Identity @entity(immutable: true) {
 type IdentityClaim @entity(immutable: false) {
   id: Bytes!
   identity: Identity!
-  topic: BigInt
-  scheme: BigInt
   issuer: Account
-  signature: Bytes
-  data: Bytes
+  data: String
   uri: String
   revoked: Boolean!
 }
