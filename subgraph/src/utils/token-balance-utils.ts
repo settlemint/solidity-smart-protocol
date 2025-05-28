@@ -1,8 +1,8 @@
-import { Token } from "../../../generated/schema";
+import { Token, TokenBalance } from "../../../generated/schema";
 import { fetchAccount } from "../account/fetch/account";
 import { setBigNumber } from "../bignumber/bignumber";
 import { fetchTokenBalance } from "../token-balance/fetch/token-balance";
-import { Address, BigInt, store } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, store } from "@graphprotocol/graph-ts";
 
 export function increaseTokenBalanceValue(
   token: Token,
@@ -11,14 +11,13 @@ export function increaseTokenBalanceValue(
 ): void {
   const balance = fetchTokenBalance(token, fetchAccount(account));
 
-  const newValue = balance.valueExact.plus(value);
-  setBigNumber(balance, "value", newValue, token.decimals);
   setBigNumber(
     balance,
-    "available",
-    newValue.minus(balance.frozenExact),
+    "value",
+    balance.valueExact.plus(value),
     token.decimals
   );
+  updateAvailableAmount(balance, token.decimals);
 
   balance.save();
 }
@@ -30,14 +29,13 @@ export function decreaseTokenBalanceValue(
 ): void {
   const balance = fetchTokenBalance(token, fetchAccount(account));
 
-  const newValue = balance.valueExact.minus(value);
-  setBigNumber(balance, "value", newValue, token.decimals);
   setBigNumber(
     balance,
-    "available",
-    newValue.minus(balance.frozenExact),
+    "value",
+    balance.valueExact.minus(value),
     token.decimals
   );
+  updateAvailableAmount(balance, token.decimals);
 
   balance.save();
 }
@@ -49,14 +47,13 @@ export function increaseTokenBalanceFrozen(
 ): void {
   const balance = fetchTokenBalance(token, fetchAccount(account));
 
-  const newFrozen = balance.frozenExact.plus(amount);
-  setBigNumber(balance, "frozen", newFrozen, token.decimals);
   setBigNumber(
     balance,
-    "available",
-    balance.valueExact.minus(newFrozen),
+    "frozen",
+    balance.frozenExact.plus(amount),
     token.decimals
   );
+  updateAvailableAmount(balance, token.decimals);
 
   balance.save();
 }
@@ -68,14 +65,13 @@ export function decreaseTokenBalanceFrozen(
 ): void {
   const balance = fetchTokenBalance(token, fetchAccount(account));
 
-  const newFrozen = balance.frozenExact.minus(amount);
-  setBigNumber(balance, "frozen", newFrozen, token.decimals);
   setBigNumber(
     balance,
-    "available",
-    balance.valueExact.minus(newFrozen),
+    "frozen",
+    balance.frozenExact.minus(amount),
     token.decimals
   );
+  updateAvailableAmount(balance, token.decimals);
 
   balance.save();
 }
@@ -88,16 +84,7 @@ export function freezeOrUnfreezeTokenBalance(
   const balance = fetchTokenBalance(token, fetchAccount(account));
 
   balance.isFrozen = isFrozen;
-  if (isFrozen) {
-    setBigNumber(balance, "available", BigInt.zero(), token.decimals);
-  } else {
-    setBigNumber(
-      balance,
-      "available",
-      balance.valueExact.minus(balance.frozenExact),
-      token.decimals
-    );
-  }
+  updateAvailableAmount(balance, token.decimals);
 
   balance.save();
 }
@@ -112,13 +99,24 @@ export function moveTokenBalanceToNewAccount(
 
   setBigNumber(newBalance, "value", oldBalance.valueExact, token.decimals);
   setBigNumber(newBalance, "frozen", oldBalance.frozenExact, token.decimals);
-  setBigNumber(
-    newBalance,
-    "available",
-    oldBalance.availableExact,
-    token.decimals
-  );
+  updateAvailableAmount(newBalance, token.decimals);
 
   newBalance.save();
   store.remove("TokenBalance", oldBalance.id.toHexString());
+}
+
+function updateAvailableAmount(
+  tokenBalance: TokenBalance,
+  decimals: number
+): void {
+  if (tokenBalance.isFrozen) {
+    setBigNumber(tokenBalance, "available", BigInt.zero(), decimals);
+  } else {
+    setBigNumber(
+      tokenBalance,
+      "available",
+      tokenBalance.valueExact.minus(tokenBalance.frozenExact),
+      decimals
+    );
+  }
 }
