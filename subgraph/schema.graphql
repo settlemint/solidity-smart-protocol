@@ -6,7 +6,7 @@ type Account @entity(immutable: false) {
   id: Bytes!
   isContract: Boolean!
   identity: Identity
-  country: Int!
+  country: Int
   balances: [TokenBalance!]! @derivedFrom(field: "account")
 }
 
@@ -105,8 +105,8 @@ type TopicSchemeRegistry @entity(immutable: false) {
 type TopicScheme @entity(immutable: false) {
   id: Bytes!
   registry: TopicSchemeRegistry!
+  name: String!
   signature: String!
-  topicId: BigInt!
   enabled: Boolean!
 }
 
@@ -162,6 +162,7 @@ type Identity @entity(immutable: false) {
 type IdentityClaim @entity(immutable: false) {
   id: Bytes!
   identity: Identity!
+  name: String!
   issuer: Account
   uri: String
   revoked: Boolean!
