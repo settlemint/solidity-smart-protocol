@@ -39,7 +39,7 @@
 		"lint": "solhint --config .solhint.json ./contracts/**/*.sol",
 		"format": "settlemint scs foundry format && prettier --write .",
 		"compile:forge": "settlemint scs foundry build --sizes && ./scripts/interfaceid.sh",
-		"compile:hardhat": "settlemint scs hardhat build",
+		"compile:hardhat": "settlemint scs hardhat build && npm run hardhat:abi-typings",
 		"hardhat:abi-typings": "node --experimental-strip-types scripts/hardhat/generate-abi-typings.ts",
 		"hardhat:check-types": "npm run hardhat:abi-typings && npx tsc",
 		"test": "forge test -vvv",

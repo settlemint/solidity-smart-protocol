@@ -3,7 +3,6 @@ import { claimIssuer } from "../../actors/claim-issuer";
 import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
 import { SMARTTopic } from "../../constants/topics";
-import { topicManager } from "../../services/topic-manager";
 import { encodeClaimData } from "../../utils/claim-scheme-utils";
 import { waitForSuccess } from "../../utils/wait-for-success";
 
@@ -32,7 +31,7 @@ export const issueIsinClaim = async (
 
 	const transactionHash = await tokenIdentityContract.write.addClaim([
 		topicId,
-		topicManager.getTopicId(SMARTTopic.isin), // ECDSA
+		BigInt(1), // ECDSA
 		claimIssuerIdentity,
 		isinClaimSignature,
 		isinClaimData,

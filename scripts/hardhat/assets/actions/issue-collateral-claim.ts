@@ -4,7 +4,6 @@ import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
 
 import { SMARTTopic } from "../../constants/topics";
-import { topicManager } from "../../services/topic-manager";
 import { encodeClaimData } from "../../utils/claim-scheme-utils";
 import { formatDecimals } from "../../utils/format-decimals";
 import { toDecimals } from "../../utils/to-decimals";
@@ -64,7 +63,7 @@ export const issueCollateralClaim = async (
 	// Corresponds to clientIdentity.addClaim(...) in Solidity, called by the token owner
 	const transactionHash = await tokenIdentityContract.write.addClaim([
 		topicId,
-		topicManager.getTopicId(SMARTTopic.collateral),
+		BigInt(1), // ECDSA
 		claimIssuerIdentityAddress,
 		collateralClaimSignature,
 		collateralClaimData,
