@@ -5,8 +5,8 @@ pragma solidity ^0.8.28;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 // Base contract imports
-import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
-import { SMARTHooks } from "./../common/SMARTHooks.sol"; // Consider SMARTHooksUpgradeable if available and preferred
+import { SMARTExtensionUpgradeable } from "../common/SMARTExtensionUpgradeable.sol";
+import { SMARTHooks } from "../common/SMARTHooks.sol"; // Consider SMARTHooksUpgradeable if available and preferred
 
 // Internal implementation imports
 import { _SMARTCollateralLogic } from "./internal/_SMARTCollateralLogic.sol";

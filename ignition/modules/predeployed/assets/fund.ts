@@ -4,10 +4,13 @@ import ForwarderModule from "../forwarder";
 const FundModule = buildModule("FundModule", (m) => {
   const { forwarder } = m.useModule(ForwarderModule);
 
-  const fundFactory = m.contract("SMARTFundFactoryImplementation", [forwarder]);
-  const fund = m.contract("SMARTFundImplementation", [forwarder]);
+  const fundFactoryImplementation = m.contract(
+    "SMARTFundFactoryImplementation",
+    [forwarder]
+  );
+  const fundImplementation = m.contract("SMARTFundImplementation", [forwarder]);
 
-  return { fundFactory, fund };
+  return { fundFactoryImplementation, fundImplementation };
 });
 
 export default FundModule;

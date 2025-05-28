@@ -9,7 +9,6 @@ import { ISMARTDeposit } from "../../contracts/assets/deposit/ISMARTDeposit.sol"
 import { ISMARTDepositFactory } from "../../contracts/assets/deposit/ISMARTDepositFactory.sol";
 import { SMARTDepositFactoryImplementation } from "../../contracts/assets/deposit/SMARTDepositFactoryImplementation.sol";
 import { SMARTDepositImplementation } from "../../contracts/assets/deposit/SMARTDepositImplementation.sol";
-import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";
@@ -20,6 +19,7 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract SMARTDepositTest is AbstractSMARTAssetTest {
     ISMARTDepositFactory public depositFactory;
@@ -78,9 +78,9 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         returns (ISMARTDeposit result)
     {
         vm.startPrank(owner);
+
         address depositAddress =
             depositFactory.createDeposit(name, symbol, decimals, requiredClaimTopics, initialModulePairs);
-
         result = ISMARTDeposit(depositAddress);
 
         vm.label(depositAddress, "Deposit");
@@ -118,14 +118,18 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
     }
 
     function test_DifferentDecimals() public {
-        uint8[] memory decimalValues = new uint8[](4);
+        uint8[] memory decimalValues = new uint8[](3);
         decimalValues[0] = 0; // Test zero decimals
         decimalValues[1] = 6;
         decimalValues[2] = 8; // Test max decimals
 
         for (uint256 i = 0; i < decimalValues.length; ++i) {
             ISMARTDeposit newToken = _createDeposit(
-                "Deposit", "DEP", decimalValues[i], new uint256[](0), new SMARTComplianceModuleParamPair[](0)
+                string.concat("Deposit ", Strings.toString(decimalValues[i])),
+                string.concat("DEP_", Strings.toString(decimalValues[i])),
+                decimalValues[i],
+                new uint256[](0),
+                new SMARTComplianceModuleParamPair[](0)
             );
             assertEq(newToken.decimals(), decimalValues[i]);
         }
@@ -135,7 +139,9 @@ contract SMARTDepositTest is AbstractSMARTAssetTest {
         vm.startPrank(owner);
 
         vm.expectRevert(abi.encodeWithSelector(InvalidDecimals.selector, 19));
-        depositFactory.createDeposit("Deposit", "DEP", 19, new uint256[](0), new SMARTComplianceModuleParamPair[](0));
+        depositFactory.createDeposit(
+            "Deposit 19", "DEP19", 19, new uint256[](0), new SMARTComplianceModuleParamPair[](0)
+        );
         vm.stopPrank();
     }
 

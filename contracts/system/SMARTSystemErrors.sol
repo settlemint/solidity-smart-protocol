@@ -12,6 +12,11 @@ error InvalidSystemAddress();
 /// of a critical component if a required setup step could not be completed successfully.
 error InitializationFailed();
 
+/// @notice Error indicating that the system has already been bootstrapped and cannot be bootstrapped again.
+/// @dev This error is thrown if the `bootstrap` function is called when the system proxy contracts have already
+/// been deployed and initialized.
+error SystemAlreadyBootstrapped();
+
 /// @notice Error indicating that the compliance module implementation address has not been set.
 /// @dev This error is thrown if an operation requires the compliance module, but its logic contract address is
 /// zero or has not been configured in the `SMARTSystem`.
@@ -31,6 +36,11 @@ error IdentityRegistryStorageImplementationNotSet();
 /// @dev This error is thrown if an operation requires the trusted issuers registry, but its logic contract address is
 /// zero or has not been configured in the `SMARTSystem`.
 error TrustedIssuersRegistryImplementationNotSet();
+
+/// @notice Error indicating that the topic scheme registry implementation address has not been set.
+/// @dev This error is thrown if an operation requires the topic scheme registry, but its logic contract address is
+/// zero or has not been configured in the `SMARTSystem`.
+error TopicSchemeRegistryImplementationNotSet();
 
 /// @notice Error indicating that the identity factory implementation address has not been set.
 /// @dev This error is thrown if an operation requires the identity factory, but its logic contract address is
@@ -71,11 +81,6 @@ error ETHTransfersNotAllowed();
 /// @param implAddress The address of the implementation contract that failed the interface check.
 /// @param interfaceId The bytes4 identifier of the interface that the `implAddress` was expected to support.
 error InvalidImplementationInterface(address implAddress, bytes4 interfaceId);
-
-/// @notice Error indicating that an attempt to withdraw Ether from a contract failed.
-/// @dev This can happen if the contract does not have enough Ether, or if the recipient address cannot accept Ether
-/// (e.g., it's a contract without a payable fallback/receive function that reverts on Ether receipt).
-error EtherWithdrawalFailed();
 
 /// @notice Error indicating that an invalid token factory address was provided.
 error InvalidTokenFactoryAddress();

@@ -7,6 +7,7 @@ import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
+import { SMARTTopics } from "../../contracts/system/SMARTTopics.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { TestConstants } from "../Constants.sol";
 import { ClaimUtils } from "../utils/ClaimUtils.sol";
@@ -15,7 +16,7 @@ import { TokenUtils } from "../utils/TokenUtils.sol";
 import { SystemUtils } from "../utils/SystemUtils.sol";
 import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { SMARTToken } from "../../contracts/SMARTToken.sol";
+import { SMARTToken } from "../examples/SMARTToken.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 
@@ -86,9 +87,7 @@ abstract contract AbstractSMARTTest is Test {
             claimIssuerPrivateKey,
             systemUtils.identityRegistry(),
             systemUtils.identityFactory(),
-            TestConstants.CLAIM_TOPIC_COLLATERAL,
-            TestConstants.CLAIM_TOPIC_KYC,
-            TestConstants.CLAIM_TOPIC_AML
+            systemUtils.topicSchemeRegistry()
         );
         tokenUtils = new TokenUtils(
             platformAdmin, systemUtils.identityFactory(), systemUtils.identityRegistry(), systemUtils.compliance()
@@ -96,8 +95,8 @@ abstract contract AbstractSMARTTest is Test {
 
         // --- Initialize Test Data FIRST ---
         requiredClaimTopics = new uint256[](2);
-        requiredClaimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
-        requiredClaimTopics[1] = TestConstants.CLAIM_TOPIC_AML;
+        requiredClaimTopics[0] = systemUtils.getTopicId(SMARTTopics.TOPIC_KYC);
+        requiredClaimTopics[1] = systemUtils.getTopicId(SMARTTopics.TOPIC_AML);
 
         allowedCountries = new uint16[](2);
         allowedCountries[0] = TestConstants.COUNTRY_CODE_BE;
@@ -164,9 +163,9 @@ abstract contract AbstractSMARTTest is Test {
         identityUtils.createClientIdentity(tokenIssuer, TestConstants.COUNTRY_CODE_BE);
         // Issue claims to the token issuer as well (assuming they need verification)
         uint256[] memory claimTopics = new uint256[](3);
-        claimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
-        claimTopics[1] = TestConstants.CLAIM_TOPIC_AML;
-        claimTopics[2] = TestConstants.CLAIM_TOPIC_COLLATERAL;
+        claimTopics[0] = systemUtils.getTopicId(SMARTTopics.TOPIC_KYC);
+        claimTopics[1] = systemUtils.getTopicId(SMARTTopics.TOPIC_AML);
+        claimTopics[2] = systemUtils.getTopicId(SMARTTopics.TOPIC_COLLATERAL);
         // Use claimIssuer address directly, createIssuerIdentity handles creating the on-chain identity
         vm.label(claimIssuer, "Claim Issuer");
         address claimIssuerIdentity = identityUtils.createIssuerIdentity(claimIssuer, claimTopics);

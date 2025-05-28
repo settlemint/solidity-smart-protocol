@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { SMARTSystem } from "./SMARTSystem.sol";
+import { ISMARTSystemFactory } from "./ISMARTSystemFactory.sol";
 import {
     ComplianceImplementationNotSet,
     IdentityRegistryImplementationNotSet,
@@ -11,7 +12,8 @@ import {
     IdentityImplementationNotSet,
     TokenIdentityImplementationNotSet,
     TokenAccessManagerImplementationNotSet,
-    IndexOutOfBounds
+    IndexOutOfBounds,
+    TopicSchemeRegistryImplementationNotSet
 } from "./SMARTSystemErrors.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
@@ -25,7 +27,7 @@ import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.so
 /// This factory also supports meta-transactions through OpenZeppelin's `ERC2771Context`, allowing users to interact
 /// with it (e.g., to create a new `SMARTSystem`) without paying for gas directly, provided a trusted forwarder is used.
 /// The factory keeps track of all `SMARTSystem` instances it creates.
-contract SMARTSystemFactory is ERC2771Context {
+contract SMARTSystemFactory is ISMARTSystemFactory, ERC2771Context {
     // --- State Variables ---
     // Immutable variables are set once at construction and cannot be changed later, saving gas.
 
@@ -45,6 +47,10 @@ contract SMARTSystemFactory is ERC2771Context {
     /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial trusted issuers
     /// registry implementation.
     address public immutable defaultTrustedIssuersRegistryImplementation;
+    /// @notice The default contract address for the topic scheme registry module's logic (implementation).
+    /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial topic scheme
+    /// registry implementation.
+    address public immutable defaultTopicSchemeRegistryImplementation;
     /// @notice The default contract address for the identity factory module's logic (implementation).
     /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial identity factory
     /// implementation.
@@ -70,13 +76,6 @@ contract SMARTSystemFactory is ERC2771Context {
     /// @dev This allows for easy tracking and retrieval of deployed systems.
     address[] public smartSystems;
 
-    // --- Events ---
-
-    /// @notice Emitted when a new `SMARTSystem` instance is successfully created and deployed by this factory.
-    /// @param sender The address that called the `createSystem` function.
-    /// @param systemAddress The blockchain address of the newly deployed `SMARTSystem` contract.
-    event SMARTSystemCreated(address indexed sender, address indexed systemAddress);
-
     // --- Constructor ---
 
     /// @notice Constructs the `SMARTSystemFactory` contract.
@@ -92,15 +91,20 @@ contract SMARTSystemFactory is ERC2771Context {
     /// logic contract.
     /// @param trustedIssuersRegistryImplementation_ The default address for the trusted issuers registry module's logic
     /// contract.
+    /// @param topicSchemeRegistryImplementation_ The default address for the topic scheme registry module's logic
+    /// contract.
     /// @param identityFactoryImplementation_ The default address for the identity factory module's logic contract.
     /// @param identityImplementation_ The default address for the standard identity contract's logic (template).
     /// @param tokenIdentityImplementation_ The default address for the token identity contract's logic (template).
+    /// @param tokenAccessManagerImplementation_ The default address for the token access manager contract's logic
+    /// (template).
     /// @param forwarder_ The address of the trusted forwarder contract to be used for meta-transactions (ERC2771).
     constructor(
         address complianceImplementation_,
         address identityRegistryImplementation_,
         address identityRegistryStorageImplementation_,
         address trustedIssuersRegistryImplementation_,
+        address topicSchemeRegistryImplementation_,
         address identityFactoryImplementation_,
         address identityImplementation_,
         address tokenIdentityImplementation_,
@@ -118,6 +122,9 @@ contract SMARTSystemFactory is ERC2771Context {
         }
         if (trustedIssuersRegistryImplementation_ == address(0)) {
             revert TrustedIssuersRegistryImplementationNotSet();
+        }
+        if (topicSchemeRegistryImplementation_ == address(0)) {
+            revert TopicSchemeRegistryImplementationNotSet();
         }
         if (identityFactoryImplementation_ == address(0)) {
             revert IdentityFactoryImplementationNotSet();
@@ -138,6 +145,7 @@ contract SMARTSystemFactory is ERC2771Context {
         defaultIdentityRegistryImplementation = identityRegistryImplementation_;
         defaultIdentityRegistryStorageImplementation = identityRegistryStorageImplementation_;
         defaultTrustedIssuersRegistryImplementation = trustedIssuersRegistryImplementation_;
+        defaultTopicSchemeRegistryImplementation = topicSchemeRegistryImplementation_;
         defaultIdentityFactoryImplementation = identityFactoryImplementation_;
         defaultIdentityImplementation = identityImplementation_;
         defaultTokenIdentityImplementation = tokenIdentityImplementation_;
@@ -156,7 +164,7 @@ contract SMARTSystemFactory is ERC2771Context {
     /// The new system's address is added to the `smartSystems` array for tracking, and a `SMARTSystemCreated` event is
     /// emitted.
     /// @return systemAddress The blockchain address of the newly created `SMARTSystem` contract.
-    function createSystem() public returns (address systemAddress) {
+    function createSystem() external returns (address systemAddress) {
         // Determine the initial admin for the new SMARTSystem.
         // _msgSender() correctly identifies the original user even if called via a trusted forwarder (ERC2771).
         address sender = _msgSender();
@@ -170,6 +178,7 @@ contract SMARTSystemFactory is ERC2771Context {
             defaultIdentityRegistryImplementation,
             defaultIdentityRegistryStorageImplementation,
             defaultTrustedIssuersRegistryImplementation,
+            defaultTopicSchemeRegistryImplementation,
             defaultIdentityFactoryImplementation,
             defaultIdentityImplementation,
             defaultTokenIdentityImplementation,
@@ -193,7 +202,7 @@ contract SMARTSystemFactory is ERC2771Context {
     /// @dev This is a view function, meaning it only reads blockchain state and does not cost gas to call (if called
     /// externally, not in a transaction).
     /// @return uint256 The count of `SMARTSystem` instances currently stored in the `smartSystems` array.
-    function getSystemCount() public view returns (uint256) {
+    function getSystemCount() external view returns (uint256) {
         return smartSystems.length;
     }
 
@@ -205,7 +214,7 @@ contract SMARTSystemFactory is ERC2771Context {
     /// This is a view function.
     /// @param index The zero-based index of the desired `SMARTSystem` in the `smartSystems` array.
     /// @return address The blockchain address of the `SMARTSystem` contract found at the given `index`.
-    function getSystemAtIndex(uint256 index) public view returns (address) {
+    function getSystemAtIndex(uint256 index) external view returns (address) {
         // Check for valid index to prevent errors.
         if (index >= smartSystems.length) revert IndexOutOfBounds(index, smartSystems.length);
         return smartSystems[index];

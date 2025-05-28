@@ -6,12 +6,13 @@ const SMARTOnboardingEquityModule = buildModule(
   "SMARTOnboardingEquityModule",
   (m) => {
     const { system } = m.useModule(SMARTOnboardingSystemModule);
-    const { equityFactory, equity } = m.useModule(SMARTModule);
+    const { equityFactoryImplementation, equityImplementation } =
+      m.useModule(SMARTModule);
 
     const createEquityFactory = m.call(system, "createTokenFactory", [
       "equity",
-      equityFactory,
-      equity,
+      equityFactoryImplementation,
+      equityImplementation,
     ]);
     const equityFactoryAddress = m.readEventArgument(
       createEquityFactory,

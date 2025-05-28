@@ -16,7 +16,7 @@ import {
     NoTokensToRecover,
     RecoveryTargetAddressFrozen
 } from "../../contracts/extensions/custodian/SMARTCustodianErrors.sol";
-import { SMARTToken } from "../../contracts/SMARTToken.sol";
+import { SMARTToken } from "../examples/SMARTToken.sol";
 
 abstract contract SMARTCustodianTest is AbstractSMARTTest {
     // Renamed from setUp, removed override

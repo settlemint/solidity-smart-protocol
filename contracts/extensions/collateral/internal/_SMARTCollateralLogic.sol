@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
-import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
-import { ISMARTIdentityRegistry } from "./../../../interface/ISMARTIdentityRegistry.sol";
-import { IERC3643TrustedIssuersRegistry } from "./../../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
+import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistry.sol";
+import { IERC3643TrustedIssuersRegistry } from "../../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
-import { InsufficientCollateral, InvalidCollateralTopic } from "./../SMARTCollateralErrors.sol";
-import { ISMARTCollateral } from "./../ISMARTCollateral.sol";
+import { InsufficientCollateral, InvalidCollateralTopic } from "../SMARTCollateralErrors.sol";
+import { ISMARTCollateral } from "../ISMARTCollateral.sol";
 
 /// @title Internal Logic for SMART Collateral Extension
 /// @notice This abstract contract encapsulates the core, shared logic for verifying a global collateral

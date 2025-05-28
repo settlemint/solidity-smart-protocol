@@ -3,7 +3,7 @@ pragma solidity 0.8.28;
 
 import { SMARTFixedYieldSchedule } from "./SMARTFixedYieldSchedule.sol";
 import { ISMARTFixedYieldSchedule } from "./ISMARTFixedYieldSchedule.sol";
-import { ISMARTYield } from "./../../ISMARTYield.sol";
+import { ISMARTYield } from "../../ISMARTYield.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
@@ -104,9 +104,9 @@ contract SMARTFixedYieldScheduleFactory is ERC2771Context {
         external
         returns (address scheduleAddress)
     {
-        // Generate a unique salt for CREATE2 deployment based on token and schedule parameters.
-        // This allows for deterministic address generation.
-        bytes32 salt = keccak256(abi.encodePacked(address(token), startTime, endTime, rate, interval));
+        // Generate a unique salt for CREATE2 deployment based on factory, token and schedule parameters.
+        // This allows for deterministic address generation while preventing cross-factory collisions.
+        bytes32 salt = keccak256(abi.encode(address(this), address(token), startTime, endTime, rate, interval));
 
         // Deploy the new SMARTFixedYieldSchedule contract using CREATE2 (via the `salt` option).
         // The creator (`_msgSender()`) becomes the initial owner/admin of the new schedule.

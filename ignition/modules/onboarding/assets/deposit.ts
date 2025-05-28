@@ -6,12 +6,13 @@ const SMARTOnboardingDepositModule = buildModule(
   "SMARTOnboardingDepositModule",
   (m) => {
     const { system } = m.useModule(SMARTOnboardingSystemModule);
-    const { depositFactory, deposit } = m.useModule(SMARTModule);
+    const { depositFactoryImplementation, depositImplementation } =
+      m.useModule(SMARTModule);
 
     const createDepositFactory = m.call(system, "createTokenFactory", [
       "deposit",
-      depositFactory,
-      deposit,
+      depositFactoryImplementation,
+      depositImplementation,
     ]);
     const depositFactoryAddress = m.readEventArgument(
       createDepositFactory,

@@ -26,6 +26,8 @@ import { SMARTTokenIdentityImplementation } from
     "../../contracts/system/identity-factory/identities/SMARTTokenIdentityImplementation.sol";
 import { SMARTTokenAccessManagerImplementation } from
     "../../contracts/system/access-manager/SMARTTokenAccessManagerImplementation.sol";
+import { SMARTTopicSchemeRegistryImplementation } from
+    "../../contracts/system/topic-scheme-registry/SMARTTopicSchemeRegistryImplementation.sol";
 
 // Proxies
 import { SMARTTokenAccessManagerProxy } from "../../contracts/system/access-manager/SMARTTokenAccessManagerProxy.sol";
@@ -37,6 +39,7 @@ import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol
 import { IERC3643TrustedIssuersRegistry } from "../../contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 import { IERC3643IdentityRegistryStorage } from "../../contracts/interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { ISMARTTopicSchemeRegistry } from "../../contracts/system/topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
 
 // Compliance Modules
 import { CountryAllowListComplianceModule } from
@@ -55,7 +58,7 @@ contract SystemUtils is Test {
     ISMARTIdentityRegistry public identityRegistry; // Proxy
     ISMARTCompliance public compliance; // Proxy
     ISMARTIdentityFactory public identityFactory; // Proxy
-
+    ISMARTTopicSchemeRegistry public topicSchemeRegistry; // Proxy
     // Compliance Modules
     MockedComplianceModule public mockedComplianceModule;
     CountryAllowListComplianceModule public countryAllowListComplianceModule;
@@ -76,12 +79,15 @@ contract SystemUtils is Test {
         SMARTIdentityRegistryImplementation registryImpl = new SMARTIdentityRegistryImplementation(forwarder);
         SMARTIdentityFactoryImplementation factoryImpl = new SMARTIdentityFactoryImplementation(forwarder);
         SMARTTokenAccessManagerImplementation accessManagerImpl = new SMARTTokenAccessManagerImplementation(forwarder);
+        SMARTTopicSchemeRegistryImplementation topicSchemeRegistryImpl =
+            new SMARTTopicSchemeRegistryImplementation(forwarder);
 
         systemFactory = new SMARTSystemFactory(
             address(complianceImpl),
             address(registryImpl),
             address(storageImpl),
             address(issuersImpl),
+            address(topicSchemeRegistryImpl),
             address(factoryImpl),
             address(identityImpl),
             address(tokenIdentityImpl),
@@ -104,6 +110,8 @@ contract SystemUtils is Test {
         vm.label(address(identityRegistryStorage), "Identity Registry Storage");
         trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(system.trustedIssuersRegistryProxy());
         vm.label(address(trustedIssuersRegistry), "Trusted Issuers Registry");
+        topicSchemeRegistry = ISMARTTopicSchemeRegistry(system.topicSchemeRegistryProxy());
+        vm.label(address(topicSchemeRegistry), "Topic Scheme Registry");
         identityFactory = ISMARTIdentityFactory(system.identityFactoryProxy());
         vm.label(address(identityFactory), "Identity Factory");
 
@@ -116,6 +124,10 @@ contract SystemUtils is Test {
         vm.label(address(countryBlockListComplianceModule), "Country Block List Compliance Module");
 
         vm.stopPrank();
+    }
+
+    function getTopicId(string memory topicName) public view returns (uint256) {
+        return topicSchemeRegistry.getTopicId(topicName);
     }
 
     function createTokenAccessManager(address[] memory initialAdmins) external returns (ISMARTTokenAccessManager) {

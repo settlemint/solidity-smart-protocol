@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.28;
 
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 // OnchainID imports
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 
@@ -20,7 +22,9 @@ event TrustedIssuerRemoved(IClaimIssuer indexed _trustedIssuer);
 /// @param _claimTopics is the set of claims that the trusted issuer is allowed to emit.
 event ClaimTopicsUpdated(IClaimIssuer indexed _trustedIssuer, uint256[] _claimTopics);
 
-interface IERC3643TrustedIssuersRegistry {
+/// @title IERC3643TrustedIssuersRegistry Interface
+/// @dev This interface extends IERC165 for interface detection support.
+interface IERC3643TrustedIssuersRegistry is IERC165 {
     // Functions
 
     // Setters

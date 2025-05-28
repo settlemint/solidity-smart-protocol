@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: FSL-1.1-MIT
 pragma solidity ^0.8.28;
 
-import { _SMARTExtension } from "./../../common/_SMARTExtension.sol";
-import { ISMARTYield } from "./../ISMARTYield.sol";
-import { ISMARTYieldSchedule } from "./../schedules/ISMARTYieldSchedule.sol";
-import { ZeroAddressNotAllowed } from "./../../common/CommonErrors.sol";
-import { YieldScheduleAlreadySet, YieldScheduleActive } from "./../SMARTYieldErrors.sol";
-import { YieldScheduleSet } from "./../SMARTYieldEvents.sol";
+import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
+import { ISMARTYield } from "../ISMARTYield.sol";
+import { ISMARTYieldSchedule } from "../schedules/ISMARTYieldSchedule.sol";
+import { ZeroAddressNotAllowed } from "../../common/CommonErrors.sol";
+import { YieldScheduleAlreadySet, YieldScheduleActive } from "../SMARTYieldErrors.sol";
 
 /// @title Internal Logic for the SMART Yield Extension
 /// @notice This abstract contract provides the core, reusable logic for managing yield schedules associated with a
@@ -67,7 +66,7 @@ abstract contract _SMARTYieldLogic is _SMARTExtension, ISMARTYield {
             // this function.
 
         yieldSchedule = schedule; // Store the address of the new yield schedule contract.
-        emit YieldScheduleSet(_smartSender(), schedule); // Announce that a new schedule has been set.
+        emit ISMARTYield.YieldScheduleSet(_smartSender(), schedule); // Announce that a new schedule has been set.
     }
 
     // -- Internal Hook Helper Functions --

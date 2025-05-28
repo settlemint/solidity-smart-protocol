@@ -6,12 +6,13 @@ const SMARTOnboardingStableCoinModule = buildModule(
   "SMARTOnboardingStableCoinModule",
   (m) => {
     const { system } = m.useModule(SMARTOnboardingSystemModule);
-    const { stablecoinFactory, stablecoin } = m.useModule(SMARTModule);
+    const { stablecoinFactoryImplementation, stablecoinImplementation } =
+      m.useModule(SMARTModule);
 
     const createStableCoinFactory = m.call(system, "createTokenFactory", [
       "stablecoin",
-      stablecoinFactory,
-      stablecoin,
+      stablecoinFactoryImplementation,
+      stablecoinImplementation,
     ]);
     const stablecoinFactoryAddress = m.readEventArgument(
       createStableCoinFactory,

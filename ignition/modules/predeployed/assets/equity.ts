@@ -4,12 +4,15 @@ import ForwarderModule from "../forwarder";
 const EquityModule = buildModule("EquityModule", (m) => {
   const { forwarder } = m.useModule(ForwarderModule);
 
-  const equityFactory = m.contract("SMARTEquityFactoryImplementation", [
+  const equityFactoryImplementation = m.contract(
+    "SMARTEquityFactoryImplementation",
+    [forwarder]
+  );
+  const equityImplementation = m.contract("SMARTEquityImplementation", [
     forwarder,
   ]);
-  const equity = m.contract("SMARTEquityImplementation", [forwarder]);
 
-  return { equityFactory, equity };
+  return { equityFactoryImplementation, equityImplementation };
 });
 
 export default EquityModule;

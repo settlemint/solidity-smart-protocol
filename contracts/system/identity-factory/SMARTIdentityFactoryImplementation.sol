@@ -5,8 +5,8 @@ pragma solidity ^0.8.28;
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -38,7 +38,7 @@ import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 ///      `SMARTTokenIdentityProxy` for tokens) at deterministic addresses. These proxies point to logic implementations
 ///      whose addresses are provided by the central `ISMARTSystem` contract, enabling upgradeability of the identity
 /// logic.
-///      The factory uses `AccessControlEnumerableUpgradeable` for role-based access control, notably the
+///      The factory uses `AccessControlUpgradeable` for role-based access control, notably the
 /// `REGISTRAR_ROLE`
 ///      for creating identities. It is also `ERC2771ContextUpgradeable` for meta-transaction support.
 ///      The identities created are based on the ERC725 (OnchainID) standard, managed via ERC734 for key management.
@@ -46,7 +46,7 @@ contract SMARTIdentityFactoryImplementation is
     Initializable,
     ERC165Upgradeable,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable,
+    AccessControlUpgradeable,
     ISMARTIdentityFactory
 {
     // --- Constants ---
@@ -111,16 +111,7 @@ contract SMARTIdentityFactoryImplementation is
     error InvalidTokenIdentityImplementation();
 
     // --- Events ---
-    /// @notice Emitted when a new identity contract is successfully created and registered for an investor wallet.
-    /// @param sender The address that initiated the identity creation (e.g., an address with `REGISTRAR_ROLE`).
-    /// @param identity The address of the newly deployed `SMARTIdentityProxy` contract.
-    /// @param wallet The investor wallet address for which the identity was created.
-    event IdentityCreated(address indexed sender, address indexed identity, address indexed wallet);
-    /// @notice Emitted when a new identity contract is successfully created and registered for a token contract.
-    /// @param sender The address that initiated the token identity creation (e.g., an address with `REGISTRAR_ROLE`).
-    /// @param identity The address of the newly deployed `SMARTTokenIdentityProxy` contract.
-    /// @param token The address of the token contract for which the identity was created.
-    event TokenIdentityCreated(address indexed sender, address indexed identity, address indexed token);
+
     /// @notice Emitted when the TOKEN_REGISTRAR_ROLE is granted to an account.
     /// @param account The account that was granted the role.
     /// @param sender The account that granted the role.
@@ -162,7 +153,7 @@ contract SMARTIdentityFactoryImplementation is
         if (systemAddress == address(0)) revert InvalidSystemAddress();
 
         __ERC165_init_unchained();
-        __AccessControlEnumerable_init_unchained();
+        __AccessControl_init_unchained();
 
         if (
             !IERC165(ISMARTSystem(systemAddress).identityImplementation()).supportsInterface(
@@ -422,12 +413,28 @@ contract SMARTIdentityFactoryImplementation is
         address _address
     )
         internal
-        pure
+        view
         returns (bytes32 saltBytes, string memory saltString)
     {
         saltString = string.concat(_saltPrefix, Strings.toHexString(_address));
-        saltBytes = keccak256(abi.encodePacked(saltString));
+        saltBytes = _calculateSaltFromString(_system, saltString);
         // No explicit return needed due to named return variables
+    }
+
+    /// @notice Internal helper to calculate salt with system address prefix.
+    /// @dev Ensures consistent salt generation with system address scoping.
+    /// @param systemAddress The system address to prevent cross-system collisions.
+    /// @param saltString The string to be used for salt calculation.
+    /// @return The calculated salt for CREATE2 deployment.
+    function _calculateSaltFromString(
+        address systemAddress,
+        string memory saltString
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encode(systemAddress, saltString));
     }
 
     /// @notice Internal view function to compute the CREATE2 address for a `SMARTIdentityProxy` (for wallets).
@@ -530,7 +537,6 @@ contract SMARTIdentityFactoryImplementation is
         private
         returns (address)
     {
-        // slither-disable-next-line encode-packed-collision: Standard pattern for Create2 deployment bytecode.
         bytes memory deploymentBytecode = abi.encodePacked(_proxyBytecode, _constructorArgs);
 
         address deployedAddress = Create2.deploy(0, _saltBytes, deploymentBytecode);
@@ -583,14 +589,14 @@ contract SMARTIdentityFactoryImplementation is
     /// contract implements.
     /// It declares support for the `ISMARTIdentityFactory` interface and any interfaces supported by its parent
     /// contracts
-    /// (like `AccessControlEnumerableUpgradeable` and `ERC165Upgradeable`).
+    /// (like `AccessControlUpgradeable` and `ERC165Upgradeable`).
     /// @param interfaceId The interface identifier (bytes4) to check.
     /// @return `true` if the contract supports the `interfaceId`, `false` otherwise.
     function supportsInterface(bytes4 interfaceId)
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable, ERC165Upgradeable)
+        override(AccessControlUpgradeable, ERC165Upgradeable, IERC165)
         returns (bool)
     {
         return interfaceId == type(ISMARTIdentityFactory).interfaceId || super.supportsInterface(interfaceId);

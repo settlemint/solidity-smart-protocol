@@ -4,12 +4,15 @@ import ForwarderModule from "../forwarder";
 const DepositModule = buildModule("DepositModule", (m) => {
   const { forwarder } = m.useModule(ForwarderModule);
 
-  const depositFactory = m.contract("SMARTDepositFactoryImplementation", [
+  const depositFactoryImplementation = m.contract(
+    "SMARTDepositFactoryImplementation",
+    [forwarder]
+  );
+  const depositImplementation = m.contract("SMARTDepositImplementation", [
     forwarder,
   ]);
-  const deposit = m.contract("SMARTDepositImplementation", [forwarder]);
 
-  return { depositFactory, deposit };
+  return { depositFactoryImplementation, depositImplementation };
 });
 
 export default DepositModule;

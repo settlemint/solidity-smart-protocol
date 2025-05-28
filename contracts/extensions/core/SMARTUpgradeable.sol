@@ -7,10 +7,11 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 // Interface imports
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 // Base contract imports
-import { SMARTExtensionUpgradeable } from "./../common/SMARTExtensionUpgradeable.sol";
+import { SMARTExtensionUpgradeable } from "../common/SMARTExtensionUpgradeable.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
 
 // Internal implementation imports
@@ -222,7 +223,13 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
      * @param interfaceId The `bytes4` interface identifier.
      * @return bool `true` if the interface is supported, `false` otherwise.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC165Upgradeable, IERC165)
+        returns (bool)
+    {
         return __smart_supportsInterface(interfaceId) || super.supportsInterface(interfaceId);
     }
 

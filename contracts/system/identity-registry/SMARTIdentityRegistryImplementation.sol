@@ -4,8 +4,7 @@ pragma solidity ^0.8.28;
 // OpenZeppelin imports
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 // import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { AccessControlEnumerableUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
@@ -16,11 +15,12 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
 
 // Interface imports
-import { ISMARTIdentityRegistry } from "./../../interface/ISMARTIdentityRegistry.sol";
-import { ISMART } from "./../../interface/ISMART.sol";
+import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
+import { ISMART } from "../../interface/ISMART.sol";
 
 import { ISMARTIdentityRegistryStorage } from "./../../interface/ISMARTIdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./../../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { ISMARTTopicSchemeRegistry } from "../topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
 
 // Constants
 import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
@@ -32,14 +32,14 @@ import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 /// and their associated data, adhering to the ERC-3643 standard for tokenized assets.
 /// @dev This implementation relies on separate contracts for storing identity data (`ISMARTIdentityRegistryStorage`)
 /// and for managing trusted claim issuers (`IERC3643TrustedIssuersRegistry`).
-/// It uses OpenZeppelin's `AccessControlEnumerableUpgradeable` for role-based access control,
+/// It uses OpenZeppelin's `AccessControlUpgradeable` for role-based access control,
 /// `ERC2771ContextUpgradeable` for meta-transaction support (allowing transactions to be relayed by a trusted
 /// forwarder),
 /// and is designed to be upgradeable using the UUPS (Universal Upgradeable Proxy Standard) pattern.
 contract SMARTIdentityRegistryImplementation is
     Initializable,
     ERC2771ContextUpgradeable,
-    AccessControlEnumerableUpgradeable,
+    AccessControlUpgradeable,
     ISMARTIdentityRegistry
 {
     // --- Storage References ---
@@ -53,6 +53,11 @@ contract SMARTIdentityRegistryImplementation is
     /// to issue verifiable claims about identities (e.g., KYC/AML status).
     /// The `isVerified` function uses this registry to check the validity of claims.
     IERC3643TrustedIssuersRegistry private _trustedIssuersRegistry;
+    /// @notice Stores the contract address of the `ISMARTTopicSchemeRegistry` instance.
+    /// @dev This external contract maintains the valid topic schemes and their signatures.
+    /// The `isVerified` function uses this registry to validate that claim topics are registered before checking
+    /// claims.
+    ISMARTTopicSchemeRegistry private _topicSchemeRegistry;
 
     // --- Errors ---
     /// @notice Error triggered when an invalid storage address (e.g., address(0)) is provided.
@@ -61,6 +66,9 @@ contract SMARTIdentityRegistryImplementation is
     /// @notice Error triggered when an invalid registry address (e.g., address(0)) is provided.
     /// @dev This usually happens when setting or updating the trusted issuers registry address.
     error InvalidRegistryAddress();
+    /// @notice Error triggered when an invalid topic scheme registry address (e.g., address(0)) is provided.
+    /// @dev This usually happens when setting or updating the topic scheme registry address.
+    error InvalidTopicSchemeRegistryAddress();
     /// @notice Error triggered when an operation is attempted on a user address that is not registered in the system.
     /// @param userAddress The address that was not found in the registry.
     error IdentityNotRegistered(address userAddress);
@@ -122,11 +130,12 @@ contract SMARTIdentityRegistryImplementation is
     /// (typically called via a proxy).
     /// @dev This function sets up the core components of the identity registry:
     /// 1.  Initializes `ERC165Upgradeable` for interface detection.
-    /// 2.  Initializes `AccessControlEnumerableUpgradeable` for role-based access management.
+    /// 2.  Initializes `AccessControlUpgradeable` for role-based access management.
     /// 3.  Grants the `DEFAULT_ADMIN_ROLE` and `REGISTRAR_ROLE` to the `initialAdmin` address.
     ///     The `DEFAULT_ADMIN_ROLE` allows managing other roles and system parameters.
     ///     The `REGISTRAR_ROLE` allows managing identities.
-    /// 4.  Sets the addresses for the `_identityStorage` and `_trustedIssuersRegistry` contracts.
+    /// 4.  Sets the addresses for the `_identityStorage`, `_trustedIssuersRegistry`, and `_topicSchemeRegistry`
+    /// contracts.
     ///     These addresses must not be zero addresses.
     /// It is protected by the `initializer` modifier from OpenZeppelin, ensuring it can only be called once.
     /// @param systemAddress The address of the deployed `SMARTSystem` contract.
@@ -136,11 +145,14 @@ contract SMARTIdentityRegistryImplementation is
     /// This contract will be used to store all identity data.
     /// @param trustedIssuersRegistry_ The address of the deployed `IERC3643TrustedIssuersRegistry` contract.
     /// This contract will be used to verify claims against trusted issuers.
+    /// @param topicSchemeRegistry_ The address of the deployed `ISMARTTopicSchemeRegistry` contract.
+    /// This contract will be used to validate claim topics against registered schemes.
     function initialize(
         address systemAddress,
         address initialAdmin,
         address identityStorage_,
-        address trustedIssuersRegistry_
+        address trustedIssuersRegistry_,
+        address topicSchemeRegistry_
     )
         public
         initializer // Ensures this function is called only once
@@ -148,7 +160,7 @@ contract SMARTIdentityRegistryImplementation is
         // Initialize ERC165 for interface detection support in an upgradeable context.
         __ERC165_init_unchained();
         // Initialize AccessControl for role-based permissions in an upgradeable context.
-        __AccessControlEnumerable_init_unchained();
+        __AccessControl_init_unchained();
         // ERC2771Context is initialized by its constructor during contract creation.
 
         // Grant the caller (initialAdmin) the default admin role, allowing them to manage other roles.
@@ -163,6 +175,11 @@ contract SMARTIdentityRegistryImplementation is
         if (trustedIssuersRegistry_ == address(0)) revert InvalidRegistryAddress();
         _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
         emit TrustedIssuersRegistrySet(_msgSender(), address(_trustedIssuersRegistry)); // Use _msgSender()
+
+        // Validate and set the topic scheme registry contract address.
+        if (topicSchemeRegistry_ == address(0)) revert InvalidTopicSchemeRegistryAddress();
+        _topicSchemeRegistry = ISMARTTopicSchemeRegistry(topicSchemeRegistry_);
+        emit TopicSchemeRegistrySet(_msgSender(), address(_topicSchemeRegistry));
 
         // Grant the initialAdmin the registrar role, allowing them to manage identities.
         // TODO: Consider if the initial admin should always be the first registrar,
@@ -204,6 +221,18 @@ contract SMARTIdentityRegistryImplementation is
         if (trustedIssuersRegistry_ == address(0)) revert InvalidRegistryAddress();
         _trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry_);
         emit TrustedIssuersRegistrySet(_msgSender(), address(_trustedIssuersRegistry));
+    }
+
+    /// @inheritdoc ISMARTIdentityRegistry
+    /// @notice Updates the address of the topic scheme registry contract.
+    /// @dev This function can only be called by an address holding the `DEFAULT_ADMIN_ROLE`.
+    /// It performs a check to ensure the new `topicSchemeRegistry_` address is not the zero address.
+    /// Emits a `TopicSchemeRegistrySet` event upon successful update.
+    /// @param topicSchemeRegistry_ The new address for the `ISMARTTopicSchemeRegistry` contract.
+    function setTopicSchemeRegistry(address topicSchemeRegistry_) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (topicSchemeRegistry_ == address(0)) revert InvalidTopicSchemeRegistryAddress();
+        _topicSchemeRegistry = ISMARTTopicSchemeRegistry(topicSchemeRegistry_);
+        emit TopicSchemeRegistrySet(_msgSender(), address(_topicSchemeRegistry));
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
@@ -425,10 +454,11 @@ contract SMARTIdentityRegistryImplementation is
     /// @dev An identity is considered verified if:
     /// 1. The `_userAddress` is registered in the system (checked via `this.contains()`).
     /// 2. For *each* `requiredClaimTopics` (that is not zero):
-    ///    a. The identity contract (`IIdentity`) associated with `_userAddress` has a claim for that topic.
-    ///    b. The issuer of that claim is one of the trusted issuers for that specific topic, as defined in the
+    ///    a. The topic is registered in the topic scheme registry.
+    ///    b. The identity contract (`IIdentity`) associated with `_userAddress` has a claim for that topic.
+    ///    c. The issuer of that claim is one of the trusted issuers for that specific topic, as defined in the
     /// `_trustedIssuersRegistry`.
-    ///    c. The claim is considered valid by the issuer (checked by calling `issuer.isClaimValid()`).
+    ///    d. The claim is considered valid by the issuer (checked by calling `issuer.isClaimValid()`).
     /// If `requiredClaimTopics` is an empty array, the function returns `true` (no specific claims are required for
     /// verification).
     /// If any required claim topic is 0, it's skipped. This allows for optional or placeholder topics.
@@ -466,6 +496,10 @@ contract SMARTIdentityRegistryImplementation is
         // (Assuming it passed the contains() and not-lost checks)
         if (requiredClaimTopics.length == 0) return true;
 
+        // Cache state variables as local variables to avoid repeated reads in loops
+        ISMARTTopicSchemeRegistry topicSchemeRegistry_ = _topicSchemeRegistry;
+        IERC3643TrustedIssuersRegistry trustedIssuersRegistry = _trustedIssuersRegistry;
+
         // Retrieve the user's identity contract from storage.
         IIdentity identityToVerify = _identityStorage.storedIdentity(_userAddress);
         uint256 requiredClaimTopicsLength = requiredClaimTopics.length;
@@ -481,10 +515,15 @@ contract SMARTIdentityRegistryImplementation is
                 continue;
             }
 
+            // Check if the topic is registered in the topic scheme registry
+            if (!topicSchemeRegistry_.hasTopicScheme(currentTopic)) {
+                return false; // Topic is not registered, verification fails
+            }
+
             bool topicVerified = false; // Flag to track if the current topic is satisfied.
 
             // Get the list of trusted issuers for the current claim topic.
-            IClaimIssuer[] memory relevantIssuers = _trustedIssuersRegistry.getTrustedIssuersForClaimTopic(currentTopic);
+            IClaimIssuer[] memory relevantIssuers = trustedIssuersRegistry.getTrustedIssuersForClaimTopic(currentTopic);
             uint256 relevantIssuersLength = relevantIssuers.length;
 
             // Iterate over each trusted issuer for this topic.
@@ -585,6 +624,14 @@ contract SMARTIdentityRegistryImplementation is
         return _trustedIssuersRegistry;
     }
 
+    /// @inheritdoc ISMARTIdentityRegistry
+    /// @notice Returns the address of the currently configured topic scheme registry contract.
+    /// @dev This allows external contracts or UIs to discover the location of the topic scheme registry.
+    /// @return The address of the `ISMARTTopicSchemeRegistry` contract.
+    function topicSchemeRegistry() external view override returns (ISMARTTopicSchemeRegistry) {
+        return _topicSchemeRegistry;
+    }
+
     // --- Lost Wallet View Functions ---
 
     /// @inheritdoc ISMARTIdentityRegistry
@@ -639,7 +686,8 @@ contract SMARTIdentityRegistryImplementation is
         // Add the identity to the external storage contract.
         _identityStorage.addIdentityToStorage(_userAddress, _identity, _country);
         // Emit an event to log the successful registration.
-        emit IdentityRegistered(_msgSender(), _userAddress, _identity);
+        emit IdentityRegistered(_msgSender(), _userAddress, _identity, _country);
+        emit CountryUpdated(_msgSender(), _userAddress, _country);
     }
 
     // --- Context Overrides (ERC2771) ---
@@ -702,7 +750,7 @@ contract SMARTIdentityRegistryImplementation is
         public
         view
         virtual
-        override(AccessControlEnumerableUpgradeable) // Overrides the one in AccessControlEnumerableUpgradeable
+        override(AccessControlUpgradeable, IERC165) // Overrides the one in AccessControlUpgradeable
         returns (bool)
     {
         // Check for ISMARTIdentityRegistry interface and then delegate to parent contracts.

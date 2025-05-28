@@ -7,6 +7,19 @@ pragma solidity ^0.8.28;
 /// @dev This interface is intended to be implemented by contracts that provide redeemable token functionality.
 /// The functions defined here are external, meaning they can be called from outside the contract.
 interface ISMARTRedeemable {
+    /// @notice Emitted when tokens are successfully redeemed (burned by the token holder).
+    /// @dev This event is crucial for tracking the reduction of token supply due to redemptions.
+    /// It signifies that a token holder has voluntarily exchanged their tokens to have them permanently removed from
+    /// circulation.
+    /// Off-chain services can listen to this event to update balances, statistics, or trigger other processes.
+    /// The `indexed` keyword for `sender` allows for efficient searching and filtering of these events based on the
+    /// sender's address.
+    /// @param sender The address of the token holder who redeemed their tokens. This address initiated the redeem
+    /// transaction.
+    /// @param amount The quantity of tokens that were redeemed and thus burned. This is the amount by which the sender's
+    /// balance and the total supply decreased.
+    event Redeemed(address indexed sender, uint256 amount);
+
     // -- State-Changing Functions --
 
     /// @notice Allows the caller (the token holder) to redeem a specific amount of their own tokens.

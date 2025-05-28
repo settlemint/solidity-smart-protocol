@@ -2,12 +2,8 @@
 pragma solidity ^0.8.28;
 
 import { ISMARTTokenIdentity } from "./ISMARTTokenIdentity.sol";
-import { Identity } from "@onchainid/contracts/Identity.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { IERC735 } from "@onchainid/contracts/interface/IERC735.sol";
-import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
-import { IClaimIssuer } from "@onchainid/contracts/interface/IClaimIssuer.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import { ISMARTTokenAccessManaged } from "../../../extensions/access-managed/ISMARTTokenAccessManaged.sol";
@@ -142,7 +138,6 @@ contract SMARTTokenIdentityImplementation is
 
     // --- ERC734 (Key Holder) Functions - Overridden for Access Control & Specific Logic ---
 
-    /// @inheritdoc IERC734
     /// @dev Adds a key with a specific purpose and type. Requires MANAGEMENT_KEY purpose.
     ///      The parameters (_key, _purpose, _keyType) are unused as key operations are unsupported in this
     /// implementation.
@@ -159,7 +154,6 @@ contract SMARTTokenIdentityImplementation is
         revert UnsupportedKeyOperation();
     }
 
-    /// @inheritdoc IERC734
     /// @dev Removes a purpose from a key. If it's the last purpose, the key is removed. Requires MANAGEMENT_KEY
     /// purpose.
     ///      The parameters (_key, _purpose) are unused as key operations are unsupported in this implementation.
@@ -167,7 +161,6 @@ contract SMARTTokenIdentityImplementation is
         revert UnsupportedKeyOperation();
     }
 
-    /// @inheritdoc IERC734
     /// @dev Approves or disapproves an execution.
     ///      Requires MANAGEMENT_KEY if the execution targets the identity itself.
     ///      Requires ACTION_KEY if the execution targets an external contract.
@@ -176,7 +169,6 @@ contract SMARTTokenIdentityImplementation is
         revert UnsupportedExecutionOperation();
     }
 
-    /// @inheritdoc IERC734
     /// @dev Initiates an execution. If the sender has MANAGEMENT_KEY, or ACTION_KEY (for external calls),
     ///      the execution is auto-approved.
     ///      The parameters (_to, _value, _data) are unused as execution operations are unsupported in this
@@ -195,7 +187,6 @@ contract SMARTTokenIdentityImplementation is
         revert UnsupportedExecutionOperation();
     }
 
-    /// @inheritdoc IERC734
     /// @dev Gets key data. This operation is unsupported in this identity model.
     ///      The parameter (_key) is unused as key operations are unsupported in this implementation.
     function getKey(bytes32 /*_key*/ )
@@ -208,7 +199,6 @@ contract SMARTTokenIdentityImplementation is
         revert UnsupportedKeyOperation();
     }
 
-    /// @inheritdoc IERC734
     /// @dev Gets key purposes. This operation is unsupported in this identity model.
     ///      The parameter (_key) is unused as key operations are unsupported in this implementation.
     function getKeyPurposes(bytes32 /*_key*/ )
@@ -221,7 +211,6 @@ contract SMARTTokenIdentityImplementation is
         revert UnsupportedKeyOperation();
     }
 
-    /// @inheritdoc IERC734
     /// @dev Gets keys by purpose. This operation is unsupported in this identity model.
     ///      The parameter (_purpose) is unused as key operations are unsupported in this implementation.
     function getKeysByPurpose(uint256 /*_purpose*/ )
@@ -234,7 +223,6 @@ contract SMARTTokenIdentityImplementation is
         revert UnsupportedKeyOperation();
     }
 
-    /// @inheritdoc IERC734
     /// @dev Checks if a key has a purpose. This operation is unsupported.
     ///      The parameters (_key, _purpose) are unused as key operations are unsupported in this implementation.
     function keyHasPurpose(
@@ -272,7 +260,6 @@ contract SMARTTokenIdentityImplementation is
 
     // --- ERC165 Support ---
 
-    /// @inheritdoc IERC165
     /// @notice Checks if the contract supports a given interface ID.
     /// @dev It declares support for `IIdentity`, `IERC734`, `IERC735` (components of `IIdentity`),
     ///      and `IERC165` itself. It chains to `ERC165Upgradeable.supportsInterface`.

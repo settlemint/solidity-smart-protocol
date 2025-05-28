@@ -19,33 +19,36 @@ import {
     IdentityImplementationNotSet,
     TokenIdentityImplementationNotSet,
     InvalidImplementationInterface,
-    EtherWithdrawalFailed,
     InvalidTokenFactoryAddress,
     TokenFactoryTypeAlreadyRegistered,
     InvalidTokenImplementationAddress,
     InvalidTokenImplementationInterface,
-    TokenAccessManagerImplementationNotSet
+    TokenAccessManagerImplementationNotSet,
+    SystemAlreadyBootstrapped,
+    TopicSchemeRegistryImplementationNotSet
 } from "./SMARTSystemErrors.sol";
 
 // Constants
 import { SMARTSystemRoles } from "./SMARTSystemRoles.sol";
+import { SMARTTopics } from "./SMARTTopics.sol";
 
 // Interface imports
 import { ISMARTTokenFactory } from "./token-factory/ISMARTTokenFactory.sol";
-import { ISMARTCompliance } from "./../interface/ISMARTCompliance.sol";
+import { ISMARTCompliance } from "../interface/ISMARTCompliance.sol";
 import { ISMARTIdentityFactory } from "./identity-factory/ISMARTIdentityFactory.sol"; // Reverted to original path
-import { IERC3643TrustedIssuersRegistry } from "./../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
-import { IERC3643IdentityRegistryStorage } from "./../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
-import { ISMARTIdentityRegistry } from "./../interface/ISMARTIdentityRegistry.sol";
-import { ISMARTTokenAccessManager } from "./../extensions/access-managed/ISMARTTokenAccessManager.sol";
-
+import { IERC3643TrustedIssuersRegistry } from "../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
+import { IERC3643IdentityRegistryStorage } from "../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTIdentityRegistry } from "../interface/ISMARTIdentityRegistry.sol";
+import { ISMARTTokenAccessManager } from "../extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { ISMARTTopicSchemeRegistry } from "./topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
 import { SMARTComplianceProxy } from "./compliance/SMARTComplianceProxy.sol";
 import { SMARTIdentityRegistryProxy } from "./identity-registry/SMARTIdentityRegistryProxy.sol";
 import { SMARTIdentityRegistryStorageProxy } from "./identity-registry-storage/SMARTIdentityRegistryStorageProxy.sol";
 import { SMARTTrustedIssuersRegistryProxy } from "./trusted-issuers-registry/SMARTTrustedIssuersRegistryProxy.sol";
+import { SMARTTopicSchemeRegistryProxy } from "./topic-scheme-registry/SMARTTopicSchemeRegistryProxy.sol";
 import { SMARTIdentityFactoryProxy } from "./identity-factory/SMARTIdentityFactoryProxy.sol";
 import { SMARTTokenFactoryProxy } from "./token-factory/SMARTTokenFactoryProxy.sol";
-import { SMARTTokenAccessManagerProxy } from "./access-manager/SMARTTokenAccessManagerProxy.sol";
+
 /// @title SMARTSystem Contract
 /// @author SettleMint Tokenization Services
 /// @notice This is the main contract for managing the SMART Protocol system components, their implementations (logic
@@ -60,7 +63,6 @@ import { SMARTTokenAccessManagerProxy } from "./access-manager/SMARTTokenAccessM
 /// trusted forwarder is used) and AccessControl for role-based permissions (restricting sensitive functions to
 /// authorized
 /// administrators). It also inherits ReentrancyGuard to protect against reentrancy attacks on certain functions.
-
 contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, ReentrancyGuard {
     // Expected interface IDs used for validating implementation contracts.
     // These are unique identifiers for Solidity interfaces, ensuring that a contract claiming to be, for example,
@@ -70,80 +72,11 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     bytes4 private constant _ISMART_IDENTITY_REGISTRY_ID = type(ISMARTIdentityRegistry).interfaceId;
     bytes4 private constant _IERC3643_IDENTITY_REGISTRY_STORAGE_ID = type(IERC3643IdentityRegistryStorage).interfaceId;
     bytes4 private constant _IERC3643_TRUSTED_ISSUERS_REGISTRY_ID = type(IERC3643TrustedIssuersRegistry).interfaceId;
+    bytes4 private constant _ISMART_TOPIC_SCHEME_REGISTRY_ID = type(ISMARTTopicSchemeRegistry).interfaceId;
     bytes4 private constant _ISMART_IDENTITY_FACTORY_ID = type(ISMARTIdentityFactory).interfaceId;
     bytes4 private constant _IIDENTITY_ID = type(IIdentity).interfaceId;
     bytes4 private constant _ISMART_TOKEN_FACTORY_ID = type(ISMARTTokenFactory).interfaceId;
     bytes4 private constant _ISMART_TOKEN_ACCESS_MANAGER_ID = type(ISMARTTokenAccessManager).interfaceId;
-    // --- Events ---
-    // Events are signals emitted by the contract that can be listened to by external applications or other contracts.
-    // They are a way to log important state changes or actions.
-
-    /// @notice Emitted when the implementation (logic contract) for the compliance module is updated.
-    /// @param sender The address that called the `updateComplianceImplementation` function.
-    /// @param newImplementation The address of the new compliance module implementation contract.
-    event ComplianceImplementationUpdated(address indexed sender, address indexed newImplementation);
-    /// @notice Emitted when the implementation (logic contract) for the identity registry module is updated.
-    /// @param sender The address that called the `updateIdentityRegistryImplementation` function.
-    /// @param newImplementation The address of the new identity registry module implementation contract.
-    event IdentityRegistryImplementationUpdated(address indexed sender, address indexed newImplementation);
-    /// @notice Emitted when the implementation (logic contract) for the identity registry storage module is updated.
-    /// @param sender The address that called the `updateIdentityRegistryStorageImplementation` function.
-    /// @param newImplementation The address of the new identity registry storage module implementation contract.
-    event IdentityRegistryStorageImplementationUpdated(address indexed sender, address indexed newImplementation);
-    /// @notice Emitted when the implementation (logic contract) for the trusted issuers registry module is updated.
-    /// @param sender The address that called the `updateTrustedIssuersRegistryImplementation` function.
-    /// @param newImplementation The address of the new trusted issuers registry module implementation contract.
-    event TrustedIssuersRegistryImplementationUpdated(address indexed sender, address indexed newImplementation);
-    /// @notice Emitted when the implementation (logic contract) for the identity factory module is updated.
-    /// @param sender The address that called the `updateIdentityFactoryImplementation` function.
-    /// @param newImplementation The address of the new identity factory module implementation contract.
-    event IdentityFactoryImplementationUpdated(address indexed sender, address indexed newImplementation);
-    /// @notice Emitted when the implementation (logic contract) for the standard identity module is updated.
-    /// @dev Standard identity contracts are typically used to represent users or general entities.
-    /// @param sender The address that called the `updateIdentityImplementation` function.
-    /// @param newImplementation The address of the new standard identity module implementation contract.
-    event IdentityImplementationUpdated(address indexed sender, address indexed newImplementation);
-    /// @notice Emitted when the implementation (logic contract) for the token identity module is updated.
-    /// @dev Token identity contracts might be specialized identities associated with specific tokens.
-    /// @param sender The address that called the `updateTokenIdentityImplementation` function.
-    /// @param newImplementation The address of the new token identity module implementation contract.
-    event TokenIdentityImplementationUpdated(address indexed sender, address indexed newImplementation);
-    /// @notice Emitted when the implementation (logic contract) for the token access manager module is updated.
-    /// @param sender The address that called the `updateTokenAccessManagerImplementation` function.
-    /// @param newImplementation The address of the new token access manager module implementation contract.
-    event TokenAccessManagerImplementationUpdated(address indexed sender, address indexed newImplementation);
-    /// @notice Emitted when the `bootstrap` function has been successfully executed, creating and linking proxy
-    /// contracts
-    /// for all core modules of the SMARTSystem.
-    /// @param sender The address that called the `bootstrap` function.
-    /// @param complianceProxy The address of the deployed SMARTComplianceProxy contract.
-    /// @param identityRegistryProxy The address of the deployed SMARTIdentityRegistryProxy contract.
-    /// @param identityRegistryStorageProxy The address of the deployed SMARTIdentityRegistryStorageProxy contract.
-    /// @param trustedIssuersRegistryProxy The address of the deployed SMARTTrustedIssuersRegistryProxy contract.
-    /// @param identityFactoryProxy The address of the deployed SMARTIdentityFactoryProxy contract.
-    event Bootstrapped(
-        address indexed sender,
-        address indexed complianceProxy,
-        address indexed identityRegistryProxy,
-        address identityRegistryStorageProxy,
-        address trustedIssuersRegistryProxy,
-        address identityFactoryProxy
-    );
-
-    /// @notice Emitted when a SMARTTokenFactory is registered.
-    /// @param sender The address that registered the token factory.
-    /// @param typeName The human-readable type name of the token factory.
-    /// @param proxyAddress The address of the deployed token factory proxy.
-    /// @param implementationAddress The address of the deployed token factory implementation.
-    event TokenFactoryCreated(
-        address indexed sender, string typeName, address proxyAddress, address implementationAddress, uint256 timestamp
-    );
-
-    /// @notice Emitted when Ether (the native cryptocurrency of the blockchain) is withdrawn from this contract by an
-    /// admin.
-    /// @param to The address that received the withdrawn Ether.
-    /// @param amount The amount of Ether (in wei) that was withdrawn.
-    event EtherWithdrawn(address indexed to, uint256 amount);
 
     // --- State Variables ---
     // State variables store data persistently on the blockchain.
@@ -171,6 +104,12 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// @dev Stores the address of the current trusted issuers registry logic contract.
     address private _trustedIssuersRegistryProxy;
     /// @dev Stores the address of the trusted issuers registry module's proxy contract.
+
+    // Addresses for the topic scheme registry module.
+    address private _topicSchemeRegistryImplementation;
+    /// @dev Stores the address of the current topic scheme registry logic contract.
+    address private _topicSchemeRegistryProxy;
+    /// @dev Stores the address of the topic scheme registry module's proxy contract.
 
     // Addresses for the identity factory module.
     address private _identityFactoryImplementation;
@@ -231,6 +170,8 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// logic contract.
     /// @param trustedIssuersRegistryImplementation_ The initial address of the trusted issuers registry module's logic
     /// contract.
+    /// @param topicSchemeRegistryImplementation_ The initial address of the topic scheme registry module's logic
+    /// contract.
     /// @param identityFactoryImplementation_ The initial address of the identity factory module's logic contract.
     /// @param identityImplementation_ The initial address of the standard identity contract's logic (template). Must be
     /// IERC734/IIdentity compliant.
@@ -245,13 +186,13 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         address identityRegistryImplementation_,
         address identityRegistryStorageImplementation_,
         address trustedIssuersRegistryImplementation_,
+        address topicSchemeRegistryImplementation_,
         address identityFactoryImplementation_,
         address identityImplementation_, // Expected to be IERC734/IIdentity compliant
         address tokenIdentityImplementation_, // Expected to be IERC734/IIdentity compliant
         address tokenAccessManagerImplementation_, // Expected to be ISMARTTokenAccessManager compliant
         address forwarder_
     )
-        payable // Allows the constructor to receive Ether if sent during deployment.
         ERC2771Context(forwarder_) // Initializes ERC2771 support with the provided forwarder address.
     {
         // Grant the DEFAULT_ADMIN_ROLE to the initial administrator address.
@@ -262,48 +203,63 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         if (complianceImplementation_ == address(0)) revert ComplianceImplementationNotSet();
         _checkInterface(complianceImplementation_, _ISMART_COMPLIANCE_ID); // Ensure it supports ISMARTCompliance
         _complianceImplementation = complianceImplementation_;
+        emit ComplianceImplementationUpdated(initialAdmin_, _complianceImplementation);
 
         // Validate and set the identity registry implementation address.
         if (identityRegistryImplementation_ == address(0)) revert IdentityRegistryImplementationNotSet();
         _checkInterface(identityRegistryImplementation_, _ISMART_IDENTITY_REGISTRY_ID); // Ensure it supports
             // ISMARTIdentityRegistry
         _identityRegistryImplementation = identityRegistryImplementation_;
+        emit IdentityRegistryImplementationUpdated(initialAdmin_, _identityRegistryImplementation);
 
         // Validate and set the identity registry storage implementation address.
         if (identityRegistryStorageImplementation_ == address(0)) revert IdentityRegistryStorageImplementationNotSet();
         _checkInterface(identityRegistryStorageImplementation_, _IERC3643_IDENTITY_REGISTRY_STORAGE_ID); // Ensure it
             // supports IERC3643IdentityRegistryStorage
         _identityRegistryStorageImplementation = identityRegistryStorageImplementation_;
+        emit IdentityRegistryStorageImplementationUpdated(initialAdmin_, _identityRegistryStorageImplementation);
 
         // Validate and set the trusted issuers registry implementation address.
         if (trustedIssuersRegistryImplementation_ == address(0)) revert TrustedIssuersRegistryImplementationNotSet();
         _checkInterface(trustedIssuersRegistryImplementation_, _IERC3643_TRUSTED_ISSUERS_REGISTRY_ID); // Ensure it
             // supports IERC3643TrustedIssuersRegistry
         _trustedIssuersRegistryImplementation = trustedIssuersRegistryImplementation_;
+        emit TrustedIssuersRegistryImplementationUpdated(initialAdmin_, _trustedIssuersRegistryImplementation);
+
+        // Validate and set the topic scheme registry implementation address.
+        if (topicSchemeRegistryImplementation_ == address(0)) revert TopicSchemeRegistryImplementationNotSet();
+        _checkInterface(topicSchemeRegistryImplementation_, _ISMART_TOPIC_SCHEME_REGISTRY_ID); // Ensure it supports
+            // ISMARTTopicSchemeRegistry
+        _topicSchemeRegistryImplementation = topicSchemeRegistryImplementation_;
+        emit TopicSchemeRegistryImplementationUpdated(initialAdmin_, _topicSchemeRegistryImplementation);
 
         // Validate and set the identity factory implementation address.
         if (identityFactoryImplementation_ == address(0)) revert IdentityFactoryImplementationNotSet();
         _checkInterface(identityFactoryImplementation_, _ISMART_IDENTITY_FACTORY_ID); // Ensure it supports
             // ISMARTIdentityFactory
         _identityFactoryImplementation = identityFactoryImplementation_;
+        emit IdentityFactoryImplementationUpdated(initialAdmin_, _identityFactoryImplementation);
 
         // Validate and set the token access manager implementation address.
         if (tokenAccessManagerImplementation_ == address(0)) revert TokenAccessManagerImplementationNotSet();
         _checkInterface(tokenAccessManagerImplementation_, _ISMART_TOKEN_ACCESS_MANAGER_ID); // Ensure it supports
             // ISMARTTokenAccessManager
         _tokenAccessManagerImplementation = tokenAccessManagerImplementation_;
+        emit TokenAccessManagerImplementationUpdated(initialAdmin_, _tokenAccessManagerImplementation);
 
         // Validate and set the standard identity implementation address.
         if (identityImplementation_ == address(0)) revert IdentityImplementationNotSet();
         _checkInterface(identityImplementation_, _IIDENTITY_ID); // Ensure it supports OnchainID's
             // IIdentity
         _identityImplementation = identityImplementation_;
+        emit IdentityImplementationUpdated(initialAdmin_, _identityImplementation);
 
         // Validate and set the token identity implementation address.
         if (tokenIdentityImplementation_ == address(0)) revert TokenIdentityImplementationNotSet();
         _checkInterface(tokenIdentityImplementation_, _IIDENTITY_ID); // Ensure it supports OnchainID's
             // IIdentity
         _tokenIdentityImplementation = tokenIdentityImplementation_;
+        emit TokenIdentityImplementationUpdated(initialAdmin_, _tokenIdentityImplementation);
     }
 
     // --- Bootstrap Function ---
@@ -321,13 +277,22 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// Reverts if any required implementation address (for compliance, identity registry, storage, trusted issuers,
     /// factory)
     /// is not set (i.e., is the zero address) before calling this function.
-    function bootstrap() public onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
-        // --- Pre-condition Checks ---
+    function bootstrap() external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+        // Check if system is already bootstrapped by verifying if any proxy is already deployed
+        if (
+            _complianceProxy != address(0) || _identityRegistryProxy != address(0)
+                || _identityRegistryStorageProxy != address(0) || _trustedIssuersRegistryProxy != address(0)
+                || _topicSchemeRegistryProxy != address(0) || _identityFactoryProxy != address(0)
+        ) {
+            revert SystemAlreadyBootstrapped();
+        }
+
         // Ensure all necessary implementation addresses are set before proceeding with proxy deployment.
         if (_complianceImplementation == address(0)) revert ComplianceImplementationNotSet();
         if (_identityRegistryImplementation == address(0)) revert IdentityRegistryImplementationNotSet();
         if (_identityRegistryStorageImplementation == address(0)) revert IdentityRegistryStorageImplementationNotSet();
         if (_trustedIssuersRegistryImplementation == address(0)) revert TrustedIssuersRegistryImplementationNotSet();
+        if (_topicSchemeRegistryImplementation == address(0)) revert TopicSchemeRegistryImplementationNotSet();
         if (_identityFactoryImplementation == address(0)) revert IdentityFactoryImplementationNotSet();
 
         // The caller of this bootstrap function (who must be an admin) will also be set as the initial admin
@@ -350,12 +315,19 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         address localTrustedIssuersRegistryProxy =
             address(new SMARTTrustedIssuersRegistryProxy(address(this), initialAdmin));
 
+        // Deploy the SMARTTopicSchemeRegistryProxy, linking it to this SMARTSystem and setting an initial admin.
+        address localTopicSchemeRegistryProxy = address(new SMARTTopicSchemeRegistryProxy(address(this), initialAdmin));
+
         // Deploy the SMARTIdentityRegistryProxy. Its constructor requires the addresses of other newly created proxies
         // (storage and trusted issuers) and an initial admin.
         // Passing these as local variables is safe as they don't rely on this contract's state being prematurely read.
         address localIdentityRegistryProxy = address(
             new SMARTIdentityRegistryProxy(
-                address(this), initialAdmin, localIdentityRegistryStorageProxy, localTrustedIssuersRegistryProxy
+                address(this),
+                initialAdmin,
+                localIdentityRegistryStorageProxy,
+                localTrustedIssuersRegistryProxy,
+                localTopicSchemeRegistryProxy
             )
         );
 
@@ -367,6 +339,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         _complianceProxy = localComplianceProxy;
         _identityRegistryStorageProxy = localIdentityRegistryStorageProxy;
         _trustedIssuersRegistryProxy = localTrustedIssuersRegistryProxy;
+        _topicSchemeRegistryProxy = localTopicSchemeRegistryProxy;
         _identityRegistryProxy = localIdentityRegistryProxy;
         _identityFactoryProxy = localIdentityFactoryProxy;
 
@@ -379,6 +352,11 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
                 // set.
         );
 
+        // Register the topic schemes.
+        ISMARTTopicSchemeRegistry(localTopicSchemeRegistryProxy).batchRegisterTopicSchemes(
+            SMARTTopics.names(), SMARTTopics.signatures()
+        );
+
         // Emit an event to log that bootstrapping is complete and to provide the addresses of the deployed proxies.
         emit Bootstrapped(
             _msgSender(),
@@ -386,6 +364,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
             _identityRegistryProxy,
             _identityRegistryStorageProxy,
             _trustedIssuersRegistryProxy,
+            _topicSchemeRegistryProxy,
             _identityFactoryProxy
         );
     }
@@ -397,14 +376,15 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         address _tokenImplementation
     )
         external
-        onlyRole(DEFAULT_ADMIN_ROLE)
         nonReentrant
+        onlyRole(DEFAULT_ADMIN_ROLE)
         returns (address)
     {
         if (address(_factoryImplementation) == address(0)) revert InvalidTokenFactoryAddress();
         _checkInterface(_factoryImplementation, _ISMART_TOKEN_FACTORY_ID);
 
         if (address(_tokenImplementation) == address(0)) revert InvalidTokenImplementationAddress();
+        // aderyn-fp-next-line(reentrancy-state-change)
         if (!ISMARTTokenFactory(_factoryImplementation).isValidTokenImplementation(_tokenImplementation)) {
             revert InvalidTokenImplementationInterface();
         }
@@ -492,6 +472,18 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         emit TrustedIssuersRegistryImplementationUpdated(_msgSender(), implementation);
     }
 
+    /// @notice Sets (updates) the address of the topic scheme registry module's implementation (logic) contract.
+    /// @dev Only callable by an address with the `DEFAULT_ADMIN_ROLE`.
+    /// Reverts if `implementation` is zero or doesn't support `ISMARTTopicSchemeRegistry`.
+    /// Emits a `TopicSchemeRegistryImplementationUpdated` event.
+    /// @param implementation The new address for the topic scheme registry logic contract.
+    function setTopicSchemeRegistryImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (implementation == address(0)) revert TopicSchemeRegistryImplementationNotSet();
+        _checkInterface(implementation, _ISMART_TOPIC_SCHEME_REGISTRY_ID);
+        _topicSchemeRegistryImplementation = implementation;
+        emit TopicSchemeRegistryImplementationUpdated(_msgSender(), implementation);
+    }
+
     /// @notice Sets (updates) the address of the identity factory module's implementation (logic) contract.
     /// @dev Only callable by an address with the `DEFAULT_ADMIN_ROLE`.
     /// Reverts if `implementation` is zero or doesn't support `ISMARTIdentityFactory`.
@@ -569,6 +561,12 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         return _trustedIssuersRegistryImplementation;
     }
 
+    /// @notice Gets the current address of the topic scheme registry module's implementation (logic) contract.
+    /// @return The address of the topic scheme registry logic contract.
+    function topicSchemeRegistryImplementation() public view override returns (address) {
+        return _topicSchemeRegistryImplementation;
+    }
+
     /// @notice Gets the current address of the identity factory module's implementation (logic) contract.
     /// @return The address of the identity factory logic contract.
     function identityFactoryImplementation() public view override returns (address) {
@@ -626,6 +624,12 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         return _trustedIssuersRegistryProxy;
     }
 
+    /// @notice Gets the address of the topic scheme registry module's proxy contract.
+    /// @return The address of the topic scheme registry proxy contract.
+    function topicSchemeRegistryProxy() public view override returns (address) {
+        return _topicSchemeRegistryProxy;
+    }
+
     /// @notice Gets the address of the identity factory module's proxy contract.
     /// @return The address of the identity factory proxy contract.
     function identityFactoryProxy() public view override returns (address) {
@@ -637,24 +641,6 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     /// @return The address of the token factory proxy contract.
     function tokenFactoryProxy(bytes32 factoryTypeHash) public view override returns (address) {
         return tokenFactoryProxiesByType[factoryTypeHash];
-    }
-
-    /// @notice Allows an admin (`DEFAULT_ADMIN_ROLE`) to withdraw any Ether (native currency) held by this contract.
-    /// @dev This function is primarily for recovering Ether that might have been accidentally sent to this contract
-    /// or received by its `payable` constructor. It sends the entire Ether balance of this contract to the caller
-    /// (admin).
-    /// It reverts with `EtherWithdrawalFailed` if the Ether transfer fails for any reason.
-    /// Emits an `EtherWithdrawn` event upon successful withdrawal.
-    function withdrawEther() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 balance = address(this).balance; // Get the current Ether balance of this contract.
-        if (balance > 0) {
-            // Send the entire balance to the caller (admin).
-            // Using .call{value: ...}("") is the recommended way to send Ether.
-            // slither-disable-next-line low-level-calls -- low-level call is necessary for Ether transfer.
-            (bool sent, /* bytes memory data */ ) = payable(_msgSender()).call{ value: balance }("");
-            if (!sent) revert EtherWithdrawalFailed(); // Revert if the transfer failed.
-            emit EtherWithdrawn(_msgSender(), balance); // Emit event on success.
-        }
     }
 
     // --- Internal Functions (Overrides for ERC2771Context and ERC165/AccessControl) ---

@@ -21,8 +21,6 @@ contract SMARTFundProxy is SMARTAssetProxy {
     /// @param symbol_ The symbol of the fund.
     /// @param decimals_ The number of decimals of the fund.
     /// @param managementFeeBps_ The management fee of the fund.
-    /// @param fundClass_ The class of the fund.
-    /// @param fundCategory_ The category of the fund.
     /// @param requiredClaimTopics_ The required claim topics of the fund.
     /// @param initialModulePairs_ The initial module pairs of the fund.
     /// @param identityRegistry_ The identity registry of the fund.
@@ -34,8 +32,6 @@ contract SMARTFundProxy is SMARTAssetProxy {
         string memory symbol_,
         uint8 decimals_,
         uint16 managementFeeBps_,
-        string memory fundClass_,
-        string memory fundCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -53,8 +49,6 @@ contract SMARTFundProxy is SMARTAssetProxy {
             symbol_,
             decimals_,
             managementFeeBps_,
-            fundClass_,
-            fundCategory_,
             requiredClaimTopics_,
             initialModulePairs_,
             identityRegistry_,

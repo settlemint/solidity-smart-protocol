@@ -12,7 +12,7 @@ import { ISMARTIdentityRegistry } from "../../../interface/ISMARTIdentityRegistr
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 
 // Internal implementation imports
-import { LengthMismatch } from "./../../common/CommonErrors.sol";
+import { LengthMismatch } from "../../common/CommonErrors.sol";
 import {
     FreezeAmountExceedsAvailableBalance,
     InsufficientFrozenTokens,
@@ -21,8 +21,7 @@ import {
     RecoveryTargetAddressFrozen,
     RecipientAddressFrozen,
     SenderAddressFrozen
-} from "./../SMARTCustodianErrors.sol";
-import { AddressFrozen, TokensFrozen, TokensUnfrozen, RecoverySuccess } from "./../SMARTCustodianEvents.sol";
+} from "../SMARTCustodianErrors.sol";
 import { ISMARTCustodian } from "../ISMARTCustodian.sol";
 
 /// @title Internal Core Logic for SMART Custodian Extension
@@ -97,7 +96,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
     /// @param freeze `true` to freeze the address, `false` to unfreeze.
     function _smart_setAddressFrozen(address userAddress, bool freeze) internal virtual {
         __frozen[userAddress] = freeze;
-        emit AddressFrozen(_smartSender(), userAddress, freeze);
+        emit ISMARTCustodian.AddressFrozen(_smartSender(), userAddress, freeze);
     }
 
     /// @notice Internal logic to set the "full freeze" status for multiple addresses in a batch.
@@ -130,7 +129,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
             revert FreezeAmountExceedsAvailableBalance(availableBalance, amount);
         }
         __frozenTokens[userAddress] = currentFrozen + amount;
-        emit TokensFrozen(_smartSender(), userAddress, amount);
+        emit ISMARTCustodian.TokensFrozen(_smartSender(), userAddress, amount);
     }
 
     /// @notice Internal logic to partially freeze tokens for multiple addresses in a batch.
@@ -167,7 +166,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
             revert InsufficientFrozenTokens(currentFrozen, amount);
         }
         __frozenTokens[userAddress] = currentFrozen - amount;
-        emit TokensUnfrozen(_smartSender(), userAddress, amount);
+        emit ISMARTCustodian.TokensUnfrozen(_smartSender(), userAddress, amount);
     }
 
     /// @notice Internal logic to unfreeze partially frozen tokens for multiple addresses in a batch.
@@ -221,7 +220,7 @@ abstract contract _SMARTCustodianLogic is _SMARTExtension, ISMARTCustodian {
                 // We know currentFrozen >= neededFromFrozen because currentBalance >= amount
                 uint256 newAmountFrozen = currentFrozen - neededFromFrozen;
                 __frozenTokens[from] = newAmountFrozen;
-                emit TokensUnfrozen(_smartSender(), from, neededFromFrozen);
+                emit ISMARTCustodian.TokensUnfrozen(_smartSender(), from, neededFromFrozen);
             }
         }
 

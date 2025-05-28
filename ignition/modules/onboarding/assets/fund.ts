@@ -6,12 +6,13 @@ const SMARTOnboardingFundModule = buildModule(
   "SMARTOnboardingFundModule",
   (m) => {
     const { system } = m.useModule(SMARTOnboardingSystemModule);
-    const { fundFactory, fund } = m.useModule(SMARTModule);
+    const { fundFactoryImplementation, fundImplementation } =
+      m.useModule(SMARTModule);
 
     const createFundFactory = m.call(system, "createTokenFactory", [
       "fund",
-      fundFactory,
-      fund,
+      fundFactoryImplementation,
+      fundImplementation,
     ]);
     const fundFactoryAddress = m.readEventArgument(
       createFundFactory,

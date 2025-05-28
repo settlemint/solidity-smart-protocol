@@ -7,7 +7,6 @@ import { ISMARTEquityFactory } from "../../contracts/assets/equity/ISMARTEquityF
 import { SMARTEquityFactoryImplementation } from "../../contracts/assets/equity/SMARTEquityFactoryImplementation.sol";
 import { ISMARTEquity } from "../../contracts/assets/equity/ISMARTEquity.sol";
 import { SMARTEquityImplementation } from "../../contracts/assets/equity/SMARTEquityImplementation.sol";
-import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";
@@ -16,6 +15,7 @@ import { SMARTComplianceModuleParamPair } from "../../contracts/interface/struct
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract SMARTEquityTest is AbstractSMARTAssetTest {
     ISMARTEquityFactory internal equityFactory;
@@ -29,8 +29,7 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
     uint8 public constant DECIMALS = 8;
     string public constant NAME = "SMART Equity";
     string public constant SYMBOL = "SMART";
-    string public constant EQUITY_CLASS = "Common";
-    string public constant EQUITY_CATEGORY = "Class A";
+
     uint256 public constant INITIAL_SUPPLY = 1_000_000 * 10 ** 8; // 1M tokens with 8 decimals
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -89,9 +88,8 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         returns (ISMARTEquity result)
     {
         vm.startPrank(owner);
-        address equityAddress = equityFactory.createEquity(
-            name_, symbol_, decimals_, EQUITY_CLASS, EQUITY_CATEGORY, requiredClaimTopics_, initialModulePairs_
-        );
+        address equityAddress =
+            equityFactory.createEquity(name_, symbol_, decimals_, requiredClaimTopics_, initialModulePairs_);
 
         result = ISMARTEquity(equityAddress);
 
@@ -128,7 +126,11 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
 
         for (uint256 i = 0; i < decimalValues.length; ++i) {
             ISMARTEquity newEquity = _createEquityAndMint(
-                "Test SMART Equity", "TEST", decimalValues[i], new uint256[](0), new SMARTComplianceModuleParamPair[](0)
+                string.concat("Test SMART Equity", Strings.toString(decimalValues[i])),
+                string.concat("TEST", Strings.toString(decimalValues[i])),
+                decimalValues[i],
+                new uint256[](0),
+                new SMARTComplianceModuleParamPair[](0)
             );
             assertEq(newEquity.decimals(), decimalValues[i]);
         }

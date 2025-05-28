@@ -1,0 +1,177 @@
+# --------------------------------------------------
+# SMART Indexer
+# --------------------------------------------------
+
+type Account @entity(immutable: false) {
+  id: Bytes!
+  isContract: Boolean!
+  identity: Identity
+  country: Int
+  balances: [TokenBalance!]! @derivedFrom(field: "account")
+}
+
+type Event @entity(immutable: true) {
+  id: Bytes!
+  eventName: String!
+  txIndex: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  emitter: Account!
+  sender: Account!
+  involved: [Account!]!
+  values: [EventValue!]! @derivedFrom(field: "entry")
+}
+
+type EventValue @entity(immutable: true) {
+  id: Bytes!
+  name: String!
+  value: String!
+  entry: Event!
+}
+
+type AccessControl @entity(immutable: false) {
+  id: Bytes!
+  admin: [Account!]!
+  registrar: [Account!]!
+  registrarAdmin: [Account!]!
+  registrarGovernor: [Account!]!
+  claimManager: [Account!]!
+  identityIssuer: [Account!]!
+  tokenIdentityIssuer: [Account!]!
+  tokenIdentityIssuerAdmin: [Account!]!
+  tokenDeployer: [Account!]!
+  storageModifier: [Account!]!
+  manageRegistries: [Account!]!
+  tokenGovernance: [Account!]!
+  supplyManagement: [Account!]!
+  custodian: [Account!]!
+  emergency: [Account!]!
+}
+
+type System @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account
+  compliance: Compliance
+  identityRegistryStorage: IdentityRegistryStorage
+  identityFactory: IdentityFactory
+  identityRegistry: IdentityRegistry
+  trustedIssuersRegistry: TrustedIssuersRegistry
+  topicSchemeRegistry: TopicSchemeRegistry
+  tokenFactories: [TokenFactory!]! @derivedFrom(field: "system")
+}
+
+type Compliance @entity(immutable: false) {
+  id: Bytes!
+  account: Account!
+}
+
+type IdentityRegistryStorage @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account!
+}
+
+type IdentityFactory @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account!
+}
+
+type IdentityRegistry @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account!
+  identities: [Identity!]! @derivedFrom(field: "registry")
+  trustedIssuersRegistry: TrustedIssuersRegistry
+  topicSchemeRegistry: TopicSchemeRegistry
+  identityRegistryStorage: IdentityRegistryStorage
+}
+
+type TrustedIssuersRegistry @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account!
+}
+
+type TopicSchemeRegistry @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account!
+  schemes: [TopicScheme!]! @derivedFrom(field: "registry")
+}
+
+type TopicScheme @entity(immutable: false) {
+  id: Bytes!
+  registry: TopicSchemeRegistry!
+  name: String!
+  signature: String!
+  enabled: Boolean!
+}
+
+type TokenFactory @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  type: String!
+  system: System
+  account: Account!
+  tokens: [Token!]! @derivedFrom(field: "tokenFactory")
+}
+
+type Token @entity(immutable: false) {
+  id: Bytes!
+  account: Account!
+  accessControl: AccessControl
+  identity: Identity
+  balances: [TokenBalance!]! @derivedFrom(field: "token")
+  type: String!
+  tokenFactory: TokenFactory
+  name: String!
+  symbol: String!
+  decimals: Int!
+  totalSupply: BigDecimal!
+  totalSupplyExact: BigInt!
+  pausable: TokenPausable
+}
+
+type TokenBalance @entity(immutable: false) {
+  id: Bytes!
+  token: Token!
+  account: Account!
+  value: BigDecimal!
+  valueExact: BigInt!
+  isFrozen: Boolean!
+  frozen: BigDecimal!
+  frozenExact: BigInt!
+  available: BigDecimal!
+  availableExact: BigInt!
+}
+
+type TokenPausable @entity(immutable: false) {
+  id: Bytes!
+  paused: Boolean!
+}
+
+type Identity @entity(immutable: false) {
+  id: Bytes!
+  registry: IdentityRegistry
+  claims: [IdentityClaim!]! @derivedFrom(field: "identity")
+}
+
+type IdentityClaim @entity(immutable: false) {
+  id: Bytes!
+  identity: Identity!
+  name: String!
+  issuer: Account
+  uri: String
+  revoked: Boolean!
+  values: [IdentityClaimValue!]! @derivedFrom(field: "claim")
+}
+
+type IdentityClaimValue @entity(immutable: false) {
+  id: Bytes!
+  claim: IdentityClaim!
+  key: String!
+  value: String!
+}

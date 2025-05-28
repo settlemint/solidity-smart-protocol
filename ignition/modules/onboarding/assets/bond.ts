@@ -6,12 +6,13 @@ const SMARTOnboardingBondModule = buildModule(
   "SMARTOnboardingBondModule",
   (m) => {
     const { system } = m.useModule(SMARTOnboardingSystemModule);
-    const { bondFactory, bond } = m.useModule(SMARTModule);
+    const { bondFactoryImplementation, bondImplementation } =
+      m.useModule(SMARTModule);
 
     const createBondFactory = m.call(system, "createTokenFactory", [
       "bond",
-      bondFactory,
-      bond,
+      bondFactoryImplementation,
+      bondImplementation,
     ]);
     const bondFactoryAddress = m.readEventArgument(
       createBondFactory,

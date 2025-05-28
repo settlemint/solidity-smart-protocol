@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.28;
 
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 // OnchainID imports
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 
@@ -34,7 +36,9 @@ event IdentityRegistryBound(address indexed _identityRegistry);
 /// @param _identityRegistry is the address of the identity registry removed.
 event IdentityRegistryUnbound(address indexed _identityRegistry);
 
-interface IERC3643IdentityRegistryStorage {
+/// @title IERC3643IdentityRegistryStorage Interface
+/// @dev This interface extends IERC165 for interface detection support.
+interface IERC3643IdentityRegistryStorage is IERC165 {
     /// functions
 
     /**

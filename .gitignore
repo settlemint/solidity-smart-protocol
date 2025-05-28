@@ -41,3 +41,9 @@ ignition/deployments
 # Soldeer
 /dependencies
 .DS_Store
+.claude
+temp_*
+subgraph/src/erc165/utils/interfaceids.ts
+
+# Scripts
+scripts/hardhat/abi

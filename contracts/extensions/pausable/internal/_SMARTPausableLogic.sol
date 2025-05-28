@@ -4,11 +4,9 @@ pragma solidity ^0.8.28;
 // Common base extension for _smartSender() and _registerInterface()
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
 // Custom errors for pausable logic
-import { TokenPaused, ExpectedPause } from "./../SMARTPausableErrors.sol";
-// Events emitted on pause/unpause
-import { Paused, Unpaused } from "./../SMARTPausableEvents.sol";
+import { TokenPaused, ExpectedPause } from "../SMARTPausableErrors.sol";
 // Interface for ERC165 registration and type compatibility
-import { ISMARTPausable } from "./../ISMARTPausable.sol";
+import { ISMARTPausable } from "../ISMARTPausable.sol";
 
 /// @title Internal Core Logic for SMART Pausable Extension
 /// @notice This abstract contract encapsulates the shared state (`_paused`), core logic for pause/unpause
