@@ -102,6 +102,15 @@ abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
     // -- Internal Hook Implementations (Dependencies for _SMARTLogic) --
 
     /// @inheritdoc _SMARTLogic
+    /// @notice Implements the abstract `__smart_balanceOf` from `_SMARTLogic`.
+    /// @dev Provides the concrete token balance retrieval action by calling OpenZeppelin `ERC20.balanceOf`.
+    /// @param account The address to query the balance of.
+    /// @return The balance of the specified account.
+    function __smart_balanceOf(address account) internal virtual override returns (uint256) {
+        return balanceOf(account);
+    }
+
+    /// @inheritdoc _SMARTLogic
     /// @notice Implements the abstract `__smart_executeMint` from `_SMARTLogic`.
     /// @dev This function provides the concrete minting action by calling the standard OpenZeppelin `ERC20._mint`.
     ///      It's called by `_SMARTLogic._smart_mint` after pre-mint checks and authorization.

@@ -18,9 +18,16 @@ import {
     InvalidDecimals
 } from "../SMARTErrors.sol";
 import { _SMARTExtension } from "../../common/_SMARTExtension.sol";
+import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 
 // Error imports
-import { LengthMismatch, ZeroAddressNotAllowed, CannotRecoverSelf } from "../../common/CommonErrors.sol";
+import {
+    LengthMismatch,
+    ZeroAddressNotAllowed,
+    CannotRecoverSelf,
+    NoTokensToRecover,
+    InvalidLostWallet
+} from "../../common/CommonErrors.sol";
 /// @title Internal Core Logic for SMART Tokens
 /// @notice This abstract contract serves as the central repository for shared state, core business logic,
 ///         event emissions, and authorization hook placeholders for all SMART token implementations.
@@ -100,6 +107,12 @@ abstract contract _SMARTLogic is _SMARTExtension {
     /// @param amount The quantity of tokens to transfer.
     function __smart_executeTransfer(address from, address to, uint256 amount) internal virtual;
 
+    /// @notice Abstract function placeholder for the actual token balance retrieval mechanism.
+    /// @dev This function is implemented by child contracts to call the underlying ERC20 `balanceOf` function.
+    /// @param account The address to query the balance of.
+    /// @return The balance of the specified account.
+    function __smart_balanceOf(address account) internal virtual returns (uint256);
+
     // -- Internal Implementation for ISMART Interface Functions --
 
     /// @notice Internal function to perform the core mint operation.
@@ -163,6 +176,32 @@ abstract contract _SMARTLogic is _SMARTExtension {
                 ++i;
             }
         }
+    }
+
+    /// @notice Internal function to recover tokens from a lost wallet.
+    /// @dev This function performs a series of checks and actions to ensure the recovery is valid and secure.
+    ///      It first checks if the lost wallet is a valid address and not the contract itself.
+    ///      Then, it checks if the lost wallet has any tokens to recover.
+    ///      It then checks if the new wallet is a valid address.
+    function _smart_recoverTokens(address lostWallet, address newWallet) internal {
+        if (lostWallet == address(0)) revert ZeroAddressNotAllowed();
+        if (lostWallet == address(this)) revert CannotRecoverSelf();
+
+        uint256 balance = __smart_balanceOf(lostWallet);
+        if (balance == 0) revert NoTokensToRecover();
+
+        ISMARTIdentityRegistry registry = this.identityRegistry();
+        IIdentity identity = registry.identity(newWallet);
+        bool isLost = registry.isWalletLostForIdentity(identity, lostWallet);
+        if (!isLost) revert InvalidLostWallet();
+
+        _beforeRecoverTokens(lostWallet, newWallet);
+        __isForcedUpdate = true;
+        __smart_executeTransfer(lostWallet, newWallet, balance);
+        __isForcedUpdate = false;
+        _afterRecoverTokens(lostWallet, newWallet);
+
+        emit ISMART.TokensRecovered(_smartSender(), lostWallet, newWallet, balance);
     }
 
     /// @notice Internal function to update the address of the compliance contract.
@@ -274,7 +313,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
     ///      It checks for zero addresses for `token` and `to`, and that `amount` is not zero.
     ///      It verifies that the contract has a sufficient balance of the `token` to be recovered.
     ///      Uses OpenZeppelin's `SafeERC20.safeTransfer` for a secure transfer.
-    ///      Emits a `TokenRecovered` event.
+    ///      Emits a `ERC20TokenRecovered` event.
     /// @param token The address of the ERC20 token to recover.
     /// @param to The address to send the recovered tokens to.
     /// @param amount The quantity of tokens to recover.
@@ -288,7 +327,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
         if (balance < amount) revert InsufficientTokenBalance(); // Not enough tokens to recover
 
         SafeERC20.safeTransfer(IERC20(token), to, amount);
-        emit ISMART.TokenRecovered(_smartSender(), token, to, amount);
+        emit ISMART.ERC20TokenRecovered(_smartSender(), token, to, amount);
     }
 
     // -- View Functions --

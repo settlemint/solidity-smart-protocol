@@ -4,9 +4,6 @@ pragma solidity ^0.8.28;
 import { ISMART } from "../../interface/ISMART.sol";
 import { SMARTHooks } from "../common/SMARTHooks.sol";
 import { SMARTContext } from "../common/SMARTContext.sol";
-import { ZeroAddressNotAllowed, CannotRecoverSelf, InvalidLostWallet, NoTokensToRecover } from "./CommonErrors.sol";
-import { ISMARTIdentityRegistry } from "../../interface/ISMARTIdentityRegistry.sol";
-import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 
 /// @title Base Contract for All SMART Token Extensions
 /// @notice This abstract contract serves as the ultimate base for all SMART token extensions,
@@ -36,22 +33,6 @@ abstract contract _SMARTExtension is ISMART, SMARTContext, SMARTHooks {
     ///      like `ERC165.sol` or `SMART.sol` that inherits this).
     mapping(bytes4 interfaceId => bool isRegistered) internal _isInterfaceRegistered;
 
-    // --- Abstract Functions ---
-
-    /// @notice Abstract function placeholder for the actual token transfer mechanism.
-    /// @dev Similar to `__smart_executeMint`, this is implemented by child contracts to call the
-    ///      underlying ERC20 `_transfer` function.
-    /// @param from The address from which tokens are sent.
-    /// @param to The address to which tokens are sent.
-    /// @param amount The quantity of tokens to transfer.
-    function __smartExtension_executeTransfer(address from, address to, uint256 amount) internal virtual;
-
-    /// @notice Abstract function placeholder for the actual token balance retrieval mechanism.
-    /// @dev This function is implemented by child contracts to call the underlying ERC20 `balanceOf` function.
-    /// @param account The address to query the balance of.
-    /// @return The balance of the specified account.
-    function __smartExtension_balanceOf(address account) internal virtual returns (uint256);
-
     // --- Implementation Functions ---
 
     /**
@@ -68,29 +49,5 @@ abstract contract _SMARTExtension is ISMART, SMARTContext, SMARTHooks {
      */
     function _registerInterface(bytes4 interfaceId) internal {
         _isInterfaceRegistered[interfaceId] = true;
-    }
-
-    /// @notice Internal function to recover tokens from a lost wallet.
-    /// @dev This function performs a series of checks and actions to ensure the recovery is valid and secure.
-    ///      It first checks if the lost wallet is a valid address and not the contract itself.
-    ///      Then, it checks if the lost wallet has any tokens to recover.
-    ///      It then checks if the new wallet is a valid address.
-    function _smart_recoverTokens(address lostWallet, address newWallet) internal {
-        if (lostWallet == address(0)) revert ZeroAddressNotAllowed();
-        if (lostWallet == address(this)) revert CannotRecoverSelf();
-
-        uint256 balance = __smartExtension_balanceOf(lostWallet);
-        if (balance == 0) revert NoTokensToRecover();
-
-        ISMARTIdentityRegistry registry = this.identityRegistry();
-        IIdentity identity = registry.identity(newWallet);
-        bool isLost = registry.isWalletLostForIdentity(identity, lostWallet);
-        if (!isLost) revert InvalidLostWallet();
-
-        _beforeRecoverTokens(lostWallet, newWallet);
-        __isForcedUpdate = true;
-        __smartExtension_executeTransfer(lostWallet, newWallet, balance);
-        __isForcedUpdate = false;
-        _afterRecoverTokens(lostWallet, newWallet);
     }
 }
