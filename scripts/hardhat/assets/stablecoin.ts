@@ -1,12 +1,14 @@
 import type { Address, Hex } from "viem";
 
 import { owner } from "../actors/owner";
-import { smartProtocolDeployer } from "../deployer";
+import { smartProtocolDeployer } from "../services/deployer";
 import { waitForEvent } from "../utils/wait-for-event";
 
 import { investorA, investorB } from "../actors/investors";
 import { SMARTRoles } from "../constants/roles";
-import { SMARTTopics } from "../constants/topics";
+
+import { SMARTTopic } from "../constants/topics";
+import { topicManager } from "../services/topic-manager";
 import { burn } from "./actions/burn";
 import { grantRole } from "./actions/grant-role";
 import { issueCollateralClaim } from "./actions/issue-collateral-claim";
@@ -23,7 +25,10 @@ export const createStablecoin = async () => {
 		"Tether",
 		"USDT",
 		6,
-		[SMARTTopics.kyc, SMARTTopics.aml],
+		[
+			topicManager.getTopicId(SMARTTopic.kyc),
+			topicManager.getTopicId(SMARTTopic.aml),
+		],
 		[], // TODO: fill in with the setup for ATK
 	]);
 

@@ -8,7 +8,7 @@ import {
 	formatEther,
 	getContract as getViemContract,
 } from "viem";
-import { smartProtocolDeployer } from "../deployer";
+import { smartProtocolDeployer } from "../services/deployer";
 import { getPublicClient } from "../utils/public-client";
 import { waitForEvent } from "../utils/wait-for-event";
 

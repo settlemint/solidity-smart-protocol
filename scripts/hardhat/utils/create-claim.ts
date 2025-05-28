@@ -6,7 +6,11 @@ export async function createClaim(
 	subjectIdentityAddress: `0x${string}`,
 	claimTopic: bigint,
 	claimData: `0x${string}`,
-): Promise<{ data: `0x${string}`; signature: `0x${string}` }> {
+): Promise<{
+	data: `0x${string}`;
+	signature: `0x${string}`;
+	topicId: bigint;
+}> {
 	// Encode data to match Solidity's abi.encode(address, uint256, bytes)
 	const dataToSign = encodeAbiParameters(
 		parseAbiParameters(
@@ -26,5 +30,6 @@ export async function createClaim(
 	return {
 		data: claimData,
 		signature: signatureHex,
+		topicId: claimTopic,
 	};
 }

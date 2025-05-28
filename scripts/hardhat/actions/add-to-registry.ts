@@ -1,6 +1,6 @@
 import type { AbstractActor } from "../actors/abstract-actor";
 
-import { smartProtocolDeployer } from "../deployer";
+import { smartProtocolDeployer } from "../services/deployer";
 import { waitForSuccess } from "../utils/wait-for-success";
 
 export async function addToRegistry(actor: AbstractActor) {
