@@ -12,60 +12,64 @@ import { createFund } from "./assets/fund";
 import { createStablecoin } from "./assets/stablecoin";
 import { SMARTTopics } from "./constants/topics";
 import { smartProtocolDeployer } from "./deployer";
+import { generateAbiTypings } from "./generate-abi-typings";
 
 async function main() {
-	// Setup the smart protocol
-	await smartProtocolDeployer.setUp({
-		displayUi: true,
-	});
+  // Generated type safe typings for the abi contracts
+  await generateAbiTypings();
 
-	// Initialize the actors
-	await Promise.all([
-		owner.initialize(),
-		claimIssuer.initialize(),
-		investorA.initialize(),
-		investorB.initialize(),
-	]);
+  // Setup the smart protocol
+  await smartProtocolDeployer.setUp({
+    displayUi: true,
+  });
 
-	// Print initial balances
-	await owner.printBalance();
-	await claimIssuer.printBalance();
-	await investorA.printBalance();
-	await investorB.printBalance();
+  // Initialize the actors
+  await Promise.all([
+    owner.initialize(),
+    claimIssuer.initialize(),
+    investorA.initialize(),
+    investorB.initialize(),
+  ]);
 
-	// Register the claim topics
-	await registerTopicScheme();
+  // Print initial balances
+  await owner.printBalance();
+  await claimIssuer.printBalance();
+  await investorA.printBalance();
+  await investorB.printBalance();
 
-	// Add the claim issuer as a trusted issuer
-	const claimIssuerIdentity = await claimIssuer.getIdentity();
-	await addTrustedIssuer(claimIssuerIdentity, [
-		SMARTTopics.kyc,
-		SMARTTopics.aml,
-		SMARTTopics.collateral,
-	]);
+  // Register the claim topics
+  await registerTopicScheme();
 
-	// Add the actors to the registry
-	await batchAddToRegistry([owner, investorA, investorB]);
+  // Add the claim issuer as a trusted issuer
+  const claimIssuerIdentity = await claimIssuer.getIdentity();
+  await addTrustedIssuer(claimIssuerIdentity, [
+    SMARTTopics.kyc,
+    SMARTTopics.aml,
+    SMARTTopics.collateral,
+  ]);
 
-	// make sure every actor is verified
-	await Promise.all([
-		issueVerificationClaims(owner),
-		issueVerificationClaims(investorA),
-		issueVerificationClaims(investorB),
-	]);
+  // Add the actors to the registry
+  await batchAddToRegistry([owner, investorA, investorB]);
 
-	// Create the assets
-	const deposit = await createDeposit();
-	const equity = await createEquity();
-	const bond = await createBond(deposit);
-	const fund = await createFund();
-	const stablecoin = await createStablecoin();
+  // make sure every actor is verified
+  await Promise.all([
+    issueVerificationClaims(owner),
+    issueVerificationClaims(investorA),
+    issueVerificationClaims(investorB),
+  ]);
+
+  // Create the assets
+  const deposit = await createDeposit();
+  const equity = await createEquity();
+  const bond = await createBond(deposit);
+  const fund = await createFund();
+  const stablecoin = await createStablecoin();
 }
 
 // Execute the script
 main()
-	.then(() => process.exit(0))
-	.catch((error) => {
-		console.error(error);
-		process.exit(1);
-	});
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

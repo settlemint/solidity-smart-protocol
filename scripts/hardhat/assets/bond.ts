@@ -14,59 +14,60 @@ import { mint } from "./actions/mint";
 import { transfer } from "./actions/transfer";
 
 export const createBond = async (depositToken: Address) => {
-	const bondFactory = smartProtocolDeployer.getBondFactoryContract();
+  const bondFactory = smartProtocolDeployer.getBondFactoryContract();
 
-	// TODO: typing doesn't work? Check txsigner utils
-	const transactionHash: Hex = await bondFactory.write.createBond([
-		"Euro Bonds",
-		"EURB",
-		6,
-		1000000 * 10 ** 6,
-		Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60, // 1 year
-		123,
-		depositToken,
-		[SMARTTopics.kyc, SMARTTopics.aml],
-		[], // TODO: fill in with the setup for ATK
-	]);
+  const transactionHash = await bondFactory.write.createBond(
+    [
+      "Euro Bonds",
+      "EURB",
+      6,
+      BigInt(1000000 * 10 ** 6),
+      BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60), // 1 year
+      BigInt(123),
+      depositToken,
+      [SMARTTopics.kyc, SMARTTopics.aml],
+      [], // TODO: fill in with the setup for ATK
+    ],
+    { account: null, chain: undefined }
+  );
 
-	const { tokenAddress, tokenIdentity, accessManager } = (await waitForEvent({
-		transactionHash,
-		contract: bondFactory,
-		eventName: "TokenAssetCreated",
-	})) as unknown as {
-		sender: Address;
-		tokenAddress: Address;
-		tokenIdentity: Address;
-		accessManager: Address;
-	};
+  const { tokenAddress, tokenIdentity, accessManager } = (await waitForEvent({
+    transactionHash,
+    contract: bondFactory,
+    eventName: "TokenAssetCreated",
+  })) as {
+    tokenAddress: Address;
+    tokenIdentity: Address;
+    accessManager: Address;
+  };
 
-	if (tokenAddress && tokenIdentity && accessManager) {
-		console.log("[Bond] address:", tokenAddress);
-		console.log("[Bond] identity:", tokenIdentity);
-		console.log("[Bond] access manager:", accessManager);
+  if (tokenAddress && tokenIdentity && accessManager) {
+    console.log("[Bond] address:", tokenAddress);
+    console.log("[Bond] identity:", tokenIdentity);
+    console.log("[Bond] access manager:", accessManager);
 
-		// needs to be done so that he can add the claims
-		await grantRole(accessManager, owner.address, SMARTRoles.claimManagerRole);
+    // needs to be done so that he can add the claims
+    await grantRole(accessManager, owner.address, SMARTRoles.claimManagerRole);
 
-		// issue isin claim
-		await issueIsinClaim(tokenIdentity, "GB00B1XGHL29");
+    // issue isin claim
+    await issueIsinClaim(tokenIdentity, "GB00B1XGHL29");
 
-		// needs supply management role to mint
-		await grantRole(
-			accessManager,
-			owner.address,
-			SMARTRoles.supplyManagementRole,
-		);
+    // needs supply management role to mint
+    await grantRole(
+      accessManager,
+      owner.address,
+      SMARTRoles.supplyManagementRole
+    );
 
-		await mint(tokenAddress, investorA, 10n, 6);
-		await transfer(tokenAddress, investorA, investorB, 5n, 6);
-		await burn(tokenAddress, investorB, 2n, 6);
+    await mint(tokenAddress, investorA, 10n, 6);
+    await transfer(tokenAddress, investorA, investorB, 5n, 6);
+    await burn(tokenAddress, investorB, 2n, 6);
 
-		// TODO: add yield etc
-		// TODO: execute all other functions of the bond
+    // TODO: add yield etc
+    // TODO: execute all other functions of the bond
 
-		return tokenAddress;
-	}
+    return tokenAddress;
+  }
 
-	throw new Error("Failed to create bond");
+  throw new Error("Failed to create bond");
 };

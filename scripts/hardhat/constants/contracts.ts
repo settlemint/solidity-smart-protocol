@@ -1,9 +1,7 @@
 import type { Abi } from "viem";
-import { abi as bondAbiJson } from "../../../artifacts/contracts/assets/bond/ISMARTBond.sol/ISMARTBond.json";
-// --- ABI Imports ---
-import { abi as bondFactoryAbiJson } from "../../../artifacts/contracts/assets/bond/ISMARTBondFactory.sol/ISMARTBondFactory.json";
-// import { abi as depositFactoryAbiJson } from "../../../out/ISMARTDepositFactory.sol/ISMARTDepositFactory.json";
-import { abi as depositFactoryAbiJson } from "../../../artifacts/contracts/assets/deposit/SMARTDepositFactoryImplementation.sol/SMARTDepositFactoryImplementation.json";
+import { bondAbi } from "../abi/bond";
+import { bondFactoryAbi } from "../abi/bondFactory";
+import { depositFactoryAbi } from "../abi/depositFactory";
 import { abi as depositAbiJson } from "../../../artifacts/contracts/assets/deposit/SMARTDepositImplementation.sol/SMARTDepositImplementation.json";
 import { abi as equityAbiJson } from "../../../artifacts/contracts/assets/equity/ISMARTEquity.sol/ISMARTEquity.json";
 import { abi as equityFactoryAbiJson } from "../../../artifacts/contracts/assets/equity/ISMARTEquityFactory.sol/ISMARTEquityFactory.json";
@@ -27,30 +25,30 @@ import { abi as topicSchemeRegistryAbiJson } from "../../../artifacts/contracts/
 const asAbi = (abi: unknown): Abi => abi as Abi;
 
 export const SMARTContracts = {
-	// onboarding
-	system: asAbi(systemAbiJson),
-	compliance: asAbi(complianceAbiJson),
-	identityRegistry: asAbi(identityRegistryAbiJson),
-	identityRegistryStorage: asAbi(identityRegistryStorageAbiJson),
-	trustedIssuersRegistry: asAbi(trustedIssuersRegistryAbiJson),
-	topicSchemeRegistry: asAbi(topicSchemeRegistryAbiJson),
-	identityFactory: asAbi(identityFactoryAbiJson),
-	bondFactory: asAbi(bondFactoryAbiJson),
-	depositFactory: asAbi(depositFactoryAbiJson),
-	equityFactory: asAbi(equityFactoryAbiJson),
-	fundFactory: asAbi(fundFactoryAbiJson),
-	stablecoinFactory: asAbi(stablecoinFactoryAbiJson),
-	// token
-	accessManager: asAbi(accessManagerAbiJson),
-	identity: asAbi(identityAbiJson),
-	tokenIdentity: asAbi(tokenIdentityAbiJson),
-	// tokens
-	deposit: asAbi(depositAbiJson),
-	equity: asAbi(equityAbiJson),
-	fund: asAbi(fundAbiJson),
-	stablecoin: asAbi(stablecoinAbiJson),
-	bond: asAbi(bondAbiJson),
-	// smart
-	ismart: asAbi(ismartAbiJson),
-	ismartBurnable: asAbi(ismartBurnableAbiJson),
+  // onboarding
+  system: asAbi(systemAbiJson),
+  compliance: asAbi(complianceAbiJson),
+  identityRegistry: asAbi(identityRegistryAbiJson),
+  identityRegistryStorage: asAbi(identityRegistryStorageAbiJson),
+  trustedIssuersRegistry: asAbi(trustedIssuersRegistryAbiJson),
+  topicSchemeRegistry: asAbi(topicSchemeRegistryAbiJson),
+  identityFactory: asAbi(identityFactoryAbiJson),
+  bondFactory: bondFactoryAbi,
+  depositFactory: depositFactoryAbi,
+  equityFactory: asAbi(equityFactoryAbiJson),
+  fundFactory: asAbi(fundFactoryAbiJson),
+  stablecoinFactory: asAbi(stablecoinFactoryAbiJson),
+  // token
+  accessManager: asAbi(accessManagerAbiJson),
+  identity: asAbi(identityAbiJson),
+  tokenIdentity: asAbi(tokenIdentityAbiJson),
+  // tokens
+  deposit: asAbi(depositAbiJson),
+  equity: asAbi(equityAbiJson),
+  fund: asAbi(fundAbiJson),
+  stablecoin: asAbi(stablecoinAbiJson),
+  bond: bondAbi,
+  // smart
+  ismart: asAbi(ismartAbiJson),
+  ismartBurnable: asAbi(ismartBurnableAbiJson),
 } as const;
