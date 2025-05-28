@@ -18,7 +18,11 @@
 		"url": "https://github.com/settlemint/solidity-smart-protocol/issues",
 		"email": "support@settlemint.com"
 	},
-	"keywords": ["solidity", "subgraph", "blockchain-transformation"],
+	"keywords": [
+		"solidity",
+		"subgraph",
+		"blockchain-transformation"
+	],
 	"files": [
 		"/contracts",
 		"/ignition",
@@ -48,6 +52,7 @@
 		"subgraph:deploy:remote": "bash ./scripts/graph-deploy.sh --remote"
 	},
 	"dependencies": {
+		"@biomejs/biome": "^1.9.4",
 		"@graphprotocol/graph-cli": "0.97.1",
 		"@graphprotocol/graph-ts": "0.38.1",
 		"@nomicfoundation/hardhat-foundry": "1.1.3",
@@ -70,5 +75,9 @@
 		"cookie": "1.0.2",
 		"ejs": "3.1.10"
 	},
-	"trustedDependencies": ["keccak", "protobufjs", "secp256k1"]
+	"trustedDependencies": [
+		"keccak",
+		"protobufjs",
+		"secp256k1"
+	]
 }
