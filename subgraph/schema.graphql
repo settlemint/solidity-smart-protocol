@@ -153,6 +153,14 @@ type TokenPausable @entity(immutable: false) {
   paused: Boolean!
 }
 
+type TokenCollateral @entity(immutable: false) {
+  id: Bytes!
+  amount: BigDecimal!
+  amountExact: BigInt!
+  issuer: Account!
+  expiryTimestamp: BigInt!
+}
+
 type Identity @entity(immutable: false) {
   id: Bytes!
   registry: IdentityRegistry

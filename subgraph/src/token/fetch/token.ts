@@ -10,6 +10,7 @@ import { setBigNumber } from "../../utils/bignumber";
 import { InterfaceIds } from "../../erc165/utils/interfaceids";
 import { fetchPausable } from "../../pausable/fetch/pausable";
 import { fetchCustodian } from "../../custodian/fetch/custodian";
+import { fetchCollateral } from "../../collateral/fetch/collateral";
 
 export function fetchToken(address: Address): Token {
   let token = Token.load(address);
@@ -42,6 +43,9 @@ export function fetchToken(address: Address): Token {
     }
     if (tokenContract.supportsInterface(InterfaceIds.ISMARTCustodian)) {
       fetchCustodian(address);
+    }
+    if (tokenContract.supportsInterface(InterfaceIds.ISMARTCollateral)) {
+      fetchCollateral(address);
     }
   }
 
