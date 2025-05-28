@@ -273,3 +273,34 @@ templates:
         - event: TopicSchemesBatchRegistered(indexed address,uint256[],string[])
           handler: handleTopicSchemesBatchRegistered
       file: ./src/topic-scheme-registry/topic-scheme-registry.ts
+  - kind: ethereum
+    name: IdentityRegistry
+    network: settlemint
+    source:
+      abi: IdentityRegistry
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Address
+        - Event
+      abis:
+        - name: IdentityRegistry
+          file: ../artifacts/contracts/interface/ISMARTIdentityRegistry.sol/ISMARTIdentityRegistry.json
+      eventHandlers:
+        - event: CountryUpdated(indexed address,indexed address,indexed uint16)
+          handler: handleCountryUpdated
+        - event: IdentityRegistered(indexed address,indexed address,indexed address)
+          handler: handleIdentityRegistered
+        - event: IdentityRemoved(indexed address,indexed address,indexed address)
+          handler: handleIdentityRemoved
+        - event: IdentityStorageSet(indexed address,indexed address)
+          handler: handleIdentityStorageSet
+        - event: IdentityUpdated(indexed address,indexed address,indexed address)
+          handler: handleIdentityUpdated
+        - event: TopicSchemeRegistrySet(indexed address,indexed address)
+          handler: handleTopicSchemeRegistrySet
+        - event: TrustedIssuersRegistrySet(indexed address,indexed address)
+          handler: handleTrustedIssuersRegistrySet
+      file: ./src/identity-registry/identity-registry.ts

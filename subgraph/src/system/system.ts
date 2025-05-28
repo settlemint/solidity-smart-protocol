@@ -13,11 +13,11 @@ import {
 } from "../../../generated/templates/System/System";
 import { fetchEvent } from "../event/fetch/event";
 import { fetchIdentityFactory } from "../identity-factory/fetch/identity-factory";
+import { fetchIdentityRegistry } from "../identity-registry/fetch/identity-registry";
+import { fetchIdentityRegistryStorage } from "../identity-registry/fetch/identity-registry-storage";
 import { fetchTokenFactory } from "../token-factory/fetch/token-factory";
 import { fetchTopicSchemeRegistry } from "../topic-scheme-registry/fetch/topic-scheme-registry";
 import { fetchCompliance } from "./fetch/compliance";
-import { fetchIdentityRegistry } from "./fetch/identity-registry";
-import { fetchIdentityRegistryStorage } from "./fetch/identity-registry-storage";
 import { fetchSystem } from "./fetch/system";
 import { fetchTrustedIssuersRegistry } from "./fetch/trusted-issuers-registry";
 
