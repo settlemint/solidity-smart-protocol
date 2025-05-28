@@ -1,13 +1,15 @@
 import {
 	type Abi,
 	type Address,
+	type Chain,
 	type GetContractReturnType,
-	type Hex,
 	type PublicClient,
+	type Transport,
 	type WalletClient,
 	formatEther,
 	getContract as getViemContract,
 } from "viem";
+import type { Account } from "viem/accounts";
 import { smartProtocolDeployer } from "../services/deployer";
 import { getPublicClient } from "../utils/public-client";
 import { waitForEvent } from "../utils/wait-for-event";
@@ -39,7 +41,7 @@ export abstract class AbstractActor {
 	 * It should retrieve or create an ethers.js Signer instance representing the actor's wallet.
 	 * @returns A Promise that resolves to an ethers Signer.
 	 */
-	abstract getWalletClient(): WalletClient;
+	abstract getWalletClient(): WalletClient<Transport, Chain, Account>;
 
 	/**
 	 * Initializes the actor by fetching and storing the wallet client (Signer).
@@ -82,17 +84,17 @@ export abstract class AbstractActor {
 		this._identityPromise = new Promise((resolve, reject) => {
 			// Internal function to create the identity
 			const createIdentity = async (): Promise<`0x${string}`> => {
-				const identityFactory =
-					smartProtocolDeployer.getIdentityFactoryContract();
-				const transactionHash: Hex = await identityFactory.write.createIdentity(
-					[this.address, []],
-				);
+				const identityFactory = smartProtocolDeployer.getIdentityFactoryContract();
+				const transactionHash = await identityFactory.write.createIdentity([
+					this.address,
+					[],
+				]);
 
 				const { identity } = (await waitForEvent({
 					transactionHash,
 					contract: identityFactory,
 					eventName: "IdentityCreated",
-				})) as unknown as { identity: `0x${string}` };
+				})) as { identity: `0x${string}` };
 
 				this._identity = identity;
 				console.log(`[${this.name}] identity: ${identity}`);
@@ -138,7 +140,7 @@ export abstract class AbstractActor {
 		abi: TAbi;
 	}): GetContractReturnType<
 		TAbi,
-		{ public: PublicClient; wallet: WalletClient }
+		{ public: PublicClient; wallet: WalletClient<Transport, Chain, Account> }
 	> {
 		const walletClient = this.getWalletClient();
 

@@ -1,4 +1,4 @@
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 
 import { owner } from "../actors/owner";
 import { smartProtocolDeployer } from "../services/deployer";
@@ -18,8 +18,7 @@ import { transfer } from "./actions/transfer";
 export const createFund = async () => {
 	const fundFactory = smartProtocolDeployer.getFundFactoryContract();
 
-	// TODO: typing doesn't work? Check txsigner utils
-	const transactionHash: Hex = await fundFactory.write.createFund([
+	const transactionHash = await fundFactory.write.createFund([
 		"Bens Bugs",
 		"BB",
 		8,
@@ -37,7 +36,7 @@ export const createFund = async () => {
 		transactionHash,
 		contract: fundFactory,
 		eventName: "TokenAssetCreated",
-	})) as unknown as {
+	})) as {
 		sender: Address;
 		tokenAddress: Address;
 		tokenIdentity: Address;
@@ -58,7 +57,7 @@ export const createFund = async () => {
 		await grantRole(
 			accessManager,
 			owner.address,
-			SMARTRoles.supplyManagementRole,
+			SMARTRoles.supplyManagementRole
 		);
 
 		await mint(tokenAddress, investorA, 10n, 8);

@@ -6,6 +6,18 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
-  }
+    "resolveJsonModule": true,
+    "noEmit": true
+  },
+  "exclude": [
+    "subgraph",
+    "node_modules",
+    "artifacts",
+    "dependencies",
+    "generated",
+    "out",
+    "build",
+    "cache",
+    "cache_forge"
+  ]
 }

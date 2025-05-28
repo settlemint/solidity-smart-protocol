@@ -3,13 +3,12 @@ import { claimIssuer } from "../../actors/claim-issuer";
 import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
 import { SMARTTopic } from "../../constants/topics";
-import { topicManager } from "../../services/topic-manager";
 import { encodeClaimData } from "../../utils/claim-scheme-utils";
 import { waitForSuccess } from "../../utils/wait-for-success";
 
 export const issueIsinClaim = async (
 	tokenIdentityAddress: Address,
-	isin: string,
+	isin: string
 ) => {
 	const encodedIsinData = encodeClaimData(SMARTTopic.isin, [isin]);
 
@@ -20,7 +19,7 @@ export const issueIsinClaim = async (
 	} = await claimIssuer.createClaim(
 		tokenIdentityAddress,
 		SMARTTopic.isin,
-		encodedIsinData,
+		encodedIsinData
 	);
 
 	const tokenIdentityContract = owner.getContractInstance({
@@ -32,7 +31,7 @@ export const issueIsinClaim = async (
 
 	const transactionHash = await tokenIdentityContract.write.addClaim([
 		topicId,
-		1, // ECDSA
+		BigInt(1), // ECDSA
 		claimIssuerIdentity,
 		isinClaimSignature,
 		isinClaimData,
@@ -42,6 +41,6 @@ export const issueIsinClaim = async (
 	await waitForSuccess(transactionHash);
 
 	console.log(
-		`[ISIN claim] issued for token identity ${tokenIdentityAddress} with ISIN ${isin}.`,
+		`[ISIN claim] issued for token identity ${tokenIdentityAddress} with ISIN ${isin}.`
 	);
 };
