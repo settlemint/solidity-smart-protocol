@@ -1,8 +1,8 @@
 import { BurnCompleted } from "../../../generated/templates/Burnable/Burnable";
 import { fetchEvent } from "../event/fetch/event";
 import { fetchToken } from "../token/fetch/token";
-import { decreaseTokenBalanceValue } from "../utils/token-balance-utils";
-import { decreaseTokenSupply } from "../utils/token-utils";
+import { decreaseTokenBalanceValue } from "../token-balance/utils/token-balance-utils";
+import { decreaseTokenSupply } from "../token/utils/token-utils";
 
 export function handleBurnCompleted(event: BurnCompleted): void {
   fetchEvent(event, "BurnCompleted");
