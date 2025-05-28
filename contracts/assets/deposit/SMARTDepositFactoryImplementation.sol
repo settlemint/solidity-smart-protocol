@@ -132,6 +132,7 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
             name_,
             symbol_,
             decimals_,
+            _collateralClaimTopicId,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),

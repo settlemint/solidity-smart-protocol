@@ -25,8 +25,6 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
     /// @param name_ The name of the equity token.
     /// @param symbol_ The symbol of the equity token.
     /// @param decimals_ The number of decimals for the equity token.
-    /// @param equityClass_ The class of the equity (e.g., Common, Preferred).
-    /// @param equityCategory_ The category of the equity (e.g., Voting, Non-Voting).
     /// @param requiredClaimTopics_ An array of claim topics required for interacting with the equity token.
     /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
     /// @return deployedEquityAddress The address of the newly deployed equity token contract.
@@ -34,8 +32,6 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
-        string memory equityClass_,
-        string memory equityCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
@@ -53,8 +49,6 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
             name_,
             symbol_,
             decimals_,
-            equityClass_,
-            equityCategory_,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),
@@ -82,8 +76,6 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
     /// @param name_ The name of the equity.
     /// @param symbol_ The symbol of the equity.
     /// @param decimals_ The decimals of the equity.
-    /// @param equityClass_ The class of the equity.
-    /// @param equityCategory_ The category of the equity.
     /// @param requiredClaimTopics_ The required claim topics for the equity.
     /// @param initialModulePairs_ The initial compliance module pairs for the equity.
     /// @return predictedAddress The predicted address of the equity contract.
@@ -91,8 +83,6 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
-        string memory equityClass_,
-        string memory equityCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
@@ -108,8 +98,6 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
             name_,
             symbol_,
             decimals_,
-            equityClass_,
-            equityCategory_,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),

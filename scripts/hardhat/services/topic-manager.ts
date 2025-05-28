@@ -120,8 +120,7 @@ export class TopicManager {
 	 * Load topics from the registry and cache them
 	 */
 	private async _loadTopicsFromRegistry(): Promise<void> {
-		const topicRegistry =
-			smartProtocolDeployer.getTopicSchemeRegistryContract();
+		const topicRegistry = smartProtocolDeployer.getTopicSchemeRegistryContract();
 
 		try {
 			// Get all topic IDs from the registry
@@ -170,13 +169,16 @@ export class TopicManager {
 			}
 
 			console.log(
-				`[TopicManager] Loaded ${this._topicCache.size} topics into cache`,
+				`[TopicManager] Loaded ${this._topicCache.size} topics into cache`
 			);
 			console.log("[TopicManager] Default Topic IDs:", {
 				kyc: this.getTopicId(SMARTTopic.kyc).toString(),
 				aml: this.getTopicId(SMARTTopic.aml).toString(),
 				collateral: this.getTopicId(SMARTTopic.collateral).toString(),
 				isin: this.getTopicId(SMARTTopic.isin).toString(),
+				assetClassification: this.getTopicId(
+					SMARTTopic.assetClassification
+				).toString(),
 			});
 		} catch (error) {
 			console.error("Failed to load topics from registry:", error);

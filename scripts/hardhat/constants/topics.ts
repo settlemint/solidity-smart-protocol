@@ -10,4 +10,5 @@ export enum SMARTTopic {
 	aml = "aml",
 	collateral = "collateral",
 	isin = "isin",
+	assetClassification = "assetClassification",
 }

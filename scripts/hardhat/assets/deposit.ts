@@ -15,6 +15,8 @@ import { mint } from "./actions/mint";
 import { transfer } from "./actions/transfer";
 
 export const createDeposit = async () => {
+	console.log("\n=== Creating deposit... ===\n");
+
 	const depositFactory = smartProtocolDeployer.getDepositFactoryContract();
 
 	const transactionHash = await depositFactory.write.createDeposit([

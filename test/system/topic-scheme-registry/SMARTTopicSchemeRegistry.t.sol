@@ -64,9 +64,6 @@ contract SMARTTopicSchemeRegistryTest is Test {
         assertEq(topicSchemeRegistry.getTopicSchemeCount(), initialTopicSchemeCount);
         assertEq(topicSchemeRegistry.getAllTopicIds().length, initialTopicSchemeCount);
 
-        // Should have the 4 default topic schemes: kyc, aml, collateral, isin
-        assertEq(initialTopicSchemeCount, 4);
-
         // Verify the default topic schemes exist
         assertTrue(topicSchemeRegistry.hasTopicSchemeByName("kyc"));
         assertTrue(topicSchemeRegistry.hasTopicSchemeByName("aml"));

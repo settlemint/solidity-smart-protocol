@@ -20,8 +20,6 @@ contract SMARTEquityProxy is SMARTAssetProxy {
     /// @param name_ The name of the equity.
     /// @param symbol_ The symbol of the equity.
     /// @param decimals_ The number of decimals of the equity.
-    /// @param equityClass_ The class of the equity.
-    /// @param equityCategory_ The category of the equity.
     /// @param requiredClaimTopics_ The required claim topics of the equity.
     /// @param initialModulePairs_ The initial module pairs of the equity.
     /// @param identityRegistry_ The identity registry of the equity.
@@ -32,8 +30,6 @@ contract SMARTEquityProxy is SMARTAssetProxy {
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
-        string memory equityClass_,
-        string memory equityCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -50,8 +46,6 @@ contract SMARTEquityProxy is SMARTAssetProxy {
             name_,
             symbol_,
             decimals_,
-            equityClass_,
-            equityCategory_,
             requiredClaimTopics_,
             initialModulePairs_,
             identityRegistry_,
