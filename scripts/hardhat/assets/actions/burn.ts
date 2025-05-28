@@ -10,7 +10,7 @@ export const burn = async (
 	tokenAddress: Address,
 	from: AbstractActor,
 	amount: bigint,
-	decimals: number,
+	decimals: number
 ) => {
 	const tokenContract = owner.getContractInstance({
 		address: tokenAddress,
@@ -19,14 +19,17 @@ export const burn = async (
 
 	const tokenAmount = toDecimals(amount, decimals);
 
-	const transactionHash = await tokenContract.write.burn([
-		from.address,
-		tokenAmount,
-	]);
+	const transactionHash = await tokenContract.write.burn(
+		[from.address, tokenAmount],
+		{
+			account: null,
+			chain: undefined,
+		}
+	);
 
 	await waitForSuccess(transactionHash);
 
 	console.log(
-		`[Burn] ${formatDecimals(tokenAmount, decimals)} tokens from ${from.name} (${from.address})`,
+		`[Burn] ${formatDecimals(tokenAmount, decimals)} tokens from ${from.name} (${from.address})`
 	);
 };

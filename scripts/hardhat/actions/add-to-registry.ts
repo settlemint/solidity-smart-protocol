@@ -8,7 +8,10 @@ export async function addToRegistry(actor: AbstractActor) {
 
 	const transactionHash = await smartProtocolDeployer
 		.getIdentityRegistryContract()
-		.write.registerIdentity([actor.address, identity, actor.countryCode]);
+		.write.registerIdentity([actor.address, identity, actor.countryCode], {
+			account: null,
+			chain: undefined,
+		});
 
 	await waitForSuccess(transactionHash);
 
@@ -17,19 +20,25 @@ export async function addToRegistry(actor: AbstractActor) {
 
 export async function batchAddToRegistry(actors: AbstractActor[]) {
 	const resolvedIdentities = await Promise.all(
-		actors.map((actor) => actor.getIdentity()),
+		actors.map((actor) => actor.getIdentity())
 	);
 	const transactionHash = await smartProtocolDeployer
 		.getIdentityRegistryContract()
-		.write.batchRegisterIdentity([
-			actors.map((actor) => actor.address),
-			resolvedIdentities,
-			actors.map((actor) => actor.countryCode),
-		]);
+		.write.batchRegisterIdentity(
+			[
+				actors.map((actor) => actor.address),
+				resolvedIdentities,
+				actors.map((actor) => actor.countryCode),
+			],
+			{
+				account: null,
+				chain: undefined,
+			}
+		);
 
 	await waitForSuccess(transactionHash);
 
 	console.log(
-		`[Batch add to registry] ${actors.map((actor) => actor.name).join(", ")} added to registry`,
+		`[Batch add to registry] ${actors.map((actor) => actor.name).join(", ")} added to registry`
 	);
 }

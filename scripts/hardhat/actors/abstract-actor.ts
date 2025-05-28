@@ -2,7 +2,6 @@ import {
 	type Abi,
 	type Address,
 	type GetContractReturnType,
-	type Hex,
 	type PublicClient,
 	type WalletClient,
 	formatEther,
@@ -82,17 +81,20 @@ export abstract class AbstractActor {
 		this._identityPromise = new Promise((resolve, reject) => {
 			// Internal function to create the identity
 			const createIdentity = async (): Promise<`0x${string}`> => {
-				const identityFactory =
-					smartProtocolDeployer.getIdentityFactoryContract();
-				const transactionHash: Hex = await identityFactory.write.createIdentity(
+				const identityFactory = smartProtocolDeployer.getIdentityFactoryContract();
+				const transactionHash = await identityFactory.write.createIdentity(
 					[this.address, []],
+					{
+						account: null,
+						chain: undefined,
+					}
 				);
 
 				const { identity } = (await waitForEvent({
 					transactionHash,
 					contract: identityFactory,
 					eventName: "IdentityCreated",
-				})) as unknown as { identity: `0x${string}` };
+				})) as { identity: `0x${string}` };
 
 				this._identity = identity;
 				console.log(`[${this.name}] identity: ${identity}`);
