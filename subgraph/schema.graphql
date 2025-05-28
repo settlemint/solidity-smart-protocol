@@ -132,7 +132,8 @@ type TokenBalance @entity(immutable: false) {
   valueExact: BigInt!
   frozen: BigDecimal!
   frozenExact: BigInt!
-  lastActivity: BigInt!
+  available: BigDecimal!
+  availableExact: BigInt!
 }
 
 type TokenPausable @entity(immutable: false) {

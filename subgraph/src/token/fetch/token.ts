@@ -2,8 +2,6 @@ import { Address } from "@graphprotocol/graph-ts";
 import { Token } from "../../../../generated/schema";
 import {
   Burnable as BurnableTemplate,
-  Custodian as CustodianTemplate,
-  Pausable as PausableTemplate,
   Token as TokenTemplate,
 } from "../../../../generated/templates";
 import { Token as TokenContract } from "../../../../generated/templates/Token/Token";
@@ -11,6 +9,7 @@ import { fetchAccount } from "../../account/fetch/account";
 import { setBigNumber } from "../../bignumber/bignumber";
 import { InterfaceIds } from "../../erc165/utils/interfaceids";
 import { fetchPausable } from "../../pausable/fetch/pausable";
+import { fetchCustodian } from "../../custodian/fetch/custodian";
 
 export function fetchToken(address: Address): Token {
   let token = Token.load(address);
@@ -36,13 +35,13 @@ export function fetchToken(address: Address): Token {
     if (tokenContract.supportsInterface(InterfaceIds.ISMARTPausable)) {
       token.pausable = fetchPausable(address).id;
       token.save();
-      PausableTemplate.create(address);
     }
     if (tokenContract.supportsInterface(InterfaceIds.ISMARTBurnable)) {
       BurnableTemplate.create(address);
     }
     if (tokenContract.supportsInterface(InterfaceIds.ISMARTCustodian)) {
-      CustodianTemplate.create(address);
+      token.custodian = fetchCustodian(address).id;
+      token.save();
     }
   }
 

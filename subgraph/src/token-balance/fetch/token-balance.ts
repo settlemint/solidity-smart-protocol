@@ -1,14 +1,13 @@
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 import { TokenBalance } from "../../../../generated/schema";
 import { fetchAccount } from "../../account/fetch/account";
 import { fetchToken } from "../../token/fetch/token";
 import { setBigNumber } from "../../bignumber/bignumber";
 
 export function fetchTokenBalance(
-  tokenId: Bytes,
+  tokenAddress: Address,
   accountAddress: Address
 ): TokenBalance {
-  const tokenAddress = Address.fromBytes(tokenId);
   const id = tokenAddress.concat(accountAddress);
 
   let tokenBalance = TokenBalance.load(id);
@@ -20,7 +19,6 @@ export function fetchTokenBalance(
     tokenBalance.account = fetchAccount(accountAddress).id;
     setBigNumber(tokenBalance, "value", BigInt.fromI32(0), token.decimals);
     setBigNumber(tokenBalance, "frozen", BigInt.fromI32(0), token.decimals);
-    tokenBalance.lastActivity = BigInt.fromI32(0);
     tokenBalance.save();
   }
 

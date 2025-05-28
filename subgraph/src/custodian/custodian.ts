@@ -13,7 +13,7 @@ import {
   increaseTokenBalanceFrozen,
   updateTokenBalanceFrozen,
   moveTokenBalanceToNewAccount,
-} from "../token-balance/token-balance-operations";
+} from "../utils/token-balance-utils";
 import { Custodian as CustodianContract } from "../../../generated/templates/Custodian/Custodian";
 import { fetchTokenBalance } from "../token-balance/fetch/token-balance";
 
@@ -25,24 +25,18 @@ export function handleAddressFrozen(event: AddressFrozen): void {
 
   if (event.params.isFrozen) {
     // If an address is frozen, set the total frozen amount to the balance value
-    const balance = fetchTokenBalance(token.id, event.params.userAddress);
+    const balance = fetchTokenBalance(event.address, event.params.userAddress);
     updateTokenBalanceFrozen(
       token,
       event.params.userAddress,
-      balance.valueExact,
-      event.block.timestamp
+      balance.valueExact
     );
   } else {
     // Restore the original frozen amount from the custodian contract
     const frozenTokens = custodianContract.getFrozenTokens(
       event.params.userAddress
     );
-    updateTokenBalanceFrozen(
-      token,
-      event.params.userAddress,
-      frozenTokens,
-      event.block.timestamp
-    );
+    updateTokenBalanceFrozen(token, event.params.userAddress, frozenTokens);
   }
 }
 
@@ -52,8 +46,7 @@ export function handleRecoverySuccess(event: RecoverySuccess): void {
   moveTokenBalanceToNewAccount(
     token,
     event.params.lostWallet,
-    event.params.newWallet,
-    event.block.timestamp
+    event.params.newWallet
   );
 }
 
@@ -61,12 +54,7 @@ export function handleTokensFrozen(event: TokensFrozen): void {
   fetchEvent(event, "TokensFrozen");
   const custodian = fetchCustodian(event.address);
   const token = fetchToken(event.address);
-  increaseTokenBalanceFrozen(
-    token,
-    event.params.user,
-    event.params.amount,
-    event.block.timestamp
-  );
+  increaseTokenBalanceFrozen(token, event.params.user, event.params.amount);
   const updatedAmount = custodian.totalFrozenExact.plus(event.params.amount);
   setBigNumber(custodian, "frozen", updatedAmount, token.decimals);
   custodian.save();
@@ -76,12 +64,7 @@ export function handleTokensUnfrozen(event: TokensUnfrozen): void {
   fetchEvent(event, "TokensUnfrozen");
   const custodian = fetchCustodian(event.address);
   const token = fetchToken(event.address);
-  decreaseTokenBalanceFrozen(
-    token,
-    event.params.user,
-    event.params.amount,
-    event.block.timestamp
-  );
+  decreaseTokenBalanceFrozen(token, event.params.user, event.params.amount);
   const updatedAmount = custodian.totalFrozenExact.minus(event.params.amount);
   setBigNumber(custodian, "frozen", updatedAmount, token.decimals);
   custodian.save();
