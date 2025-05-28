@@ -1,11 +1,8 @@
-import { Address } from "@graphprotocol/graph-ts";
-import { BigInt, Bytes } from "@graphprotocol/graph-ts";
-import { fetchToken } from "../fetch/token";
+import { BigInt } from "@graphprotocol/graph-ts";
 import { setBigNumber } from "../../utils/bignumber";
+import { Token } from "../../../../generated/schema";
 
-export function increaseTokenSupply(tokenId: Bytes, amount: BigInt): void {
-  const token = fetchToken(Address.fromBytes(tokenId));
-
+export function increaseTokenSupply(token: Token, amount: BigInt): void {
   setBigNumber(
     token,
     "totalSupply",
@@ -16,9 +13,7 @@ export function increaseTokenSupply(tokenId: Bytes, amount: BigInt): void {
   token.save();
 }
 
-export function decreaseTokenSupply(tokenId: Bytes, amount: BigInt): void {
-  const token = fetchToken(Address.fromBytes(tokenId));
-
+export function decreaseTokenSupply(token: Token, amount: BigInt): void {
   setBigNumber(
     token,
     "totalSupply",

@@ -6,7 +6,7 @@ import { decreaseTokenSupply } from "../token/utils/token-utils";
 
 export function handleBurnCompleted(event: BurnCompleted): void {
   fetchEvent(event, "BurnCompleted");
-  decreaseTokenSupply(event.address, event.params.amount);
   const token = fetchToken(event.address);
+  decreaseTokenSupply(token, event.params.amount);
   decreaseTokenBalanceValue(token, event.params.from, event.params.amount);
 }
