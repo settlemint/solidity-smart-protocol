@@ -166,6 +166,7 @@ type Identity @entity(immutable: false) {
   id: Bytes!
   registry: IdentityRegistry
   claims: [IdentityClaim!]! @derivedFrom(field: "identity")
+  token: Token @derivedFrom(field: "identity")
 }
 
 type IdentityClaim @entity(immutable: false) {
