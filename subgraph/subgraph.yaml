@@ -78,7 +78,8 @@ templates:
           handler: handleIdentityImplementationUpdated
         - event: IdentityRegistryImplementationUpdated(indexed address,indexed address)
           handler: handleIdentityRegistryImplementationUpdated
-        - event: IdentityRegistryStorageImplementationUpdated(indexed address,indexed
+        - event:
+            IdentityRegistryStorageImplementationUpdated(indexed address,indexed
             address)
           handler: handleIdentityRegistryStorageImplementationUpdated
         - event: TokenAccessManagerImplementationUpdated(indexed address,indexed address)
@@ -87,7 +88,8 @@ templates:
           handler: handleTokenFactoryCreated
         - event: TokenIdentityImplementationUpdated(indexed address,indexed address)
           handler: handleTokenIdentityImplementationUpdated
-        - event: TrustedIssuersRegistryImplementationUpdated(indexed address,indexed
+        - event:
+            TrustedIssuersRegistryImplementationUpdated(indexed address,indexed
             address)
           handler: handleTrustedIssuersRegistryImplementationUpdated
         - event: TopicSchemeRegistryImplementationUpdated(indexed address,indexed address)
@@ -114,7 +116,8 @@ templates:
         - event: TokenAssetCreated(indexed address,indexed address,indexed
             address,address)
           handler: handleTokenAssetCreated
-        - event: TokenImplementationUpdated(indexed address,indexed address,indexed
+        - event:
+            TokenImplementationUpdated(indexed address,indexed address,indexed
             address)
           handler: handleTokenImplementationUpdated
       file: ./src/token-factory/token-factory.ts
@@ -300,7 +303,7 @@ templates:
       eventHandlers:
         - event: CountryUpdated(indexed address,indexed address,indexed uint16)
           handler: handleCountryUpdated
-        - event: IdentityRegistered(indexed address,indexed address,indexed address)
+        - event: IdentityRegistered(indexed address,indexed address,indexed address, uint16)
           handler: handleIdentityRegistered
         - event: IdentityRemoved(indexed address,indexed address,indexed address)
           handler: handleIdentityRemoved
