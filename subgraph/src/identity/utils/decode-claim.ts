@@ -1,8 +1,10 @@
 import { BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
+import { IdentityClaim } from "../../../../generated/schema";
 import { convertEthereumValue } from "../../event/fetch/event";
 import { fetchTopicScheme } from "../../topic-scheme-registry/fetch/topic-scheme";
+import { fetchIdentityClaimValue } from "../fetch/identity-claim-value";
 
-export function decodeClaim(topicId: BigInt, data: Bytes): string {
+export function decodeClaimValues(claim: IdentityClaim, topicId: BigInt, data: Bytes): void {
   const topicScheme = fetchTopicScheme(topicId);
 
   // Parse the signature to extract parameter names and types
@@ -50,31 +52,29 @@ export function decodeClaim(topicId: BigInt, data: Bytes): string {
 
   let decoded = ethereum.decode(decodingSignature, data);
   if (decoded == null) {
-    return data.toHexString();
+    // If decoding fails, create a single claim value with the raw hex data
+    const claimValue = fetchIdentityClaimValue(claim, "rawData");
+    claimValue.value = data.toHexString();
+    claimValue.save();
+    return;
   }
 
-  // Convert decoded value to string
-  let result = "";
-
+  // Create IdentityClaimValue entities for each decoded parameter
   if (paramTypes.length == 1) {
     // Single value - not a tuple
     const value = convertEthereumValue(decoded);
-    result = "{ " + paramNames[0] + ": " + value + " }";
+    const claimValue = fetchIdentityClaimValue(claim, paramNames[0]);
+    claimValue.value = value;
+    claimValue.save();
   } else {
     // Multiple values - decode as tuple
     const decodedTuple = decoded.toTuple();
-    result = "{ ";
 
     for (let i = 0; i < paramNames.length; i++) {
-      if (i > 0) {
-        result = result + ", ";
-      }
       const value = convertEthereumValue(decodedTuple[i]);
-      result = result + paramNames[i] + ": " + value;
+      const claimValue = fetchIdentityClaimValue(claim, paramNames[i]);
+      claimValue.value = value;
+      claimValue.save();
     }
-
-    result = result + " }";
   }
-
-  return result;
 }
