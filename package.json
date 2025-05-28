@@ -35,11 +35,13 @@
 		"deploy:remote": "settlemint scs hardhat deploy remote --deployment-id smart-protocol",
 		"deploy:local": "settlemint scs hardhat deploy local --deployment-id smart-protocol-local --reset",
 		"deploy:local:onboarding": "settlemint scs hardhat deploy local --deployment-id smart-protocol-local --reset -m ignition/modules/onboarding.ts",
-		"deploy:local:test": "rm -Rf ignition/deployments/smart-protocol-local && settlemint scs hardhat script local --script scripts/hardhat/main.ts",
+		"deploy:local:test": "npm run hardhat:check-types && rm -Rf ignition/deployments/smart-protocol-local && settlemint scs hardhat script local --script scripts/hardhat/main.ts",
 		"lint": "solhint --config .solhint.json ./contracts/**/*.sol",
 		"format": "settlemint scs foundry format && prettier --write .",
 		"compile:forge": "settlemint scs foundry build --sizes && ./scripts/interfaceid.sh",
-		"compile:hardhat": "settlemint scs hardhat build",
+		"compile:hardhat": "settlemint scs hardhat build && npm run hardhat:abi-typings",
+		"hardhat:abi-typings": "node --experimental-strip-types scripts/generate-abi-typings.ts",
+		"hardhat:check-types": "npm run hardhat:abi-typings && npx tsc",
 		"test": "forge test -vvv",
 		"coverage": "forge coverage --ir-minimum",
 		"subgraph:codegen": "settlemint scs subgraph codegen",
@@ -48,6 +50,7 @@
 		"subgraph:deploy:remote": "bash ./scripts/graph-deploy.sh --remote"
 	},
 	"dependencies": {
+		"@biomejs/biome": "1.9.4",
 		"@graphprotocol/graph-cli": "0.97.1",
 		"@graphprotocol/graph-ts": "0.38.1",
 		"@nomicfoundation/hardhat-foundry": "1.1.3",

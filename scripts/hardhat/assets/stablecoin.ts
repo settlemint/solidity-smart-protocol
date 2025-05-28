@@ -1,4 +1,4 @@
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 
 import { owner } from "../actors/owner";
 import { smartProtocolDeployer } from "../services/deployer";
@@ -17,11 +17,9 @@ import { mint } from "./actions/mint";
 import { transfer } from "./actions/transfer";
 
 export const createStablecoin = async () => {
-	const stablecoinFactory =
-		smartProtocolDeployer.getStablecoinFactoryContract();
+	const stablecoinFactory = smartProtocolDeployer.getStablecoinFactoryContract();
 
-	// TODO: typing doesn't work? Check txsigner utils
-	const transactionHash: Hex = await stablecoinFactory.write.createStableCoin([
+	const transactionHash = await stablecoinFactory.write.createStableCoin([
 		"Tether",
 		"USDT",
 		6,
@@ -36,7 +34,7 @@ export const createStablecoin = async () => {
 		transactionHash,
 		contract: stablecoinFactory,
 		eventName: "TokenAssetCreated",
-	})) as unknown as {
+	})) as {
 		sender: Address;
 		tokenAddress: Address;
 		tokenIdentity: Address;
@@ -58,7 +56,7 @@ export const createStablecoin = async () => {
 		const oneYearFromNow = new Date(
 			now.getFullYear() + 1,
 			now.getMonth(),
-			now.getDate(),
+			now.getDate()
 		);
 		await issueCollateralClaim(tokenIdentity, 1000n, 6, oneYearFromNow);
 
@@ -66,7 +64,7 @@ export const createStablecoin = async () => {
 		await grantRole(
 			accessManager,
 			owner.address,
-			SMARTRoles.supplyManagementRole,
+			SMARTRoles.supplyManagementRole
 		);
 
 		await mint(tokenAddress, investorA, 1000n, 6);
