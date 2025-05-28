@@ -29,7 +29,9 @@ contract SMARTIdentityRegistryImplementationTest is Test {
 
     event IdentityStorageSet(address indexed admin, address indexed identityStorage);
     event TrustedIssuersRegistrySet(address indexed admin, address indexed trustedIssuersRegistry);
-    event IdentityRegistered(address indexed registrar, address indexed userAddress, IIdentity indexed identity);
+    event IdentityRegistered(
+        address indexed registrar, address indexed userAddress, IIdentity indexed identity, uint16 country
+    );
     event IdentityRemoved(address indexed registrar, address indexed userAddress, IIdentity indexed identity);
     event CountryUpdated(address indexed sender, address indexed _investorAddress, uint16 indexed _country);
     event IdentityUpdated(address indexed registrar, IIdentity indexed oldIdentity, IIdentity indexed newIdentity);
@@ -68,7 +70,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
 
     function testRegisterIdentity() public {
         vm.expectEmit(true, true, true, true);
-        emit IdentityRegistered(admin, user1, identity1);
+        emit IdentityRegistered(admin, user1, identity1, COUNTRY_US);
 
         vm.prank(admin);
         identityRegistry.registerIdentity(user1, identity1, COUNTRY_US);

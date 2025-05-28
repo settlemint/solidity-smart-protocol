@@ -59,7 +59,10 @@ interface ISMARTIdentityRegistry is IERC165 {
     /// @param _investorAddress The wallet address of the investor being registered.
     /// @param _identity The address of the investor's `IIdentity` smart contract, which holds their claims and
     /// attestations.
-    event IdentityRegistered(address indexed sender, address indexed _investorAddress, IIdentity indexed _identity);
+    /// @param _country The numeric country code (ISO 3166-1 alpha-2 standard) representing the investor's jurisdiction.
+    event IdentityRegistered(
+        address indexed sender, address indexed _investorAddress, IIdentity indexed _identity, uint16 _country
+    );
 
     /// @notice Emitted when an existing identity registration is successfully removed for an investor's wallet address.
     /// @dev This event indicates that the link between a wallet address and its associated `IIdentity` contract has
