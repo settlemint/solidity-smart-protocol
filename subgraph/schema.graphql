@@ -6,6 +6,7 @@ type Account @entity(immutable: false) {
   id: Bytes!
   isContract: Boolean!
   identity: Identity
+  country: Int!
 }
 
 type Event @entity(immutable: true) {

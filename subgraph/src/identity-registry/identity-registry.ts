@@ -8,6 +8,7 @@ import {
   TopicSchemeRegistrySet,
   TrustedIssuersRegistrySet,
 } from "../../../generated/templates/IdentityRegistry/IdentityRegistry";
+import { fetchAccount } from "../account/fetch/account";
 import { fetchEvent } from "../event/fetch/event";
 import { fetchIdentity } from "../identity/fetch/identity";
 import { fetchTrustedIssuersRegistry } from "../system/fetch/trusted-issuers-registry";
@@ -17,6 +18,9 @@ import { fetchIdentityRegistryStorage } from "./fetch/identity-registry-storage"
 
 export function handleCountryUpdated(event: CountryUpdated): void {
   fetchEvent(event, "CountryUpdated");
+  const account = fetchAccount(event.params._investorAddress);
+  account.country = event.params._country;
+  account.save();
 }
 
 export function handleIdentityRegistered(event: IdentityRegistered): void {
