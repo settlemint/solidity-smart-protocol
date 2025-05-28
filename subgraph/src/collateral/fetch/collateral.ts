@@ -11,7 +11,7 @@ export function fetchCollateral(address: Address): TokenCollateral {
     collateral.issuer = Address.zero();
     const token = fetchToken(address);
     setBigNumber(collateral, "amount", BigInt.zero(), token.decimals);
-    collateral.expiryTimestamp = BigInt.fromI32(0);
+    collateral.expiryTimestamp = BigInt.zero();
     collateral.save();
   }
 
