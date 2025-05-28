@@ -23,9 +23,9 @@ interface ISMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage {
     event IdentityModified(IIdentity indexed _oldIdentity, IIdentity indexed _newIdentity);
 
     /// @dev This event is emitted when an Identity's country has been updated.
-    /// @param _investorAddress is the address on which the country has been updated.
+    /// @param _identityWallet is the address on which the country has been updated.
     /// @param _country is the numeric code (ISO 3166-1) of the new country.
-    event CountryModified(address indexed _investorAddress, uint16 indexed _country);
+    event CountryModified(address indexed _identityWallet, uint16 _country);
 
     /// @dev This event is emitted when an Identity Registry is bound to the storage contract.
     /// @param _identityRegistry is the address of the identity registry added.

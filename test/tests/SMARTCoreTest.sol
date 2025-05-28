@@ -9,8 +9,8 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplianceModule.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { ZeroAddressNotAllowed } from "../../contracts/extensions/common/CommonErrors.sol";
-import { CannotRecoverSelf, InsufficientTokenBalance } from "../../contracts/extensions/core/SMARTErrors.sol";
+import { ZeroAddressNotAllowed, CannotRecoverSelf } from "../../contracts/extensions/common/CommonErrors.sol";
+import { InsufficientTokenBalance } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
 import { SMARTToken } from "../examples/SMARTToken.sol";
 

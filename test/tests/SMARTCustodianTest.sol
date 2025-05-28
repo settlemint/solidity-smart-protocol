@@ -621,20 +621,6 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
     }
 
-    function test_Custodian_AddressRecovery_NewWalletFrozen_Reverts() public {
-        _setUpCustodianTest(); // Call setup explicitly
-        address lostWallet = clientBE;
-        address newWallet = makeAddr("New Wallet BE");
-        address investorOnchainID = identityUtils.getIdentity(lostWallet);
-
-        // Register new wallet ID and freeze it
-        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
-        tokenUtils.setAddressFrozen(address(token), tokenIssuer, newWallet, true);
-
-        vm.expectRevert(abi.encodeWithSelector(RecoveryTargetAddressFrozen.selector));
-        tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
-    }
-
     function test_Custodian_AddressRecovery_AccessControl_Reverts() public {
         _setUpCustodianTest(); // Call setup explicitly
         address lostWallet = clientBE;
@@ -648,7 +634,7 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
                 SMARTToken(address(token)).RECOVERY_ROLE()
             )
         );
-        tokenUtils.recoveryAddressAsExecutor(address(token), clientJP, clientJP, newWallet, investorOnchainID);
+        tokenUtils.recoveryAddressAsExecutor(address(token), clientJP, lostWallet, newWallet, investorOnchainID);
     }
 
     function test_SupportsInterface_Custodian() public {

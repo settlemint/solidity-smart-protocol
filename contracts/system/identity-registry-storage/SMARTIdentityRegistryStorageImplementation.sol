@@ -29,7 +29,7 @@ import { ISMARTIdentityRegistryStorage } from "./../../interface/ISMARTIdentityR
 /// @notice This contract is the core logic for storing and managing identity-related data for the SMART Protocol.
 /// It acts as a persistent data layer for `SMARTIdentityRegistry` contracts, which handle the business logic of
 /// identity registration and verification. This separation allows the storage logic to be upgraded independently.
-/// @dev This contract implements `IERC3643IdentityRegistryStorage`, a standard interface for storing data related to
+/// @dev This contract implements `ISMARTIdentityRegistryStorage`, a standard interface for storing data related to
 /// ERC-3643 compliant identity registries. This includes mapping user wallet addresses to their `IIdentity` contracts
 /// (which hold identity claims like KYC/AML status) and their country codes (for compliance purposes).
 /// It uses `AccessControlUpgradeable` to manage permissions:
@@ -649,7 +649,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @dev This function allows other contracts or off-chain tools to query if this contract implements specific
     /// interfaces.
     /// It checks if the `interfaceId` matches:
-    /// 1.  `type(IERC3643IdentityRegistryStorage).interfaceId`: This confirms that the contract adheres to the
+    /// 1.  `type(ISMARTIdentityRegistryStorage).interfaceId`: This confirms that the contract adheres to the
     ///     standard interface for ERC-3643 compliant identity registry storage.
     /// 2.  Any interfaces supported by its parent contracts (e.g., `AccessControlUpgradeable`,
     ///     `ERC165Upgradeable` itself) by calling `super.supportsInterface(interfaceId)`.
@@ -666,6 +666,6 @@ contract SMARTIdentityRegistryStorageImplementation is
             // extended.
         returns (bool)
     {
-        return interfaceId == type(IERC3643IdentityRegistryStorage).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(ISMARTIdentityRegistryStorage).interfaceId || super.supportsInterface(interfaceId);
     }
 }
