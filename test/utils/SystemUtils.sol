@@ -126,6 +126,10 @@ contract SystemUtils is Test {
         vm.stopPrank();
     }
 
+    function getTopicId(string memory topicName) public view returns (uint256) {
+        return topicSchemeRegistry.getTopicId(topicName);
+    }
+
     function createTokenAccessManager(address[] memory initialAdmins) external returns (ISMARTTokenAccessManager) {
         return ISMARTTokenAccessManager(address(new SMARTTokenAccessManagerProxy(address(system), initialAdmins)));
     }

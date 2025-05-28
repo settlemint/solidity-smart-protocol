@@ -95,7 +95,7 @@ interface ISMARTTopicSchemeRegistry is IERC165 {
     /// @notice Gets the topic ID for a given name
     /// @param name The name of the topic scheme
     /// @return topicId The unique identifier generated from the name
-    function getTopicIdByName(string calldata name) external pure returns (uint256 topicId);
+    function getTopicId(string calldata name) external pure returns (uint256 topicId);
 
     /// @notice Gets all registered topic IDs
     /// @return topicIds Array of all registered topic scheme identifiers

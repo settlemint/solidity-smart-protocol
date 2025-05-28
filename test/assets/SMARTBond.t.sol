@@ -7,7 +7,6 @@ import { ISMARTYield } from "../../contracts/extensions/yield/ISMARTYield.sol";
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMARTBond } from "../../contracts/assets/bond/ISMARTBond.sol";
 import { ISMARTBondFactory } from "../../contracts/assets/bond/ISMARTBondFactory.sol";
-import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";

@@ -89,12 +89,17 @@ contract SMARTTopicSchemeRegistryImplementation is
     /// @notice Initializes the SMARTTopicSchemeRegistryImplementation contract
     /// @dev Sets up access control and grants initial roles to the admin
     /// @param initialAdmin The address that will receive admin and registrar roles
-    function initialize(address initialAdmin) public initializer {
+    /// @param initialRegistrars The addresses that will receive registrar roles
+    function initialize(address initialAdmin, address[] memory initialRegistrars) public initializer {
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
-        _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
+
+        uint256 initialRegistrarsLength = initialRegistrars.length;
+        for (uint256 i = 0; i < initialRegistrarsLength; ++i) {
+            _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialRegistrars[i]);
+        }
     }
 
     // --- Topic Scheme Management Functions ---
@@ -267,7 +272,7 @@ contract SMARTTopicSchemeRegistryImplementation is
     }
 
     /// @inheritdoc ISMARTTopicSchemeRegistry
-    function getTopicIdByName(string calldata name) external pure override returns (uint256 topicId) {
+    function getTopicId(string calldata name) external pure override returns (uint256 topicId) {
         return uint256(keccak256(abi.encodePacked(name)));
     }
 

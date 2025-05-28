@@ -9,7 +9,7 @@ import { ClaimUtils } from "../utils/ClaimUtils.sol";
 import { IdentityUtils } from "../utils/IdentityUtils.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
-import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
+import { SMARTTopics } from "../../contracts/system/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
@@ -48,9 +48,7 @@ abstract contract AbstractSMARTAssetTest is Test {
             claimIssuerPrivateKey,
             systemUtils.identityRegistry(),
             systemUtils.identityFactory(),
-            SMARTTopics.CLAIM_TOPIC_COLLATERAL,
-            TestConstants.CLAIM_TOPIC_KYC,
-            TestConstants.CLAIM_TOPIC_AML
+            systemUtils.topicSchemeRegistry()
         );
         identityUtils = new IdentityUtils(
             platformAdmin,
@@ -61,16 +59,8 @@ abstract contract AbstractSMARTAssetTest is Test {
 
         // Initialize the claim issuer and topic schemes
         uint256[] memory claimTopics = new uint256[](2);
-        claimTopics[0] = TestConstants.CLAIM_TOPIC_KYC;
-        claimTopics[1] = SMARTTopics.CLAIM_TOPIC_COLLATERAL;
-
-        string[] memory claimSchemes = new string[](2);
-        claimSchemes[0] = "string claim";
-        claimSchemes[1] = "uint256 amount, uint256 expiryTimestamp";
-
-        vm.startPrank(platformAdmin);
-        systemUtils.topicSchemeRegistry().batchRegisterTopicSchemes(claimTopics, claimSchemes);
-        vm.stopPrank();
+        claimTopics[0] = systemUtils.getTopicId(SMARTTopics.TOPIC_KYC);
+        claimTopics[1] = systemUtils.getTopicId(SMARTTopics.TOPIC_COLLATERAL);
 
         // Use claimIssuer address directly, createIssuerIdentity handles creating the on-chain identity
         vm.label(claimIssuer, "Claim Issuer");
@@ -88,7 +78,7 @@ abstract contract AbstractSMARTAssetTest is Test {
         vm.label(_wallet, _label);
         address identity = identityUtils.createClientIdentity(_wallet, TestConstants.COUNTRY_CODE_BE);
         vm.label(identity, string.concat(_label, " Identity"));
-        claimUtils.issueInvestorClaim(_wallet, TestConstants.CLAIM_TOPIC_KYC, "Verified KYC by Issuer");
+        claimUtils.issueInvestorClaim(_wallet, SMARTTopics.TOPIC_KYC, "Verified KYC by Issuer");
     }
 
     function _setUpIdentities(string[] memory _labels, address[] memory _wallets) internal {
@@ -120,9 +110,7 @@ abstract contract AbstractSMARTAssetTest is Test {
             claimIssuerPrivateKey_,
             systemUtils.identityRegistry(),
             systemUtils.identityFactory(),
-            SMARTTopics.CLAIM_TOPIC_COLLATERAL,
-            TestConstants.CLAIM_TOPIC_KYC,
-            TestConstants.CLAIM_TOPIC_AML
+            systemUtils.topicSchemeRegistry()
         );
     }
 

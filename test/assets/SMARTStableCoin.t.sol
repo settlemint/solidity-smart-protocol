@@ -9,7 +9,6 @@ import { ISMARTStableCoinFactory } from "../../contracts/assets/stable-coin/ISMA
 import { SMARTStableCoinFactoryImplementation } from
     "../../contracts/assets/stable-coin/SMARTStableCoinFactoryImplementation.sol";
 import { SMARTStableCoinImplementation } from "../../contracts/assets/stable-coin/SMARTStableCoinImplementation.sol";
-import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";

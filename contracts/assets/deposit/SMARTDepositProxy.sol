@@ -20,6 +20,7 @@ contract SMARTDepositProxy is SMARTAssetProxy {
     /// @param name_ The name of the deposit.
     /// @param symbol_ The symbol of the deposit.
     /// @param decimals_ The number of decimals of the deposit.
+    /// @param collateralTopicId_ The topic ID of the collateral claim.
     /// @param requiredClaimTopics_ The required claim topics of the deposit.
     /// @param initialModulePairs_ The initial module pairs of the deposit.
     /// @param identityRegistry_ The identity registry of the deposit.
@@ -30,6 +31,7 @@ contract SMARTDepositProxy is SMARTAssetProxy {
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
+        uint256 collateralTopicId_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -46,6 +48,7 @@ contract SMARTDepositProxy is SMARTAssetProxy {
             name_,
             symbol_,
             decimals_,
+            collateralTopicId_,
             requiredClaimTopics_,
             initialModulePairs_,
             identityRegistry_,

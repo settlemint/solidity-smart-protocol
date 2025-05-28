@@ -12,7 +12,6 @@ import { SMARTFundFactoryImplementation } from "../../contracts/assets/fund/SMAR
 import { SMARTFundImplementation } from "../../contracts/assets/fund/SMARTFundImplementation.sol";
 
 import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
-import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
