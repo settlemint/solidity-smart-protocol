@@ -19,11 +19,11 @@
 	},
 	"linter": {
 		"enabled": true,
+		"ignore": ["subgraph"],
 		"rules": {
 			"recommended": true,
 			"style": {
-				"noNonNullAssertion": "off",
-				"useImportType": "off"
+				"noNonNullAssertion": "off"
 			},
 			"suspicious": {
 				"noExplicitAny": "off",

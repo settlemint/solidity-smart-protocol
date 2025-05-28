@@ -1,6 +1,6 @@
 import hre from "hardhat";
-import { Chain, Transport, WalletClient } from "viem";
-import { Account } from "viem/accounts";
+import type { Chain, Transport, WalletClient } from "viem";
+import type { Account } from "viem/accounts";
 import { Countries } from "../constants/countries";
 import { AbstractActor } from "./abstract-actor";
 

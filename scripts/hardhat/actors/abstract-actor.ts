@@ -1,15 +1,15 @@
 import {
-	Abi,
-	Address,
-	Chain,
-	GetContractReturnType,
-	PublicClient,
-	Transport,
-	WalletClient,
+	type Abi,
+	type Address,
+	type Chain,
+	type GetContractReturnType,
+	type PublicClient,
+	type Transport,
+	type WalletClient,
 	formatEther,
 	getContract as getViemContract,
 } from "viem";
-import { Account } from "viem/accounts";
+import type { Account } from "viem/accounts";
 import { smartProtocolDeployer } from "../services/deployer";
 import { getPublicClient } from "../utils/public-client";
 import { waitForEvent } from "../utils/wait-for-event";

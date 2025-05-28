@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import {
-	Chain,
-	Transport,
+	type Chain,
+	type Transport,
 	type WalletClient,
 	createWalletClient,
 	custom,
