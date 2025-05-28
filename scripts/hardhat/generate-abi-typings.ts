@@ -2,8 +2,8 @@ import { mkdir } from "node:fs/promises";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-const BASE_PATH = join(__dirname, "..", "..", "artifacts", "contracts");
-const OUTPUT_PATH = join(__dirname, "abi");
+const BASE_PATH = join(process.cwd(), "artifacts", "contracts");
+const OUTPUT_PATH = join(process.cwd(), "scripts", "hardhat", "abi");
 
 export const ABI_PATHS = {
 	// onboarding
@@ -35,6 +35,7 @@ export const ABI_PATHS = {
 } as const;
 
 export async function generateAbiTypings() {
+	console.log("Generating abi typings...");
 	await mkdir(OUTPUT_PATH, { recursive: true });
 	for (const [abiName, value] of Object.entries(ABI_PATHS)) {
 		const abi = await readFile(value, "utf-8");
@@ -44,4 +45,6 @@ export async function generateAbiTypings() {
 			`export const ${abiName}Abi = ${JSON.stringify(parsed.abi, undefined, 2)} as const;`
 		);
 	}
+	console.log("Abi typings generated successfully");
 }
+generateAbiTypings();

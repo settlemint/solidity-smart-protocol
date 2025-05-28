@@ -12,12 +12,8 @@ import { createFund } from "./assets/fund";
 import { createStablecoin } from "./assets/stablecoin";
 import { SMARTTopics } from "./constants/topics";
 import { smartProtocolDeployer } from "./deployer";
-import { generateAbiTypings } from "./generate-abi-typings";
 
 async function main() {
-	// Generated type safe typings for the abi contracts
-	await generateAbiTypings();
-
 	// Setup the smart protocol
 	await smartProtocolDeployer.setUp({
 		displayUi: true,
