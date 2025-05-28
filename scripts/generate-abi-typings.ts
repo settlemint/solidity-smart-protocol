@@ -10,7 +10,7 @@ export const ABI_PATHS = {
 	system: `${BASE_PATH}/system/ISMARTSystem.sol/ISMARTSystem.json`,
 	compliance: `${BASE_PATH}/interface/ISMARTCompliance.sol/ISMARTCompliance.json`,
 	identityRegistry: `${BASE_PATH}/interface/ISMARTIdentityRegistry.sol/ISMARTIdentityRegistry.json`,
-	identityRegistryStorage: `${BASE_PATH}/interface/ERC-3643/IERC3643IdentityRegistryStorage.sol/IERC3643IdentityRegistryStorage.json`,
+	identityRegistryStorage: `${BASE_PATH}/interface/ISMARTIdentityRegistryStorage.sol/ISMARTIdentityRegistryStorage.json`,
 	trustedIssuersRegistry: `${BASE_PATH}/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol/IERC3643TrustedIssuersRegistry.json`,
 	topicSchemeRegistry: `${BASE_PATH}/system/topic-scheme-registry/SMARTTopicSchemeRegistryImplementation.sol/SMARTTopicSchemeRegistryImplementation.json`,
 	identityFactory: `${BASE_PATH}/system/identity-factory/ISMARTIdentityFactory.sol/ISMARTIdentityFactory.json`,

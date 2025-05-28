@@ -11,7 +11,7 @@ const SMARTOnboardingSystemModule = buildModule(
 			createSystem,
 			"SMARTSystemCreated",
 			"systemAddress",
-			{ id: "systemAddress" },
+			{ id: "systemAddress" }
 		);
 		const system = m.contractAt("SMARTSystem", systemAddress, {
 			id: "system",
@@ -23,7 +23,7 @@ const SMARTOnboardingSystemModule = buildModule(
 			bootstrap,
 			"Bootstrapped",
 			"complianceProxy",
-			{ id: "complianceAddress" },
+			{ id: "complianceAddress" }
 		);
 
 		const compliance = m.contractAt("ISMARTCompliance", complianceAddress, {
@@ -34,65 +34,65 @@ const SMARTOnboardingSystemModule = buildModule(
 			bootstrap,
 			"Bootstrapped",
 			"identityRegistryProxy",
-			{ id: "identityRegistryAddress" },
+			{ id: "identityRegistryAddress" }
 		);
 
 		const identityRegistry = m.contractAt(
 			"ISMARTIdentityRegistry",
 			identityRegistryAddress,
-			{ id: "identityRegistry" },
+			{ id: "identityRegistry" }
 		);
 
 		const identityRegistryStorageAddress = m.readEventArgument(
 			bootstrap,
 			"Bootstrapped",
 			"identityRegistryStorageProxy",
-			{ id: "identityRegistryStorageAddress" },
+			{ id: "identityRegistryStorageAddress" }
 		);
 
 		const identityRegistryStorage = m.contractAt(
-			"IERC3643IdentityRegistryStorage", // TODO this will change with next PR
+			"ISMARTIdentityRegistryStorage",
 			identityRegistryStorageAddress,
-			{ id: "identityRegistryStorage" },
+			{ id: "identityRegistryStorage" }
 		);
 
 		const trustedIssuersRegistryAddress = m.readEventArgument(
 			bootstrap,
 			"Bootstrapped",
 			"trustedIssuersRegistryProxy",
-			{ id: "trustedIssuersRegistryAddress" },
+			{ id: "trustedIssuersRegistryAddress" }
 		);
 
 		const trustedIssuersRegistry = m.contractAt(
 			"IERC3643TrustedIssuersRegistry",
 			trustedIssuersRegistryAddress,
-			{ id: "trustedIssuersRegistry" },
+			{ id: "trustedIssuersRegistry" }
 		);
 
 		const topicSchemeRegistryAddress = m.readEventArgument(
 			bootstrap,
 			"Bootstrapped",
 			"topicSchemeRegistryProxy",
-			{ id: "topicSchemeRegistryAddress" },
+			{ id: "topicSchemeRegistryAddress" }
 		);
 
 		const topicSchemeRegistry = m.contractAt(
 			"ISMARTTopicSchemeRegistry",
 			topicSchemeRegistryAddress,
-			{ id: "topicSchemeRegistry" },
+			{ id: "topicSchemeRegistry" }
 		);
 
 		const identityFactoryAddress = m.readEventArgument(
 			bootstrap,
 			"Bootstrapped",
 			"identityFactoryProxy",
-			{ id: "identityFactoryAddress" },
+			{ id: "identityFactoryAddress" }
 		);
 
 		const identityFactory = m.contractAt(
 			"ISMARTIdentityFactory",
 			identityFactoryAddress,
-			{ id: "identityFactory" },
+			{ id: "identityFactory" }
 		);
 		return {
 			system,
@@ -103,7 +103,7 @@ const SMARTOnboardingSystemModule = buildModule(
 			topicSchemeRegistry,
 			identityFactory,
 		};
-	},
+	}
 );
 
 export default SMARTOnboardingSystemModule;

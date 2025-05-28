@@ -7,8 +7,7 @@ import { SMARTIdentityRegistryStorageImplementation } from
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { IERC3643IdentityRegistryStorage } from
-    "../../../contracts/interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTIdentityRegistryStorage } from "../../../contracts/interface/ISMARTIdentityRegistryStorage.sol";
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { SystemUtils } from "../../utils/SystemUtils.sol";
 import { IdentityUtils } from "../../utils/IdentityUtils.sol";
@@ -315,7 +314,7 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
     }
 
     function test_SupportsInterface() public view {
-        assertTrue(storageContract.supportsInterface(type(IERC3643IdentityRegistryStorage).interfaceId));
+        assertTrue(storageContract.supportsInterface(type(ISMARTIdentityRegistryStorage).interfaceId));
         assertTrue(storageContract.supportsInterface(type(IAccessControl).interfaceId));
         assertTrue(storageContract.supportsInterface(type(IERC165).interfaceId));
         assertFalse(storageContract.supportsInterface(bytes4(0x12345678)));
