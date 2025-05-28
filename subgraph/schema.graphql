@@ -171,7 +171,7 @@ type IdentityClaim @entity(immutable: false) {
   id: Bytes!
   identity: Identity!
   name: String!
-  issuer: Account
+  issuer: Account!
   uri: String
   revoked: Boolean!
   values: [IdentityClaimValue!]! @derivedFrom(field: "claim")
