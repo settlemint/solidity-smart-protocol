@@ -430,7 +430,7 @@ contract SMARTToken is
         override
         onlyAccessManagerRole(RECOVERY_ROLE)
     {
-        _smart_recoverTokens(lostWallet, newWallet);
+        _smart_recoverTokens(newWallet, lostWallet);
     }
 
     // --- ISMARTPausable Implementation ---

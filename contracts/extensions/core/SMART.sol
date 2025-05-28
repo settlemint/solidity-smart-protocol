@@ -96,7 +96,7 @@ abstract contract SMART is SMARTExtension, _SMARTLogic, ERC165 {
     ///      Delegates to `_smart_recoverTokens` from `_SMARTLogic` for execution.
     /// @param lostWallet The address of the lost wallet containing tokens to recover.
     function recoverTokens(address lostWallet) external virtual override {
-        _smart_recoverTokens(lostWallet, _smartSender());
+        _smart_recoverTokens(_smartSender(), lostWallet);
     }
 
     // -- Internal Hook Implementations (Dependencies for _SMARTLogic) --

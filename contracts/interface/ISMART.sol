@@ -114,11 +114,11 @@ interface ISMART is IERC20, IERC20Metadata, IERC165 {
 
     /// @notice Emitted when tokens are recovered from a lost wallet to the caller's address.
     /// @param sender The address that initiated the recovery operation.
+    /// @param newWallet The address to which the tokens were recovered.
     /// @param lostWallet The address of the lost wallet containing tokens to recover.
-    /// @param recoveredWallet The address to which the tokens were recovered.
     /// @param amount The amount of tokens recovered.
     event TokensRecovered(
-        address indexed sender, address indexed lostWallet, address indexed recoveredWallet, uint256 amount
+        address indexed sender, address indexed newWallet, address indexed lostWallet, uint256 amount
     );
 
     /// @notice Emitted when mistakenly sent ERC20 tokens are recovered from the contract.

@@ -375,8 +375,7 @@ contract SMARTIdentityRegistryImplementation is
     function recoverIdentity(
         IIdentity identityContract,
         address newWallet,
-        address oldLostWallet,
-        uint16 newCountryCode
+        address oldLostWallet
     )
         external
         override
@@ -398,12 +397,15 @@ contract SMARTIdentityRegistryImplementation is
             revert WalletNotRegisteredToThisIdentity(oldLostWallet, address(identityContract));
         }
 
-        // 2. Check if oldLostWallet is already marked as lost
+        // 2. Retrieve the existing country code from the old wallet before any modifications
+        uint16 existingCountryCode = _identityStorage.storedInvestorCountry(oldLostWallet);
+
+        // 3. Check if oldLostWallet is already marked as lost
         if (_identityStorage.isWalletMarkedAsLost(oldLostWallet)) {
             revert WalletAlreadyMarkedAsLost(oldLostWallet);
         }
 
-        // 3. Verify newWallet is not already in use or marked as lost
+        // 4. Verify newWallet is not already in use or marked as lost
         bool newWalletIsCurrentlyRegistered = false;
         try _identityStorage.storedIdentity(newWallet) returns (IIdentity) {
             newWalletIsCurrentlyRegistered = true; // Found an active registration
@@ -417,17 +419,17 @@ contract SMARTIdentityRegistryImplementation is
             revert WalletAlreadyMarkedAsLost(newWallet);
         }
 
-        // 4. Mark oldLostWallet as lost in the storage layer
+        // 5. Mark oldLostWallet as lost in the storage layer
         _identityStorage.markWalletAsLost(address(identityContract), oldLostWallet);
 
-        // 5. Remove oldLostWallet's active registration from storage
+        // 6. Remove oldLostWallet's active registration from storage
         _identityStorage.removeIdentityFromStorage(oldLostWallet);
 
-        // 6. Register the newWallet with the original identityContract and newCountryCode
+        // 7. Register the newWallet with the original identityContract and preserved country code
         //    Internally, addIdentityToStorage should handle the emit for IdentityRegistered
-        _identityStorage.addIdentityToStorage(newWallet, identityContract, newCountryCode);
+        _identityStorage.addIdentityToStorage(newWallet, identityContract, existingCountryCode);
 
-        emit IdentityRecovered(identityContract, newWallet, oldLostWallet, _msgSender());
+        emit IdentityRecovered(_msgSender(), identityContract, newWallet, oldLostWallet);
     }
 
     // --- View Functions ---

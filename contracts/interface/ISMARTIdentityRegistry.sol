@@ -90,15 +90,12 @@ interface ISMARTIdentityRegistry is IERC165 {
 
     /// @notice Emitted when an identity is successfully recovered, associating it with a new wallet
     ///         and marking the old wallet as lost.
+    /// @param sender The address of the account (e.g., a registrar agent) that performed the recovery.
     /// @param identityContract The IIdentity contract whose associated wallet was recovered. (Indexed)
     /// @param newWallet The new active wallet address for the identity. (Indexed)
     /// @param oldLostWallet The previous wallet address that has now been marked as lost. (Indexed)
-    /// @param recoveredBy The address (typically a registrar) that performed the recovery operation. (Not Indexed)
     event IdentityRecovered(
-        IIdentity indexed identityContract,
-        address indexed newWallet,
-        address indexed oldLostWallet,
-        address recoveredBy
+        address indexed sender, IIdentity indexed identityContract, address indexed newWallet, address oldLostWallet
     );
 
     // --- Configuration Setters (Typically Owner/Admin Restricted) ---
@@ -212,17 +209,11 @@ interface ISMARTIdentityRegistry is IERC165 {
     /// @dev This function is typically restricted to registrar roles.
     ///      It ensures the old wallet was indeed linked to the given identity and is not already lost.
     ///      The new wallet must not be in use or marked as lost.
+    ///      The country code from the old wallet registration will be preserved for the new wallet.
     /// @param identityContract The IIdentity contract to be associated with the new wallet.
     /// @param newWallet The new wallet address to activate for the identity.
     /// @param oldLostWallet The current wallet address associated with the identity that will be marked as lost.
-    /// @param newCountryCode The country code to associate with the new wallet registration.
-    function recoverIdentity(
-        IIdentity identityContract,
-        address newWallet,
-        address oldLostWallet,
-        uint16 newCountryCode
-    )
-        external;
+    function recoverIdentity(IIdentity identityContract, address newWallet, address oldLostWallet) external;
 
     // --- Registry Consultation (View Functions) ---
 

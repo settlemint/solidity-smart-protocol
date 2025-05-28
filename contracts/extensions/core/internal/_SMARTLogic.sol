@@ -183,7 +183,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
     ///      It first checks if the lost wallet is a valid address and not the contract itself.
     ///      Then, it checks if the lost wallet has any tokens to recover.
     ///      It then checks if the new wallet is a valid address.
-    function _smart_recoverTokens(address lostWallet, address newWallet) internal {
+    function _smart_recoverTokens(address newWallet, address lostWallet) internal {
         if (lostWallet == address(0)) revert ZeroAddressNotAllowed();
         if (lostWallet == address(this)) revert CannotRecoverSelf();
 
@@ -201,7 +201,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
         __isForcedUpdate = false;
         _afterRecoverTokens(lostWallet, newWallet);
 
-        emit ISMART.TokensRecovered(_smartSender(), lostWallet, newWallet, balance);
+        emit ISMART.TokensRecovered(_smartSender(), newWallet, lostWallet, balance);
     }
 
     /// @notice Internal function to update the address of the compliance contract.
