@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ERC2771ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 
 import { ISMART } from "../../interface/ISMART.sol";
@@ -49,7 +50,6 @@ contract SMARTTokenSaleFactory is Initializable, AccessControlUpgradeable, ERC27
     /// @param implementation_ The address of the token sale implementation contract
     function initialize(address implementation_) external initializer {
         __AccessControl_init();
-        __ERC2771Context_init_unchained(_trustedForwarder());
 
         if (implementation_ == address(0)) revert("Invalid implementation");
 
@@ -149,6 +149,17 @@ contract SMARTTokenSaleFactory is Initializable, AccessControlUpgradeable, ERC27
     /// @return The address of the trusted forwarder
     function _trustedForwarder() internal view virtual returns (address) {
         return address(0); // Override in derived contract if needed
+    }
+
+    /// @dev Required override for ERC2771ContextUpgradeable
+    function _contextSuffixLength()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (uint256)
+    {
+        return ERC2771ContextUpgradeable._contextSuffixLength();
     }
 
     /// @dev Required override for ERC2771ContextUpgradeable
