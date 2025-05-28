@@ -11,7 +11,6 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 // Constants
-import { SMARTTopics } from "../SMARTTopics.sol";
 import { SMARTRoles } from "../SMARTRoles.sol";
 
 // Interface imports
@@ -56,6 +55,7 @@ contract SMARTStableCoinImplementation is
     /// @param name_ The name of the token.
     /// @param symbol_ The symbol of the token.
     /// @param decimals_ The number of decimals the token uses.
+    /// @param collateralTopicId_ The topic ID of the collateral claim.
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
     /// @param identityRegistry_ The address of the Identity Registry contract.
@@ -65,6 +65,7 @@ contract SMARTStableCoinImplementation is
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
+        uint256 collateralTopicId_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -89,7 +90,7 @@ contract SMARTStableCoinImplementation is
         __SMARTBurnable_init();
         __SMARTPausable_init();
         __SMARTTokenAccessManaged_init(accessManager_);
-        __SMARTCollateral_init(SMARTTopics.CLAIM_TOPIC_COLLATERAL);
+        __SMARTCollateral_init(collateralTopicId_);
     }
 
     // --- ISMART Implementation ---

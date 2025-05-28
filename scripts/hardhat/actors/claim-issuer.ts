@@ -4,6 +4,8 @@ import type { LocalAccount } from "viem/accounts"; // viem signer type
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 import { Countries } from "../constants/countries";
+import type { SMARTTopic } from "../constants/topics";
+import { topicManager } from "../services/topic-manager";
 import { createClaim } from "../utils/create-claim";
 import { getViemChain } from "../utils/viem-chain";
 import { AbstractActor } from "./abstract-actor";
@@ -61,13 +63,17 @@ class ClaimIssuer extends AbstractActor {
 	 */
 	async createClaim(
 		subjectIdentityAddress: `0x${string}`,
-		claimTopic: bigint,
+		claimTopic: SMARTTopic,
 		claimData: `0x${string}`,
-	): Promise<{ data: `0x${string}`; signature: `0x${string}` }> {
+	): Promise<{
+		data: `0x${string}`;
+		signature: `0x${string}`;
+		topicId: bigint;
+	}> {
 		return createClaim(
 			this.signer,
 			subjectIdentityAddress,
-			claimTopic,
+			topicManager.getTopicId(claimTopic),
 			claimData,
 		);
 	}

@@ -82,7 +82,8 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         address tokenImplementation_,
         address initialAdmin
     )
-        external
+        public
+        virtual
         override
         initializer
     {

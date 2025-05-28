@@ -21,8 +21,13 @@ contract SMARTTopicSchemeRegistryProxy is SMARTSystemProxy {
 
         address implementation = _getSpecificImplementationAddress(system_);
 
-        bytes memory data =
-            abi.encodeWithSelector(SMARTTopicSchemeRegistryImplementation.initialize.selector, initialAdmin);
+        address[] memory initialRegistrars = new address[](2);
+        initialRegistrars[0] = initialAdmin;
+        initialRegistrars[1] = systemAddress;
+
+        bytes memory data = abi.encodeWithSelector(
+            SMARTTopicSchemeRegistryImplementation.initialize.selector, initialAdmin, initialRegistrars
+        );
 
         _performInitializationDelegatecall(implementation, data);
     }

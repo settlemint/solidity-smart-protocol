@@ -30,6 +30,7 @@ import {
 
 // Constants
 import { SMARTSystemRoles } from "./SMARTSystemRoles.sol";
+import { SMARTTopics } from "./SMARTTopics.sol";
 
 // Interface imports
 import { ISMARTTokenFactory } from "./token-factory/ISMARTTokenFactory.sol";
@@ -349,6 +350,11 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         IERC3643IdentityRegistryStorage(localIdentityRegistryStorageProxy).bindIdentityRegistry(
             localIdentityRegistryProxy // Using the local variable, or _identityRegistryProxy which is now correctly
                 // set.
+        );
+
+        // Register the topic schemes.
+        ISMARTTopicSchemeRegistry(localTopicSchemeRegistryProxy).batchRegisterTopicSchemes(
+            SMARTTopics.names(), SMARTTopics.signatures()
         );
 
         // Emit an event to log that bootstrapping is complete and to provide the addresses of the deployed proxies.

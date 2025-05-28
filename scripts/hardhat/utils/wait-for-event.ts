@@ -1,25 +1,25 @@
 import {
-  type Abi,
-  type Address,
-  type ContractEventName,
-  type DecodeEventLogReturnType,
-  type Hex,
-  type PublicClient,
-  type TransactionReceipt,
-  type WalletClient,
-  decodeEventLog,
+	type Abi,
+	type Address,
+	type ContractEventName,
+	type DecodeEventLogReturnType,
+	type Hex,
+	type PublicClient,
+	type TransactionReceipt,
+	type WalletClient,
+	decodeEventLog,
 } from "viem";
-import type { ViemContract } from "../deployer";
+import type { ViemContract } from "../services/deployer";
 import { getPublicClient } from "./public-client";
 import { waitForSuccess } from "./wait-for-success";
 // Utility function to find specific event arguments from a transaction
 export async function waitForEvent<
-  const TAbi extends Abi,
-  TEventName extends ContractEventName<TAbi>
+	const TAbi extends Abi,
+	TEventName extends ContractEventName<TAbi>,
 >(params: {
-  contract: ViemContract<TAbi, { public: PublicClient; wallet: WalletClient }>;
-  transactionHash: Hex;
-  eventName: TEventName;
+	contract: ViemContract<TAbi, { public: PublicClient; wallet: WalletClient }>;
+	transactionHash: Hex;
+	eventName: TEventName;
 }): Promise<DecodeEventLogReturnType<TAbi, TEventName>["args"] | null> {
 	const { transactionHash, contract, eventName } = params;
 	const contractAddress = contract.address;

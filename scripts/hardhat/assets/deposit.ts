@@ -2,8 +2,10 @@ import type { Address, Hex } from "viem";
 import { investorA, investorB } from "../actors/investors";
 import { owner } from "../actors/owner";
 import { SMARTRoles } from "../constants/roles";
-import { SMARTTopics } from "../constants/topics";
-import { smartProtocolDeployer } from "../deployer";
+
+import { SMARTTopic } from "../constants/topics";
+import { smartProtocolDeployer } from "../services/deployer";
+import { topicManager } from "../services/topic-manager";
 import { waitForEvent } from "../utils/wait-for-event";
 import { burn } from "./actions/burn";
 import { grantRole } from "./actions/grant-role";
@@ -20,7 +22,10 @@ export const createDeposit = async () => {
 		"Euro Deposits",
 		"EURD",
 		6,
-		[SMARTTopics.kyc, SMARTTopics.aml],
+		[
+			topicManager.getTopicId(SMARTTopic.kyc),
+			topicManager.getTopicId(SMARTTopic.aml),
+		],
 		[], // TODO: fill in with the setup for ATK
 	]);
 

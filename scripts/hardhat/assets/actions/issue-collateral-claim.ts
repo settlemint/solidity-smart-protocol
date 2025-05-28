@@ -2,7 +2,9 @@ import type { Address } from "viem";
 import { claimIssuer } from "../../actors/claim-issuer";
 import { owner } from "../../actors/owner";
 import { SMARTContracts } from "../../constants/contracts";
-import { SMARTTopics } from "../../constants/topics";
+
+import { SMARTTopic } from "../../constants/topics";
+import { topicManager } from "../../services/topic-manager";
 import { encodeClaimData } from "../../utils/claim-scheme-utils";
 import { formatDecimals } from "../../utils/format-decimals";
 import { toDecimals } from "../../utils/to-decimals";
@@ -32,19 +34,22 @@ export const issueCollateralClaim = async (
 
 	// 1. Encode the collateral claim data (amount, expiryTimestamp)
 	// Corresponds to abi.encode(amount, expiryTimestamp) in Solidity
-	const encodedCollateralData = encodeClaimData(SMARTTopics.collateral, [
+	const encodedCollateralData = encodeClaimData(SMARTTopic.collateral, [
 		tokenAmount,
 		expiryTimestampBigInt,
 	]);
 
 	// 2. Create the claim using the claimIssuer's identity/key
 	// The claimIssuer signs that this data is valid for the given topic and token identity
-	const { data: collateralClaimData, signature: collateralClaimSignature } =
-		await claimIssuer.createClaim(
-			tokenIdentityAddress,
-			SMARTTopics.collateral,
-			encodedCollateralData,
-		);
+	const {
+		data: collateralClaimData,
+		signature: collateralClaimSignature,
+		topicId,
+	} = await claimIssuer.createClaim(
+		tokenIdentityAddress,
+		SMARTTopic.collateral,
+		encodedCollateralData,
+	);
 
 	// 3. Get an instance of the token's identity contract, interacted with by the 'owner' (assumed token owner)
 	const tokenIdentityContract = owner.getContractInstance({
@@ -58,7 +63,7 @@ export const issueCollateralClaim = async (
 	// 5. The token owner adds the claim (signed by the claimIssuer) to the token's identity contract
 	// Corresponds to clientIdentity.addClaim(...) in Solidity, called by the token owner
 	const transactionHash = await tokenIdentityContract.write.addClaim([
-		SMARTTopics.collateral,
+		topicId,
 		1,
 		claimIssuerIdentityAddress,
 		collateralClaimSignature,

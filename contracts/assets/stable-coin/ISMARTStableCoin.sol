@@ -25,6 +25,7 @@ interface ISMARTStableCoin is
     /// @param name_ The name of the stable coin.
     /// @param symbol_ The symbol of the stable coin.
     /// @param decimals_ The number of decimals for the stable coin.
+    /// @param collateralTopicId_ The topic ID of the collateral claim.
     /// @param requiredClaimTopics_ An array of claim topics required for interacting with the stable coin.
     /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
     /// @param identityRegistry_ The address of the identity registry contract.
@@ -34,6 +35,7 @@ interface ISMARTStableCoin is
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
+        uint256 collateralTopicId_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,

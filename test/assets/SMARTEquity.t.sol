@@ -7,7 +7,6 @@ import { ISMARTEquityFactory } from "../../contracts/assets/equity/ISMARTEquityF
 import { SMARTEquityFactoryImplementation } from "../../contracts/assets/equity/SMARTEquityFactoryImplementation.sol";
 import { ISMARTEquity } from "../../contracts/assets/equity/ISMARTEquity.sol";
 import { SMARTEquityImplementation } from "../../contracts/assets/equity/SMARTEquityImplementation.sol";
-import { SMARTTopics } from "../../contracts/assets/SMARTTopics.sol";
 import { SMARTRoles } from "../../contracts/assets/SMARTRoles.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 import { InvalidDecimals } from "../../contracts/extensions/core/SMARTErrors.sol";

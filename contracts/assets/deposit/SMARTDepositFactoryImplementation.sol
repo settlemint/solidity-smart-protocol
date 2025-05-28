@@ -11,6 +11,12 @@ import { ISMARTDeposit } from "./ISMARTDeposit.sol";
 import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
 import { ISMARTDepositFactory } from "./ISMARTDepositFactory.sol";
+import { ISMARTTokenFactory } from "../../system/token-factory/ISMARTTokenFactory.sol";
+import { ISMARTSystem } from "../../system/ISMARTSystem.sol";
+import { ISMARTTopicSchemeRegistry } from "../../system/topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
+
+// Constants
+import { SMARTTopics } from "../../system/SMARTTopics.sol";
 
 // Local imports
 import { SMARTDepositProxy } from "./SMARTDepositProxy.sol";
@@ -18,9 +24,33 @@ import { SMARTDepositProxy } from "./SMARTDepositProxy.sol";
 /// @title Implementation of the SMART Deposit Factory
 /// @notice This contract is responsible for creating instances of SMART Deposit tokens.
 contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMARTTokenFactoryImplementation {
+    /// @notice The collateral claim topic ID.
+    uint256 internal _collateralClaimTopicId;
+
     /// @notice Constructor for the SMARTDepositFactoryImplementation.
     /// @param forwarder The address of the trusted forwarder for meta-transactions.
     constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
+
+    /// @inheritdoc ISMARTTokenFactory
+    /// @param systemAddress The address of the `ISMARTSystem` contract.
+    /// @param tokenImplementation_ The initial address of the token implementation contract.
+    /// @param initialAdmin The address to be granted the DEFAULT_ADMIN_ROLE and TOKEN_DEPLOYER_ROLE.
+    function initialize(
+        address systemAddress,
+        address tokenImplementation_,
+        address initialAdmin
+    )
+        public
+        override(AbstractSMARTTokenFactoryImplementation, ISMARTTokenFactory)
+        initializer
+    {
+        super.initialize(systemAddress, tokenImplementation_, initialAdmin);
+
+        ISMARTTopicSchemeRegistry topicSchemeRegistry =
+            ISMARTTopicSchemeRegistry(ISMARTSystem(_systemAddress).topicSchemeRegistryProxy());
+
+        _collateralClaimTopicId = topicSchemeRegistry.getTopicId(SMARTTopics.TOPIC_COLLATERAL);
+    }
 
     /// @notice Creates a new SMART Deposit token.
     /// @param name_ The name of the deposit token.
@@ -51,6 +81,7 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
             name_,
             symbol_,
             decimals_,
+            _collateralClaimTopicId,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),

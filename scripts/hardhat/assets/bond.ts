@@ -1,12 +1,13 @@
 import type { Address, Hex } from "viem";
 
 import { owner } from "../actors/owner";
-import { smartProtocolDeployer } from "../deployer";
+import { smartProtocolDeployer } from "../services/deployer";
 import { waitForEvent } from "../utils/wait-for-event";
 
 import { investorA, investorB } from "../actors/investors";
 import { SMARTRoles } from "../constants/roles";
-import { SMARTTopics } from "../constants/topics";
+import { SMARTTopic } from "../constants/topics";
+import { topicManager } from "../services/topic-manager";
 import { burn } from "./actions/burn";
 import { grantRole } from "./actions/grant-role";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
@@ -25,7 +26,10 @@ export const createBond = async (depositToken: Address) => {
 		Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60, // 1 year
 		123,
 		depositToken,
-		[SMARTTopics.kyc, SMARTTopics.aml],
+		[
+			topicManager.getTopicId(SMARTTopic.kyc),
+			topicManager.getTopicId(SMARTTopic.aml),
+		],
 		[], // TODO: fill in with the setup for ATK
 	]);
 

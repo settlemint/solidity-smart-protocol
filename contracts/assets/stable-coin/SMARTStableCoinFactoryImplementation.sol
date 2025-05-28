@@ -10,7 +10,13 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { ISMARTStableCoin } from "./ISMARTStableCoin.sol";
 import { ISMARTStableCoinFactory } from "./ISMARTStableCoinFactory.sol";
 import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMARTTokenAccessManager.sol";
+import { ISMARTTokenFactory } from "../../system/token-factory/ISMARTTokenFactory.sol";
+import { ISMARTSystem } from "../../system/ISMARTSystem.sol";
+import { ISMARTTopicSchemeRegistry } from "../../system/topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
 import { SMARTComplianceModuleParamPair } from "../../interface/structs/SMARTComplianceModuleParamPair.sol";
+
+// Constants
+import { SMARTTopics } from "../../system/SMARTTopics.sol";
 
 // Local imports
 import { SMARTStableCoinProxy } from "./SMARTStableCoinProxy.sol";
@@ -18,9 +24,33 @@ import { SMARTStableCoinProxy } from "./SMARTStableCoinProxy.sol";
 /// @title Implementation of the SMART Stable Coin Factory
 /// @notice This contract is responsible for creating instances of SMART Stable Coins.
 contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, AbstractSMARTTokenFactoryImplementation {
+    /// @notice The collateral claim topic ID.
+    uint256 internal _collateralClaimTopicId;
+
     /// @notice Constructor for the SMARTStableCoinFactoryImplementation.
     /// @param forwarder The address of the trusted forwarder for meta-transactions.
     constructor(address forwarder) AbstractSMARTTokenFactoryImplementation(forwarder) { }
+
+    /// @inheritdoc ISMARTTokenFactory
+    /// @param systemAddress The address of the `ISMARTSystem` contract.
+    /// @param tokenImplementation_ The initial address of the token implementation contract.
+    /// @param initialAdmin The address to be granted the DEFAULT_ADMIN_ROLE and TOKEN_DEPLOYER_ROLE.
+    function initialize(
+        address systemAddress,
+        address tokenImplementation_,
+        address initialAdmin
+    )
+        public
+        override(AbstractSMARTTokenFactoryImplementation, ISMARTTokenFactory)
+        initializer
+    {
+        super.initialize(systemAddress, tokenImplementation_, initialAdmin);
+
+        ISMARTTopicSchemeRegistry topicSchemeRegistry =
+            ISMARTTopicSchemeRegistry(ISMARTSystem(_systemAddress).topicSchemeRegistryProxy());
+
+        _collateralClaimTopicId = topicSchemeRegistry.getTopicId(SMARTTopics.TOPIC_COLLATERAL);
+    }
 
     /// @notice Creates a new SMART Stable Coin.
     /// @param name_ The name of the stable coin.
@@ -49,6 +79,7 @@ contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, Abstra
             name_,
             symbol_,
             decimals_,
+            _collateralClaimTopicId,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),
