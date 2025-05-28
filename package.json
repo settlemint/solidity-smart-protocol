@@ -19,7 +19,6 @@
 		"email": "support@settlemint.com"
 	},
 	"keywords": ["solidity", "subgraph", "blockchain-transformation"],
-	"type": "module",
 	"files": [
 		"/contracts",
 		"/ignition",
@@ -36,11 +35,12 @@
 		"deploy:remote": "settlemint scs hardhat deploy remote --deployment-id smart-protocol",
 		"deploy:local": "settlemint scs hardhat deploy local --deployment-id smart-protocol-local --reset",
 		"deploy:local:onboarding": "settlemint scs hardhat deploy local --deployment-id smart-protocol-local --reset -m ignition/modules/onboarding.ts",
-		"deploy:local:test": "node --experimental-strip-types scripts/hardhat/generate-abi-typings.ts && rm -Rf ignition/deployments/smart-protocol-local && settlemint scs hardhat script local --script scripts/hardhat/main.ts",
+		"deploy:local:test": "npm run abi-typings && rm -Rf ignition/deployments/smart-protocol-local && settlemint scs hardhat script local --script scripts/hardhat/main.ts",
 		"lint": "solhint --config .solhint.json ./contracts/**/*.sol",
 		"format": "settlemint scs foundry format && prettier --write .",
 		"compile:forge": "settlemint scs foundry build --sizes && ./scripts/interfaceid.sh",
 		"compile:hardhat": "settlemint scs hardhat build",
+		"abi-typings": "node --experimental-strip-types scripts/hardhat/generate-abi-typings.ts",
 		"test": "forge test -vvv",
 		"coverage": "forge coverage --ir-minimum",
 		"subgraph:codegen": "settlemint scs subgraph codegen",
