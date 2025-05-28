@@ -7,6 +7,7 @@ export function fetchIdentity(address: Address): Identity {
 
   if (!identity) {
     identity = new Identity(address);
+    identity.registry = Address.zero();
     identity.save();
     IdentityTemplate.create(address);
   }

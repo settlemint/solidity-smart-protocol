@@ -1,0 +1,75 @@
+import { Address } from "@graphprotocol/graph-ts";
+import {
+  CountryUpdated,
+  IdentityRegistered,
+  IdentityRemoved,
+  IdentityStorageSet,
+  IdentityUpdated,
+  TopicSchemeRegistrySet,
+  TrustedIssuersRegistrySet,
+} from "../../../generated/templates/IdentityRegistry/IdentityRegistry";
+import { fetchEvent } from "../event/fetch/event";
+import { fetchIdentity } from "../identity/fetch/identity";
+import { fetchTrustedIssuersRegistry } from "../system/fetch/trusted-issuers-registry";
+import { fetchTopicSchemeRegistry } from "../topic-scheme-registry/fetch/topic-scheme-registry";
+import { fetchIdentityRegistry } from "./fetch/identity-registry";
+
+export function handleCountryUpdated(event: CountryUpdated): void {
+  fetchEvent(event, "CountryUpdated");
+}
+
+export function handleIdentityRegistered(event: IdentityRegistered): void {
+  fetchEvent(event, "IdentityRegistered");
+  const identityRegistry = fetchIdentityRegistry(event.address);
+  const identity = fetchIdentity(event.params._identity);
+  identity.registry = identityRegistry.id;
+  identity.save();
+}
+
+export function handleIdentityRemoved(event: IdentityRemoved): void {
+  fetchEvent(event, "IdentityRemoved");
+  const identity = fetchIdentity(event.params._identity);
+  identity.registry = Address.zero();
+  identity.save();
+}
+
+export function handleIdentityStorageSet(event: IdentityStorageSet): void {
+  fetchEvent(event, "IdentityStorageSet");
+}
+
+export function handleIdentityUpdated(event: IdentityUpdated): void {
+  fetchEvent(event, "IdentityUpdated");
+  const identityRegistry = fetchIdentityRegistry(event.address);
+  // Reset old identity's registry if it exists
+  if (event.params._oldIdentity) {
+    const oldIdentity = fetchIdentity(event.params._oldIdentity);
+    oldIdentity.registry = Address.zero();
+    oldIdentity.save();
+  }
+
+  const identity = fetchIdentity(event.params._newIdentity);
+  identity.registry = identityRegistry.id;
+  identity.save();
+}
+
+export function handleTopicSchemeRegistrySet(
+  event: TopicSchemeRegistrySet
+): void {
+  fetchEvent(event, "TopicSchemeRegistrySet");
+  const identityRegistry = fetchIdentityRegistry(event.address);
+  identityRegistry.topicSchemeRegistry = fetchTopicSchemeRegistry(
+    event.params._topicSchemeRegistry
+  ).id;
+  identityRegistry.save();
+}
+
+export function handleTrustedIssuersRegistrySet(
+  event: TrustedIssuersRegistrySet
+): void {
+  fetchEvent(event, "TrustedIssuersRegistrySet");
+  const identityRegistry = fetchIdentityRegistry(event.address);
+  identityRegistry.trustedIssuersRegistry = fetchTrustedIssuersRegistry(
+    event.params._trustedIssuersRegistry
+  ).id;
+  identityRegistry.save();
+}

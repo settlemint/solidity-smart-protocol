@@ -81,6 +81,9 @@ type IdentityRegistry @entity(immutable: false) {
   id: Bytes!
   accessControl: AccessControl!
   account: Account!
+  identities: [Identity!]! @derivedFrom(field: "registry")
+  trustedIssuersRegistry: TrustedIssuersRegistry
+  topicSchemeRegistry: TopicSchemeRegistry
 }
 
 type TrustedIssuersRegistry @entity(immutable: false) {
@@ -133,8 +136,9 @@ type TokenPausable @entity(immutable: false) {
   paused: Boolean!
 }
 
-type Identity @entity(immutable: true) {
+type Identity @entity(immutable: false) {
   id: Bytes!
+  registry: IdentityRegistry
   claims: [IdentityClaim!]! @derivedFrom(field: "identity")
 }
 
