@@ -6,6 +6,10 @@ import { fetchIdentityClaimValue } from "../fetch/identity-claim-value";
 
 export function decodeClaimValues(claim: IdentityClaim, topicId: BigInt, data: Bytes): void {
   const topicScheme = fetchTopicScheme(topicId);
+  
+  // Set the claim name from the topic scheme
+  claim.name = topicScheme.name;
+  claim.save();
 
   // Parse the signature to extract parameter names and types
   const signatureWithNames = topicScheme.signature;

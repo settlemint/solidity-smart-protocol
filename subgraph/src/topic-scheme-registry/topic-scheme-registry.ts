@@ -12,6 +12,7 @@ export function handleTopicSchemeRegistered(
 ): void {
   fetchEvent(event, "TopicSchemeRegistered");
   const topicScheme = fetchTopicScheme(event.params.topicId);
+  topicScheme.name = event.params.name;
   topicScheme.signature = event.params.signature;
   topicScheme.save();
 }
@@ -26,6 +27,7 @@ export function handleTopicSchemeRemoved(event: TopicSchemeRemoved): void {
 export function handleTopicSchemeUpdated(event: TopicSchemeUpdated): void {
   fetchEvent(event, "TopicSchemeUpdated");
   const topicScheme = fetchTopicScheme(event.params.topicId);
+  topicScheme.name = event.params.name;
   topicScheme.signature = event.params.newSignature;
   topicScheme.save();
 }
@@ -34,4 +36,15 @@ export function handleTopicSchemesBatchRegistered(
   event: TopicSchemesBatchRegistered
 ): void {
   fetchEvent(event, "TopicSchemesBatchRegistered");
+  
+  const topicIds = event.params.topicIds;
+  const names = event.params.names;
+  const signatures = event.params.signatures;
+  
+  for (let i = 0; i < topicIds.length; i++) {
+    const topicScheme = fetchTopicScheme(topicIds[i]);
+    topicScheme.name = names[i];
+    topicScheme.signature = signatures[i];
+    topicScheme.save();
+  }
 }

@@ -11,6 +11,7 @@ export function fetchIdentityClaim(
   if (!identityClaim) {
     identityClaim = new IdentityClaim(id);
     identityClaim.identity = identity.id;
+    identityClaim.name = "";
     identityClaim.revoked = false;
     identityClaim.save();
   }

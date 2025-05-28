@@ -7,8 +7,8 @@ export function fetchTopicScheme(topicId: BigInt): TopicScheme {
 
   if (!topicScheme) {
     topicScheme = new TopicScheme(id);
-    topicScheme.topicId = topicId;
     topicScheme.registry = Address.zero();
+    topicScheme.name = "";
     topicScheme.signature = "";
     topicScheme.enabled = true;
     topicScheme.save();
