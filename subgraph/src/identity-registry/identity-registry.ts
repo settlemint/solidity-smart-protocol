@@ -40,6 +40,13 @@ export function handleIdentityStorageSet(event: IdentityStorageSet): void {
 export function handleIdentityUpdated(event: IdentityUpdated): void {
   fetchEvent(event, "IdentityUpdated");
   const identityRegistry = fetchIdentityRegistry(event.address);
+  // Reset old identity's registry if it exists
+  if (event.params._oldIdentity) {
+    const oldIdentity = fetchIdentity(event.params._oldIdentity);
+    oldIdentity.registry = Address.zero();
+    oldIdentity.save();
+  }
+
   const identity = fetchIdentity(event.params._newIdentity);
   identity.registry = identityRegistry.id;
   identity.save();
