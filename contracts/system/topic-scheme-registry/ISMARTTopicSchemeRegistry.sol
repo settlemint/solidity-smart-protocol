@@ -10,7 +10,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 interface ISMARTTopicSchemeRegistry is IERC165 {
     // --- Structs ---
     /// @notice Defines a topic scheme with its identifier and signature
-    /// @param topicId The unique identifier for this topic scheme
+    /// @param topicId The unique identifier for this topic scheme (generated from name)
     /// @param signature The signature string used for encoding/decoding claim data
     /// @param exists Flag indicating if this topic scheme is registered
     struct TopicScheme {
@@ -52,30 +52,25 @@ interface ISMARTTopicSchemeRegistry is IERC165 {
 
     // --- Functions ---
     /// @notice Registers a new topic scheme with its name and signature
-    /// @param topicId The unique identifier for the topic scheme
+    /// @dev topicId is generated as uint256(keccak256(abi.encodePacked(name)))
     /// @param name The human-readable name for the topic scheme
     /// @param signature The signature string used for encoding/decoding data
-    function registerTopicScheme(uint256 topicId, string calldata name, string calldata signature) external;
+    function registerTopicScheme(string calldata name, string calldata signature) external;
 
     /// @notice Registers multiple topic schemes in a single transaction
-    /// @param topicIds Array of unique identifiers for the topic schemes
+    /// @dev topicIds are generated from names using keccak256 hash
     /// @param names Array of human-readable names for the topic schemes
     /// @param signatures Array of signature strings used for encoding/decoding data
-    function batchRegisterTopicSchemes(
-        uint256[] calldata topicIds,
-        string[] calldata names,
-        string[] calldata signatures
-    )
-        external;
+    function batchRegisterTopicSchemes(string[] calldata names, string[] calldata signatures) external;
 
     /// @notice Updates an existing topic scheme's signature
-    /// @param topicId The unique identifier of the topic scheme to update
+    /// @param name The name of the topic scheme to update
     /// @param newSignature The new signature string
-    function updateTopicScheme(uint256 topicId, string calldata newSignature) external;
+    function updateTopicScheme(string calldata name, string calldata newSignature) external;
 
     /// @notice Removes a topic scheme from the registry
-    /// @param topicId The unique identifier of the topic scheme to remove
-    function removeTopicScheme(uint256 topicId) external;
+    /// @param name The name of the topic scheme to remove
+    function removeTopicScheme(string calldata name) external;
 
     /// @notice Checks if a topic scheme exists by ID
     /// @param topicId The unique identifier to check
@@ -99,8 +94,8 @@ interface ISMARTTopicSchemeRegistry is IERC165 {
 
     /// @notice Gets the topic ID for a given name
     /// @param name The name of the topic scheme
-    /// @return topicId The unique identifier of the topic scheme
-    function getTopicIdByName(string calldata name) external view returns (uint256 topicId);
+    /// @return topicId The unique identifier generated from the name
+    function getTopicIdByName(string calldata name) external pure returns (uint256 topicId);
 
     /// @notice Gets all registered topic IDs
     /// @return topicIds Array of all registered topic scheme identifiers
