@@ -11,7 +11,7 @@ import { SMARTBurnable } from "../../contracts/extensions/burnable/SMARTBurnable
 import { SMARTRedeemable } from "../../contracts/extensions/redeemable/SMARTRedeemable.sol";
 import { SMARTCustodian } from "../../contracts/extensions/custodian/SMARTCustodian.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { SMARTToken } from "../../contracts/SMARTToken.sol";
+import { SMARTToken } from "../examples/SMARTToken.sol";
 
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";

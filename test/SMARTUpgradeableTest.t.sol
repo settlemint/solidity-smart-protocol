@@ -10,7 +10,7 @@ import { SMARTCountryAllowListTest } from "./tests/SMARTCountryAllowListTest.sol
 import { SMARTCountryBlockListTest } from "./tests/SMARTCountryBlockListTest.sol";
 import { ISMART } from "../contracts/interface/ISMART.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { SMARTTokenUpgradeable } from "../contracts/SMARTTokenUpgradeable.sol";
+import { SMARTTokenUpgradeable } from "./examples/SMARTTokenUpgradeable.sol";
 import { TestConstants } from "./Constants.sol";
 // Contract for testing the UPGRADEABLE SMART token implementation
 

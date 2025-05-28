@@ -15,7 +15,7 @@ import { TokenUtils } from "../utils/TokenUtils.sol";
 import { SystemUtils } from "../utils/SystemUtils.sol";
 import { MockedComplianceModule } from "../utils/mocks/MockedComplianceModule.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { SMARTToken } from "../../contracts/SMARTToken.sol";
+import { SMARTToken } from "../examples/SMARTToken.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { SMARTSystemRoles } from "../../contracts/system/SMARTSystemRoles.sol";
 
@@ -102,6 +102,15 @@ abstract contract AbstractSMARTTest is Test {
         allowedCountries = new uint16[](2);
         allowedCountries[0] = TestConstants.COUNTRY_CODE_BE;
         allowedCountries[1] = TestConstants.COUNTRY_CODE_JP;
+
+        // Setup claim topics and schemes
+        string[] memory claimSchemes = new string[](2);
+        claimSchemes[0] = "string claim";
+        claimSchemes[1] = "string claim";
+
+        vm.startPrank(platformAdmin);
+        systemUtils.topicSchemeRegistry().batchRegisterTopicSchemes(requiredClaimTopics, claimSchemes);
+        vm.stopPrank();
 
         // --- Setup Identities AFTER requiredClaimTopics is initialized ---
         _setupIdentities();

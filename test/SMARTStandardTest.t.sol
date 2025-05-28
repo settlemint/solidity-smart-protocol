@@ -12,7 +12,7 @@ import { SMARTCollateralTest } from "./tests/SMARTCollateralTest.sol";
 import { SMARTCountryAllowListTest } from "./tests/SMARTCountryAllowListTest.sol";
 import { SMARTCountryBlockListTest } from "./tests/SMARTCountryBlockListTest.sol";
 import { ISMART } from "../contracts/interface/ISMART.sol";
-import { SMARTToken } from "../contracts/SMARTToken.sol";
+import { SMARTToken } from "./examples/SMARTToken.sol";
 import { TestConstants } from "./Constants.sol";
 // Rename contract to reflect its purpose
 

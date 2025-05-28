@@ -1,10 +1,17 @@
 import type { Address, Hex } from "viem";
-import { claimIssuer } from "../actors/claim-issuer";
+
 import { owner } from "../actors/owner";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
-import { grantClaimManagerRole } from "./actions/grant-claim-manager-role";
+
+import { investorA, investorB } from "../actors/investors";
+import { SMARTRoles } from "../constants/roles";
+import { SMARTTopics } from "../constants/topics";
+import { burn } from "./actions/burn";
+import { grantRole } from "./actions/grant-role";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
+import { mint } from "./actions/mint";
+import { transfer } from "./actions/transfer";
 
 export const createFund = async () => {
 	const fundFactory = smartProtocolDeployer.getFundFactoryContract();
@@ -17,7 +24,7 @@ export const createFund = async () => {
 		20,
 		"Class A",
 		"Category A",
-		[], // TODO: fill in with the setup for ATK
+		[SMARTTopics.kyc, SMARTTopics.aml],
 		[], // TODO: fill in with the setup for ATK
 	]);
 
@@ -38,9 +45,20 @@ export const createFund = async () => {
 		console.log("[Fund] access manager:", accessManager);
 
 		// needs to be done so that he can add the claims
-		await grantClaimManagerRole(accessManager, owner.address);
+		await grantRole(accessManager, owner.address, SMARTRoles.claimManagerRole);
 		// issue isin claim
-		await issueIsinClaim(tokenIdentity, "12345678901234567890");
+		await issueIsinClaim(tokenIdentity, "FR0000120271");
+
+		// needs supply management role to mint
+		await grantRole(
+			accessManager,
+			owner.address,
+			SMARTRoles.supplyManagementRole,
+		);
+
+		await mint(tokenAddress, investorA, 10n, 8);
+		await transfer(tokenAddress, investorA, investorB, 5n, 8);
+		await burn(tokenAddress, investorB, 2n, 8);
 
 		// TODO: execute all other functions of the fund
 

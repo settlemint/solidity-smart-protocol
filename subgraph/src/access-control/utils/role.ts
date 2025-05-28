@@ -56,17 +56,6 @@ export const Roles = [
   new RoleConfig("SUPPLY_MANAGEMENT_ROLE", "supplyManagement"),
   new RoleConfig("CUSTODIAN_ROLE", "custodian"),
   new RoleConfig("EMERGENCY_ROLE", "emergency"),
-  new RoleConfig("TOKEN_ADMIN_ROLE", "tokenAdmin"),
-  new RoleConfig("COMPLIANCE_ADMIN_ROLE", "complianceAdmin"),
-  new RoleConfig("VERIFICATION_ADMIN_ROLE", "verificationAdmin"),
-  new RoleConfig("MINTER_ROLE", "minter"),
-  new RoleConfig("BURNER_ROLE", "burner"),
-  new RoleConfig("FREEZER_ROLE", "freezer"),
-  new RoleConfig("FORCED_TRANSFER_ROLE", "forcedTransfer"),
-  new RoleConfig("RECOVERY_ROLE", "recovery"),
-  new RoleConfig("PAUSER_ROLE", "pauser"),
-  new RoleConfig("GLOBAL_LIST_MANAGER_ROLE", "globalListManager"),
-  new RoleConfig("OPERATOR_ROLE", "operator"),
 ];
 
 export function getRoleConfigFromBytes(bytes: Bytes): RoleConfig {

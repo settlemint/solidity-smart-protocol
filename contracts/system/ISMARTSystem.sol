@@ -32,6 +32,10 @@ interface ISMARTSystem {
     /// @param sender The address that called the `updateTrustedIssuersRegistryImplementation` function.
     /// @param newImplementation The address of the new trusted issuers registry module implementation contract.
     event TrustedIssuersRegistryImplementationUpdated(address indexed sender, address indexed newImplementation);
+    /// @notice Emitted when the implementation (logic contract) for the topic scheme registry module is updated.
+    /// @param sender The address that called the `updateTopicSchemeRegistryImplementation` function.
+    /// @param newImplementation The address of the new topic scheme registry module implementation contract.
+    event TopicSchemeRegistryImplementationUpdated(address indexed sender, address indexed newImplementation);
     /// @notice Emitted when the implementation (logic contract) for the identity factory module is updated.
     /// @param sender The address that called the `updateIdentityFactoryImplementation` function.
     /// @param newImplementation The address of the new identity factory module implementation contract.
@@ -58,6 +62,7 @@ interface ISMARTSystem {
     /// @param identityRegistryProxy The address of the deployed SMARTIdentityRegistryProxy contract.
     /// @param identityRegistryStorageProxy The address of the deployed SMARTIdentityRegistryStorageProxy contract.
     /// @param trustedIssuersRegistryProxy The address of the deployed SMARTTrustedIssuersRegistryProxy contract.
+    /// @param topicSchemeRegistryProxy The address of the deployed SMARTTopicSchemeRegistryProxy contract.
     /// @param identityFactoryProxy The address of the deployed SMARTIdentityFactoryProxy contract.
     event Bootstrapped(
         address indexed sender,
@@ -65,6 +70,7 @@ interface ISMARTSystem {
         address indexed identityRegistryProxy,
         address identityRegistryStorageProxy,
         address trustedIssuersRegistryProxy,
+        address topicSchemeRegistryProxy,
         address identityFactoryProxy
     );
 
@@ -168,6 +174,20 @@ interface ISMARTSystem {
         view
         returns (address trustedIssuersRegistryImplementationAddress);
 
+    /// @notice Retrieves the current, active smart contract address of the topic scheme registry module's logic.
+    /// @dev Topic scheme registries manage the registration and lifecycle of topic schemes used for claim data
+    /// structures.
+    /// They store mapping between topic IDs and their corresponding signatures for encoding/decoding claim data.
+    /// This function returns the specific address of the contract that holds the actual programming code (the "logic")
+    /// for managing topic schemes.
+    /// This address can change if the topic scheme registry's logic is upgraded.
+    /// @return topicSchemeRegistryImplementationAddress The blockchain address of the smart contract containing the
+    /// topic scheme registry logic.
+    function topicSchemeRegistryImplementation()
+        external
+        view
+        returns (address topicSchemeRegistryImplementationAddress);
+
     /// @notice Retrieves the current, active smart contract address of the standard identity contract's logic.
     /// @dev Standard identity contracts are the actual on-chain representations of individual users, organizations, or
     /// entities within the SMART Protocol. These contracts typically hold claims and attributes related to an identity.
@@ -253,4 +273,11 @@ interface ISMARTSystem {
     /// @param factoryTypeHash The hash of the factory type.
     /// @return The address of the token factory proxy contract.
     function tokenFactoryProxy(bytes32 factoryTypeHash) external view returns (address);
+
+    /// @notice Retrieves the smart contract address of the proxy for the topic scheme registry module.
+    /// @dev This function returns the stable, unchanging address of the topic scheme registry's proxy contract.
+    /// To interact with the topic scheme registry (e.g., to register topic schemes or retrieve topic signatures),
+    /// you should use this proxy address. It will forward calls to the current logic implementation.
+    /// @return topicSchemeRegistryProxyAddress The blockchain address of the topic scheme registry module's proxy.
+    function topicSchemeRegistryProxy() external view returns (address topicSchemeRegistryProxyAddress);
 }

@@ -6,7 +6,7 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ISMARTBurnable } from "../../contracts/extensions/burnable/ISMARTBurnable.sol";
-import { SMARTToken } from "../../contracts/SMARTToken.sol";
+import { SMARTToken } from "../examples/SMARTToken.sol";
 
 abstract contract SMARTBurnableTest is AbstractSMARTTest {
     function _setUpBurnableTest() internal /* override */ {

@@ -40,6 +40,12 @@ interface ISMARTSystemFactory {
     /// @return address The default trusted issuers registry implementation address.
     function defaultTrustedIssuersRegistryImplementation() external view returns (address);
 
+    /// @notice The default contract address for the topic scheme registry module's logic (implementation).
+    /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial topic scheme
+    /// registry implementation.
+    /// @return address The default topic scheme registry implementation address.
+    function defaultTopicSchemeRegistryImplementation() external view returns (address);
+
     /// @notice The default contract address for the identity factory module's logic (implementation).
     /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial identity factory
     /// implementation.

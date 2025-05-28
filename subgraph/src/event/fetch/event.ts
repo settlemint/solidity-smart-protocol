@@ -2,7 +2,7 @@ import { Bytes, ethereum, log } from "@graphprotocol/graph-ts";
 import { Event, EventValue } from "../../../../generated/schema";
 import { fetchAccount } from "../../account/fetch/account";
 
-function convertEthereumValue(value: ethereum.Value): string {
+export function convertEthereumValue(value: ethereum.Value): string {
   if (value.kind == ethereum.ValueKind.ADDRESS) {
     return value.toAddress().toHexString();
   } else if (value.kind == ethereum.ValueKind.BOOL) {

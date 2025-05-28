@@ -1,10 +1,18 @@
 import type { Address, Hex } from "viem";
-import { claimIssuer } from "../actors/claim-issuer";
+
 import { owner } from "../actors/owner";
 import { smartProtocolDeployer } from "../deployer";
 import { waitForEvent } from "../utils/wait-for-event";
-import { grantClaimManagerRole } from "./actions/grant-claim-manager-role";
+
+import { investorA, investorB } from "../actors/investors";
+import { SMARTRoles } from "../constants/roles";
+import { SMARTTopics } from "../constants/topics";
+import { burn } from "./actions/burn";
+import { grantRole } from "./actions/grant-role";
+import { issueCollateralClaim } from "./actions/issue-collateral-claim";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
+import { mint } from "./actions/mint";
+import { transfer } from "./actions/transfer";
 
 export const createStablecoin = async () => {
 	const stablecoinFactory =
@@ -15,7 +23,7 @@ export const createStablecoin = async () => {
 		"Tether",
 		"USDT",
 		6,
-		[], // TODO: fill in with the setup for ATK
+		[SMARTTopics.kyc, SMARTTopics.aml],
 		[], // TODO: fill in with the setup for ATK
 	]);
 
@@ -36,9 +44,29 @@ export const createStablecoin = async () => {
 		console.log("[Stablecoin] access manager:", accessManager);
 
 		// needs to be done so that he can add the claims
-		await grantClaimManagerRole(accessManager, owner.address);
+		await grantRole(accessManager, owner.address, SMARTRoles.claimManagerRole);
 		// issue isin claim
-		await issueIsinClaim(tokenIdentity, "12345678901234567890");
+		await issueIsinClaim(tokenIdentity, "JP3902900004");
+
+		// Update collateral
+		const now = new Date();
+		const oneYearFromNow = new Date(
+			now.getFullYear() + 1,
+			now.getMonth(),
+			now.getDate(),
+		);
+		await issueCollateralClaim(tokenIdentity, 1000n, 6, oneYearFromNow);
+
+		// needs supply management role to mint
+		await grantRole(
+			accessManager,
+			owner.address,
+			SMARTRoles.supplyManagementRole,
+		);
+
+		await mint(tokenAddress, investorA, 1000n, 6);
+		await transfer(tokenAddress, investorA, investorB, 500n, 6);
+		await burn(tokenAddress, investorB, 250n, 6);
 
 		// TODO: execute all other functions of the stablecoin
 

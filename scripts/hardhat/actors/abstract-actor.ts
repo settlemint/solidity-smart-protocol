@@ -5,11 +5,16 @@ import {
 	type Hex,
 	type PublicClient,
 	type WalletClient,
+	formatEther,
 	getContract as getViemContract,
 } from "viem";
 import { smartProtocolDeployer } from "../deployer";
 import { getPublicClient } from "../utils/public-client";
 import { waitForEvent } from "../utils/wait-for-event";
+
+// Chain to ensure identity creation operations are serialized across all actors
+// To avoid replacement transactions when in sync
+let identityCreationQueue: Promise<void> = Promise.resolve();
 
 /**
  * Abstract base class for actors interacting with the blockchain.
@@ -20,12 +25,14 @@ export abstract class AbstractActor {
 	protected initialized = false;
 
 	protected _address: Address | undefined;
+	protected _identityPromise: Promise<`0x${string}`> | undefined;
 	protected _identity: `0x${string}` | undefined;
 
-	protected readonly name: string;
-
-	constructor(name: string) {
+	public readonly name: string;
+	public readonly countryCode: number;
+	constructor(name: string, countryCode: number) {
 		this.name = name;
+		this.countryCode = countryCode;
 	}
 	/**
 	 * Abstract method to be implemented by subclasses.
@@ -68,37 +75,59 @@ export abstract class AbstractActor {
 	}
 
 	async getIdentity(): Promise<`0x${string}`> {
-		if (this._identity) {
-			return this._identity;
+		if (this._identityPromise) {
+			return this._identityPromise;
 		}
 
-		const identityFactory = smartProtocolDeployer.getIdentityFactoryContract();
-		const transactionHash: Hex = await identityFactory.write.createIdentity([
-			this.address,
-			[],
-		]);
+		this._identityPromise = new Promise((resolve, reject) => {
+			// Internal function to create the identity
+			const createIdentity = async (): Promise<`0x${string}`> => {
+				const identityFactory =
+					smartProtocolDeployer.getIdentityFactoryContract();
+				const transactionHash: Hex = await identityFactory.write.createIdentity(
+					[this.address, []],
+				);
 
-		const { identity } = (await waitForEvent({
-			transactionHash,
-			contract: identityFactory,
-			eventName: "IdentityCreated",
-		})) as unknown as { identity: `0x${string}` };
+				const { identity } = (await waitForEvent({
+					transactionHash,
+					contract: identityFactory,
+					eventName: "IdentityCreated",
+				})) as unknown as { identity: `0x${string}` };
 
-		this._identity = identity;
+				this._identity = identity;
+				console.log(`[${this.name}] identity: ${identity}`);
 
-		console.log(`[${this.name}] identity: ${identity}`);
+				return identity;
+			};
 
-		return identity;
+			// Chain this identity creation to the queue
+			identityCreationQueue = identityCreationQueue
+				.then(async () => {
+					try {
+						const identity = await createIdentity();
+						resolve(identity);
+					} catch (error) {
+						console.error(`[${this.name}] Failed to create identity:`, error);
+						reject(error);
+					}
+				})
+				.catch((error) => {
+					reject(error);
+				});
+		});
+
+		return this._identityPromise;
 	}
 
 	/**
 	 * Creates a Viem contract instance.
+	 * For zero gas, pass { gas: 0n } as the second argument to write calls.
+	 * Set useGasEstimation to true for standard gas estimation.
 	 *
 	 * @template TAbi - The ABI of the contract.
 	 * @param {Object} params - The parameters for creating the contract instance.
 	 * @param {Address} params.address - The address of the contract.
 	 * @param {TAbi} params.abi - The ABI of the contract.
-	 * @param {PublicClient} params.publicClient - The Viem PublicClient.
 	 * @returns {GetContractReturnType<TAbi, { public: PublicClient; wallet: WalletClient }>} The Viem contract instance.
 	 */
 	getContractInstance<TAbi extends Abi>({
@@ -111,10 +140,26 @@ export abstract class AbstractActor {
 		TAbi,
 		{ public: PublicClient; wallet: WalletClient }
 	> {
+		const walletClient = this.getWalletClient();
+
+		// Create and return the base contract instance
+		// Note: For zero gas, manually pass { gas: 0n } to write calls
 		return getViemContract({
 			address,
 			abi,
-			client: { public: getPublicClient(), wallet: this.getWalletClient() },
+			client: { public: getPublicClient(), wallet: walletClient },
 		});
+	}
+
+	async getBalance() {
+		const publicClient = getPublicClient();
+		return publicClient.getBalance({
+			address: this.address,
+		});
+	}
+
+	async printBalance() {
+		const ethBalance = await this.getBalance();
+		console.log(`[${this.name}] ETH Balance: ${formatEther(ethBalance)} ETH`);
 	}
 }

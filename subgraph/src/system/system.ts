@@ -8,14 +8,16 @@ import {
   TokenAccessManagerImplementationUpdated,
   TokenFactoryCreated,
   TokenIdentityImplementationUpdated,
+  TopicSchemeRegistryImplementationUpdated,
   TrustedIssuersRegistryImplementationUpdated,
 } from "../../../generated/templates/System/System";
 import { fetchEvent } from "../event/fetch/event";
+import { fetchIdentityFactory } from "../identity-factory/fetch/identity-factory";
+import { fetchIdentityRegistry } from "../identity-registry/fetch/identity-registry";
+import { fetchIdentityRegistryStorage } from "../identity-registry/fetch/identity-registry-storage";
 import { fetchTokenFactory } from "../token-factory/fetch/token-factory";
+import { fetchTopicSchemeRegistry } from "../topic-scheme-registry/fetch/topic-scheme-registry";
 import { fetchCompliance } from "./fetch/compliance";
-import { fetchIdentityFactory } from "./fetch/identity-factory";
-import { fetchIdentityRegistry } from "./fetch/identity-registry";
-import { fetchIdentityRegistryStorage } from "./fetch/identity-registry-storage";
 import { fetchSystem } from "./fetch/system";
 import { fetchTrustedIssuersRegistry } from "./fetch/trusted-issuers-registry";
 
@@ -34,6 +36,9 @@ export function handleBootstrapped(event: Bootstrapped): void {
   ).id;
   system.identityFactory = fetchIdentityFactory(
     event.params.identityFactoryProxy
+  ).id;
+  system.topicSchemeRegistry = fetchTopicSchemeRegistry(
+    event.params.topicSchemeRegistryProxy
   ).id;
   system.save();
 }
@@ -92,4 +97,10 @@ export function handleTrustedIssuersRegistryImplementationUpdated(
   event: TrustedIssuersRegistryImplementationUpdated
 ): void {
   fetchEvent(event, "TrustedIssuersRegistryImplementationUpdated");
+}
+
+export function handleTopicSchemeRegistryImplementationUpdated(
+  event: TopicSchemeRegistryImplementationUpdated
+): void {
+  fetchEvent(event, "TopicSchemeRegistryImplementationUpdated");
 }

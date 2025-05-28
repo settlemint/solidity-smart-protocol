@@ -12,7 +12,8 @@ import {
     IdentityImplementationNotSet,
     TokenIdentityImplementationNotSet,
     TokenAccessManagerImplementationNotSet,
-    IndexOutOfBounds
+    IndexOutOfBounds,
+    TopicSchemeRegistryImplementationNotSet
 } from "./SMARTSystemErrors.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
@@ -46,6 +47,10 @@ contract SMARTSystemFactory is ISMARTSystemFactory, ERC2771Context {
     /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial trusted issuers
     /// registry implementation.
     address public immutable defaultTrustedIssuersRegistryImplementation;
+    /// @notice The default contract address for the topic scheme registry module's logic (implementation).
+    /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial topic scheme
+    /// registry implementation.
+    address public immutable defaultTopicSchemeRegistryImplementation;
     /// @notice The default contract address for the identity factory module's logic (implementation).
     /// @dev This address will be passed to newly created `SMARTSystem` instances as the initial identity factory
     /// implementation.
@@ -86,15 +91,20 @@ contract SMARTSystemFactory is ISMARTSystemFactory, ERC2771Context {
     /// logic contract.
     /// @param trustedIssuersRegistryImplementation_ The default address for the trusted issuers registry module's logic
     /// contract.
+    /// @param topicSchemeRegistryImplementation_ The default address for the topic scheme registry module's logic
+    /// contract.
     /// @param identityFactoryImplementation_ The default address for the identity factory module's logic contract.
     /// @param identityImplementation_ The default address for the standard identity contract's logic (template).
     /// @param tokenIdentityImplementation_ The default address for the token identity contract's logic (template).
+    /// @param tokenAccessManagerImplementation_ The default address for the token access manager contract's logic
+    /// (template).
     /// @param forwarder_ The address of the trusted forwarder contract to be used for meta-transactions (ERC2771).
     constructor(
         address complianceImplementation_,
         address identityRegistryImplementation_,
         address identityRegistryStorageImplementation_,
         address trustedIssuersRegistryImplementation_,
+        address topicSchemeRegistryImplementation_,
         address identityFactoryImplementation_,
         address identityImplementation_,
         address tokenIdentityImplementation_,
@@ -112,6 +122,9 @@ contract SMARTSystemFactory is ISMARTSystemFactory, ERC2771Context {
         }
         if (trustedIssuersRegistryImplementation_ == address(0)) {
             revert TrustedIssuersRegistryImplementationNotSet();
+        }
+        if (topicSchemeRegistryImplementation_ == address(0)) {
+            revert TopicSchemeRegistryImplementationNotSet();
         }
         if (identityFactoryImplementation_ == address(0)) {
             revert IdentityFactoryImplementationNotSet();
@@ -132,6 +145,7 @@ contract SMARTSystemFactory is ISMARTSystemFactory, ERC2771Context {
         defaultIdentityRegistryImplementation = identityRegistryImplementation_;
         defaultIdentityRegistryStorageImplementation = identityRegistryStorageImplementation_;
         defaultTrustedIssuersRegistryImplementation = trustedIssuersRegistryImplementation_;
+        defaultTopicSchemeRegistryImplementation = topicSchemeRegistryImplementation_;
         defaultIdentityFactoryImplementation = identityFactoryImplementation_;
         defaultIdentityImplementation = identityImplementation_;
         defaultTokenIdentityImplementation = tokenIdentityImplementation_;
@@ -164,6 +178,7 @@ contract SMARTSystemFactory is ISMARTSystemFactory, ERC2771Context {
             defaultIdentityRegistryImplementation,
             defaultIdentityRegistryStorageImplementation,
             defaultTrustedIssuersRegistryImplementation,
+            defaultTopicSchemeRegistryImplementation,
             defaultIdentityFactoryImplementation,
             defaultIdentityImplementation,
             defaultTokenIdentityImplementation,

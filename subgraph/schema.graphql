@@ -2,9 +2,11 @@
 # SMART Indexer
 # --------------------------------------------------
 
-type Account @entity(immutable: true) {
+type Account @entity(immutable: false) {
   id: Bytes!
   isContract: Boolean!
+  identity: Identity
+  country: Int!
   balances: [TokenBalance!]! @derivedFrom(field: "account")
 }
 
@@ -45,17 +47,6 @@ type AccessControl @entity(immutable: false) {
   supplyManagement: [Account!]!
   custodian: [Account!]!
   emergency: [Account!]!
-  tokenAdmin: [Account!]!
-  complianceAdmin: [Account!]!
-  verificationAdmin: [Account!]!
-  minter: [Account!]!
-  burner: [Account!]!
-  freezer: [Account!]!
-  forcedTransfer: [Account!]!
-  recovery: [Account!]!
-  pauser: [Account!]!
-  globalListManager: [Account!]!
-  operator: [Account!]!
 }
 
 type System @entity(immutable: false) {
@@ -67,6 +58,7 @@ type System @entity(immutable: false) {
   identityFactory: IdentityFactory
   identityRegistry: IdentityRegistry
   trustedIssuersRegistry: TrustedIssuersRegistry
+  topicSchemeRegistry: TopicSchemeRegistry
   tokenFactories: [TokenFactory!]! @derivedFrom(field: "system")
 }
 
@@ -91,12 +83,31 @@ type IdentityRegistry @entity(immutable: false) {
   id: Bytes!
   accessControl: AccessControl!
   account: Account!
+  identities: [Identity!]! @derivedFrom(field: "registry")
+  trustedIssuersRegistry: TrustedIssuersRegistry
+  topicSchemeRegistry: TopicSchemeRegistry
+  identityRegistryStorage: IdentityRegistryStorage
 }
 
 type TrustedIssuersRegistry @entity(immutable: false) {
   id: Bytes!
   accessControl: AccessControl!
   account: Account!
+}
+
+type TopicSchemeRegistry @entity(immutable: false) {
+  id: Bytes!
+  accessControl: AccessControl!
+  account: Account!
+  schemes: [TopicScheme!]! @derivedFrom(field: "registry")
+}
+
+type TopicScheme @entity(immutable: false) {
+  id: Bytes!
+  registry: TopicSchemeRegistry!
+  signature: String!
+  topicId: BigInt!
+  enabled: Boolean!
 }
 
 type TokenFactory @entity(immutable: false) {
@@ -111,6 +122,7 @@ type TokenFactory @entity(immutable: false) {
 type Token @entity(immutable: false) {
   id: Bytes!
   account: Account!
+  accessControl: AccessControl
   identity: TokenIdentity
   balances: [TokenBalance!]! @derivedFrom(field: "token")
   type: String!
@@ -140,19 +152,24 @@ type TokenPausable @entity(immutable: false) {
   paused: Boolean!
 }
 
-type TokenIdentity @entity(immutable: true) {
+type Identity @entity(immutable: false) {
   id: Bytes!
-  claims: [TokenIdentityClaim!]! @derivedFrom(field: "tokenIdentity")
+  registry: IdentityRegistry
+  claims: [IdentityClaim!]! @derivedFrom(field: "identity")
 }
 
-type TokenIdentityClaim @entity(immutable: false) {
+type IdentityClaim @entity(immutable: false) {
   id: Bytes!
-  tokenIdentity: TokenIdentity!
-  topic: BigInt
-  scheme: BigInt
+  identity: Identity!
   issuer: Account
-  signature: Bytes
-  data: Bytes
   uri: String
   revoked: Boolean!
+  values: [IdentityClaimValue!]! @derivedFrom(field: "claim")
+}
+
+type IdentityClaimValue @entity(immutable: false) {
+  id: Bytes!
+  claim: IdentityClaim!
+  key: String!
+  value: String!
 }

@@ -12,7 +12,6 @@ import { ISMARTTokenAccessManaged } from "../../extensions/access-managed/ISMART
 import { ISMARTCustodian } from "../../extensions/custodian/ISMARTCustodian.sol";
 import { ISMARTPausable } from "../../extensions/pausable/ISMARTPausable.sol";
 import { ISMARTBurnable } from "../../extensions/burnable/ISMARTBurnable.sol";
-import { ISMARTCollateral } from "../../extensions/collateral/ISMARTCollateral.sol";
 
 /// @title Interface for a SMART Fund
 /// @notice Defines the core functionality and extensions for a SMART Fund, including voting capabilities.

@@ -30,11 +30,13 @@ contract SMARTIdentityRegistryProxy is SMARTSystemProxy {
     /// @param initialAdmin The address that will be granted initial administrative roles.
     /// @param identityStorage The address of the `IERC3643IdentityRegistryStorage` contract.
     /// @param trustedIssuersRegistry The address of the `IERC3643TrustedIssuersRegistry` contract.
+    /// @param topicSchemeRegistry The address of the `ISMARTTopicSchemeRegistry` contract.
     constructor(
         address systemAddress,
         address initialAdmin,
         address identityStorage,
-        address trustedIssuersRegistry
+        address trustedIssuersRegistry,
+        address topicSchemeRegistry
     )
         payable
         SMARTSystemProxy(systemAddress)
@@ -47,7 +49,8 @@ contract SMARTIdentityRegistryProxy is SMARTSystemProxy {
             systemAddress,
             initialAdmin,
             identityStorage,
-            trustedIssuersRegistry
+            trustedIssuersRegistry,
+            topicSchemeRegistry
         );
 
         _performInitializationDelegatecall(implementation, data);
