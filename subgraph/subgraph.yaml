@@ -303,7 +303,7 @@ templates:
       eventHandlers:
         - event: CountryUpdated(indexed address,indexed address,indexed uint16)
           handler: handleCountryUpdated
-        - event: IdentityRegistered(indexed address,indexed address,indexed address, uint16)
+        - event: IdentityRegistered(indexed address,indexed address,indexed address,uint16)
           handler: handleIdentityRegistered
         - event: IdentityRemoved(indexed address,indexed address,indexed address)
           handler: handleIdentityRemoved
