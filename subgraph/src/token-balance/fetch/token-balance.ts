@@ -1,6 +1,6 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 import { Account, Token, TokenBalance } from "../../../../generated/schema";
-import { setBigNumber } from "../../bignumber/bignumber";
+import { setBigNumber } from "../../utils/bignumber";
 
 export function fetchTokenBalance(
   token: Token,

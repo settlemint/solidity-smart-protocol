@@ -1,7 +1,7 @@
-import { Token, TokenBalance } from "../../../generated/schema";
-import { fetchAccount } from "../account/fetch/account";
-import { setBigNumber } from "../bignumber/bignumber";
-import { fetchTokenBalance } from "../token-balance/fetch/token-balance";
+import { Token, TokenBalance } from "../../../../generated/schema";
+import { fetchAccount } from "../../account/fetch/account";
+import { setBigNumber } from "../../utils/bignumber";
+import { fetchTokenBalance } from "../fetch/token-balance";
 import { Address, BigInt, Bytes, store } from "@graphprotocol/graph-ts";
 
 export function increaseTokenBalanceValue(
