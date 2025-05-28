@@ -31,6 +31,10 @@ contract SMARTTopicSchemeRegistryImplementation is
     /// @dev Maps topicId => TopicScheme struct containing id, signature, and existence flag
     mapping(uint256 topicId => TopicScheme scheme) private _topicSchemes;
 
+    /// @notice Mapping from topic name hash to topic ID for name-based lookups
+    /// @dev Maps keccak256(abi.encodePacked(name)) => topicId for efficient name-based retrieval
+    mapping(bytes32 nameHash => uint256 topicId) private _nameHashToTopicId;
+
     /// @notice Array storing all registered topic IDs for enumeration
     /// @dev Allows iteration over all registered topic schemes
     uint256[] private _topicIds;
@@ -40,9 +44,16 @@ contract SMARTTopicSchemeRegistryImplementation is
     /// Value of 0 means the topic ID is not in the array, non-zero values represent (actualIndex + 1)
     mapping(uint256 topicId => uint256 indexPlusOne) private _topicIdIndex;
 
+    /// @notice Mapping to store topic names for event emission (gas-optimized storage)
+    /// @dev Maps topicId => name string, only used for events and removal operations
+    mapping(uint256 topicId => string name) private _topicNames;
+
     // --- Custom Errors ---
     /// @notice Error thrown when attempting to register a topic scheme with an invalid (zero) topic ID
     error InvalidTopicId();
+
+    /// @notice Error thrown when attempting to register a topic scheme with an empty name
+    error EmptyName();
 
     /// @notice Error thrown when attempting to register a topic scheme with an empty signature
     error EmptySignature();
@@ -51,9 +62,17 @@ contract SMARTTopicSchemeRegistryImplementation is
     /// @param topicId The topic ID that already exists
     error TopicSchemeAlreadyExists(uint256 topicId);
 
+    /// @notice Error thrown when attempting to register a topic scheme with a name that already exists
+    /// @param name The name that already exists
+    error TopicSchemeNameAlreadyExists(string name);
+
     /// @notice Error thrown when attempting to operate on a topic scheme that doesn't exist
     /// @param topicId The topic ID that doesn't exist
     error TopicSchemeDoesNotExist(uint256 topicId);
+
+    /// @notice Error thrown when attempting to operate on a topic scheme that doesn't exist by name
+    /// @param name The name that doesn't exist
+    error TopicSchemeDoesNotExistByName(string name);
 
     /// @notice Error thrown when a topic ID is not found in the enumeration array during removal
     /// @param topicId The topic ID that was not found
@@ -66,8 +85,9 @@ contract SMARTTopicSchemeRegistryImplementation is
 
     /// @notice Error thrown when input arrays have mismatched lengths
     /// @param topicIdsLength The length of the topic IDs array
+    /// @param namesLength The length of the names array
     /// @param signaturesLength The length of the signatures array
-    error ArrayLengthMismatch(uint256 topicIdsLength, uint256 signaturesLength);
+    error ArrayLengthMismatch(uint256 topicIdsLength, uint256 namesLength, uint256 signaturesLength);
 
     /// @notice Error thrown when attempting batch operations with empty arrays
     error EmptyArraysProvided();
@@ -98,6 +118,7 @@ contract SMARTTopicSchemeRegistryImplementation is
     /// @inheritdoc ISMARTTopicSchemeRegistry
     function registerTopicScheme(
         uint256 topicId,
+        string calldata name,
         string calldata signature
     )
         external
@@ -105,22 +126,33 @@ contract SMARTTopicSchemeRegistryImplementation is
         onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
     {
         if (topicId == 0) revert InvalidTopicId();
+        if (bytes(name).length == 0) revert EmptyName();
         if (bytes(signature).length == 0) revert EmptySignature();
         if (_topicSchemes[topicId].exists) revert TopicSchemeAlreadyExists(topicId);
 
-        // Store the topic scheme
+        bytes32 nameHash = keccak256(abi.encodePacked(name));
+        if (_nameHashToTopicId[nameHash] != 0) revert TopicSchemeNameAlreadyExists(name);
+
+        // Store the topic scheme (no nameHash stored, computed on-demand)
         _topicSchemes[topicId] = TopicScheme({ topicId: topicId, signature: signature, exists: true });
+
+        // Store name hash mapping for lookups
+        _nameHashToTopicId[nameHash] = topicId;
+
+        // Store name for events (separate mapping to avoid storing in main struct)
+        _topicNames[topicId] = name;
 
         // Add to enumeration array
         _topicIds.push(topicId);
         _topicIdIndex[topicId] = _topicIds.length; // Store index + 1
 
-        emit TopicSchemeRegistered(_msgSender(), topicId, signature);
+        emit TopicSchemeRegistered(_msgSender(), topicId, name, signature);
     }
 
     /// @inheritdoc ISMARTTopicSchemeRegistry
     function batchRegisterTopicSchemes(
         uint256[] calldata topicIds,
+        string[] calldata names,
         string[] calldata signatures
     )
         external
@@ -128,32 +160,48 @@ contract SMARTTopicSchemeRegistryImplementation is
         onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
     {
         uint256 topicIdsLength = topicIds.length;
+        uint256 namesLength = names.length;
         uint256 signaturesLength = signatures.length;
 
         // Validate input arrays
         if (topicIdsLength == 0) revert EmptyArraysProvided();
-        if (topicIdsLength != signaturesLength) revert ArrayLengthMismatch(topicIdsLength, signaturesLength);
+        if (topicIdsLength != namesLength || topicIdsLength != signaturesLength) {
+            revert ArrayLengthMismatch(topicIdsLength, namesLength, signaturesLength);
+        }
 
         // Cache the current length to avoid reading from storage in each iteration
         uint256 currentArrayLength = _topicIds.length;
 
         // Cache storage variables accessed in loop
         mapping(uint256 => TopicScheme) storage topicSchemes_ = _topicSchemes;
+        mapping(bytes32 => uint256) storage nameHashToTopicId_ = _nameHashToTopicId;
+        mapping(uint256 => string) storage topicNames_ = _topicNames;
         uint256[] storage topicIds_ = _topicIds;
         mapping(uint256 => uint256) storage topicIdIndex_ = _topicIdIndex;
 
         // Process each topic scheme registration
         for (uint256 i = 0; i < topicIdsLength;) {
             uint256 topicId = topicIds[i];
+            string calldata name = names[i];
             string calldata signature = signatures[i];
 
             // Validate individual topic scheme (same validation as single register)
             if (topicId == 0) revert InvalidTopicId();
+            if (bytes(name).length == 0) revert EmptyName();
             if (bytes(signature).length == 0) revert EmptySignature();
             if (topicSchemes_[topicId].exists) revert TopicSchemeAlreadyExists(topicId);
 
-            // Store the topic scheme
+            bytes32 nameHash = keccak256(abi.encodePacked(name));
+            if (nameHashToTopicId_[nameHash] != 0) revert TopicSchemeNameAlreadyExists(name);
+
+            // Store the topic scheme (no nameHash stored)
             topicSchemes_[topicId] = TopicScheme({ topicId: topicId, signature: signature, exists: true });
+
+            // Store name hash mapping for lookups
+            nameHashToTopicId_[nameHash] = topicId;
+
+            // Store name for events
+            topicNames_[topicId] = name;
 
             // Add to enumeration array
             topicIds_.push(topicId);
@@ -161,7 +209,7 @@ contract SMARTTopicSchemeRegistryImplementation is
             topicIdIndex_[topicId] = currentArrayLength; // Use cached length instead of reading from storage
 
             // Emit individual event for each registration
-            emit TopicSchemeRegistered(_msgSender(), topicId, signature);
+            emit TopicSchemeRegistered(_msgSender(), topicId, name, signature);
 
             unchecked {
                 ++i;
@@ -169,7 +217,7 @@ contract SMARTTopicSchemeRegistryImplementation is
         }
 
         // Emit batch event
-        emit TopicSchemesBatchRegistered(_msgSender(), topicIds, signatures);
+        emit TopicSchemesBatchRegistered(_msgSender(), topicIds, names, signatures);
     }
 
     /// @inheritdoc ISMARTTopicSchemeRegistry
@@ -191,20 +239,31 @@ contract SMARTTopicSchemeRegistryImplementation is
 
         _topicSchemes[topicId].signature = newSignature;
 
-        emit TopicSchemeUpdated(_msgSender(), topicId, oldSignature, newSignature);
+        emit TopicSchemeUpdated(_msgSender(), topicId, _topicNames[topicId], oldSignature, newSignature);
     }
 
     /// @inheritdoc ISMARTTopicSchemeRegistry
     function removeTopicScheme(uint256 topicId) external override onlyRole(SMARTSystemRoles.REGISTRAR_ROLE) {
         if (!_topicSchemes[topicId].exists) revert TopicSchemeDoesNotExist(topicId);
 
+        // Get the name before deletion for cleanup and event
+        string memory name = _topicNames[topicId];
+        // Compute hash from stored name instead of reading from struct
+        bytes32 nameHash = keccak256(abi.encodePacked(name));
+
         // Remove from enumeration array using swap-and-pop
         _removeTopicIdFromArray(topicId);
+
+        // Remove name hash mapping
+        delete _nameHashToTopicId[nameHash];
+
+        // Remove name storage
+        delete _topicNames[topicId];
 
         // Delete the topic scheme
         delete _topicSchemes[topicId];
 
-        emit TopicSchemeRemoved(_msgSender(), topicId);
+        emit TopicSchemeRemoved(_msgSender(), topicId, name);
     }
 
     // --- View Functions ---
@@ -215,15 +274,36 @@ contract SMARTTopicSchemeRegistryImplementation is
     }
 
     /// @inheritdoc ISMARTTopicSchemeRegistry
+    function hasTopicSchemeByName(string calldata name) external view override returns (bool exists) {
+        bytes32 nameHash = keccak256(abi.encodePacked(name));
+        return _nameHashToTopicId[nameHash] != 0;
+    }
+
+    /// @inheritdoc ISMARTTopicSchemeRegistry
     function getTopicSchemeSignature(uint256 topicId) external view override returns (string memory signature) {
         if (!_topicSchemes[topicId].exists) revert TopicSchemeDoesNotExist(topicId);
         return _topicSchemes[topicId].signature;
     }
 
     /// @inheritdoc ISMARTTopicSchemeRegistry
-    function getTopicScheme(uint256 topicId) external view override returns (TopicScheme memory scheme) {
-        if (!_topicSchemes[topicId].exists) revert TopicSchemeDoesNotExist(topicId);
-        return _topicSchemes[topicId];
+    function getTopicSchemeSignatureByName(string calldata name)
+        external
+        view
+        override
+        returns (string memory signature)
+    {
+        bytes32 nameHash = keccak256(abi.encodePacked(name));
+        uint256 topicId = _nameHashToTopicId[nameHash];
+        if (topicId == 0) revert TopicSchemeDoesNotExistByName(name);
+        return _topicSchemes[topicId].signature;
+    }
+
+    /// @inheritdoc ISMARTTopicSchemeRegistry
+    function getTopicIdByName(string calldata name) external view override returns (uint256 topicId) {
+        bytes32 nameHash = keccak256(abi.encodePacked(name));
+        topicId = _nameHashToTopicId[nameHash];
+        if (topicId == 0) revert TopicSchemeDoesNotExistByName(name);
+        return topicId;
     }
 
     /// @inheritdoc ISMARTTopicSchemeRegistry
