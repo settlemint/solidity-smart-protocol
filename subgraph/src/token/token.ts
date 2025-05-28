@@ -11,6 +11,12 @@ import {
   UpdatedTokenInformation,
 } from "../../../generated/templates/Token/Token";
 import { fetchEvent } from "../event/fetch/event";
+import {
+  decreaseTokenBalanceValue,
+  increaseTokenBalanceValue,
+} from "../token-balance/utils/token-balance-utils";
+import { fetchToken } from "./fetch/token";
+import { increaseTokenSupply } from "./utils/token-utils";
 
 export function handleApproval(event: Approval): void {
   fetchEvent(event, "Approval");
@@ -40,6 +46,9 @@ export function handleIdentityRegistryAdded(
 
 export function handleMintCompleted(event: MintCompleted): void {
   fetchEvent(event, "Mint");
+  const token = fetchToken(event.address);
+  increaseTokenSupply(token, event.params.amount);
+  increaseTokenBalanceValue(token, event.params.to, event.params.amount);
 }
 
 export function handleModuleParametersUpdated(
@@ -56,10 +65,16 @@ export function handleRequiredClaimTopicsUpdated(
 
 export function handleTransferCompleted(event: TransferCompleted): void {
   fetchEvent(event, "Transfer");
+  const token = fetchToken(event.address);
+  decreaseTokenBalanceValue(token, event.params.from, event.params.amount);
+  increaseTokenBalanceValue(token, event.params.to, event.params.amount);
 }
 
 export function handleUpdatedTokenInformation(
   event: UpdatedTokenInformation
 ): void {
   fetchEvent(event, "UpdatedTokenInformation");
+  const token = fetchToken(event.address);
+  token.decimals = event.params._newDecimals;
+  token.save();
 }

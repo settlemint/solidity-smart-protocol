@@ -6,7 +6,7 @@ import {
 } from "../../../../generated/templates";
 import { Token as TokenContract } from "../../../../generated/templates/Token/Token";
 import { fetchAccount } from "../../account/fetch/account";
-import { setBigNumber } from "../../bignumber/bignumber";
+import { setBigNumber } from "../../utils/bignumber";
 import { InterfaceIds } from "../../erc165/utils/interfaceids";
 import { fetchPausable } from "../../pausable/fetch/pausable";
 import { fetchCustodian } from "../../custodian/fetch/custodian";
