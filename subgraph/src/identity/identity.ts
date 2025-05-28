@@ -13,7 +13,7 @@ import { fetchAccount } from "../account/fetch/account";
 import { fetchEvent } from "../event/fetch/event";
 import { fetchIdentity } from "./fetch/identity";
 import { fetchIdentityClaim } from "./fetch/identity-claim";
-import { decodeClaim } from "./utils/decode-claim";
+import { decodeClaimValues } from "./utils/decode-claim";
 
 export function handleApproved(event: Approved): void {
   fetchEvent(event, "Approved");
@@ -24,10 +24,11 @@ export function handleClaimAdded(event: ClaimAdded): void {
   const identity = fetchIdentity(event.address);
   const identityClaim = fetchIdentityClaim(identity, event.params.claimId);
   identityClaim.issuer = fetchAccount(event.params.issuer).id;
-  identityClaim.data = decodeClaim(event.params.topic, event.params.data);
   identityClaim.uri = event.params.uri;
-
   identityClaim.save();
+
+  // Decode claim data and create IdentityClaimValue entities
+  decodeClaimValues(identityClaim, event.params.topic, event.params.data);
 }
 
 export function handleClaimChanged(event: ClaimChanged): void {
@@ -35,10 +36,11 @@ export function handleClaimChanged(event: ClaimChanged): void {
   const identity = fetchIdentity(event.address);
   const identityClaim = fetchIdentityClaim(identity, event.params.claimId);
   identityClaim.issuer = fetchAccount(event.params.issuer).id;
-  identityClaim.data = decodeClaim(event.params.topic, event.params.data);
   identityClaim.uri = event.params.uri;
-
   identityClaim.save();
+
+  // Decode claim data and create IdentityClaimValue entities
+  decodeClaimValues(identityClaim, event.params.topic, event.params.data);
 }
 
 export function handleClaimRemoved(event: ClaimRemoved): void {
