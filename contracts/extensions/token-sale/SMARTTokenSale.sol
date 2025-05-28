@@ -382,8 +382,13 @@ contract SMARTTokenSale is
             // Price in ERC20 tokens
             if (!paymentCurrencies[currency].accepted) revert UnsupportedPaymentCurrency();
 
-            uint256 priceInBase = (amount * basePrice) / 10 ** token.decimals();
-            price = (priceInBase * PRICE_SCALE) / paymentCurrencies[currency].priceRatio;
+            uint256 currencyDecimals = IERC20Metadata(currency).decimals();
+            uint256 priceRatio = paymentCurrencies[currency].priceRatio;
+
+            // The priceRatio represents: (payment currency amount per token) * PRICE_SCALE
+            // To calculate price: price = (amount * priceRatio * 10^currencyDecimals) / (PRICE_SCALE *
+            // 10^tokenDecimals)
+            price = (amount * priceRatio * 10 ** currencyDecimals) / (PRICE_SCALE * 10 ** token.decimals());
         }
 
         return price;
@@ -476,7 +481,12 @@ contract SMARTTokenSale is
             if (!paymentCurrencies[currency].accepted) revert UnsupportedPaymentCurrency();
 
             uint256 priceRatio = paymentCurrencies[currency].priceRatio;
-            tokenAmount = (paymentAmount * priceRatio * 10 ** decimals) / (basePrice * PRICE_SCALE);
+            uint256 currencyDecimals = IERC20Metadata(currency).decimals();
+
+            // The priceRatio represents: (payment currency amount per token) * PRICE_SCALE
+            // To calculate tokens: tokenAmount = (paymentAmount * PRICE_SCALE * 10^tokenDecimals) / (priceRatio *
+            // 10^currencyDecimals)
+            tokenAmount = (paymentAmount * PRICE_SCALE * 10 ** decimals) / (priceRatio * 10 ** currencyDecimals);
         }
 
         return tokenAmount;
