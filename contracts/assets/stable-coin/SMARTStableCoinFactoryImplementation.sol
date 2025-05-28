@@ -129,6 +129,7 @@ contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, Abstra
             name_,
             symbol_,
             decimals_,
+            _collateralClaimTopicId,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),

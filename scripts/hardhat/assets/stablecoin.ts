@@ -17,6 +17,8 @@ import { mint } from "./actions/mint";
 import { transfer } from "./actions/transfer";
 
 export const createStablecoin = async () => {
+	console.log("\n=== Creating stablecoin... ===\n");
+
 	const stablecoinFactory = smartProtocolDeployer.getStablecoinFactoryContract();
 
 	const transactionHash = await stablecoinFactory.write.createStableCoin([

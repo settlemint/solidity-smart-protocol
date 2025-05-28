@@ -31,8 +31,6 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
     string constant SYMBOL = "TFUND";
     uint8 constant DECIMALS = 18;
     uint16 constant MANAGEMENT_FEE_BPS = 200; // 2%
-    string constant FUND_CLASS = "Hedge Fund";
-    string constant FUND_CATEGORY = "Long/Short Equity";
 
     // Test constants
     uint256 constant INITIAL_SUPPLY = 1000 ether;
@@ -70,14 +68,7 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         _setUpIdentity(investor2, "Investor 2");
 
         fund = _createFundAndMint(
-            NAME,
-            SYMBOL,
-            DECIMALS,
-            MANAGEMENT_FEE_BPS,
-            FUND_CLASS,
-            FUND_CATEGORY,
-            new uint256[](0),
-            new SMARTComplianceModuleParamPair[](0)
+            NAME, SYMBOL, DECIMALS, MANAGEMENT_FEE_BPS, new uint256[](0), new SMARTComplianceModuleParamPair[](0)
         );
         vm.label(address(fund), "Fund");
     }
@@ -87,8 +78,6 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         string memory symbol_,
         uint8 decimals_,
         uint16 managementFeeBps_,
-        string memory fundClass_,
-        string memory fundCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
@@ -97,14 +86,7 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
     {
         vm.startPrank(owner);
         address fundAddress = fundFactory.createFund(
-            name_,
-            symbol_,
-            decimals_,
-            managementFeeBps_,
-            fundClass_,
-            fundCategory_,
-            requiredClaimTopics_,
-            initialModulePairs_
+            name_, symbol_, decimals_, managementFeeBps_, requiredClaimTopics_, initialModulePairs_
         );
 
         result = ISMARTFund(fundAddress);
@@ -124,8 +106,6 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
         assertEq(fund.name(), NAME);
         assertEq(fund.symbol(), SYMBOL);
         assertEq(fund.decimals(), DECIMALS);
-        assertEq(fund.fundClass(), FUND_CLASS);
-        assertEq(fund.fundCategory(), FUND_CATEGORY);
         assertTrue(fund.hasRole(SMARTRoles.SUPPLY_MANAGEMENT_ROLE, owner));
         assertTrue(fund.hasRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, owner));
     }

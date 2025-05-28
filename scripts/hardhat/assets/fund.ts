@@ -11,11 +11,14 @@ import { SMARTTopic } from "../constants/topics";
 import { topicManager } from "../services/topic-manager";
 import { burn } from "./actions/burn";
 import { grantRole } from "./actions/grant-role";
+import { issueAssetClassificationClaim } from "./actions/issue-asset-classification-claim";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
 import { mint } from "./actions/mint";
 import { transfer } from "./actions/transfer";
 
 export const createFund = async () => {
+	console.log("\n=== Creating fund... ===\n");
+
 	const fundFactory = smartProtocolDeployer.getFundFactoryContract();
 
 	const transactionHash = await fundFactory.write.createFund([
@@ -23,8 +26,6 @@ export const createFund = async () => {
 		"BB",
 		8,
 		20,
-		"Class A",
-		"Category A",
 		[
 			topicManager.getTopicId(SMARTTopic.kyc),
 			topicManager.getTopicId(SMARTTopic.aml),
@@ -52,6 +53,8 @@ export const createFund = async () => {
 		await grantRole(accessManager, owner.address, SMARTRoles.claimManagerRole);
 		// issue isin claim
 		await issueIsinClaim(tokenIdentity, "FR0000120271");
+		// issue asset classification claim
+		await issueAssetClassificationClaim(tokenIdentity, "Class A", "Category A");
 
 		// needs supply management role to mint
 		await grantRole(

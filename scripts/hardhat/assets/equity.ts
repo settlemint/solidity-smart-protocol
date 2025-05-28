@@ -9,19 +9,20 @@ import { topicManager } from "../services/topic-manager";
 import { waitForEvent } from "../utils/wait-for-event";
 import { burn } from "./actions/burn";
 import { grantRole } from "./actions/grant-role";
+import { issueAssetClassificationClaim } from "./actions/issue-asset-classification-claim";
 import { issueIsinClaim } from "./actions/issue-isin-claim";
 import { mint } from "./actions/mint";
 import { transfer } from "./actions/transfer";
 
 export const createEquity = async () => {
+	console.log("\n=== Creating equity... ===\n");
+
 	const equityFactory = smartProtocolDeployer.getEquityFactoryContract();
 
 	const transactionHash = await equityFactory.write.createEquity([
 		"Apple",
 		"AAPL",
 		18,
-		"Class A",
-		"Category A",
 		[
 			topicManager.getTopicId(SMARTTopic.kyc),
 			topicManager.getTopicId(SMARTTopic.aml),
@@ -49,6 +50,8 @@ export const createEquity = async () => {
 		await grantRole(accessManager, owner.address, SMARTRoles.claimManagerRole);
 		// issue isin claim
 		await issueIsinClaim(tokenIdentity, "DE000BAY0017");
+		// issue asset classification claim
+		await issueAssetClassificationClaim(tokenIdentity, "Class A", "Category A");
 
 		// needs supply management role to mint
 		await grantRole(

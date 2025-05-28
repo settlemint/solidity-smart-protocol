@@ -27,8 +27,6 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
     /// @param symbol_ The symbol of the fund.
     /// @param decimals_ The number of decimals for the fund tokens.
     /// @param managementFeeBps_ The management fee in basis points.
-    /// @param fundClass_ The class of the fund (e.g., Equity, Fixed Income).
-    /// @param fundCategory_ The category of the fund (e.g., Growth, Value).
     /// @param requiredClaimTopics_ An array of claim topics required for interacting with the fund.
     /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
     /// @return deployedFundAddress The address of the newly deployed fund contract.
@@ -37,8 +35,6 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
         string memory symbol_,
         uint8 decimals_,
         uint16 managementFeeBps_,
-        string memory fundClass_,
-        string memory fundCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
@@ -57,8 +53,6 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
             symbol_,
             decimals_,
             managementFeeBps_,
-            fundClass_,
-            fundCategory_,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),
@@ -87,8 +81,6 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
     /// @param symbol_ The symbol of the fund.
     /// @param decimals_ The decimals of the fund.
     /// @param managementFeeBps_ The management fee in basis points for the fund.
-    /// @param fundClass_ The class of the fund.
-    /// @param fundCategory_ The category of the fund.
     /// @param requiredClaimTopics_ The required claim topics for the fund.
     /// @param initialModulePairs_ The initial compliance module pairs for the fund.
     /// @return predictedAddress The predicted address of the fund contract.
@@ -97,8 +89,6 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
         string memory symbol_,
         uint8 decimals_,
         uint16 managementFeeBps_,
-        string memory fundClass_,
-        string memory fundCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
@@ -115,8 +105,6 @@ contract SMARTFundFactoryImplementation is ISMARTFundFactory, AbstractSMARTToken
             symbol_,
             decimals_,
             managementFeeBps_,
-            fundClass_,
-            fundCategory_,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),

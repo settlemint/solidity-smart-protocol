@@ -42,9 +42,6 @@ contract SMARTEquityImplementation is
     ERC20VotesUpgradeable, // TODO?
     ERC2771ContextUpgradeable
 {
-    string private _equityClass;
-    string private _equityCategory;
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     /// @param forwarder_ The address of the forwarder contract.
     constructor(address forwarder_) ERC2771ContextUpgradeable(forwarder_) {
@@ -55,8 +52,6 @@ contract SMARTEquityImplementation is
     /// @param name_ The name of the token.
     /// @param symbol_ The symbol of the token.
     /// @param decimals_ The number of decimals the token uses.
-    /// @param equityClass_ The class of the equity.
-    /// @param equityCategory_ The category of the equity.
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
     /// @param identityRegistry_ The address of the Identity Registry contract.
@@ -66,8 +61,6 @@ contract SMARTEquityImplementation is
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
-        string memory equityClass_,
-        string memory equityCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -92,23 +85,6 @@ contract SMARTEquityImplementation is
         __SMARTBurnable_init();
         __SMARTPausable_init();
         __SMARTTokenAccessManaged_init(accessManager_);
-
-        _equityClass = equityClass_;
-        _equityCategory = equityCategory_;
-    }
-
-    // --- View Functions ---
-
-    /// @notice Returns the class of the equity.
-    /// @return The class of the equity.
-    function equityClass() public view returns (string memory) {
-        return _equityClass;
-    }
-
-    /// @notice Returns the category of the equity.
-    /// @return The category of the equity.
-    function equityCategory() public view returns (string memory) {
-        return _equityCategory;
     }
 
     // --- ISMART Implementation ---

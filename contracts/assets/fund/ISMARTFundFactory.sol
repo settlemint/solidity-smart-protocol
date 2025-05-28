@@ -12,8 +12,6 @@ interface ISMARTFundFactory is ISMARTTokenFactory {
     /// @param symbol_ The symbol of the fund.
     /// @param decimals_ The number of decimals for the fund tokens.
     /// @param managementFeeBps_ The management fee in basis points.
-    /// @param fundClass_ The class of the fund (e.g., Equity, Fixed Income).
-    /// @param fundCategory_ The category of the fund (e.g., Growth, Value).
     /// @param requiredClaimTopics_ An array of claim topics required for interacting with the fund.
     /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
     /// @return deployedFundAddress The address of the newly deployed fund contract.
@@ -22,8 +20,6 @@ interface ISMARTFundFactory is ISMARTTokenFactory {
         string memory symbol_,
         uint8 decimals_,
         uint16 managementFeeBps_,
-        string memory fundClass_,
-        string memory fundCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
@@ -35,8 +31,6 @@ interface ISMARTFundFactory is ISMARTTokenFactory {
     /// @param symbol_ The symbol of the fund.
     /// @param decimals_ The number of decimals for the fund tokens.
     /// @param managementFeeBps_ The management fee in basis points.
-    /// @param fundClass_ The class of the fund.
-    /// @param fundCategory_ The category of the fund.
     /// @param requiredClaimTopics_ An array of claim topics required for interacting with the fund.
     /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
     /// @return predictedAddress The predicted address of the fund contract.
@@ -45,8 +39,6 @@ interface ISMARTFundFactory is ISMARTTokenFactory {
         string memory symbol_,
         uint8 decimals_,
         uint16 managementFeeBps_,
-        string memory fundClass_,
-        string memory fundCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_
     )
