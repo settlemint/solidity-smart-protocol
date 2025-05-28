@@ -64,14 +64,6 @@ contract SMARTFundImplementation is
     /// @dev Set at deployment and cannot be changed
     uint16 private _managementFeeBps;
 
-    /// @notice The class of the fund (e.g., "Hedge SMARTFund", "Mutual SMARTFund")
-    /// @dev Set at deployment and cannot be changed
-    string private _fundClass;
-
-    /// @notice The category of the fund (e.g., "Long/Short Equity", "Global Macro")
-    /// @dev Set at deployment and cannot be changed
-    string private _fundCategory;
-
     /// @notice Emitted when management fees are collected
     /// @param sender The address that collected the management fees
     /// @param amount The amount of tokens minted as management fees
@@ -89,8 +81,6 @@ contract SMARTFundImplementation is
     /// @param symbol_ The symbol of the token.
     /// @param decimals_ The number of decimals the token uses.
     /// @param managementFeeBps_ The management fee in basis points (1 basis point = 0.01%)
-    /// @param fundClass_ The class of the fund (e.g., "Hedge SMARTFund", "Mutual SMARTFund")
-    /// @param fundCategory_ The category of the fund (e.g., "Long/Short Equity", "Global Macro")
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
     /// @param identityRegistry_ The address of the Identity Registry contract.
@@ -101,8 +91,6 @@ contract SMARTFundImplementation is
         string memory symbol_,
         uint8 decimals_,
         uint16 managementFeeBps_,
-        string memory fundClass_,
-        string memory fundCategory_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -129,26 +117,10 @@ contract SMARTFundImplementation is
         __SMARTTokenAccessManaged_init(accessManager_);
 
         _managementFeeBps = managementFeeBps_;
-        _fundClass = fundClass_;
-        _fundCategory = fundCategory_;
         _lastFeeCollection = uint40(block.timestamp);
     }
 
     // --- View Functions ---
-
-    /// @notice Returns the fund class
-    /// @dev The fund class is immutable after construction
-    /// @return The fund class as a string (e.g., "Hedge SMARTFund", "Mutual SMARTFund")
-    function fundClass() external view returns (string memory) {
-        return _fundClass;
-    }
-
-    /// @notice Returns the fund category
-    /// @dev The fund category is immutable after construction
-    /// @return The fund category as a string (e.g., "Long/Short Equity", "Global Macro")
-    function fundCategory() external view returns (string memory) {
-        return _fundCategory;
-    }
 
     /// @notice Returns the management fee in basis points
     /// @dev One basis point equals 0.01%

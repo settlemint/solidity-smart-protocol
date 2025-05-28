@@ -14,10 +14,14 @@ import { smartProtocolDeployer } from "./services/deployer";
 import { topicManager } from "./services/topic-manager";
 
 async function main() {
+	console.log("\n=== Setting up smart protocol... ===\n");
+
 	// Setup the smart protocol
 	await smartProtocolDeployer.setUp({
 		displayUi: true,
 	});
+
+	console.log("\n=== Setting up actors... ===\n");
 
 	// Initialize the actors
 	await Promise.all([
@@ -33,6 +37,11 @@ async function main() {
 	await investorA.printBalance();
 	await investorB.printBalance();
 
+	// Add the actors to the registry
+	await batchAddToRegistry([owner, investorA, investorB]);
+
+	console.log("\n=== Setting up topics and trusted issuers... ===\n");
+
 	// Initialize the TopicManager with the deployed topic registry
 	await topicManager.initialize();
 
@@ -42,10 +51,10 @@ async function main() {
 		topicManager.getTopicId(SMARTTopic.kyc),
 		topicManager.getTopicId(SMARTTopic.aml),
 		topicManager.getTopicId(SMARTTopic.collateral),
+		topicManager.getTopicId(SMARTTopic.assetClassification),
 	]);
 
-	// Add the actors to the registry
-	await batchAddToRegistry([owner, investorA, investorB]);
+	console.log("\n=== Verify the actors... ===\n");
 
 	// make sure every actor is verified
 	await Promise.all([

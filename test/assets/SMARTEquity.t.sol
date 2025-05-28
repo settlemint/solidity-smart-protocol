@@ -29,8 +29,7 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
     uint8 public constant DECIMALS = 8;
     string public constant NAME = "SMART Equity";
     string public constant SYMBOL = "SMART";
-    string public constant EQUITY_CLASS = "Common";
-    string public constant EQUITY_CATEGORY = "Class A";
+
     uint256 public constant INITIAL_SUPPLY = 1_000_000 * 10 ** 8; // 1M tokens with 8 decimals
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -89,9 +88,8 @@ contract SMARTEquityTest is AbstractSMARTAssetTest {
         returns (ISMARTEquity result)
     {
         vm.startPrank(owner);
-        address equityAddress = equityFactory.createEquity(
-            name_, symbol_, decimals_, EQUITY_CLASS, EQUITY_CATEGORY, requiredClaimTopics_, initialModulePairs_
-        );
+        address equityAddress =
+            equityFactory.createEquity(name_, symbol_, decimals_, requiredClaimTopics_, initialModulePairs_);
 
         result = ISMARTEquity(equityAddress);
 

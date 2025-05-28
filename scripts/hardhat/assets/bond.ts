@@ -15,6 +15,8 @@ import { mint } from "./actions/mint";
 import { transfer } from "./actions/transfer";
 
 export const createBond = async (depositToken: Address) => {
+	console.log("\n=== Creating bond... ===\n");
+
 	const bondFactory = smartProtocolDeployer.getBondFactoryContract();
 
 	const transactionHash = await bondFactory.write.createBond([
