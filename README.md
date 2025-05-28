@@ -316,6 +316,24 @@ anvil
 forge script scripts/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast
 ```
 
+### **Subgraph Integration**
+
+SMART Protocol includes a comprehensive subgraph for indexing on-chain events and data:
+
+- **Identity Management**: Complete indexing of identity registries, storage, and on-chain claims
+- **Compliance Tracking**: Real-time compliance rule updates and transfer validations
+- **Token Operations**: Full ERC-20 transfer history with compliance context
+- **Access Control**: Role-based permission changes and token access management
+- **Topic Scheme Registry**: Structured claim data with decoding support
+
+```bash
+# Deploy subgraph to The Graph
+bunx settlemint scs subgraph deploy
+
+# Query subgraph locally
+npm run graph:local
+```
+
 ### **Gas Optimization**
 
 SMART Protocol includes several gas optimization features:

@@ -84,6 +84,7 @@ type IdentityRegistry @entity(immutable: false) {
   identities: [Identity!]! @derivedFrom(field: "registry")
   trustedIssuersRegistry: TrustedIssuersRegistry
   topicSchemeRegistry: TopicSchemeRegistry
+  identityRegistryStorage: IdentityRegistryStorage
 }
 
 type TrustedIssuersRegistry @entity(immutable: false) {
