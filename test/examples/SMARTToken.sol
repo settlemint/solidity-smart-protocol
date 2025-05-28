@@ -422,19 +422,15 @@ contract SMARTToken is
     /// provided their identity is verified. Only callable by an address with `RECOVERY_ROLE`.
     /// @param lostWallet The address of the compromised or lost wallet.
     /// @param newWallet The address of the new wallet to which tokens will be transferred.
-    /// @param investorOnchainID The OnchainID address of the investor, used for verification.
-    /// @return A boolean indicating whether the recovery was successful.
-    function recoveryAddress(
+    function forcedRecoverTokens(
         address lostWallet,
-        address newWallet,
-        address investorOnchainID
+        address newWallet
     )
         external
         override
         onlyAccessManagerRole(RECOVERY_ROLE)
-        returns (bool)
     {
-        return _smart_recoveryAddress(lostWallet, newWallet, investorOnchainID);
+        _smart_recoverTokens(lostWallet, newWallet);
     }
 
     // --- ISMARTPausable Implementation ---
@@ -579,6 +575,18 @@ contract SMARTToken is
         override(SMART, SMARTHistoricalBalances, SMARTHooks)
     {
         super._afterBurn(from, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterRecoverTokens(
+        address lostWallet,
+        address newWallet
+    )
+        internal
+        virtual
+        override(SMARTCustodian, SMARTHooks)
+    {
+        super._afterRecoverTokens(lostWallet, newWallet);
     }
 
     // --- Internal Functions (Overrides) ---

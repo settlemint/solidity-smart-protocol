@@ -417,23 +417,20 @@ contract SMARTTokenUpgradeable is
         _smart_batchForcedTransfer(fromList, toList, amounts);
     }
 
-    /// @notice Recovers tokens from a lost wallet to a new wallet for an investor.
-    /// @dev Requires OnchainID verification. Only callable by `RECOVERY_ROLE`.
-    /// @param lostWallet The address of the lost wallet.
-    /// @param newWallet The address of the new wallet.
-    /// @param investorOnchainID The investor's OnchainID for verification.
-    /// @return `true` if successful.
-    function recoveryAddress(
+    /// @notice Recovers tokens from a lost wallet to a new wallet for an investor, based on their OnchainID.
+    /// @dev This function helps users regain access to their tokens if they lose control of their private keys,
+    /// provided their identity is verified. Only callable by an address with `RECOVERY_ROLE`.
+    /// @param lostWallet The address of the compromised or lost wallet.
+    /// @param newWallet The address of the new wallet to which tokens will be transferred.
+    function forcedRecoverTokens(
         address lostWallet,
-        address newWallet,
-        address investorOnchainID
+        address newWallet
     )
         external
         override
         onlyAccessManagerRole(RECOVERY_ROLE)
-        returns (bool)
     {
-        return _smart_recoveryAddress(lostWallet, newWallet, investorOnchainID);
+        _smart_recoverTokens(lostWallet, newWallet);
     }
 
     // --- ISMARTPausable Implementation ---
@@ -633,6 +630,18 @@ contract SMARTTokenUpgradeable is
     {
         // SMARTCustodianUpgradeable, SMARTPausableUpgradeable do not implement _afterBurn
         super._afterBurn(from, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterRecoverTokens(
+        address lostWallet,
+        address newWallet
+    )
+        internal
+        virtual
+        override(SMARTCustodianUpgradeable, SMARTHooks)
+    {
+        super._afterRecoverTokens(lostWallet, newWallet);
     }
 
     /// @notice Internal hook called after any token redemption operation.

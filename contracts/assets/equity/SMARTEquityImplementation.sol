@@ -313,17 +313,15 @@ contract SMARTEquityImplementation is
         _smart_batchForcedTransfer(fromList, toList, amounts);
     }
 
-    function recoveryAddress(
+    function forcedRecoverTokens(
         address lostWallet,
-        address newWallet,
-        address investorOnchainID
+        address newWallet
     )
         external
         override
         onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
-        returns (bool)
     {
-        return _smart_recoveryAddress(lostWallet, newWallet, investorOnchainID);
+        _smart_recoverTokens(lostWallet, newWallet);
     }
 
     // --- ISMARTPausable Implementation ---
@@ -447,6 +445,18 @@ contract SMARTEquityImplementation is
     /// @inheritdoc SMARTHooks
     function _afterBurn(address from, uint256 amount) internal virtual override(SMARTUpgradeable, SMARTHooks) {
         super._afterBurn(from, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterRecoverTokens(
+        address lostWallet,
+        address newWallet
+    )
+        internal
+        virtual
+        override(SMARTCustodianUpgradeable, SMARTHooks)
+    {
+        super._afterRecoverTokens(lostWallet, newWallet);
     }
 
     // --- Internal Functions (Overrides) ---

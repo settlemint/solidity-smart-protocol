@@ -454,17 +454,15 @@ contract SMARTBondImplementation is
         _smart_batchForcedTransfer(fromList, toList, amounts);
     }
 
-    function recoveryAddress(
+    function forcedRecoverTokens(
         address lostWallet,
-        address newWallet,
-        address investorOnchainID
+        address newWallet
     )
         external
         override
         onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
-        returns (bool)
     {
-        return _smart_recoveryAddress(lostWallet, newWallet, investorOnchainID);
+        _smart_recoverTokens(lostWallet, newWallet);
     }
 
     // --- ISMARTPausable Implementation ---
@@ -638,6 +636,18 @@ contract SMARTBondImplementation is
         override(SMARTUpgradeable, SMARTHistoricalBalancesUpgradeable, SMARTHooks)
     {
         super._afterBurn(from, amount);
+    }
+
+    /// @inheritdoc SMARTHooks
+    function _afterRecoverTokens(
+        address lostWallet,
+        address newWallet
+    )
+        internal
+        virtual
+        override(SMARTCustodianUpgradeable, SMARTHooks)
+    {
+        super._afterRecoverTokens(lostWallet, newWallet);
     }
 
     // --- Internal Functions (Overrides) ---
