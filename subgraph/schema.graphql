@@ -133,6 +133,7 @@ type Token @entity(immutable: false) {
   totalSupply: BigDecimal!
   totalSupplyExact: BigInt!
   pausable: TokenPausable
+  collateral: TokenCollateral
 }
 
 type TokenBalance @entity(immutable: false) {
