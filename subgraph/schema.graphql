@@ -123,7 +123,7 @@ type Token @entity(immutable: false) {
   id: Bytes!
   account: Account!
   accessControl: AccessControl
-  identity: TokenIdentity
+  identity: Identity
   balances: [TokenBalance!]! @derivedFrom(field: "token")
   type: String!
   tokenFactory: TokenFactory
@@ -141,6 +141,7 @@ type TokenBalance @entity(immutable: false) {
   account: Account!
   value: BigDecimal!
   valueExact: BigInt!
+  isFrozen: Boolean!
   frozen: BigDecimal!
   frozenExact: BigInt!
   available: BigDecimal!
