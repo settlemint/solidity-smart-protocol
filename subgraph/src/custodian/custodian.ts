@@ -5,8 +5,6 @@ import {
   TokensUnfrozen,
 } from "../../../generated/templates/Custodian/Custodian";
 import { fetchEvent } from "../event/fetch/event";
-import { fetchCustodian } from "./fetch/custodian";
-import { setBigNumber } from "../bignumber/bignumber";
 import { fetchToken } from "../token/fetch/token";
 import {
   decreaseTokenBalanceFrozen,
@@ -21,8 +19,6 @@ export function handleAddressFrozen(event: AddressFrozen): void {
   fetchEvent(event, "AddressFrozen");
   const token = fetchToken(event.address);
 
-  const custodianContract = CustodianContract.bind(event.address);
-
   if (event.params.isFrozen) {
     // If an address is frozen, set the total frozen amount to the balance value
     const balance = fetchTokenBalance(event.address, event.params.userAddress);
@@ -32,6 +28,8 @@ export function handleAddressFrozen(event: AddressFrozen): void {
       balance.valueExact
     );
   } else {
+    const custodianContract = CustodianContract.bind(event.address);
+
     // Restore the original frozen amount from the custodian contract
     const frozenTokens = custodianContract.getFrozenTokens(
       event.params.userAddress
@@ -52,20 +50,12 @@ export function handleRecoverySuccess(event: RecoverySuccess): void {
 
 export function handleTokensFrozen(event: TokensFrozen): void {
   fetchEvent(event, "TokensFrozen");
-  const custodian = fetchCustodian(event.address);
   const token = fetchToken(event.address);
   increaseTokenBalanceFrozen(token, event.params.user, event.params.amount);
-  const updatedAmount = custodian.totalFrozenExact.plus(event.params.amount);
-  setBigNumber(custodian, "frozen", updatedAmount, token.decimals);
-  custodian.save();
 }
 
 export function handleTokensUnfrozen(event: TokensUnfrozen): void {
   fetchEvent(event, "TokensUnfrozen");
-  const custodian = fetchCustodian(event.address);
   const token = fetchToken(event.address);
   decreaseTokenBalanceFrozen(token, event.params.user, event.params.amount);
-  const updatedAmount = custodian.totalFrozenExact.minus(event.params.amount);
-  setBigNumber(custodian, "frozen", updatedAmount, token.decimals);
-  custodian.save();
 }

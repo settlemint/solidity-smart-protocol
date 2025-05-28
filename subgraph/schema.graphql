@@ -121,7 +121,6 @@ type Token @entity(immutable: false) {
   totalSupply: BigDecimal!
   totalSupplyExact: BigInt!
   pausable: TokenPausable
-  custodian: TokenCustodian
 }
 
 type TokenBalance @entity(immutable: false) {
@@ -156,10 +155,4 @@ type TokenIdentityClaim @entity(immutable: false) {
   data: Bytes
   uri: String
   revoked: Boolean!
-}
-
-type TokenCustodian @entity(immutable: false) {
-  id: Bytes!
-  totalFrozen: BigDecimal!
-  totalFrozenExact: BigInt!
 }

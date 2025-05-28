@@ -40,8 +40,7 @@ export function fetchToken(address: Address): Token {
       BurnableTemplate.create(address);
     }
     if (tokenContract.supportsInterface(InterfaceIds.ISMARTCustodian)) {
-      token.custodian = fetchCustodian(address).id;
-      token.save();
+      fetchCustodian(address);
     }
   }
 

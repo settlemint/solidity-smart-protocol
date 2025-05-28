@@ -17,8 +17,9 @@ export function fetchTokenBalance(
     const token = fetchToken(tokenAddress);
     tokenBalance.token = token.id;
     tokenBalance.account = fetchAccount(accountAddress).id;
-    setBigNumber(tokenBalance, "value", BigInt.fromI32(0), token.decimals);
-    setBigNumber(tokenBalance, "frozen", BigInt.fromI32(0), token.decimals);
+    setBigNumber(tokenBalance, "value", BigInt.zero(), token.decimals);
+    setBigNumber(tokenBalance, "frozen", BigInt.zero(), token.decimals);
+    setBigNumber(tokenBalance, "available", BigInt.zero(), token.decimals);
     tokenBalance.save();
   }
 

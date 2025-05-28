@@ -10,10 +10,12 @@ export function increaseTokenBalanceValue(
 ): void {
   const balance = fetchTokenBalance(Address.fromBytes(token.id), account);
 
+  const newValue = balance.valueExact.plus(value);
+  setBigNumber(balance, "value", newValue, token.decimals);
   setBigNumber(
     balance,
-    "value",
-    balance.valueExact.plus(value),
+    "available",
+    newValue.minus(balance.frozenExact),
     token.decimals
   );
 
@@ -27,10 +29,12 @@ export function decreaseTokenBalanceValue(
 ): void {
   const balance = fetchTokenBalance(Address.fromBytes(token.id), account);
 
+  const newValue = balance.valueExact.minus(value);
+  setBigNumber(balance, "value", newValue, token.decimals);
   setBigNumber(
     balance,
-    "value",
-    balance.valueExact.minus(value),
+    "available",
+    newValue.minus(balance.frozenExact),
     token.decimals
   );
 
@@ -44,10 +48,12 @@ export function increaseTokenBalanceFrozen(
 ): void {
   const balance = fetchTokenBalance(Address.fromBytes(token.id), account);
 
+  const newFrozen = balance.frozenExact.plus(amount);
+  setBigNumber(balance, "frozen", newFrozen, token.decimals);
   setBigNumber(
     balance,
-    "frozen",
-    balance.frozenExact.plus(amount),
+    "available",
+    balance.valueExact.minus(newFrozen),
     token.decimals
   );
 
@@ -62,6 +68,12 @@ export function updateTokenBalanceFrozen(
   const balance = fetchTokenBalance(Address.fromBytes(token.id), account);
 
   setBigNumber(balance, "frozen", newBalance, token.decimals);
+  setBigNumber(
+    balance,
+    "available",
+    balance.valueExact.minus(newBalance),
+    token.decimals
+  );
 
   balance.save();
 }
@@ -73,10 +85,12 @@ export function decreaseTokenBalanceFrozen(
 ): void {
   const balance = fetchTokenBalance(Address.fromBytes(token.id), account);
 
+  const newFrozen = balance.frozenExact.minus(amount);
+  setBigNumber(balance, "frozen", newFrozen, token.decimals);
   setBigNumber(
     balance,
-    "frozen",
-    balance.frozenExact.minus(amount),
+    "available",
+    balance.valueExact.minus(newFrozen),
     token.decimals
   );
 
