@@ -180,9 +180,7 @@ contract SMARTCrossExtensionTest is Test {
         );
 
         // Create real access manager with owner as admin
-        address[] memory admins = new address[](1);
-        admins[0] = owner;
-        accessManager = systemUtils.createTokenAccessManager(admins);
+        accessManager = systemUtils.createTokenAccessManager(owner);
 
         // Deploy token with all extensions (SMARTToken includes all major extensions)
         uint256[] memory requiredClaimTopics = new uint256[](2);

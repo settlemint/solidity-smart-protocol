@@ -16,6 +16,7 @@ import { IERC734 } from "@onchainid/contracts/interface/IERC734.sol";
 import { ISMARTIdentityFactory } from "./ISMARTIdentityFactory.sol";
 import { ISMARTIdentity } from "./identities/ISMARTIdentity.sol";
 import { ISMARTTokenIdentity } from "./identities/ISMARTTokenIdentity.sol";
+import { ISMART } from "../../interface/ISMART.sol";
 
 // System imports
 import { InvalidSystemAddress } from "../SMARTSystemErrors.sol"; // Assuming this is correctly placed
@@ -52,6 +53,10 @@ contract SMARTIdentityFactoryImplementation is
     /// @notice Prefix used in salt calculation for creating token identities to ensure unique salt generation.
     /// @dev For example, salt might be `keccak256(abi.encodePacked("Token", <tokenAddressHex>))`.
     string public constant TOKEN_SALT_PREFIX = "Token";
+    /// @notice Prefix used in salt calculation for creating token identities with metadata-based salts.
+    /// @dev For example, salt might be `keccak256(abi.encodePacked("TokenMeta", <name>, <symbol>, <decimals>,
+    /// <tokenAddressHex>))`.
+    string public constant TOKEN_METADATA_SALT_PREFIX = "TokenMeta";
     /// @notice Prefix used in salt calculation for creating wallet identities to ensure unique salt generation.
     /// @dev For example, salt might be `keccak256(abi.encodePacked("OID", <walletAddressHex>))` (OID stands for
     /// OnchainID).
@@ -245,7 +250,7 @@ contract SMARTIdentityFactoryImplementation is
     /// It performs several steps:
     /// 1. Validates that `_token` and `_tokenOwner` are not zero addresses and that an identity doesn't already exist
     /// for this token.
-    /// 2. Calls `_createAndRegisterTokenIdentity` to handle the deterministic deployment of the
+    /// 2. Calls `_createAndRegisterTokenIdentityWithMetadata` to handle the deterministic deployment of the
     /// `SMARTTokenIdentityProxy`.
     ///    The `_tokenOwner` is passed as the `_initialManager` to the proxy constructor.
     /// 3. Stores the mapping from the `_token` address to the new `identity` contract address.
@@ -268,7 +273,7 @@ contract SMARTIdentityFactoryImplementation is
         if (_accessManager == address(0)) revert ZeroAddressNotAllowed();
         if (_tokenIdentities[_token] != address(0)) revert TokenAlreadyLinked(_token);
 
-        // Deploy identity with _tokenOwner as the initial management key
+        // Deploy identity with metadata-based salt by querying the token directly
         address identity = _createAndRegisterTokenIdentity(_token, _accessManager);
 
         _tokenIdentities[_token] = identity;
@@ -326,15 +331,19 @@ contract SMARTIdentityFactoryImplementation is
 
     /// @inheritdoc ISMARTIdentityFactory
     /// @notice Computes the deterministic address at which a `SMARTTokenIdentityProxy` for a token contract will be
-    /// deployed (or was deployed).
-    /// @dev Similar to `calculateWalletIdentityAddress`, but for token identities. It uses the `TOKEN_SALT_PREFIX`.
-    ///      It calls `_computeTokenProxyAddress` with the calculated salt and `_initialManager`.
-    /// @param _tokenAddress The token contract address for which to calculate the potential identity contract address.
+    /// deployed (or was deployed) using metadata-based salt.
+    /// @dev Uses token metadata (name, symbol, decimals) combined with token address to calculate deployment address.
+    ///      It calls `_computeTokenProxyAddress` with the calculated metadata-based salt and `_initialManager`.
+    /// @param _name The name of the token used in salt generation.
+    /// @param _symbol The symbol of the token used in salt generation.
+    /// @param _decimals The decimals of the token used in salt generation.
     /// @param _initialManager The address that would be (or was) set as the initial management key for the token
     /// identity's proxy constructor.
     /// @return address The pre-computed CREATE2 deployment address for the token's identity contract.
     function calculateTokenIdentityAddress(
-        address _tokenAddress,
+        string calldata _name,
+        string calldata _symbol,
+        uint8 _decimals,
         address _initialManager
     )
         public
@@ -343,7 +352,7 @@ contract SMARTIdentityFactoryImplementation is
         override
         returns (address)
     {
-        (bytes32 saltBytes,) = _calculateSalt(TOKEN_SALT_PREFIX, _tokenAddress);
+        (bytes32 saltBytes,) = _calculateTokenSalt(TOKEN_METADATA_SALT_PREFIX, _name, _symbol, _decimals);
         return _computeTokenProxyAddress(saltBytes, _initialManager);
     }
 
@@ -380,14 +389,22 @@ contract SMARTIdentityFactoryImplementation is
         return identity;
     }
 
-    /// @notice Internal function to handle the creation and registration of a token identity.
-    /// @dev Calculates a unique salt for the `_tokenAddress`, checks if the salt has been taken, deploys
-    ///      the `SMARTTokenIdentityProxy` using `_deployTokenProxy`, and marks the salt as taken.
-    /// @param _tokenAddress The address of the token for which to create an identity.
+    /// @notice Internal function to handle the creation and registration of a token identity using metadata-based salt.
+    /// @dev Calculates a unique salt for the `_tokenAddress` using metadata queried from the ISMART interface,
+    ///      checks if the salt has been taken, deploys the `SMARTTokenIdentityProxy` using `_deployTokenProxy`, and
+    /// marks the salt as taken.
+    /// @param _tokenAddress The address of the token (must implement ISMART) for which to create an identity.
     /// @param _accessManager The address of the access manager contract that will be set as the initial owner/manager
     /// @return address The address of the newly deployed `SMARTTokenIdentityProxy`.
     function _createAndRegisterTokenIdentity(address _tokenAddress, address _accessManager) private returns (address) {
-        (bytes32 saltBytes, string memory saltString) = _calculateSalt(TOKEN_SALT_PREFIX, _tokenAddress);
+        // Query token metadata from ISMART interface
+        ISMART token = ISMART(_tokenAddress);
+        string memory name = token.name();
+        string memory symbol = token.symbol();
+        uint8 decimals = token.decimals();
+
+        (bytes32 saltBytes, string memory saltString) =
+            _calculateTokenSalt(TOKEN_METADATA_SALT_PREFIX, name, symbol, decimals);
 
         if (_saltTakenByteSalt[saltBytes]) revert SaltAlreadyTaken(saltString);
 
@@ -416,6 +433,31 @@ contract SMARTIdentityFactoryImplementation is
         returns (bytes32 saltBytes, string memory saltString)
     {
         saltString = string.concat(_saltPrefix, Strings.toHexString(_address));
+        saltBytes = _calculateSaltFromString(_system, saltString);
+        // No explicit return needed due to named return variables
+    }
+
+    /// @notice Calculates a deterministic salt for CREATE2 deployment based on token metadata.
+    /// @dev Concatenates the `_saltPrefix` with token metadata (name, symbol, decimals) and the token address.
+    ///      The result is then keccak256 hashed to produce the `bytes32` salt.
+    ///      This ensures unique salts based on token characteristics.
+    /// @param _saltPrefix A string prefix to ensure salt uniqueness (e.g., "TokenMeta").
+    /// @param _name The name of the token.
+    /// @param _symbol The symbol of the token.
+    /// @param _decimals The decimals of the token.
+    /// @return saltBytes The calculated `bytes32` salt value.
+    /// @return saltString The string representation of the salt before hashing, useful for error messages.
+    function _calculateTokenSalt(
+        string memory _saltPrefix,
+        string memory _name,
+        string memory _symbol,
+        uint8 _decimals
+    )
+        internal
+        view
+        returns (bytes32 saltBytes, string memory saltString)
+    {
+        saltString = string.concat(_saltPrefix, _name, _symbol, Strings.toString(_decimals));
         saltBytes = _calculateSaltFromString(_system, saltString);
         // No explicit return needed due to named return variables
     }

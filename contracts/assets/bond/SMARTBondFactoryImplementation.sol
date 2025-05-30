@@ -52,12 +52,15 @@ contract SMARTBondFactoryImplementation is ISMARTBondFactory, AbstractSMARTToken
         // Create the access manager for the token
         ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
 
+        address tokenIdentityAddress = _predictTokenIdentityAddress(name_, symbol_, decimals_, address(accessManager));
+
         // ABI encode constructor arguments for SMARTBondProxy
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
             symbol_,
             decimals_,
+            tokenIdentityAddress,
             cap_,
             maturityDate_,
             faceValue_,
@@ -73,7 +76,13 @@ contract SMARTBondFactoryImplementation is ISMARTBondFactory, AbstractSMARTToken
         bytes memory proxyBytecode = type(SMARTBondProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        deployedBondAddress = _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
+        address deployedTokenIdentityAddress;
+        (deployedBondAddress, deployedTokenIdentityAddress) =
+            _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
+
+        if (deployedTokenIdentityAddress != tokenIdentityAddress) {
+            revert TokenIdentityAddressMismatch(deployedTokenIdentityAddress, tokenIdentityAddress);
+        }
 
         return deployedBondAddress;
     }
@@ -114,11 +123,13 @@ contract SMARTBondFactoryImplementation is ISMARTBondFactory, AbstractSMARTToken
     {
         bytes memory salt = _buildSaltInput(name_, symbol_, decimals_);
         address accessManagerAddress_ = _predictAccessManagerAddress(salt);
+        address tokenIdentityAddress = _predictTokenIdentityAddress(name_, symbol_, decimals_, accessManagerAddress_);
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
             symbol_,
             decimals_,
+            tokenIdentityAddress,
             cap_,
             maturityDate_,
             faceValue_,

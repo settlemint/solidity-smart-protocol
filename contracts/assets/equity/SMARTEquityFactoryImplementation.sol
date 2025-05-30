@@ -43,12 +43,15 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
         // Create the access manager for the token
         ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
 
-        // ABI encode constructor arguments for SMARTDepositProxy
+        address tokenIdentityAddress = _predictTokenIdentityAddress(name_, symbol_, decimals_, address(accessManager));
+
+        // ABI encode constructor arguments for SMARTEquityProxy
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
             symbol_,
             decimals_,
+            tokenIdentityAddress,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),
@@ -56,11 +59,17 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
             address(accessManager)
         );
 
-        // Get the creation bytecode of SMARTDepositProxy
+        // Get the creation bytecode of SMARTEquityProxy
         bytes memory proxyBytecode = type(SMARTEquityProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        deployedEquityAddress = _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
+        address deployedTokenIdentityAddress;
+        (deployedEquityAddress, deployedTokenIdentityAddress) =
+            _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
+
+        if (deployedTokenIdentityAddress != tokenIdentityAddress) {
+            revert TokenIdentityAddressMismatch(deployedTokenIdentityAddress, tokenIdentityAddress);
+        }
 
         return deployedEquityAddress;
     }
@@ -93,11 +102,13 @@ contract SMARTEquityFactoryImplementation is ISMARTEquityFactory, AbstractSMARTT
     {
         bytes memory salt = _buildSaltInput(name_, symbol_, decimals_);
         address accessManagerAddress_ = _predictAccessManagerAddress(salt);
+        address tokenIdentityAddress = _predictTokenIdentityAddress(name_, symbol_, decimals_, accessManagerAddress_);
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
             symbol_,
             decimals_,
+            tokenIdentityAddress,
             requiredClaimTopics_,
             initialModulePairs_,
             _identityRegistry(),

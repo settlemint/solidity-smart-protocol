@@ -44,11 +44,11 @@ interface ISMARTIdentityFactory is IERC165 {
         external
         returns (address identityContract);
 
-    /// @notice Creates a new on-chain identity specifically for a token contract.
-    /// @dev This function is expected to deploy a new identity contract (e.g., a `SMARTTokenIdentityProxy`)
-    ///      and associate it with the `_token` contract address. An `_accessManager` is specified to manage this token
-    /// identity.
-    /// @param _token The address of the token contract for which the identity is being created.
+    /// @notice Creates a new on-chain identity specifically for a token contract using metadata-based salt.
+    /// @dev This function deploys a new identity contract (e.g., a `SMARTTokenIdentityProxy`) using the token's
+    ///      metadata (name, symbol, decimals) queried from the ISMART interface to generate a unique salt.
+    ///      This provides more predictable and meaningful identity addresses based on token characteristics.
+    /// @param _token The address of the token contract (must implement ISMART) for which the identity is being created.
     /// @param _accessManager The address of the access manager contract to be used for the token identity.
     /// @return tokenIdentityContract The address of the newly deployed token identity contract.
     function createTokenIdentity(
@@ -91,15 +91,19 @@ interface ISMARTIdentityFactory is IERC165 {
         returns (address predictedAddress);
 
     /// @notice Calculates the deterministic address at which an identity contract for a token *would be* or *was*
-    /// deployed.
-    /// @dev Similar to `calculateWalletIdentityAddress`, but for token identities. It uses a salt often derived from
-    /// `_tokenAddress`.
-    /// @param _tokenAddress The token contract address for which the identity address is being calculated.
+    /// deployed using metadata-based salt.
+    /// @dev Uses token metadata (name, symbol, decimals) combined with token address to calculate the deployment
+    ///      address. This provides a way to predict addresses for tokens based on their characteristics.
+    /// @param _name The name of the token used in salt generation.
+    /// @param _symbol The symbol of the token used in salt generation.
+    /// @param _decimals The decimals of the token used in salt generation.
     /// @param _initialManager The address that would be (or was) set as the initial manager during the token identity's
     /// creation.
     /// @return predictedAddress The pre-computed or actual deployment address of the token's identity contract.
     function calculateTokenIdentityAddress(
-        address _tokenAddress,
+        string calldata _name,
+        string calldata _symbol,
+        uint8 _decimals,
         address _initialManager
     )
         external

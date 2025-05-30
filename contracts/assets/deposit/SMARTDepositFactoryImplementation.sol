@@ -75,12 +75,15 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         // Create the access manager for the token
         ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
 
+        address tokenIdentityAddress = _predictTokenIdentityAddress(name_, symbol_, decimals_, address(accessManager));
+
         // ABI encode constructor arguments for SMARTDepositProxy
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
             symbol_,
             decimals_,
+            tokenIdentityAddress,
             _collateralClaimTopicId,
             requiredClaimTopics_,
             initialModulePairs_,
@@ -93,7 +96,13 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
         bytes memory proxyBytecode = type(SMARTDepositProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        deployedDepositAddress = _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
+        address deployedTokenIdentityAddress;
+        (deployedDepositAddress, deployedTokenIdentityAddress) =
+            _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
+
+        if (deployedTokenIdentityAddress != tokenIdentityAddress) {
+            revert TokenIdentityAddressMismatch(deployedTokenIdentityAddress, tokenIdentityAddress);
+        }
 
         return deployedDepositAddress;
     }
@@ -126,12 +135,14 @@ contract SMARTDepositFactoryImplementation is ISMARTDepositFactory, AbstractSMAR
     {
         bytes memory salt = _buildSaltInput(name_, symbol_, decimals_);
         address accessManagerAddress_ = _predictAccessManagerAddress(salt);
+        address tokenIdentityAddress = _predictTokenIdentityAddress(name_, symbol_, decimals_, accessManagerAddress_);
         // ABI encode constructor arguments for SMARTDepositProxy
         bytes memory constructorArgs = abi.encode(
             address(this), // The factory address is part of the constructor args
             name_,
             symbol_,
             decimals_,
+            tokenIdentityAddress,
             _collateralClaimTopicId,
             requiredClaimTopics_,
             initialModulePairs_,

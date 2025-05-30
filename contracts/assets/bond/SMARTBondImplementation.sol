@@ -100,6 +100,8 @@ contract SMARTBondImplementation is
     /// @param name_ The name of the token.
     /// @param symbol_ The symbol of the token.
     /// @param decimals_ The number of decimals the token uses.
+    /// @param onchainID_ Optional address of an existing onchain identity contract. Pass address(0) to create a new
+    /// one.
     /// @param cap_ Token cap
     /// @param maturityDate_ Bond maturity date
     /// @param faceValue_ Bond face value
@@ -113,6 +115,7 @@ contract SMARTBondImplementation is
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
+        address onchainID_,
         uint256 cap_,
         uint256 maturityDate_,
         uint256 faceValue_,
@@ -142,7 +145,7 @@ contract SMARTBondImplementation is
             name_,
             symbol_,
             decimals_,
-            address(0),
+            onchainID_,
             identityRegistry_,
             compliance_,
             requiredClaimTopics_,

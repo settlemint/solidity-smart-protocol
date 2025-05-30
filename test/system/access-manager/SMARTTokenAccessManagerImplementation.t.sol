@@ -34,9 +34,7 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         implementation = new SMARTTokenAccessManagerImplementation(forwarder);
 
         // Deploy proxy with initialization data
-        address[] memory initialAdmins = new address[](1);
-        initialAdmins[0] = admin;
-        bytes memory initData = abi.encodeWithSelector(implementation.initialize.selector, initialAdmins);
+        bytes memory initData = abi.encodeWithSelector(implementation.initialize.selector, admin);
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         accessManager = ISMARTTokenAccessManager(address(proxy));
     }
@@ -46,44 +44,9 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         assertTrue(IAccessControl(address(accessManager)).hasRole(implementation.DEFAULT_ADMIN_ROLE(), admin));
     }
 
-    function test_InitializeWithMultipleAdmins() public {
-        // Deploy new instance with multiple admins
-        address[] memory multipleAdmins = new address[](3);
-        multipleAdmins[0] = admin;
-        multipleAdmins[1] = user1;
-        multipleAdmins[2] = user2;
-
-        SMARTTokenAccessManagerImplementation newImpl = new SMARTTokenAccessManagerImplementation(forwarder);
-        bytes memory initData = abi.encodeWithSelector(newImpl.initialize.selector, multipleAdmins);
-        ERC1967Proxy proxy = new ERC1967Proxy(address(newImpl), initData);
-        ISMARTTokenAccessManager newManager = ISMARTTokenAccessManager(address(proxy));
-
-        // Verify all admins have DEFAULT_ADMIN_ROLE
-        assertTrue(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), admin));
-        assertTrue(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), user1));
-        assertTrue(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), user2));
-    }
-
-    function test_InitializeWithEmptyAdmins() public {
-        // Deploy new instance with empty admins array
-        address[] memory emptyAdmins = new address[](0);
-
-        SMARTTokenAccessManagerImplementation newImpl = new SMARTTokenAccessManagerImplementation(forwarder);
-        bytes memory initData = abi.encodeWithSelector(newImpl.initialize.selector, emptyAdmins);
-        ERC1967Proxy proxy = new ERC1967Proxy(address(newImpl), initData);
-        ISMARTTokenAccessManager newManager = ISMARTTokenAccessManager(address(proxy));
-
-        // Verify no one has admin role
-        assertFalse(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), admin));
-        assertFalse(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), user1));
-    }
-
     function test_CannotInitializeTwice() public {
-        address[] memory newAdmins = new address[](1);
-        newAdmins[0] = user1;
-
         vm.expectRevert();
-        SMARTTokenAccessManagerImplementation(address(accessManager)).initialize(newAdmins);
+        SMARTTokenAccessManagerImplementation(address(accessManager)).initialize(admin);
     }
 
     function test_BatchGrantRoleSuccess() public {
@@ -214,11 +177,8 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
 
     function test_DirectCallToImplementation() public {
         // Test calling initialize directly on implementation (should fail due to _disableInitializers)
-        address[] memory admins = new address[](1);
-        admins[0] = admin;
-
         vm.expectRevert();
-        implementation.initialize(admins);
+        implementation.initialize(admin);
     }
 
     function test_ERC2771ContextIntegration() public view {

@@ -27,9 +27,7 @@ contract SMARTTokenAccessManagerTest is Test {
         systemUtils = new SystemUtils(admin);
 
         // Create a fresh access manager for testing
-        address[] memory initialAdmins = new address[](1);
-        initialAdmins[0] = admin;
-        accessManager = systemUtils.createTokenAccessManager(initialAdmins);
+        accessManager = systemUtils.createTokenAccessManager(admin);
 
         // Get the implementation for direct testing
         implementation = new SMARTTokenAccessManagerImplementation(forwarder);
@@ -116,49 +114,9 @@ contract SMARTTokenAccessManagerTest is Test {
         vm.stopPrank();
     }
 
-    function test_MultipleAdmins() public {
-        // Test with multiple admins
-        address[] memory admins = new address[](2);
-        admins[0] = admin;
-        admins[1] = user1;
-
-        ISMARTTokenAccessManager multiAdminManager = systemUtils.createTokenAccessManager(admins);
-
-        // Both should have admin role
-        assertTrue(IAccessControl(address(multiAdminManager)).hasRole(DEFAULT_ADMIN_ROLE, admin));
-        assertTrue(IAccessControl(address(multiAdminManager)).hasRole(DEFAULT_ADMIN_ROLE, user1));
-    }
-
-    function test_EmptyAdminsList() public {
-        // Test creating with empty admins list
-        address[] memory emptyAdmins = new address[](0);
-
-        // This should still create a manager, but no one will have admin access initially
-        ISMARTTokenAccessManager emptyAdminManager = systemUtils.createTokenAccessManager(emptyAdmins);
-
-        // Verify the manager exists
-        assertTrue(address(emptyAdminManager) != address(0));
-
-        // Verify no one has admin role
-        assertFalse(IAccessControl(address(emptyAdminManager)).hasRole(DEFAULT_ADMIN_ROLE, admin));
-        assertFalse(IAccessControl(address(emptyAdminManager)).hasRole(DEFAULT_ADMIN_ROLE, user1));
-
-        // Verify role operations fail when attempted by non-admins
-        bytes32 testRole = keccak256("TEST_ROLE");
-
-        vm.prank(admin);
-        vm.expectRevert();
-        IAccessControl(address(emptyAdminManager)).grantRole(testRole, user1);
-
-        vm.prank(user1);
-        vm.expectRevert();
-        IAccessControl(address(emptyAdminManager)).grantRole(testRole, user2);
-    }
-
     function test_ProxyFunctionality() public {
         // Test that the proxy correctly delegates to implementation
-        SMARTTokenAccessManagerProxy proxy =
-            new SMARTTokenAccessManagerProxy(address(systemUtils.system()), new address[](0));
+        SMARTTokenAccessManagerProxy proxy = new SMARTTokenAccessManagerProxy(address(systemUtils.system()), admin);
 
         // Verify it's a proxy by checking it has no direct code for the interface
         assertTrue(address(proxy) != address(0));

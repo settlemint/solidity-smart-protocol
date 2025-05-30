@@ -20,6 +20,8 @@ interface ISMARTEquity is ISMART, ISMARTTokenAccessManaged, ISMARTCustodian, ISM
     /// @param name_ The name of the equity token.
     /// @param symbol_ The symbol of the equity token.
     /// @param decimals_ The number of decimals for the equity token.
+    /// @param onchainID_ Optional address of an existing onchain identity contract. Pass address(0) to create a new
+    /// one.
     /// @param requiredClaimTopics_ An array of claim topics required for interacting with the equity token.
     /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
     /// @param identityRegistry_ The address of the identity registry contract.
@@ -29,6 +31,7 @@ interface ISMARTEquity is ISMART, ISMARTTokenAccessManaged, ISMARTCustodian, ISM
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
+        address onchainID_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,

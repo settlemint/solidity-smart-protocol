@@ -57,6 +57,8 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @notice Error when a predicted CREATE2 address for an access manager is already marked as deployed by this
     /// factory.
     error AccessManagerAlreadyDeployed(address predictedAddress);
+    /// @notice Error when a token identity address mismatch is detected.
+    error TokenIdentityAddressMismatch(address deployedTokenIdentityAddress, address tokenIdentityAddress);
 
     // --- State Variables ---
 
@@ -162,6 +164,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
 
     /// @notice Builds salt input data for token creation.
     /// @dev Internal helper to build the salt input for access manager and related operations.
+    /// Includes the caller address to ensure unique deployments per caller.
     /// @param name_ The name of the token.
     /// @param symbol_ The symbol of the token.
     /// @param decimals_ The number of decimals for the token.
@@ -181,17 +184,19 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @notice Prepares the data required for access manager creation using CREATE2.
     /// @dev Internal helper function to calculate salt and full creation code.
     /// @param accessManagerSaltInputData The ABI encoded data to be used for salt calculation for the access manager.
+    /// @param initialAdmin The address to be set as the initial admin of the access manager.
     /// @return salt The calculated salt for CREATE2 deployment.
     /// @return fullCreationCode The complete bytecode for deploying the access manager.
-    function _prepareAccessManagerCreationData(bytes memory accessManagerSaltInputData)
+    function _prepareAccessManagerCreationData(
+        bytes memory accessManagerSaltInputData,
+        address initialAdmin
+    )
         internal
         view
         returns (bytes32 salt, bytes memory fullCreationCode)
     {
         salt = _calculateAccessManagerSalt(_systemAddress, accessManagerSaltInputData);
-        address[] memory initialAdmins = new address[](1); // Factory is initial admin
-        initialAdmins[0] = address(this);
-        bytes memory constructorArgs = abi.encode(_systemAddress, initialAdmins);
+        bytes memory constructorArgs = abi.encode(_systemAddress, initialAdmin);
         bytes memory bytecode = type(SMARTTokenAccessManagerProxy).creationCode;
         fullCreationCode = bytes.concat(bytecode, constructorArgs);
     }
@@ -204,10 +209,27 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         view
         returns (address predictedAddress)
     {
-        (bytes32 salt, bytes memory fullCreationCode) = _prepareAccessManagerCreationData(accessManagerSaltInputData);
+        // Use _msgSender() as the initial admin to match actual deployment behavior
+        (bytes32 salt, bytes memory fullCreationCode) =
+            _prepareAccessManagerCreationData(accessManagerSaltInputData, _msgSender());
         bytes32 bytecodeHash = keccak256(fullCreationCode);
         predictedAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
         return predictedAddress;
+    }
+
+    function _predictTokenIdentityAddress(
+        string memory name,
+        string memory symbol,
+        uint8 decimals,
+        address initialManager
+    )
+        internal
+        view
+        returns (address)
+    {
+        return ISMARTIdentityFactory(ISMARTSystem(_systemAddress).identityFactoryProxy()).calculateTokenIdentityAddress(
+            name, symbol, decimals, initialManager
+        );
     }
 
     /// @notice Creates a new access manager for a token using CREATE2.
@@ -221,24 +243,11 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         returns (ISMARTTokenAccessManager)
     {
         // Calculate salt and creation code once
-        bytes32 salt = _calculateAccessManagerSalt(_systemAddress, accessManagerSaltInputData);
+        (bytes32 salt, bytes memory fullCreationCode) =
+            _prepareAccessManagerCreationData(accessManagerSaltInputData, _msgSender());
 
-        // Use inline array assembly for gas efficiency
-        address[] memory initialAdmins;
-        assembly {
-            initialAdmins := mload(0x40)
-            mstore(0x40, add(initialAdmins, 0x40))
-            mstore(initialAdmins, 1)
-            mstore(add(initialAdmins, 0x20), address())
-        }
-
-        bytes memory constructorArgs = abi.encode(_systemAddress, initialAdmins);
-        bytes memory bytecode = type(SMARTTokenAccessManagerProxy).creationCode;
-        bytes memory fullCreationCode = bytes.concat(bytecode, constructorArgs);
-
-        // Predict address using pre-calculated data
-        bytes32 bytecodeHash = keccak256(fullCreationCode);
-        address predictedAccessManagerAddress = Create2.computeAddress(salt, bytecodeHash, address(this));
+        // Predict address using the same parameters that will be used for deployment
+        address predictedAccessManagerAddress = _predictAccessManagerAddress(accessManagerSaltInputData);
 
         if (isFactoryAccessManager[predictedAccessManagerAddress]) {
             revert AccessManagerAlreadyDeployed(predictedAccessManagerAddress);
@@ -272,7 +281,7 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     )
         internal
         onlyRole(SMARTSystemRoles.TOKEN_DEPLOYER_ROLE)
-        returns (address deployedAddress)
+        returns (address deployedAddress, address deployedTokenIdentityAddress)
     {
         // Calculate salt and creation code once
         bytes32 salt = _calculateSalt(_systemAddress, tokenSaltInputData);
@@ -294,9 +303,11 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
 
         isFactoryToken[deployedAddress] = true;
 
-        _finalizeTokenCreation(deployedAddress, accessManager);
+        address tokenIdentity = _deployTokenIdentity(deployedAddress, accessManager);
 
-        return deployedAddress;
+        emit TokenAssetCreated(_msgSender(), deployedAddress, tokenIdentity, accessManager);
+
+        return (deployedAddress, tokenIdentity);
     }
 
     /// @notice Predicts the deployment address of a proxy using CREATE2.
@@ -325,23 +336,12 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
     /// @dev Sets up token identity, on-chain ID, and necessary roles.
     /// @param tokenAddress The address of the deployed token (proxy).
     /// @param accessManagerAddress The address of the token's access manager.
-    function _finalizeTokenCreation(address tokenAddress, address accessManagerAddress) internal {
+    function _deployTokenIdentity(address tokenAddress, address accessManagerAddress) internal returns (address) {
         ISMARTSystem system_ = ISMARTSystem(_systemAddress);
         ISMARTIdentityFactory identityFactory_ = ISMARTIdentityFactory(system_.identityFactoryProxy());
         address tokenIdentity = identityFactory_.createTokenIdentity(tokenAddress, accessManagerAddress);
 
-        IAccessControl accessManagerCtrl = IAccessControl(accessManagerAddress);
-
-        // Make sure the creator has admin rights on the access manager.
-        accessManagerCtrl.grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
-
-        // Grant the token factory the TOKEN_GOVERNANCE_ROLE to set the onchainID.
-        accessManagerCtrl.grantRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, address(this));
-        ISMART(tokenAddress).setOnchainID(tokenIdentity);
-        accessManagerCtrl.renounceRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, address(this));
-        accessManagerCtrl.renounceRole(DEFAULT_ADMIN_ROLE, address(this));
-
-        emit TokenAssetCreated(_msgSender(), tokenAddress, tokenIdentity, accessManagerAddress);
+        return tokenIdentity;
     }
 
     // --- ERC165 Overrides ---

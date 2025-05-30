@@ -27,13 +27,13 @@ contract SMARTTokenAccessManagerProxy is SMARTSystemProxy {
     /// contract
     ///    via `_performInitializationDelegatecall`.
     /// @param systemAddress The address of the `ISMARTSystem` contract.
-    /// @param initialAdmins The addresses that will be granted initial administrative privileges.
-    constructor(address systemAddress, address[] memory initialAdmins) SMARTSystemProxy(systemAddress) {
+    /// @param initialAdmin The address that will be granted initial administrative privileges.
+    constructor(address systemAddress, address initialAdmin) SMARTSystemProxy(systemAddress) {
         ISMARTSystem system_ = _getSystem();
 
         address implementation = _getSpecificImplementationAddress(system_);
         bytes memory data =
-            abi.encodeWithSelector(SMARTTokenAccessManagerImplementation.initialize.selector, initialAdmins);
+            abi.encodeWithSelector(SMARTTokenAccessManagerImplementation.initialize.selector, initialAdmin);
 
         _performInitializationDelegatecall(implementation, data);
     }
