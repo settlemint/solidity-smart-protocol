@@ -46,7 +46,6 @@ contract SMARTIdentityRegistryProxy is SMARTSystemProxy {
 
         bytes memory data = abi.encodeWithSelector(
             SMARTIdentityRegistryImplementation.initialize.selector,
-            systemAddress,
             initialAdmin,
             identityStorage,
             trustedIssuersRegistry,

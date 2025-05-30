@@ -138,7 +138,6 @@ contract SMARTIdentityRegistryImplementation is
     /// contracts.
     ///     These addresses must not be zero addresses.
     /// It is protected by the `initializer` modifier from OpenZeppelin, ensuring it can only be called once.
-    /// @param systemAddress The address of the deployed `SMARTSystem` contract.
     /// @param initialAdmin The address that will receive initial administrative and registrar privileges.
     /// This address will be responsible for the initial setup and management of the registry.
     /// @param identityStorage_ The address of the deployed `ISMARTIdentityRegistryStorage` contract.
@@ -148,7 +147,6 @@ contract SMARTIdentityRegistryImplementation is
     /// @param topicSchemeRegistry_ The address of the deployed `ISMARTTopicSchemeRegistry` contract.
     /// This contract will be used to validate claim topics against registered schemes.
     function initialize(
-        address systemAddress,
         address initialAdmin,
         address identityStorage_,
         address trustedIssuersRegistry_,
