@@ -70,9 +70,7 @@ abstract contract AbstractSMARTTest is Test {
         claimIssuer = vm.addr(claimIssuerPrivateKey);
 
         // --- Setup access manager ---
-        address[] memory initialAdmins = new address[](1);
-        initialAdmins[0] = tokenIssuer;
-        accessManager = systemUtils.createTokenAccessManager(initialAdmins);
+        accessManager = systemUtils.createTokenAccessManager(tokenIssuer);
 
         // --- Setup utilities
         identityUtils = new IdentityUtils(

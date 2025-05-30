@@ -130,7 +130,7 @@ contract SystemUtils is Test {
         return topicSchemeRegistry.getTopicId(topicName);
     }
 
-    function createTokenAccessManager(address[] memory initialAdmins) external returns (ISMARTTokenAccessManager) {
-        return ISMARTTokenAccessManager(address(new SMARTTokenAccessManagerProxy(address(system), initialAdmins)));
+    function createTokenAccessManager(address initialAdmin) external returns (ISMARTTokenAccessManager) {
+        return ISMARTTokenAccessManager(address(new SMARTTokenAccessManagerProxy(address(system), initialAdmin)));
     }
 }

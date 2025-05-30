@@ -79,11 +79,8 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
     }
 
     function test_CannotInitializeTwice() public {
-        address[] memory newAdmins = new address[](1);
-        newAdmins[0] = user1;
-
         vm.expectRevert();
-        SMARTTokenAccessManagerImplementation(address(accessManager)).initialize(newAdmins);
+        SMARTTokenAccessManagerImplementation(address(accessManager)).initialize(admin);
     }
 
     function test_BatchGrantRoleSuccess() public {
@@ -214,11 +211,8 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
 
     function test_DirectCallToImplementation() public {
         // Test calling initialize directly on implementation (should fail due to _disableInitializers)
-        address[] memory admins = new address[](1);
-        admins[0] = admin;
-
         vm.expectRevert();
-        implementation.initialize(admins);
+        implementation.initialize(admin);
     }
 
     function test_ERC2771ContextIntegration() public view {

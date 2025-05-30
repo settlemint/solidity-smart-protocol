@@ -5,6 +5,8 @@ import "forge-std/Test.sol";
 import "../../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
 import "../../utils/SystemUtils.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { SMARTToken } from "../../examples/SMARTToken.sol";
+import { SMARTComplianceModuleParamPair } from "../../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
 
 contract SMARTIdentityFactoryImplementationTest is Test {
     SystemUtils public systemUtils;
@@ -27,9 +29,7 @@ contract SMARTIdentityFactoryImplementationTest is Test {
 
         vm.startPrank(admin);
 
-        address[] memory initialAdmins = new address[](1);
-        initialAdmins[0] = admin;
-        accessManager = address(systemUtils.createTokenAccessManager(initialAdmins));
+        accessManager = address(systemUtils.createTokenAccessManager(admin));
 
         factory = systemUtils.identityFactory();
 
@@ -112,12 +112,23 @@ contract SMARTIdentityFactoryImplementationTest is Test {
     }
 
     function testCreateTokenIdentityDeterministicAddress() public {
-        address tokenAddress = makeAddr("token");
+        SMARTToken token = new SMARTToken(
+            "Token",
+            "TKN",
+            18,
+            address(0),
+            address(systemUtils.identityRegistry()),
+            address(systemUtils.compliance()),
+            new uint256[](0),
+            new SMARTComplianceModuleParamPair[](0),
+            0,
+            address(accessManager)
+        );
 
-        address predictedAddress = factory.calculateTokenIdentityAddress(tokenAddress, accessManager);
+        address predictedAddress = factory.calculateTokenIdentityAddress("Token", "TKN", 18, accessManager);
 
         vm.prank(admin);
-        address actualAddress = factory.createTokenIdentity(tokenAddress, accessManager);
+        address actualAddress = factory.createTokenIdentity(address(token), accessManager);
 
         assertEq(actualAddress, predictedAddress);
     }
@@ -214,9 +225,8 @@ contract SMARTIdentityFactoryImplementationTest is Test {
     function testCalculateTokenIdentityAddressReturnsPredictableAddress() public {
         vm.prank(admin);
 
-        address tokenAddress = makeAddr("token");
-        address predictedAddress1 = factory.calculateTokenIdentityAddress(tokenAddress, accessManager);
-        address predictedAddress2 = factory.calculateTokenIdentityAddress(tokenAddress, accessManager);
+        address predictedAddress1 = factory.calculateTokenIdentityAddress("TOKEN", "TKN", 18, accessManager);
+        address predictedAddress2 = factory.calculateTokenIdentityAddress("TOKEN", "TKN", 18, accessManager);
 
         assertEq(predictedAddress1, predictedAddress2);
         assertTrue(predictedAddress1 != address(0));
