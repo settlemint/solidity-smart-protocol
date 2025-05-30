@@ -227,8 +227,9 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         view
         returns (address)
     {
-        return
-            ISMARTIdentityFactory(_systemAddress).calculateTokenIdentityAddress(name, symbol, decimals, initialManager);
+        return ISMARTIdentityFactory(ISMARTSystem(_systemAddress).identityFactoryProxy()).calculateTokenIdentityAddress(
+            name, symbol, decimals, initialManager
+        );
     }
 
     /// @notice Creates a new access manager for a token using CREATE2.

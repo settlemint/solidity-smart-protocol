@@ -52,11 +52,9 @@ contract SMARTTokenIdentityImplementationTest is Test {
 
     function setUp() public {
         // Deploy access manager
-        address[] memory initialAdmins = new address[](1);
-        initialAdmins[0] = admin;
         SMARTTokenAccessManagerImplementation accessManagerImpl = new SMARTTokenAccessManagerImplementation(forwarder);
         ERC1967Proxy accessManagerProxy = new ERC1967Proxy(
-            address(accessManagerImpl), abi.encodeWithSelector(accessManagerImpl.initialize.selector, initialAdmins)
+            address(accessManagerImpl), abi.encodeWithSelector(accessManagerImpl.initialize.selector, admin)
         );
         accessManager = ISMARTTokenAccessManager(address(accessManagerProxy));
 

@@ -7,6 +7,7 @@ import "../../utils/SystemUtils.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { SMARTToken } from "../../examples/SMARTToken.sol";
 import { SMARTComplianceModuleParamPair } from "../../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
+import { SMARTTopics } from "../../../contracts/system/SMARTTopics.sol";
 
 contract SMARTIdentityFactoryImplementationTest is Test {
     SystemUtils public systemUtils;
@@ -50,16 +51,27 @@ contract SMARTIdentityFactoryImplementationTest is Test {
     }
 
     function testCreateTokenIdentity() public {
-        address tokenAddress = makeAddr("token");
+        SMARTToken token = new SMARTToken(
+            "Token",
+            "TKN",
+            18,
+            address(0),
+            address(systemUtils.identityRegistry()),
+            address(systemUtils.compliance()),
+            new uint256[](0),
+            new SMARTComplianceModuleParamPair[](0),
+            systemUtils.topicSchemeRegistry().getTopicId(SMARTTopics.TOPIC_COLLATERAL),
+            address(accessManager)
+        );
 
         vm.expectEmit(true, false, true, true);
-        emit TokenIdentityCreated(admin, address(0), tokenAddress); // address(0) will be replaced with actual
+        emit TokenIdentityCreated(admin, address(0), address(token)); // address(0) will be replaced with actual
 
         vm.prank(admin);
-        address identity = factory.createTokenIdentity(tokenAddress, accessManager);
+        address identity = factory.createTokenIdentity(address(token), accessManager);
 
         assertTrue(identity != address(0));
-        assertEq(factory.getTokenIdentity(tokenAddress), identity);
+        assertEq(factory.getTokenIdentity(address(token)), identity);
     }
 
     function testCreateIdentityRevertsWithUnauthorizedCaller() public {
@@ -121,7 +133,7 @@ contract SMARTIdentityFactoryImplementationTest is Test {
             address(systemUtils.compliance()),
             new uint256[](0),
             new SMARTComplianceModuleParamPair[](0),
-            0,
+            systemUtils.topicSchemeRegistry().getTopicId(SMARTTopics.TOPIC_COLLATERAL),
             address(accessManager)
         );
 
@@ -145,14 +157,25 @@ contract SMARTIdentityFactoryImplementationTest is Test {
     }
 
     function testCreateTokenIdentityForSameTokenFails() public {
-        address tokenAddress = makeAddr("token");
+        SMARTToken token = new SMARTToken(
+            "Token",
+            "TKN",
+            18,
+            address(0),
+            address(systemUtils.identityRegistry()),
+            address(systemUtils.compliance()),
+            new uint256[](0),
+            new SMARTComplianceModuleParamPair[](0),
+            systemUtils.topicSchemeRegistry().getTopicId(SMARTTopics.TOPIC_COLLATERAL),
+            address(accessManager)
+        );
 
         vm.prank(admin);
-        factory.createTokenIdentity(tokenAddress, accessManager);
+        factory.createTokenIdentity(address(token), accessManager);
 
         vm.prank(admin);
         vm.expectRevert();
-        factory.createTokenIdentity(tokenAddress, accessManager);
+        factory.createTokenIdentity(address(token), accessManager);
     }
 
     function testCreateMultipleIdentitiesForDifferentWallets() public {
@@ -173,20 +196,42 @@ contract SMARTIdentityFactoryImplementationTest is Test {
     }
 
     function testCreateMultipleTokenIdentitiesForDifferentTokens() public {
-        address token1 = makeAddr("token1");
-        address token2 = makeAddr("token2");
+        SMARTToken token1 = new SMARTToken(
+            "Token1",
+            "TKN1",
+            18,
+            address(0),
+            address(systemUtils.identityRegistry()),
+            address(systemUtils.compliance()),
+            new uint256[](0),
+            new SMARTComplianceModuleParamPair[](0),
+            systemUtils.topicSchemeRegistry().getTopicId(SMARTTopics.TOPIC_COLLATERAL),
+            address(accessManager)
+        );
+        SMARTToken token2 = new SMARTToken(
+            "Token2",
+            "TKN2",
+            18,
+            address(0),
+            address(systemUtils.identityRegistry()),
+            address(systemUtils.compliance()),
+            new uint256[](0),
+            new SMARTComplianceModuleParamPair[](0),
+            systemUtils.topicSchemeRegistry().getTopicId(SMARTTopics.TOPIC_COLLATERAL),
+            address(accessManager)
+        );
 
         vm.prank(admin);
-        address identity1 = factory.createTokenIdentity(token1, accessManager);
+        address identity1 = factory.createTokenIdentity(address(token1), accessManager);
 
         vm.prank(admin);
-        address identity2 = factory.createTokenIdentity(token2, accessManager);
+        address identity2 = factory.createTokenIdentity(address(token2), accessManager);
 
         assertTrue(identity1 != identity2);
         assertTrue(identity1 != address(0));
         assertTrue(identity2 != address(0));
-        assertEq(factory.getTokenIdentity(token1), identity1);
-        assertEq(factory.getTokenIdentity(token2), identity2);
+        assertEq(factory.getTokenIdentity(address(token1)), identity1);
+        assertEq(factory.getTokenIdentity(address(token2)), identity2);
     }
 
     function testCreateIdentityWithEmptyManagementKeys() public {
