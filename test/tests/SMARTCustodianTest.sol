@@ -566,7 +566,7 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
 
         // Perform forced recovery via custodian - expects TokensRecovered event (not RecoverySuccess)
         vm.expectEmit(true, true, true, true);
-        emit ISMART.TokensRecovered(tokenIssuer, newWallet, lostWallet, initialBalance);
+        emit ISMART.TokensRecovered(tokenIssuer, lostWallet, newWallet, initialBalance);
 
         tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
 

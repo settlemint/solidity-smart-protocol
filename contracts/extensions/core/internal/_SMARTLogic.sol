@@ -205,7 +205,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
         __isForcedUpdate = false;
         _afterRecoverTokens(lostWallet, newWallet);
 
-        emit ISMART.TokensRecovered(_smartSender(), newWallet, lostWallet, balance);
+        emit ISMART.TokensRecovered(_smartSender(), lostWallet, newWallet, balance);
     }
 
     /// @notice Internal function to update the address of the compliance contract.

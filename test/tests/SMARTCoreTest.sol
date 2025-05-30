@@ -232,7 +232,7 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
 
         // Perform the token recovery
         vm.expectEmit(true, true, true, true);
-        emit ISMART.TokensRecovered(newWallet, newWallet, lostWallet, initialBalance);
+        emit ISMART.TokensRecovered(newWallet, lostWallet, newWallet, initialBalance);
 
         vm.prank(newWallet);
         token.recoverTokens(lostWallet);
