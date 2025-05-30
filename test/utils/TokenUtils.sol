@@ -403,39 +403,6 @@ contract TokenUtils is Test {
     }
 
     /**
-     * @notice Performs forced recovery of tokens from a lost wallet to a new wallet via custodian.
-     * @param tokenAddress The address of the token contract.
-     * @param owner The address performing the action (token owner).
-     * @param newWallet The address of the new wallet.
-     * @param lostWallet The address of the lost wallet.
-     */
-    function forcedRecoverTokens(address tokenAddress, address owner, address newWallet, address lostWallet) public {
-        // Call the executor version, passing the owner as the executor
-        forcedRecoverTokensAsExecutor(tokenAddress, owner, newWallet, lostWallet);
-    }
-
-    /**
-     * @notice Performs forced recovery of tokens from a lost wallet to a new wallet via custodian (as specified
-     * executor).
-     * @param tokenAddress The address of the token contract.
-     * @param executor The address performing the action.
-     * @param newWallet The address of the new wallet.
-     * @param lostWallet The address of the lost wallet.
-     */
-    function forcedRecoverTokensAsExecutor(
-        address tokenAddress,
-        address executor,
-        address newWallet,
-        address lostWallet
-    )
-        public
-    {
-        vm.startPrank(executor);
-        SMARTCustodian(payable(tokenAddress)).forcedRecoverTokens(newWallet, lostWallet);
-        vm.stopPrank();
-    }
-
-    /**
      * @notice Creates and sets the on-chain ID for a token.
      * @param tokenAddress The address of the token contract.
      * @param tokenIssuer_ The address of the token issuer.

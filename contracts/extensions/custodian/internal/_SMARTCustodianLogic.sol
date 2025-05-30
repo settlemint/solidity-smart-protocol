@@ -16,9 +16,6 @@ import { LengthMismatch } from "../../common/CommonErrors.sol";
 import {
     FreezeAmountExceedsAvailableBalance,
     InsufficientFrozenTokens,
-    NoTokensToRecover,
-    RecoveryWalletsNotVerified,
-    RecoveryTargetAddressFrozen,
     RecipientAddressFrozen,
     SenderAddressFrozen
 } from "../SMARTCustodianErrors.sol";

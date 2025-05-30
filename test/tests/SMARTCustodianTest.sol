@@ -14,8 +14,7 @@ import {
     RecipientAddressFrozen,
     FreezeAmountExceedsAvailableBalance,
     InsufficientFrozenTokens,
-    NoTokensToRecover,
-    RecoveryTargetAddressFrozen
+    NoTokensToRecover
 } from "../../contracts/extensions/custodian/SMARTCustodianErrors.sol";
 import { SMARTToken } from "../examples/SMARTToken.sol";
 
@@ -568,7 +567,9 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         vm.expectEmit(true, true, true, true);
         emit ISMART.TokensRecovered(tokenIssuer, lostWallet, newWallet, initialBalance);
 
-        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+        vm.startPrank(tokenIssuer);
+        ISMARTCustodian(address(token)).forcedRecoverTokens(lostWallet, newWallet);
+        vm.stopPrank();
 
         // Post-checks
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
@@ -617,7 +618,9 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         vm.expectEmit(true, true, true, false);
         emit ISMARTCustodian.AddressFrozen(tokenIssuer, lostWallet, false);
 
-        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+        vm.startPrank(tokenIssuer);
+        ISMARTCustodian(address(token)).forcedRecoverTokens(lostWallet, newWallet);
+        vm.stopPrank();
 
         // Post-checks: verify freeze state migration
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
@@ -657,7 +660,9 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         vm.expectEmit(true, true, false, true);
         emit ISMARTCustodian.TokensFrozen(tokenIssuer, newWallet, freezeAmount);
 
-        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+        vm.startPrank(tokenIssuer);
+        ISMARTCustodian(address(token)).forcedRecoverTokens(lostWallet, newWallet);
+        vm.stopPrank();
 
         // Post-checks: verify only partial freeze state migration
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
@@ -690,7 +695,9 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         vm.expectEmit(true, true, true, false);
         emit ISMARTCustodian.AddressFrozen(tokenIssuer, newWallet, false);
 
-        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+        vm.startPrank(tokenIssuer);
+        ISMARTCustodian(address(token)).forcedRecoverTokens(lostWallet, newWallet);
+        vm.stopPrank();
 
         // Post-checks: new wallet should be unfrozen
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
@@ -717,7 +724,10 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
 
         vm.expectRevert(abi.encodeWithSelector(NoTokensToRecover.selector));
-        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+
+        vm.startPrank(tokenIssuer);
+        ISMARTCustodian(address(token)).forcedRecoverTokens(lostWallet, newWallet);
+        vm.stopPrank();
     }
 
     function test_Custodian_ForcedRecoverTokens_NewWalletHasExistingBalance_Success() public {
@@ -737,7 +747,9 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
 
         identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
 
-        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+        vm.startPrank(tokenIssuer);
+        ISMARTCustodian(address(token)).forcedRecoverTokens(lostWallet, newWallet);
+        vm.stopPrank();
 
         // Post-checks: new wallet should have existing + recovered balance
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
@@ -761,7 +773,9 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         claimUtils.issueAllClaims(newWallet1);
         identityUtils.recoverIdentity(lostWallet1, newWallet1, newIdentity1);
 
-        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet1, lostWallet1);
+        vm.startPrank(tokenIssuer);
+        ISMARTCustodian(address(token)).forcedRecoverTokens(lostWallet1, newWallet1);
+        vm.stopPrank();
 
         assertEq(token.balanceOf(lostWallet1), 0, "First lost wallet should have zero balance");
         assertEq(token.balanceOf(newWallet1), balance1, "First new wallet should have recovered balance");
@@ -775,7 +789,9 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         claimUtils.issueAllClaims(newWallet2);
         identityUtils.recoverIdentity(lostWallet2, newWallet2, newIdentity2);
 
-        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet2, lostWallet2);
+        vm.startPrank(tokenIssuer);
+        ISMARTCustodian(address(token)).forcedRecoverTokens(lostWallet2, newWallet2);
+        vm.stopPrank();
 
         assertEq(token.balanceOf(lostWallet2), 0, "Second lost wallet should have zero balance");
         assertEq(token.balanceOf(newWallet2), balance2, "Second new wallet should have recovered balance");
@@ -804,7 +820,9 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
                 SMARTToken(address(token)).RECOVERY_ROLE()
             )
         );
-        tokenUtils.forcedRecoverTokensAsExecutor(address(token), clientJP, newWallet, lostWallet);
+        vm.startPrank(clientJP);
+        ISMARTCustodian(address(token)).forcedRecoverTokens(lostWallet, newWallet);
+        vm.stopPrank();
     }
 
     function test_SupportsInterface_Custodian() public {

@@ -19,15 +19,6 @@ error InsufficientFrozenTokens(uint256 frozenBalance, uint256 requested);
 /// @notice Error indicating that a recovery operation was attempted on a wallet with a zero token balance.
 error NoTokensToRecover();
 
-/// @notice Error indicating that neither the lost wallet nor the new wallet could be verified against the
-///         provided on-chain ID during a recovery attempt, or that the on-chain ID itself is problematic.
-/// @dev For recovery, at least one wallet should typically be verifiably linked to the identity, or the new wallet
-///      should be registerable under that identity.
-error RecoveryWalletsNotVerified();
-
-/// @notice Error indicating that a recovery operation cannot proceed because the target new wallet is frozen.
-error RecoveryTargetAddressFrozen();
-
 /// @notice Error indicating that an operation (e.g., mint, transfer) cannot proceed because the recipient address is
 /// frozen.
 error RecipientAddressFrozen();
