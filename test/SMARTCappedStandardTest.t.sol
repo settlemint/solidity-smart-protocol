@@ -31,7 +31,7 @@ contract SMARTCappedStandardTest is SMARTCappedTest {
         address tokenAddress = address(cappedToken);
         vm.stopPrank();
 
-        // Grant roles using the same pattern as SMARTStandardTest  
+        // Grant roles using the same pattern as SMARTStandardTest
         vm.startPrank(tokenIssuer);
         // Grant all roles to the token issuer
         IAccessControl(accessManager).grantRole(SMARTCappedToken(tokenAddress).TOKEN_ADMIN_ROLE(), tokenIssuer);
