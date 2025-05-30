@@ -13,14 +13,6 @@ library SMARTSystemRoles {
     /// @dev Assigned to entities responsible for user registration
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
-    /// @notice Role for managing registrar operations
-    /// @dev Assigned to entities responsible for managing registrars
-    bytes32 public constant REGISTRAR_ADMIN_ROLE = keccak256("REGISTRAR_ADMIN_ROLE");
-
-    /// @notice Role for managing registrar governors
-    /// @dev Assigned to entities responsible for managing registrar admins
-    bytes32 public constant REGISTRAR_GOVERNOR_ROLE = keccak256("REGISTRAR_GOVERNOR_ROLE");
-
     /// @notice Role for managing claims
     /// @dev Assigned to entities responsible for handling token claims
     bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");

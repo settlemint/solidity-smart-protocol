@@ -185,12 +185,6 @@ contract SMARTIdentityRegistryImplementation is
         // TODO: Consider if the initial admin should always be the first registrar,
         // or if this should be a separate step.
         _grantRole(SMARTSystemRoles.REGISTRAR_ROLE, initialAdmin);
-        _grantRole(SMARTSystemRoles.REGISTRAR_ADMIN_ROLE, initialAdmin);
-        _grantRole(SMARTSystemRoles.REGISTRAR_GOVERNOR_ROLE, initialAdmin);
-
-        _grantRole(SMARTSystemRoles.REGISTRAR_GOVERNOR_ROLE, systemAddress);
-        _setRoleAdmin(SMARTSystemRoles.REGISTRAR_ROLE, SMARTSystemRoles.REGISTRAR_ADMIN_ROLE);
-        _setRoleAdmin(SMARTSystemRoles.REGISTRAR_ADMIN_ROLE, SMARTSystemRoles.REGISTRAR_GOVERNOR_ROLE);
     }
 
     // --- State-Changing Functions ---

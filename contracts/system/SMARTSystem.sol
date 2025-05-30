@@ -406,11 +406,6 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         IAccessControl(address(identityFactoryProxy())).grantRole(
             SMARTSystemRoles.TOKEN_IDENTITY_ISSUER_ROLE, _tokenFactoryProxy
         );
-        // Make it possible that the token factory can give tokens the possibility to register token identities
-        // (for recovery).
-        IAccessControl(address(identityRegistryProxy())).grantRole(
-            SMARTSystemRoles.REGISTRAR_ADMIN_ROLE, _tokenFactoryProxy
-        );
 
         emit TokenFactoryCreated(_msgSender(), _typeName, _tokenFactoryProxy, _factoryImplementation, block.timestamp);
 
