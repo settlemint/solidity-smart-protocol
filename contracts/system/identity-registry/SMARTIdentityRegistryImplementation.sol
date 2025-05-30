@@ -396,16 +396,28 @@ contract SMARTIdentityRegistryImplementation is
             revert WalletAlreadyMarkedAsLost(lostWallet);
         }
 
-        // 4. Verify newWallet is not already in use or marked as lost
+        // 4. Check newWallet status and determine if registration is needed
         bool newWalletIsCurrentlyRegistered = false;
-        try _identityStorage.storedIdentity(newWallet) returns (IIdentity) {
-            newWalletIsCurrentlyRegistered = true; // Found an active registration
+        bool needsRegistration = true;
+        IIdentity currentNewWalletIdentity;
+
+        try _identityStorage.storedIdentity(newWallet) returns (IIdentity id) {
+            newWalletIsCurrentlyRegistered = true;
+            currentNewWalletIdentity = id;
+
+            // Check if newWallet is already registered to the correct identity
+            if (address(currentNewWalletIdentity) == newOnchainId) {
+                needsRegistration = false; // Skip registration as it's already correct
+            } else {
+                // newWallet is registered to a different identity - this is a conflict
+                revert IdentityAlreadyRegistered(newWallet);
+            }
         } catch {
-            // Expected if newWallet is not registered, so no action needed in catch.
+            // newWallet is not registered, proceed with normal registration
+            needsRegistration = true;
         }
-        if (newWalletIsCurrentlyRegistered) {
-            revert IdentityAlreadyRegistered(newWallet);
-        }
+
+        // Check if newWallet is marked as lost
         if (_identityStorage.isWalletMarkedAsLost(newWallet)) {
             revert WalletAlreadyMarkedAsLost(newWallet);
         }
@@ -416,8 +428,10 @@ contract SMARTIdentityRegistryImplementation is
         // 6. Remove lostWallet's active registration from storage
         _identityStorage.removeIdentityFromStorage(lostWallet);
 
-        // 7. Register the newWallet with the NEW identity contract and preserved country code
-        _identityStorage.addIdentityToStorage(newWallet, IIdentity(newOnchainId), existingCountryCode);
+        // 7. Register the newWallet with the NEW identity contract and preserved country code (only if needed)
+        if (needsRegistration) {
+            _identityStorage.addIdentityToStorage(newWallet, IIdentity(newOnchainId), existingCountryCode);
+        }
 
         // 8. Establish the recovery link between old and new wallets for token reclaim
         _identityStorage.linkWalletRecovery(lostWallet, newWallet);
