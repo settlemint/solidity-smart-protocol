@@ -9,10 +9,17 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { ISMARTComplianceModule } from "../../contracts/interface/ISMARTComplianceModule.sol";
 import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { ZeroAddressNotAllowed, CannotRecoverSelf } from "../../contracts/extensions/common/CommonErrors.sol";
+import {
+    ZeroAddressNotAllowed,
+    CannotRecoverSelf,
+    InvalidLostWallet,
+    NoTokensToRecover
+} from "../../contracts/extensions/common/CommonErrors.sol";
 import { InsufficientTokenBalance } from "../../contracts/extensions/core/SMARTErrors.sol";
 import { MockedERC20Token } from "../utils/mocks/MockedERC20Token.sol";
 import { SMARTToken } from "../examples/SMARTToken.sol";
+import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
+import { TestConstants } from "../Constants.sol";
 
 abstract contract SMARTCoreTest is AbstractSMARTTest {
     using SafeERC20 for IERC20;
@@ -198,6 +205,239 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         assertTrue(
             IERC165(address(token)).supportsInterface(type(ISMART).interfaceId),
             "Token does not support ISMART interface"
+        );
+    }
+
+    // ==========================================
+    //          recoverTokens Tests
+    // ==========================================
+
+    function test_Core_RecoverTokens_Success() public {
+        _setUpCoreTest();
+        _mintInitialBalances();
+
+        address lostWallet = clientBE;
+        address newWallet = makeAddr("NewWalletForBE");
+        uint256 initialBalance = token.balanceOf(lostWallet);
+
+        // Get the identity associated with the lost wallet
+        address identityAddress = identityUtils.getIdentity(lostWallet);
+        require(identityAddress != address(0), "Identity not found for lost wallet");
+
+        // Mark the old wallet as lost and recover to new wallet
+        vm.prank(platformAdmin);
+        systemUtils.identityRegistry().recoverIdentity(IIdentity(identityAddress), newWallet, lostWallet);
+
+        // Perform the token recovery
+        vm.expectEmit(true, true, true, true);
+        emit ISMART.TokensRecovered(newWallet, newWallet, lostWallet, initialBalance);
+
+        vm.prank(newWallet);
+        token.recoverTokens(lostWallet);
+
+        // Verify balances after recovery
+        assertEq(token.balanceOf(lostWallet), 0, "Lost wallet should have zero balance");
+        assertEq(token.balanceOf(newWallet), initialBalance, "New wallet should have recovered balance");
+
+        // Verify that lost wallet is marked as lost in identity registry
+        assertTrue(systemUtils.identityRegistry().isWalletLost(lostWallet), "Lost wallet should be marked as lost");
+        assertTrue(
+            systemUtils.identityRegistry().isWalletLostForIdentity(IIdentity(identityAddress), lostWallet),
+            "Lost wallet should be marked as lost for the specific identity"
+        );
+    }
+
+    function test_Core_RecoverTokens_ZeroAddressLostWallet_Reverts() public {
+        _setUpCoreTest();
+        _mintInitialBalances();
+
+        vm.expectRevert(abi.encodeWithSelector(ZeroAddressNotAllowed.selector));
+        vm.prank(clientBE);
+        token.recoverTokens(address(0));
+    }
+
+    function test_Core_RecoverTokens_CannotRecoverSelf_Reverts() public {
+        _setUpCoreTest();
+        _mintInitialBalances();
+
+        vm.expectRevert(abi.encodeWithSelector(CannotRecoverSelf.selector));
+        vm.prank(clientBE);
+        token.recoverTokens(address(token));
+    }
+
+    function test_Core_RecoverTokens_NoTokensToRecover_Reverts() public {
+        _setUpCoreTest();
+        _mintInitialBalances();
+
+        address lostWallet = clientBE;
+        address newWallet = makeAddr("NewWalletForBE");
+
+        // Burn all tokens from the lost wallet
+        uint256 currentBalance = token.balanceOf(lostWallet);
+        tokenUtils.burnToken(address(token), tokenIssuer, lostWallet, currentBalance);
+        assertEq(token.balanceOf(lostWallet), 0, "Lost wallet should have zero balance");
+
+        // Get the identity and set up recovery scenario
+        address identityAddress = identityUtils.getIdentity(lostWallet);
+
+        vm.prank(platformAdmin);
+        systemUtils.identityRegistry().recoverIdentity(IIdentity(identityAddress), newWallet, lostWallet);
+
+        vm.expectRevert(abi.encodeWithSelector(NoTokensToRecover.selector));
+        vm.prank(newWallet);
+        token.recoverTokens(lostWallet);
+    }
+
+    function test_Core_RecoverTokens_InvalidLostWallet_Reverts() public {
+        _setUpCoreTest();
+        _mintInitialBalances();
+
+        address lostWallet = clientBE;
+        address newWallet = makeAddr("NewWalletForBE");
+
+        // Create identity for new wallet but don't mark the lost wallet as lost
+        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
+        claimUtils.issueAllClaims(newWallet);
+
+        // Try to recover without marking the wallet as lost in identity registry
+        vm.expectRevert(abi.encodeWithSelector(InvalidLostWallet.selector));
+        vm.prank(newWallet);
+        token.recoverTokens(lostWallet);
+    }
+
+    function test_Core_RecoverTokens_WalletNotLostForThisIdentity_Reverts() public {
+        _setUpCoreTest();
+        _mintInitialBalances();
+
+        address lostWallet = clientBE;
+        address newWallet = makeAddr("NewWalletForBE");
+        address differentWallet = makeAddr("DifferentWallet");
+
+        // Create identities for both wallets
+        address lostWalletIdentity = identityUtils.getIdentity(lostWallet);
+        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
+        claimUtils.issueAllClaims(newWallet);
+
+        identityUtils.createClientIdentity(differentWallet, TestConstants.COUNTRY_CODE_JP);
+        claimUtils.issueAllClaims(differentWallet);
+        address differentIdentity = identityUtils.getIdentity(differentWallet);
+
+        // Mark a different wallet as lost for a different identity
+        vm.prank(platformAdmin);
+        systemUtils.identityRegistry().recoverIdentity(IIdentity(differentIdentity), newWallet, differentWallet);
+
+        // Try to recover the BE wallet's tokens (which is not marked as lost for any identity)
+        vm.expectRevert(abi.encodeWithSelector(InvalidLostWallet.selector));
+        vm.prank(newWallet);
+        token.recoverTokens(lostWallet);
+    }
+
+    function test_Core_RecoverTokens_MultipleRecoveries_Success() public {
+        _setUpCoreTest();
+        _mintInitialBalances();
+
+        // First recovery: clientBE -> newWallet1
+        address lostWallet1 = clientBE;
+        address newWallet1 = makeAddr("NewWallet1");
+        uint256 balance1 = token.balanceOf(lostWallet1);
+
+        address identity1 = identityUtils.getIdentity(lostWallet1);
+        identityUtils.createClientIdentity(newWallet1, TestConstants.COUNTRY_CODE_BE);
+        claimUtils.issueAllClaims(newWallet1);
+
+        vm.prank(platformAdmin);
+        systemUtils.identityRegistry().recoverIdentity(IIdentity(identity1), newWallet1, lostWallet1);
+
+        vm.prank(newWallet1);
+        token.recoverTokens(lostWallet1);
+
+        assertEq(token.balanceOf(lostWallet1), 0, "First lost wallet should have zero balance");
+        assertEq(token.balanceOf(newWallet1), balance1, "First new wallet should have recovered balance");
+
+        // Second recovery: clientJP -> newWallet2
+        address lostWallet2 = clientJP;
+        address newWallet2 = makeAddr("NewWallet2");
+        uint256 balance2 = token.balanceOf(lostWallet2);
+
+        address identity2 = identityUtils.getIdentity(lostWallet2);
+        identityUtils.createClientIdentity(newWallet2, TestConstants.COUNTRY_CODE_JP);
+        claimUtils.issueAllClaims(newWallet2);
+
+        vm.prank(platformAdmin);
+        systemUtils.identityRegistry().recoverIdentity(IIdentity(identity2), newWallet2, lostWallet2);
+
+        vm.prank(newWallet2);
+        token.recoverTokens(lostWallet2);
+
+        assertEq(token.balanceOf(lostWallet2), 0, "Second lost wallet should have zero balance");
+        assertEq(token.balanceOf(newWallet2), balance2, "Second new wallet should have recovered balance");
+
+        // Verify both old wallets are marked as lost
+        assertTrue(systemUtils.identityRegistry().isWalletLost(lostWallet1), "First wallet should be marked as lost");
+        assertTrue(systemUtils.identityRegistry().isWalletLost(lostWallet2), "Second wallet should be marked as lost");
+    }
+
+    function test_Core_RecoverTokens_PartialBalance_Success() public {
+        _setUpCoreTest();
+        _mintInitialBalances();
+
+        address lostWallet = clientBE;
+        address newWallet = makeAddr("NewWalletForBE");
+        uint256 initialBalance = token.balanceOf(lostWallet);
+
+        // Transfer some tokens away first, leaving a partial balance
+        uint256 transferAmount = initialBalance / 3;
+        tokenUtils.transferToken(address(token), lostWallet, clientJP, transferAmount);
+
+        uint256 remainingBalance = token.balanceOf(lostWallet);
+        assertEq(remainingBalance, initialBalance - transferAmount, "Remaining balance incorrect");
+
+        // Set up recovery
+        address identityAddress = identityUtils.getIdentity(lostWallet);
+        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
+        claimUtils.issueAllClaims(newWallet);
+
+        vm.prank(platformAdmin);
+        systemUtils.identityRegistry().recoverIdentity(IIdentity(identityAddress), newWallet, lostWallet);
+
+        // Recover the remaining tokens
+        vm.prank(newWallet);
+        token.recoverTokens(lostWallet);
+
+        assertEq(token.balanceOf(lostWallet), 0, "Lost wallet should have zero balance");
+        assertEq(token.balanceOf(newWallet), remainingBalance, "New wallet should have recovered remaining balance");
+    }
+
+    function test_Core_RecoverTokens_NewWalletHasExistingBalance_Success() public {
+        _setUpCoreTest();
+        _mintInitialBalances();
+
+        address lostWallet = clientBE;
+        address newWallet = makeAddr("NewWalletForBE");
+        uint256 lostWalletBalance = token.balanceOf(lostWallet);
+
+        // Set up new wallet with existing identity and tokens
+        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
+        claimUtils.issueAllClaims(newWallet);
+
+        // Mint some tokens to the new wallet first
+        uint256 existingBalance = 500 ether;
+        tokenUtils.mintToken(address(token), tokenIssuer, newWallet, existingBalance);
+
+        // Set up recovery
+        address identityAddress = identityUtils.getIdentity(lostWallet);
+        vm.prank(platformAdmin);
+        systemUtils.identityRegistry().recoverIdentity(IIdentity(identityAddress), newWallet, lostWallet);
+
+        // Recover tokens
+        vm.prank(newWallet);
+        token.recoverTokens(lostWallet);
+
+        assertEq(token.balanceOf(lostWallet), 0, "Lost wallet should have zero balance");
+        assertEq(
+            token.balanceOf(newWallet),
+            existingBalance + lostWalletBalance,
+            "New wallet should have existing plus recovered balance"
         );
     }
 }
