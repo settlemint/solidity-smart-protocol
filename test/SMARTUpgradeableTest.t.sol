@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { SMARTCoreTest } from "./tests/SMARTCoreTest.sol";
-import { SMARTBurnableTest } from "./tests/SMARTBurnableTest.sol";
-import { SMARTPausableTest } from "./tests/SMARTPausableTest.sol";
-import { SMARTCustodianTest } from "./tests/SMARTCustodianTest.sol";
-import { SMARTCollateralTest } from "./tests/SMARTCollateralTest.sol";
-import { SMARTCountryAllowListTest } from "./tests/SMARTCountryAllowListTest.sol";
-import { SMARTCountryBlockListTest } from "./tests/SMARTCountryBlockListTest.sol";
+import { SMARTCoreTest } from "./extensions/SMARTCoreTest.sol";
+import { SMARTBurnableTest } from "./extensions/SMARTBurnableTest.sol";
+import { SMARTPausableTest } from "./extensions/SMARTPausableTest.sol";
+import { SMARTCustodianTest } from "./extensions/SMARTCustodianTest.sol";
+import { SMARTCollateralTest } from "./extensions/SMARTCollateralTest.sol";
+import { SMARTCountryAllowListTest } from "./extensions/SMARTCountryAllowListTest.sol";
+import { SMARTCountryBlockListTest } from "./extensions/SMARTCountryBlockListTest.sol";
 import { ISMART } from "../contracts/interface/ISMART.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { SMARTTokenUpgradeable } from "./examples/SMARTTokenUpgradeable.sol";

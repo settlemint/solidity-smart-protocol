@@ -16,6 +16,7 @@ import { SMARTToken } from "../examples/SMARTToken.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
+import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 
 contract TokenUtils is Test {
     address internal _platformAdmin;
@@ -392,8 +393,12 @@ contract TokenUtils is Test {
     )
         public
     {
+        vm.startPrank(_platformAdmin);
+        _identityRegistry.recoverIdentity(lostWallet, newWallet, investorOnchainID);
+        vm.stopPrank();
+
         vm.startPrank(executor);
-        SMARTCustodian(payable(tokenAddress)).recoveryAddress(lostWallet, newWallet, investorOnchainID);
+        SMARTCustodian(payable(tokenAddress)).forcedRecoverTokens(newWallet, lostWallet);
         vm.stopPrank();
     }
 

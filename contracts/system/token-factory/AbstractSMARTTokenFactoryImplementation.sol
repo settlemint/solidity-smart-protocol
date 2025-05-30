@@ -341,11 +341,6 @@ abstract contract AbstractSMARTTokenFactoryImplementation is
         accessManagerCtrl.renounceRole(SMARTRoles.TOKEN_GOVERNANCE_ROLE, address(this));
         accessManagerCtrl.renounceRole(DEFAULT_ADMIN_ROLE, address(this));
 
-        // Make it possible that the token can register token identities, only needed for Custodian recovery.
-        if (IERC165(tokenAddress).supportsInterface(type(ISMARTCustodian).interfaceId)) {
-            IAccessControl(system_.identityRegistryProxy()).grantRole(SMARTSystemRoles.REGISTRAR_ROLE, tokenAddress);
-        }
-
         emit TokenAssetCreated(_msgSender(), tokenAddress, tokenIdentity, accessManagerAddress);
     }
 

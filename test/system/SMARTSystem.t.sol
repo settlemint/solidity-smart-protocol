@@ -15,7 +15,7 @@ import { SystemUtils } from "../utils/SystemUtils.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
 import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
 import { IERC3643TrustedIssuersRegistry } from "../../contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
-import { IERC3643IdentityRegistryStorage } from "../../contracts/interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTIdentityRegistryStorage } from "../../contracts/interface/ISMARTIdentityRegistryStorage.sol";
 import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
 import { ISMARTTopicSchemeRegistry } from "../../contracts/system/topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
@@ -331,8 +331,8 @@ contract SMARTSystemTest is Test {
         // Test that the system works with actual proxy contracts
         ISMARTCompliance compliance = ISMARTCompliance(smartSystem.complianceProxy());
         ISMARTIdentityRegistry identityRegistry = ISMARTIdentityRegistry(smartSystem.identityRegistryProxy());
-        IERC3643IdentityRegistryStorage identityStorage =
-            IERC3643IdentityRegistryStorage(smartSystem.identityRegistryStorageProxy());
+        ISMARTIdentityRegistryStorage identityStorage =
+            ISMARTIdentityRegistryStorage(smartSystem.identityRegistryStorageProxy());
         IERC3643TrustedIssuersRegistry trustedIssuers =
             IERC3643TrustedIssuersRegistry(smartSystem.trustedIssuersRegistryProxy());
         ISMARTTopicSchemeRegistry topicSchemeRegistry =
@@ -350,9 +350,7 @@ contract SMARTSystemTest is Test {
         // Test interface support
         assertTrue(IERC165(address(compliance)).supportsInterface(type(ISMARTCompliance).interfaceId));
         assertTrue(IERC165(address(identityRegistry)).supportsInterface(type(ISMARTIdentityRegistry).interfaceId));
-        assertTrue(
-            IERC165(address(identityStorage)).supportsInterface(type(IERC3643IdentityRegistryStorage).interfaceId)
-        );
+        assertTrue(IERC165(address(identityStorage)).supportsInterface(type(ISMARTIdentityRegistryStorage).interfaceId));
         assertTrue(IERC165(address(trustedIssuers)).supportsInterface(type(IERC3643TrustedIssuersRegistry).interfaceId));
         assertTrue(IERC165(address(topicSchemeRegistry)).supportsInterface(type(ISMARTTopicSchemeRegistry).interfaceId));
         assertTrue(IERC165(address(identityFactory)).supportsInterface(type(ISMARTIdentityFactory).interfaceId));

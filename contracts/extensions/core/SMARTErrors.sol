@@ -30,11 +30,6 @@ error ModuleAlreadyAdded();
 /// @dev This can occur when trying to remove or update parameters for a non-existent module.
 error ModuleNotFound();
 
-/// @notice Error indicating an attempt to recover the token contract's own tokens.
-/// @dev The `recoverERC20` function is designed to recover other ERC20 tokens mistakenly sent to this contract,
-///      not the token this contract itself represents.
-error CannotRecoverSelf();
-
 /// @notice Error indicating that the token balance is insufficient for an operation.
 /// @dev This typically occurs during token recovery if the contract holds less of the target token than the amount
 /// requested for recovery.

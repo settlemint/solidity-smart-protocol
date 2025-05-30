@@ -112,12 +112,21 @@ interface ISMART is IERC20, IERC20Metadata, IERC165 {
     /// @param amount The quantity of tokens minted.
     event MintCompleted(address indexed sender, address indexed to, uint256 amount);
 
+    /// @notice Emitted when tokens are recovered from a lost wallet to the caller's address.
+    /// @param sender The address that initiated the recovery operation.
+    /// @param lostWallet The address of the lost wallet containing tokens to recover.
+    /// @param newWallet The address to which the tokens were recovered.
+    /// @param amount The amount of tokens recovered.
+    event TokensRecovered(
+        address indexed sender, address indexed lostWallet, address indexed newWallet, uint256 amount
+    );
+
     /// @notice Emitted when mistakenly sent ERC20 tokens are recovered from the contract.
     /// @param sender The address that initiated the recovery operation.
     /// @param token The address of the ERC20 token recovered.
     /// @param to The address to which the tokens were recovered.
     /// @param amount The amount of tokens recovered.
-    event TokenRecovered(address indexed sender, address indexed token, address indexed to, uint256 amount);
+    event ERC20TokenRecovered(address indexed sender, address indexed token, address indexed to, uint256 amount);
 
     // --- Configuration Setters (Admin/Authorized) ---
 
@@ -197,6 +206,12 @@ interface ISMART is IERC20, IERC20Metadata, IERC165 {
     /// @param _amounts An array of corresponding token quantities to transfer. The lengths of `_toList` and `_amounts`
     /// MUST be equal.
     function batchTransfer(address[] calldata _toList, uint256[] calldata _amounts) external;
+
+    /// @notice Recovers SMART tokens from a lost wallet to the caller's address.
+    /// @dev This will make it possible to recover SMART tokens from the lostWallet to msgSender, if it was correctly
+    /// marked as lost in the identity registry.
+    /// @param _lostWallet The address of the lost wallet containing tokens to recover.
+    function recoverTokens(address _lostWallet) external;
 
     /// @notice Allows an authorized account to recover ERC20 tokens that were mistakenly sent to this SMART token
     /// contract's address.

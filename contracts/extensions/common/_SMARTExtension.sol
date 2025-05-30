@@ -33,6 +33,8 @@ abstract contract _SMARTExtension is ISMART, SMARTContext, SMARTHooks {
     ///      like `ERC165.sol` or `SMART.sol` that inherits this).
     mapping(bytes4 interfaceId => bool isRegistered) internal _isInterfaceRegistered;
 
+    // --- Implementation Functions ---
+
     /**
      * @notice Registers a specific interface ID as being supported by this contract.
      * @dev This internal function is intended to be called by derived extension contracts, usually during

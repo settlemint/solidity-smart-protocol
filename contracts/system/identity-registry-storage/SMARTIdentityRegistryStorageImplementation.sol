@@ -16,50 +16,20 @@ import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 import { SMARTSystemRoles } from "../SMARTSystemRoles.sol";
 
 // Interface imports
-import { IERC3643IdentityRegistryStorage } from "../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { IERC3643IdentityRegistryStorage } from "./../../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTIdentityRegistryStorage } from "./../../interface/ISMARTIdentityRegistryStorage.sol";
 
-// --- Errors ---
-/// @notice Error triggered if an attempt is made to register or operate on an identity with a zero address for the
-/// user's wallet.
-/// @dev This error ensures that every identity record in the system is linked to a valid, non-zero wallet address.
-/// A zero address typically indicates an uninitialized or invalid address in Ethereum.
-error InvalidIdentityWalletAddress();
-/// @notice Error triggered if an attempt is made to register or associate an identity contract that has a zero address.
-/// @dev This error ensures that all registered identities point to a valid, non-zero `IIdentity` contract address.
-/// The `IIdentity` contract holds the claims and keys related to an identity.
-error InvalidIdentityAddress();
-/// @notice Error triggered when attempting to add an identity to storage for a user address that already has an
-/// identity registered.
-/// @param userAddress The wallet address for which an identity record already exists.
-/// @dev This error prevents duplicate identity registrations for the same wallet address, maintaining data integrity.
-error IdentityAlreadyExists(address userAddress);
-/// @notice Error triggered when attempting to operate on (e.g., modify, remove) an identity for a user address that is
-/// not registered.
-/// @param userAddress The wallet address for which no identity record was found in the storage.
-/// @dev This error ensures that operations like modification or removal are only performed on existing identity
-/// records.
-error IdentityDoesNotExist(address userAddress);
-/// @notice Error triggered if an attempt is made to bind an identity registry contract that has a zero address.
-/// @dev This error ensures that only valid, non-zero registry contract addresses can be bound to this storage contract.
-/// Binding allows a registry contract to modify data in this storage.
-error InvalidIdentityRegistryAddress();
-/// @notice Error triggered when attempting to bind an identity registry contract that is already bound to this storage.
-/// @param registryAddress The address of the identity registry contract that is already bound.
-/// @dev This error prevents a registry contract from being bound multiple times to this storage.
-error IdentityRegistryAlreadyBound(address registryAddress);
-/// @notice Error triggered when attempting to unbind an identity registry contract that is not currently bound to this
-/// storage.
-/// @param registryAddress The address of the identity registry contract that was not found in the list of bound
-/// registries.
-/// @dev This error ensures that unbinding operations are only performed on currently bound registry contracts.
-error IdentityRegistryNotBound(address registryAddress);
+// --- Custom Errors for Lost Wallet Management ---
+// It's good practice to define specific errors if not already available for clarity.
+// Reusing existing errors like InvalidIdentityWalletAddress and InvalidIdentityAddress from the top of the file if they
+// exist.
 
 /// @title SMART Identity Registry Storage Implementation
 /// @author SettleMint Tokenization Services
 /// @notice This contract is the core logic for storing and managing identity-related data for the SMART Protocol.
 /// It acts as a persistent data layer for `SMARTIdentityRegistry` contracts, which handle the business logic of
 /// identity registration and verification. This separation allows the storage logic to be upgraded independently.
-/// @dev This contract implements `IERC3643IdentityRegistryStorage`, a standard interface for storing data related to
+/// @dev This contract implements `ISMARTIdentityRegistryStorage`, a standard interface for storing data related to
 /// ERC-3643 compliant identity registries. This includes mapping user wallet addresses to their `IIdentity` contracts
 /// (which hold identity claims like KYC/AML status) and their country codes (for compliance purposes).
 /// It uses `AccessControlUpgradeable` to manage permissions:
@@ -82,27 +52,31 @@ contract SMARTIdentityRegistryStorageImplementation is
     Initializable,
     ERC2771ContextUpgradeable,
     AccessControlUpgradeable,
-    IERC3643IdentityRegistryStorage
+    ISMARTIdentityRegistryStorage
 {
     // --- Storage Variables ---
-    /// @notice Defines a structure to hold the core information for a registered identity.
-    /// An `Identity` struct links a user's wallet address to their on-chain identity representation and their country.
+    /// @notice Defines a structure to hold the comprehensive information for a registered identity.
+    /// An `Identity` struct links a user's wallet address to their on-chain identity representation, country, and
+    /// recovery status.
     /// @param identityContract The Ethereum address of the ERC725/ERC734 compliant `IIdentity` contract. This contract
     /// stores the user's identity claims, keys, and other related information.
     /// @param country A numerical code (uint16) representing the user's country of residence or jurisdiction. This is
     /// often used for compliance checks, such as ensuring users from certain countries are eligible for specific
     /// services or assets.
+    /// @param recoveredWallet If this wallet was lost, the address of the replacement wallet (address(0) if not lost).
     struct Identity {
         address identityContract;
         uint16 country;
+        address recoveredWallet; // Points to the new wallet if this one was lost
     }
 
     /// @notice Mapping from an investor's wallet address to their `Identity` struct.
     /// @dev This is the primary data structure where identity information is stored.
     /// The key (`address wallet`) is the public wallet address of the user (e.g., their MetaMask address).
-    /// The value (`Identity identity`) is the struct containing the address of their `IIdentity` contract and their
-    /// country code.
-    /// Example: `_identities[0xUserWalletAddress] = Identity(0xIdentityContractAddress, 840)` (840 for USA).
+    /// The value (`Identity identity`) is the struct containing the address of their `IIdentity` contract, their
+    /// country code, and recovery information.
+    /// Example: `_identities[0xUserWalletAddress] = Identity(0xIdentityContractAddress, 840, address(0))` (840
+    /// for USA).
     mapping(address wallet => Identity identity) private _identities;
 
     /// @notice An array storing the wallet addresses of all users who have a registered identity in this contract.
@@ -125,7 +99,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @notice Mapping that indicates whether a given `SMARTIdentityRegistry` contract address is currently authorized
     /// (bound) to modify the storage in this contract.
     /// @dev If `_boundIdentityRegistries[registryAddress]` is `true`, it means the `registryAddress` has been granted
-    /// the `STORAGE_MODIFIER_ROLE` and can call functions like `addIdentityToStorage`. If `false`, it cannot.
+    /// the `STORAGE_MODIFIER_ROLE`. If `false`, it cannot.
     /// This provides a quick way to check the binding status of a registry without querying the access control system
     /// directly, though the access control system is the ultimate source of truth for permissions.
     mapping(address registry => bool isBound) private _boundIdentityRegistries;
@@ -148,52 +122,68 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// Storing `index + 1` helps distinguish non-existence (0) from an actual index of 0.
     mapping(address registry => uint256 indexPlusOne) private _boundIdentityRegistriesIndex;
 
-    // --- Events ---
-    /// @notice Emitted when a new identity record (linking a user's wallet, their `IIdentity` contract, and country
-    /// code) is successfully added to the storage.
-    /// @param _identityWallet The user's external wallet address that was registered. This address is indexed to allow
-    /// for easier searching of this event.
-    /// @param _identity The address of the `IIdentity` contract associated with the `_identityWallet`. This address is
-    /// also indexed.
-    /// @dev This event is crucial for off-chain systems to track new identity registrations.
-    event IdentityStored(address indexed _identityWallet, IIdentity indexed _identity);
+    // --- Storage Variables for Lost Wallet Management ---
+    /// @notice Mapping to track which wallets have been marked as lost
+    /// @dev This provides a clean boolean check for wallet lost status without overloading other fields
+    mapping(address wallet => bool isLost) private _lostWallets;
 
-    /// @notice Emitted when an existing identity record is successfully removed from the storage.
-    /// @param _identityWallet The user's external wallet address whose identity record was removed. Indexed for
-    /// searchability.
-    /// @param _identity The `IIdentity` contract address that was associated with the removed `_identityWallet`. Indexed
-    /// for searchability.
-    /// @dev This event helps off-chain systems stay synchronized with the state of identities in the storage.
-    event IdentityUnstored(address indexed _identityWallet, IIdentity indexed _identity);
+    // --- Storage Variables for Wallet Recovery Tracking ---
+    // Maps a lost wallet to its replacement wallet (lostWallet => newWallet)
+    mapping(address lostWallet => address newWallet) private _walletRecoveryMapping;
 
-    /// @notice Emitted when the `IIdentity` contract address associated with a user's wallet is successfully changed or
-    /// updated.
-    /// @param _oldIdentity The previous `IIdentity` contract address. Indexed for searchability.
-    /// @param _newIdentity The new `IIdentity` contract address that replaced the old one. Indexed for searchability.
-    /// @dev This event is important for tracking changes to the core identity contract linked to a user.
-    event IdentityModified(IIdentity indexed _oldIdentity, IIdentity indexed _newIdentity);
+    // Maps a new wallet back to the original lost wallet (newWallet => lostWallet)
+    mapping(address newWallet => address lostWallet) private _reverseWalletRecoveryMapping;
 
-    /// @notice Emitted when the country code associated with a user's wallet is successfully changed or updated.
-    /// @param _identityWallet The user's external wallet address whose country code was modified. Indexed for
-    /// searchability.
-    /// @param _country The new country code (uint16) that has been set for the user.
-    /// @dev This event allows tracking changes in a user's jurisdiction, which might be relevant for compliance.
-    event CountryModified(address indexed _identityWallet, uint16 _country);
+    // --- Errors ---
+    /// @notice Error triggered if an attempt is made to register or operate on an identity with a zero address for the
+    /// user's wallet.
+    /// @dev This error ensures that every identity record in the system is linked to a valid, non-zero wallet address.
+    /// A zero address typically indicates an uninitialized or invalid address in Ethereum.
+    error InvalidIdentityWalletAddress();
+    /// @notice Error triggered if an attempt is made to register or associate an identity contract that has a zero
+    /// address.
+    /// @dev This error ensures that all registered identities point to a valid, non-zero `IIdentity` contract address.
+    /// The `IIdentity` contract holds the claims and keys related to an identity.
+    error InvalidIdentityAddress();
+    /// @notice Error triggered when attempting to add an identity to storage for a user address that already has an
+    /// identity registered.
+    /// @param userAddress The wallet address for which an identity record already exists.
+    /// @dev This error prevents duplicate identity registrations for the same wallet address, maintaining data
+    /// integrity.
+    error IdentityAlreadyExists(address userAddress);
+    /// @notice Error triggered when attempting to operate on (e.g., modify, remove) an identity for a user address that
+    /// is
+    /// not registered.
+    /// @param userAddress The wallet address for which no identity record was found in the storage.
+    /// @dev This error ensures that operations like modification or removal are only performed on existing identity
+    /// records.
+    error IdentityDoesNotExist(address userAddress);
+    /// @notice Error triggered if an attempt is made to bind an identity registry contract that has a zero address.
+    /// @dev This error ensures that only valid, non-zero registry contract addresses can be bound to this storage
+    /// contract.
+    /// Binding allows a registry contract to modify data in this storage.
+    error InvalidIdentityRegistryAddress();
+    /// @notice Error triggered when attempting to bind an identity registry contract that is already bound to this
+    /// storage.
+    /// @param registryAddress The address of the identity registry contract that is already bound.
+    /// @dev This error prevents a registry contract from being bound multiple times to this storage.
+    error IdentityRegistryAlreadyBound(address registryAddress);
+    /// @notice Error triggered when attempting to unbind an identity registry contract that is not currently bound to
+    /// this
+    /// storage.
+    /// @param registryAddress The address of the identity registry contract that was not found in the list of bound
+    /// registries.
+    /// @dev This error ensures that unbinding operations are only performed on currently bound registry contracts.
+    error IdentityRegistryNotBound(address registryAddress);
 
-    /// @notice Emitted when a `SMARTIdentityRegistry` contract is successfully bound to this storage contract.
-    /// Binding grants the registry the `STORAGE_MODIFIER_ROLE`, allowing it to add, remove, or update identity data.
-    /// @param _identityRegistry The address of the `SMARTIdentityRegistry` contract that was bound. Indexed for
-    /// searchability.
-    /// @dev This event signals that a new entity is now authorized to manage identity data within this storage.
-    event IdentityRegistryBound(address indexed _identityRegistry);
-
-    /// @notice Emitted when a `SMARTIdentityRegistry` contract is successfully unbound from this storage contract.
-    /// Unbinding revokes the `STORAGE_MODIFIER_ROLE` from the registry, preventing it from further modifying identity
-    /// data.
-    /// @param _identityRegistry The address of the `SMARTIdentityRegistry` contract that was unbound. Indexed for
-    /// searchability.
-    /// @dev This event signals that an entity is no longer authorized to manage identity data.
-    event IdentityRegistryUnbound(address indexed _identityRegistry);
+    // --- Lost Wallet Management Errors ---
+    /// @notice Error triggered when attempting to mark a wallet as lost for an identity that is not associated with
+    /// that wallet.
+    /// @param identityContract The identity contract address.
+    /// @param userWallet The wallet address that is not associated with the identity.
+    /// @dev This error ensures that wallets can only be marked as lost for identities they are actually associated
+    /// with.
+    error WalletNotAssociatedWithIdentity(address identityContract, address userWallet);
 
     // --- Constructor --- (Disable direct construction for upgradeable contract)
     /// @notice Constructor for the `SMARTIdentityRegistryStorageImplementation`.
@@ -293,7 +283,7 @@ contract SMARTIdentityRegistryStorageImplementation is
         if (_identities[_userAddress].identityContract != address(0)) revert IdentityAlreadyExists(_userAddress);
 
         // Store the new identity information.
-        _identities[_userAddress] = Identity(address(_identity), _country);
+        _identities[_userAddress] = Identity(address(_identity), _country, address(0));
         // Add the user's wallet address to the list of all identity wallets.
         _identityWallets.push(_userAddress);
         // Store the index (plus one, for 1-based indexing) in the `_identityWalletsIndex` map for O(1) removal later.
@@ -548,6 +538,62 @@ contract SMARTIdentityRegistryStorageImplementation is
         return _identityWallets;
     }
 
+    // --- Lost Wallet Management Functions ---
+
+    /// @inheritdoc ISMARTIdentityRegistryStorage
+    function markWalletAsLost(
+        address identityContract,
+        address userWallet
+    )
+        external
+        override
+        onlyRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE)
+    {
+        if (userWallet == address(0)) revert InvalidIdentityWalletAddress();
+        if (identityContract == address(0)) revert InvalidIdentityAddress();
+
+        // Check if the wallet is actually associated with this identity contract
+        if (_identities[userWallet].identityContract != identityContract) {
+            revert WalletNotAssociatedWithIdentity(identityContract, userWallet);
+        }
+
+        // Only mark as lost if not already marked (for idempotency)
+        if (!_lostWallets[userWallet]) {
+            _lostWallets[userWallet] = true;
+        }
+
+        // The event is emitted regardless, as the intent is to mark/confirm it as lost.
+        emit IdentityWalletMarkedAsLost(identityContract, userWallet, _msgSender());
+    }
+
+    /// @inheritdoc ISMARTIdentityRegistryStorage
+    function linkWalletRecovery(
+        address lostWallet,
+        address newWallet
+    )
+        external
+        override
+        onlyRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE)
+    {
+        if (lostWallet == address(0)) revert InvalidIdentityWalletAddress();
+        if (newWallet == address(0)) revert InvalidIdentityWalletAddress();
+
+        // Establish bidirectional mapping in the Identity structs
+        _identities[lostWallet].recoveredWallet = newWallet;
+
+        emit WalletRecoveryLinked(lostWallet, newWallet, _msgSender());
+    }
+
+    /// @inheritdoc ISMARTIdentityRegistryStorage
+    function isWalletMarkedAsLost(address userWallet) external view override returns (bool) {
+        return _lostWallets[userWallet];
+    }
+
+    /// @inheritdoc ISMARTIdentityRegistryStorage
+    function getRecoveredWalletFromStorage(address lostWallet) external view override returns (address) {
+        return _identities[lostWallet].recoveredWallet;
+    }
+
     // --- Context Overrides (ERC2771 for meta-transactions) ---
 
     /// @notice Provides the actual sender of a transaction, supporting meta-transactions via ERC2771.
@@ -614,7 +660,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @dev This function allows other contracts or off-chain tools to query if this contract implements specific
     /// interfaces.
     /// It checks if the `interfaceId` matches:
-    /// 1.  `type(IERC3643IdentityRegistryStorage).interfaceId`: This confirms that the contract adheres to the
+    /// 1.  `type(ISMARTIdentityRegistryStorage).interfaceId`: This confirms that the contract adheres to the
     ///     standard interface for ERC-3643 compliant identity registry storage.
     /// 2.  Any interfaces supported by its parent contracts (e.g., `AccessControlUpgradeable`,
     ///     `ERC165Upgradeable` itself) by calling `super.supportsInterface(interfaceId)`.
@@ -631,6 +677,6 @@ contract SMARTIdentityRegistryStorageImplementation is
             // extended.
         returns (bool)
     {
-        return interfaceId == type(IERC3643IdentityRegistryStorage).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(ISMARTIdentityRegistryStorage).interfaceId || super.supportsInterface(interfaceId);
     }
 }

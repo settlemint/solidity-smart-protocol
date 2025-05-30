@@ -37,7 +37,7 @@ import { ISMARTTokenFactory } from "./token-factory/ISMARTTokenFactory.sol";
 import { ISMARTCompliance } from "../interface/ISMARTCompliance.sol";
 import { ISMARTIdentityFactory } from "./identity-factory/ISMARTIdentityFactory.sol"; // Reverted to original path
 import { IERC3643TrustedIssuersRegistry } from "../interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
-import { IERC3643IdentityRegistryStorage } from "../interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTIdentityRegistryStorage } from "../interface/ISMARTIdentityRegistryStorage.sol";
 import { ISMARTIdentityRegistry } from "../interface/ISMARTIdentityRegistry.sol";
 import { ISMARTTokenAccessManager } from "../extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { ISMARTTopicSchemeRegistry } from "./topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
@@ -70,7 +70,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
     bytes4 private constant _ISMART_SYSTEM_ID = type(ISMARTSystem).interfaceId;
     bytes4 private constant _ISMART_COMPLIANCE_ID = type(ISMARTCompliance).interfaceId;
     bytes4 private constant _ISMART_IDENTITY_REGISTRY_ID = type(ISMARTIdentityRegistry).interfaceId;
-    bytes4 private constant _IERC3643_IDENTITY_REGISTRY_STORAGE_ID = type(IERC3643IdentityRegistryStorage).interfaceId;
+    bytes4 private constant _ISMART_IDENTITY_REGISTRY_STORAGE_ID = type(ISMARTIdentityRegistryStorage).interfaceId;
     bytes4 private constant _IERC3643_TRUSTED_ISSUERS_REGISTRY_ID = type(IERC3643TrustedIssuersRegistry).interfaceId;
     bytes4 private constant _ISMART_TOPIC_SCHEME_REGISTRY_ID = type(ISMARTTopicSchemeRegistry).interfaceId;
     bytes4 private constant _ISMART_IDENTITY_FACTORY_ID = type(ISMARTIdentityFactory).interfaceId;
@@ -214,8 +214,8 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
 
         // Validate and set the identity registry storage implementation address.
         if (identityRegistryStorageImplementation_ == address(0)) revert IdentityRegistryStorageImplementationNotSet();
-        _checkInterface(identityRegistryStorageImplementation_, _IERC3643_IDENTITY_REGISTRY_STORAGE_ID); // Ensure it
-            // supports IERC3643IdentityRegistryStorage
+        _checkInterface(identityRegistryStorageImplementation_, _ISMART_IDENTITY_REGISTRY_STORAGE_ID); // Ensure it
+            // supports ISMARTIdentityRegistryStorage
         _identityRegistryStorageImplementation = identityRegistryStorageImplementation_;
         emit IdentityRegistryStorageImplementationUpdated(initialAdmin_, _identityRegistryStorageImplementation);
 
@@ -347,7 +347,7 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         // After all proxy state variables are set, perform any necessary interactions between the new proxies.
         // Here, we bind the IdentityRegistryProxy to its dedicated IdentityRegistryStorageProxy.
         // This tells the storage proxy which identity registry is allowed to manage it.
-        IERC3643IdentityRegistryStorage(localIdentityRegistryStorageProxy).bindIdentityRegistry(
+        ISMARTIdentityRegistryStorage(localIdentityRegistryStorageProxy).bindIdentityRegistry(
             localIdentityRegistryProxy // Using the local variable, or _identityRegistryProxy which is now correctly
                 // set.
         );
@@ -406,11 +406,6 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
         IAccessControl(address(identityFactoryProxy())).grantRole(
             SMARTSystemRoles.TOKEN_IDENTITY_ISSUER_ROLE, _tokenFactoryProxy
         );
-        // Make it possible that the token factory can give tokens the possibility to register token identities
-        // (for recovery).
-        IAccessControl(address(identityRegistryProxy())).grantRole(
-            SMARTSystemRoles.REGISTRAR_ADMIN_ROLE, _tokenFactoryProxy
-        );
 
         emit TokenFactoryCreated(_msgSender(), _typeName, _tokenFactoryProxy, _factoryImplementation, block.timestamp);
 
@@ -450,12 +445,12 @@ contract SMARTSystem is ISMARTSystem, ERC165, ERC2771Context, AccessControl, Ree
 
     /// @notice Sets (updates) the address of the identity registry storage module's implementation (logic) contract.
     /// @dev Only callable by an address with the `DEFAULT_ADMIN_ROLE`.
-    /// Reverts if `implementation` is zero or doesn't support `IERC3643IdentityRegistryStorage`.
+    /// Reverts if `implementation` is zero or doesn't support `ISMARTIdentityRegistryStorage`.
     /// Emits an `IdentityRegistryStorageImplementationUpdated` event.
     /// @param implementation The new address for the identity registry storage logic contract.
     function setIdentityRegistryStorageImplementation(address implementation) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (implementation == address(0)) revert IdentityRegistryStorageImplementationNotSet();
-        _checkInterface(implementation, _IERC3643_IDENTITY_REGISTRY_STORAGE_ID);
+        _checkInterface(implementation, _ISMART_IDENTITY_REGISTRY_STORAGE_ID);
         _identityRegistryStorageImplementation = implementation;
         emit IdentityRegistryStorageImplementationUpdated(_msgSender(), implementation);
     }

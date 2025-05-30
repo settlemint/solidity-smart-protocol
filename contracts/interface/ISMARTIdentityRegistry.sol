@@ -8,7 +8,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { IIdentity } from "@onchainid/contracts/interface/IIdentity.sol";
 
 // Interface imports
-import { IERC3643IdentityRegistryStorage } from "./ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTIdentityRegistryStorage } from "./ISMARTIdentityRegistryStorage.sol";
 import { IERC3643TrustedIssuersRegistry } from "./ERC-3643/IERC3643TrustedIssuersRegistry.sol";
 import { ISMARTTopicSchemeRegistry } from "../system/topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
 
@@ -21,7 +21,7 @@ import { ISMARTTopicSchemeRegistry } from "../system/topic-scheme-registry/ISMAR
 ///         based on claims issued by trusted entities.
 /// @dev This registry acts as a central point of truth for associating wallet addresses with digital identities.
 ///      It relies on two other key components:
-///      1. `IERC3643IdentityRegistryStorage`: A separate contract responsible for storing the actual mappings
+///      1. `ISMARTIdentityRegistryStorage`: A separate contract responsible for storing the actual mappings
 ///         between investor addresses, identity contracts, and country codes. This separation of concerns allows
 ///         for upgradability and different storage strategies.
 ///      2. `IERC3643TrustedIssuersRegistry`: A contract that maintains a list of trusted entities (claim issuers)
@@ -36,7 +36,7 @@ interface ISMARTIdentityRegistry is IERC165 {
     /// @dev This event is crucial for transparency, allowing external observers to track changes in the underlying
     ///      storage mechanism used by the Identity Registry.
     /// @param sender The address of the account (typically the owner or an admin) that initiated this change.
-    /// @param _identityStorage The new address of the contract implementing `IERC3643IdentityRegistryStorage`.
+    /// @param _identityStorage The new address of the contract implementing `ISMARTIdentityRegistryStorage`.
     event IdentityStorageSet(address indexed sender, address indexed _identityStorage);
 
     /// @notice Emitted when the address of the `TrustedIssuersRegistry` contract is successfully set or updated.
@@ -88,6 +88,28 @@ interface ISMARTIdentityRegistry is IERC165 {
     /// @param _country The new numeric country code (conforming to ISO 3166-1 alpha-2 standard, e.g., 840 for USA).
     event CountryUpdated(address indexed sender, address indexed _investorAddress, uint16 indexed _country);
 
+    /// @notice Emitted when an identity is successfully recovered, associating a new wallet with a new identity
+    ///         and marking the old wallet as lost.
+    /// @param sender The address of the account (e.g., a registrar agent) that performed the recovery.
+    /// @param lostWallet The previous wallet address that has now been marked as lost. (Indexed)
+    /// @param newWallet The new active wallet address for the identity. (Indexed)
+    /// @param newIdentityContract The new IIdentity contract for the new wallet. (Indexed)
+    /// @param oldIdentityContract The old IIdentity contract that was associated with the lost wallet.
+    event IdentityRecovered(
+        address indexed sender,
+        address indexed lostWallet,
+        address indexed newWallet,
+        address newIdentityContract,
+        address oldIdentityContract
+    );
+
+    /// @notice Emitted when a wallet recovery link is established between a lost wallet and its replacement.
+    /// @dev This event helps track the recovery chain for token reclaim purposes.
+    /// @param sender The address that performed the recovery operation.
+    /// @param lostWallet The lost wallet address.
+    /// @param newWallet The new replacement wallet address.
+    event WalletRecoveryLinked(address indexed sender, address indexed lostWallet, address indexed newWallet);
+
     // --- Configuration Setters (Typically Owner/Admin Restricted) ---
 
     /**
@@ -97,7 +119,7 @@ interface ISMARTIdentityRegistry is IERC165 {
      * upgradable, contract.
      *      Changing this address can have significant implications, so it must be handled with care.
      * @param _identityRegistryStorage The address of the new contract that implements the
-     * `IERC3643IdentityRegistryStorage` interface.
+     * `ISMARTIdentityRegistryStorage` interface.
      * @custom:emit IdentityStorageSet
      */
     function setIdentityRegistryStorage(address _identityRegistryStorage) external;
@@ -194,6 +216,17 @@ interface ISMARTIdentityRegistry is IERC165 {
     )
         external;
 
+    /// @notice Recovers an identity by creating a new wallet registration with a new identity contract,
+    ///         marking the old wallet as lost, and preserving the country code.
+    /// @dev This function handles the practical reality that losing wallet access often means losing
+    ///      access to the identity contract as well. It creates a fresh start while maintaining
+    ///      regulatory compliance data and recovery links for token reclaim.
+    ///      The function is typically restricted to registrar roles.
+    /// @param lostWallet The current wallet address to be marked as lost.
+    /// @param newWallet The new wallet address to be registered.
+    /// @param newOnchainId The new IIdentity contract address for the new wallet.
+    function recoverIdentity(address lostWallet, address newWallet, address newOnchainId) external;
+
     // --- Registry Consultation (View Functions) ---
 
     /**
@@ -240,9 +273,9 @@ interface ISMARTIdentityRegistry is IERC165 {
      * @notice Returns the address of the `IdentityRegistryStorage` contract currently being used by this Identity
      * Registry.
      * @dev This allows external parties to inspect which storage contract is active.
-     * @return The address of the contract implementing `IERC3643IdentityRegistryStorage`.
+     * @return The address of the contract implementing `ISMARTIdentityRegistryStorage`.
      */
-    function identityStorage() external view returns (IERC3643IdentityRegistryStorage);
+    function identityStorage() external view returns (ISMARTIdentityRegistryStorage);
 
     /**
      * @notice Returns the address of the `TrustedIssuersRegistry` contract currently being used by this Identity
@@ -259,4 +292,17 @@ interface ISMARTIdentityRegistry is IERC165 {
      * @return The address of the contract implementing `ISMARTTopicSchemeRegistry`.
      */
     function topicSchemeRegistry() external view returns (ISMARTTopicSchemeRegistry);
+
+    // --- Lost Wallet View Functions ---
+
+    /// @notice Checks if a wallet address has been marked as lost.
+    /// @param userWallet The wallet address to check.
+    /// @return True if the wallet is marked as lost, false otherwise.
+    function isWalletLost(address userWallet) external view returns (bool);
+
+    /// @notice Gets the new wallet address that replaced a lost wallet during recovery.
+    /// @dev This is the key function for token recovery validation.
+    /// @param lostWallet The lost wallet address.
+    /// @return The new wallet address that replaced the lost wallet, or address(0) if not found.
+    function getRecoveredWallet(address lostWallet) external view returns (address);
 }

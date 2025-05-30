@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 // This file represents the test suite for the SMART Capped token implementation.
 // It inherits the common test logic and infrastructure setup.
 
-import { SMARTCappedTest } from "./tests/SMARTCappedTest.sol";
+import { SMARTCappedTest } from "./extensions/SMARTCappedTest.sol";
 import { ISMART } from "../contracts/interface/ISMART.sol";
 import { SMARTCappedToken } from "./examples/SMARTCappedToken.sol";
 import { SMARTTopics } from "../contracts/system/SMARTTopics.sol";

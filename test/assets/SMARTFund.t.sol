@@ -148,7 +148,7 @@ contract SMARTFundTest is AbstractSMARTAssetTest {
 
         vm.startPrank(owner);
         vm.expectEmit(true, true, true, true);
-        emit ISMART.TokenRecovered(owner, mockToken, investor1, withdrawAmount);
+        emit ISMART.ERC20TokenRecovered(owner, mockToken, investor1, withdrawAmount);
         fund.recoverERC20(mockToken, investor1, withdrawAmount);
         vm.stopPrank();
     }

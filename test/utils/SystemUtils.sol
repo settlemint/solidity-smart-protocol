@@ -37,7 +37,7 @@ import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentity
 import { ISMARTIdentityFactory } from "../../contracts/system/identity-factory/ISMARTIdentityFactory.sol";
 import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
 import { IERC3643TrustedIssuersRegistry } from "../../contracts/interface/ERC-3643/IERC3643TrustedIssuersRegistry.sol";
-import { IERC3643IdentityRegistryStorage } from "../../contracts/interface/ERC-3643/IERC3643IdentityRegistryStorage.sol";
+import { ISMARTIdentityRegistryStorage } from "../../contracts/interface/ISMARTIdentityRegistryStorage.sol";
 import { ISMARTTokenAccessManager } from "../../contracts/extensions/access-managed/ISMARTTokenAccessManager.sol";
 import { ISMARTTopicSchemeRegistry } from "../../contracts/system/topic-scheme-registry/ISMARTTopicSchemeRegistry.sol";
 
@@ -53,7 +53,7 @@ contract SystemUtils is Test {
     ISMARTSystem public system;
 
     // Core Contract Instances (now holding proxy addresses)
-    IERC3643IdentityRegistryStorage public identityRegistryStorage; // Proxy
+    ISMARTIdentityRegistryStorage public identityRegistryStorage; // Proxy
     IERC3643TrustedIssuersRegistry public trustedIssuersRegistry; // Proxy
     ISMARTIdentityRegistry public identityRegistry; // Proxy
     ISMARTCompliance public compliance; // Proxy
@@ -106,7 +106,7 @@ contract SystemUtils is Test {
         vm.label(address(compliance), "Compliance");
         identityRegistry = ISMARTIdentityRegistry(system.identityRegistryProxy());
         vm.label(address(identityRegistry), "Identity Registry");
-        identityRegistryStorage = IERC3643IdentityRegistryStorage(system.identityRegistryStorageProxy());
+        identityRegistryStorage = ISMARTIdentityRegistryStorage(system.identityRegistryStorageProxy());
         vm.label(address(identityRegistryStorage), "Identity Registry Storage");
         trustedIssuersRegistry = IERC3643TrustedIssuersRegistry(system.trustedIssuersRegistryProxy());
         vm.label(address(trustedIssuersRegistry), "Trusted Issuers Registry");

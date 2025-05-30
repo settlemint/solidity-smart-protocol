@@ -82,4 +82,18 @@ abstract contract SMARTHooks {
     /// @param _from The address that redeemed tokens.
     /// @param _amount The quantity of tokens that were redeemed.
     function _afterRedeem(address _from, uint256 _amount) internal virtual { }
+
+    /// @notice Hook executed before a token recovery operation.
+    /// @dev To be overridden by extensions needing to perform checks or actions before tokens are recovered.
+    ///      Implementations MUST call `super._beforeRecoverTokens(_lostWallet, _newWallet)` first.
+    /// @param _lostWallet The address of the wallet that is being recovered.
+    /// @param _newWallet The address of the new wallet that will receive the tokens.
+    function _beforeRecoverTokens(address _lostWallet, address _newWallet) internal virtual { }
+
+    /// @notice Hook executed after a token recovery operation has completed.
+    /// @dev To be overridden by extensions needing to perform actions after tokens are recovered.
+    ///      Implementations MUST call `super._afterRecoverTokens(_lostWallet, _newWallet)` first.
+    /// @param _lostWallet The address of the wallet that was recovered.
+    /// @param _newWallet The address of the new wallet that received the tokens.
+    function _afterRecoverTokens(address _lostWallet, address _newWallet) internal virtual { }
 }

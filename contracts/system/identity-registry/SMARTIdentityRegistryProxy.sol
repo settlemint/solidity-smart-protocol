@@ -28,7 +28,7 @@ contract SMARTIdentityRegistryProxy is SMARTSystemProxy {
     /// logic.
     /// @param systemAddress The address of the `ISMARTSystem` contract.
     /// @param initialAdmin The address that will be granted initial administrative roles.
-    /// @param identityStorage The address of the `IERC3643IdentityRegistryStorage` contract.
+    /// @param identityStorage The address of the `ISMARTIdentityRegistryStorage` contract.
     /// @param trustedIssuersRegistry The address of the `IERC3643TrustedIssuersRegistry` contract.
     /// @param topicSchemeRegistry The address of the `ISMARTTopicSchemeRegistry` contract.
     constructor(
@@ -46,7 +46,6 @@ contract SMARTIdentityRegistryProxy is SMARTSystemProxy {
 
         bytes memory data = abi.encodeWithSelector(
             SMARTIdentityRegistryImplementation.initialize.selector,
-            systemAddress,
             initialAdmin,
             identityStorage,
             trustedIssuersRegistry,
