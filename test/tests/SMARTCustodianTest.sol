@@ -7,6 +7,7 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 import { TestConstants } from "../Constants.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { ISMARTCustodian } from "../../contracts/extensions/custodian/ISMARTCustodian.sol";
+import { ISMART } from "../../contracts/interface/ISMART.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {
     SenderAddressFrozen,
@@ -546,22 +547,32 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
     //                       ADDRESS RECOVERY TESTS
     // =====================================================================
 
-    function test_Custodian_AddressRecovery_Success() public {
-        _setUpCustodianTest(); // Call setup explicitly
+    function test_Custodian_ForcedRecoverTokens_Success() public {
+        _setUpCustodianTest();
+        _mintInitialBalances();
+
         address lostWallet = clientBE;
-        address newWallet = makeAddr("New Wallet BE");
-        address investorOnchainID = identityUtils.getIdentity(lostWallet);
-        require(investorOnchainID != address(0), "Could not get OnchainID");
+        address newWallet = makeAddr("NewWalletForBE");
+        uint256 initialBalance = token.balanceOf(lostWallet);
+        require(initialBalance > 0, "Lost wallet has no balance");
 
-        uint256 initialLostBalance = token.balanceOf(lostWallet);
-        require(initialLostBalance > 0, "Lost wallet has no balance");
+        // Create identity for new wallet and set up recovery
+        address newIdentity = identityUtils.createIdentity(newWallet);
+        claimUtils.issueAllClaims(newWallet);
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
 
-        // Perform Recovery
-        tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
+        // Verify the wallet is marked as lost
+        assertTrue(systemUtils.identityRegistry().isWalletLost(lostWallet), "Lost wallet should be marked as lost");
+
+        // Perform forced recovery via custodian - expects TokensRecovered event (not RecoverySuccess)
+        vm.expectEmit(true, true, true, true);
+        emit ISMART.TokensRecovered(tokenIssuer, newWallet, lostWallet, initialBalance);
+
+        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
 
         // Post-checks
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
-        assertEq(token.balanceOf(newWallet), initialLostBalance, "New wallet balance wrong");
+        assertEq(token.balanceOf(newWallet), initialBalance, "New wallet balance wrong");
         assertTrue(
             systemUtils.identityRegistry().isVerified(newWallet, requiredClaimTopics),
             "New wallet not verified after recovery"
@@ -573,18 +584,17 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         );
     }
 
-    function test_Custodian_AddressRecovery_WithFrozenState_Success() public {
-        _setUpCustodianTest(); // Call setup explicitly
-        address lostWallet = clientJP;
-        address newWallet = makeAddr("New Wallet JP");
-        address investorOnchainID = identityUtils.getIdentity(lostWallet);
-        require(investorOnchainID != address(0), "Could not get OnchainID");
+    function test_Custodian_ForcedRecoverTokens_WithFrozenState_Success() public {
+        _setUpCustodianTest();
+        _mintInitialBalances();
 
-        uint256 initialLostBalance = token.balanceOf(lostWallet);
-        require(initialLostBalance > 0, "Lost wallet has no balance");
+        address lostWallet = clientJP;
+        address newWallet = makeAddr("NewWalletForJP");
+        uint256 initialBalance = token.balanceOf(lostWallet);
+        require(initialBalance > 0, "Lost wallet has no balance");
 
         // Freeze the lost wallet address and some tokens
-        uint256 freezeAmount = initialLostBalance / 3;
+        uint256 freezeAmount = initialBalance / 3;
         tokenUtils.setAddressFrozen(address(token), tokenIssuer, lostWallet, true);
         tokenUtils.freezePartialTokens(address(token), tokenIssuer, lostWallet, freezeAmount);
         assertTrue(tokenUtils.isFrozen(address(token), lostWallet), "Lost wallet not frozen before recovery");
@@ -592,11 +602,26 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
             tokenUtils.getFrozenTokens(address(token), lostWallet), freezeAmount, "Lost wallet frozen tokens wrong"
         );
 
-        tokenUtils.recoveryAddressAsExecutor(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
+        // Create identity for new wallet and set up recovery
+        address newIdentity = identityUtils.createIdentity(newWallet);
+        claimUtils.issueAllClaims(newWallet);
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
 
-        // Post-checks
+        // Expect freeze state migration events
+        vm.expectEmit(true, true, false, true);
+        emit ISMARTCustodian.TokensUnfrozen(tokenIssuer, lostWallet, freezeAmount);
+        vm.expectEmit(true, true, false, true);
+        emit ISMARTCustodian.TokensFrozen(tokenIssuer, newWallet, freezeAmount);
+        vm.expectEmit(true, true, true, false);
+        emit ISMARTCustodian.AddressFrozen(tokenIssuer, newWallet, true);
+        vm.expectEmit(true, true, true, false);
+        emit ISMARTCustodian.AddressFrozen(tokenIssuer, lostWallet, false);
+
+        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+
+        // Post-checks: verify freeze state migration
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
-        assertEq(token.balanceOf(newWallet), initialLostBalance, "New wallet balance wrong");
+        assertEq(token.balanceOf(newWallet), initialBalance, "New wallet balance wrong");
         assertTrue(tokenUtils.isFrozen(address(token), newWallet), "New wallet not frozen after recovery");
         assertFalse(tokenUtils.isFrozen(address(token), lostWallet), "Lost wallet still frozen after recovery");
         assertEq(tokenUtils.getFrozenTokens(address(token), newWallet), freezeAmount, "New wallet frozen tokens wrong");
@@ -604,28 +629,173 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
         assertTrue(systemUtils.identityRegistry().isVerified(newWallet, requiredClaimTopics), "New wallet not verified");
     }
 
-    function test_Custodian_AddressRecovery_NoBalance_Reverts() public {
-        _setUpCustodianTest(); // Call setup explicitly
-        address lostWallet = clientBE;
-        address newWallet = makeAddr("New Wallet BE");
-        address investorOnchainID = identityUtils.getIdentity(lostWallet);
+    function test_Custodian_ForcedRecoverTokens_WithPartialFreezeOnly_Success() public {
+        _setUpCustodianTest();
+        _mintInitialBalances();
 
-        // Burn all balance
-        uint256 currentBalance = token.balanceOf(lostWallet);
-        if (currentBalance > 0) {
-            tokenUtils.burnToken(address(token), tokenIssuer, lostWallet, currentBalance);
-        }
-        assertEq(token.balanceOf(lostWallet), 0, "Failed to burn balance for test setup");
+        address lostWallet = clientUS;
+        address newWallet = makeAddr("NewWalletForUS");
+        uint256 initialBalance = token.balanceOf(lostWallet);
+        require(initialBalance > 0, "Lost wallet has no balance");
 
-        vm.expectRevert(abi.encodeWithSelector(NoTokensToRecover.selector));
-        tokenUtils.recoveryAddress(address(token), tokenIssuer, lostWallet, newWallet, investorOnchainID);
+        // Only freeze partial tokens (not the entire address)
+        uint256 freezeAmount = initialBalance / 2;
+        tokenUtils.freezePartialTokens(address(token), tokenIssuer, lostWallet, freezeAmount);
+        assertFalse(tokenUtils.isFrozen(address(token), lostWallet), "Lost wallet should not be fully frozen");
+        assertEq(
+            tokenUtils.getFrozenTokens(address(token), lostWallet), freezeAmount, "Lost wallet frozen tokens wrong"
+        );
+
+        // Create identity for new wallet and set up recovery
+        address newIdentity = identityUtils.createIdentity(newWallet);
+        claimUtils.issueAllClaims(newWallet);
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
+
+        // Expect only partial freeze migration events (no address freeze events)
+        vm.expectEmit(true, true, false, true);
+        emit ISMARTCustodian.TokensUnfrozen(tokenIssuer, lostWallet, freezeAmount);
+        vm.expectEmit(true, true, false, true);
+        emit ISMARTCustodian.TokensFrozen(tokenIssuer, newWallet, freezeAmount);
+
+        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+
+        // Post-checks: verify only partial freeze state migration
+        assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
+        assertEq(token.balanceOf(newWallet), initialBalance, "New wallet balance wrong");
+        assertFalse(tokenUtils.isFrozen(address(token), newWallet), "New wallet should not be fully frozen");
+        assertFalse(tokenUtils.isFrozen(address(token), lostWallet), "Lost wallet should not be fully frozen");
+        assertEq(tokenUtils.getFrozenTokens(address(token), newWallet), freezeAmount, "New wallet frozen tokens wrong");
+        assertEq(tokenUtils.getFrozenTokens(address(token), lostWallet), 0, "Lost wallet frozen tokens not zero");
     }
 
-    function test_Custodian_AddressRecovery_AccessControl_Reverts() public {
-        _setUpCustodianTest(); // Call setup explicitly
+    function test_Custodian_ForcedRecoverTokens_NewWalletPreFrozen_Success() public {
+        _setUpCustodianTest();
+        _mintInitialBalances();
+
         address lostWallet = clientBE;
-        address newWallet = makeAddr("New Wallet BE");
-        address investorOnchainID = identityUtils.getIdentity(lostWallet);
+        address newWallet = makeAddr("NewWalletForBE");
+        uint256 initialBalance = token.balanceOf(lostWallet);
+
+        // Create identity for new wallet and set up recovery
+        address newIdentity = identityUtils.createIdentity(newWallet);
+        claimUtils.issueAllClaims(newWallet);
+
+        // Pre-freeze the new wallet (edge case)
+        tokenUtils.setAddressFrozen(address(token), tokenIssuer, newWallet, true);
+        assertTrue(tokenUtils.isFrozen(address(token), newWallet), "New wallet should be pre-frozen");
+
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
+
+        // Expect new wallet to be unfrozen during recovery (defensive behavior)
+        vm.expectEmit(true, true, true, false);
+        emit ISMARTCustodian.AddressFrozen(tokenIssuer, newWallet, false);
+
+        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+
+        // Post-checks: new wallet should be unfrozen
+        assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
+        assertEq(token.balanceOf(newWallet), initialBalance, "New wallet balance wrong");
+        assertFalse(tokenUtils.isFrozen(address(token), newWallet), "New wallet should be unfrozen after recovery");
+        assertFalse(tokenUtils.isFrozen(address(token), lostWallet), "Lost wallet should be unfrozen");
+    }
+
+    function test_Custodian_ForcedRecoverTokens_NoBalance_Reverts() public {
+        _setUpCustodianTest();
+        _mintInitialBalances();
+
+        address lostWallet = clientBE;
+        address newWallet = makeAddr("NewWalletForBE");
+
+        // Burn all balance from lost wallet
+        uint256 currentBalance = token.balanceOf(lostWallet);
+        tokenUtils.burnToken(address(token), tokenIssuer, lostWallet, currentBalance);
+        assertEq(token.balanceOf(lostWallet), 0, "Failed to burn balance for test setup");
+
+        // Create identity for new wallet and set up recovery
+        address newIdentity = identityUtils.createIdentity(newWallet);
+        claimUtils.issueAllClaims(newWallet);
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
+
+        vm.expectRevert(abi.encodeWithSelector(NoTokensToRecover.selector));
+        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+    }
+
+    function test_Custodian_ForcedRecoverTokens_NewWalletHasExistingBalance_Success() public {
+        _setUpCustodianTest();
+        _mintInitialBalances();
+
+        address lostWallet = clientBE;
+        address newWallet = makeAddr("NewWalletForBE");
+        uint256 lostBalance = token.balanceOf(lostWallet);
+
+        // Create identity for new wallet and mint some tokens to it
+        address newIdentity = identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
+        claimUtils.issueAllClaims(newWallet);
+
+        uint256 existingBalance = 500 ether;
+        tokenUtils.mintToken(address(token), tokenIssuer, newWallet, existingBalance);
+
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
+
+        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet, lostWallet);
+
+        // Post-checks: new wallet should have existing + recovered balance
+        assertEq(token.balanceOf(lostWallet), 0, "Lost wallet balance not zero");
+        assertEq(
+            token.balanceOf(newWallet),
+            existingBalance + lostBalance,
+            "New wallet should have existing plus recovered balance"
+        );
+    }
+
+    function test_Custodian_ForcedRecoverTokens_MultipleRecoveries_Success() public {
+        _setUpCustodianTest();
+        _mintInitialBalances();
+
+        // First recovery: clientBE -> newWallet1
+        address lostWallet1 = clientBE;
+        address newWallet1 = makeAddr("NewWallet1");
+        uint256 balance1 = token.balanceOf(lostWallet1);
+
+        address newIdentity1 = identityUtils.createIdentity(newWallet1);
+        claimUtils.issueAllClaims(newWallet1);
+        identityUtils.recoverIdentity(lostWallet1, newWallet1, newIdentity1);
+
+        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet1, lostWallet1);
+
+        assertEq(token.balanceOf(lostWallet1), 0, "First lost wallet should have zero balance");
+        assertEq(token.balanceOf(newWallet1), balance1, "First new wallet should have recovered balance");
+
+        // Second recovery: clientJP -> newWallet2
+        address lostWallet2 = clientJP;
+        address newWallet2 = makeAddr("NewWallet2");
+        uint256 balance2 = token.balanceOf(lostWallet2);
+
+        address newIdentity2 = identityUtils.createIdentity(newWallet2);
+        claimUtils.issueAllClaims(newWallet2);
+        identityUtils.recoverIdentity(lostWallet2, newWallet2, newIdentity2);
+
+        tokenUtils.forcedRecoverTokensAsExecutor(address(token), tokenIssuer, newWallet2, lostWallet2);
+
+        assertEq(token.balanceOf(lostWallet2), 0, "Second lost wallet should have zero balance");
+        assertEq(token.balanceOf(newWallet2), balance2, "Second new wallet should have recovered balance");
+
+        // Verify both old wallets are marked as lost
+        assertTrue(systemUtils.identityRegistry().isWalletLost(lostWallet1), "First wallet should be marked as lost");
+        assertTrue(systemUtils.identityRegistry().isWalletLost(lostWallet2), "Second wallet should be marked as lost");
+    }
+
+    function test_Custodian_ForcedRecoverTokens_AccessControl_Reverts() public {
+        _setUpCustodianTest();
+        _mintInitialBalances();
+
+        address lostWallet = clientBE;
+        address newWallet = makeAddr("NewWalletForBE");
+
+        // Create identity for new wallet and set up recovery
+        address newIdentity = identityUtils.createIdentity(newWallet);
+        claimUtils.issueAllClaims(newWallet);
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -634,7 +804,7 @@ abstract contract SMARTCustodianTest is AbstractSMARTTest {
                 SMARTToken(address(token)).RECOVERY_ROLE()
             )
         );
-        tokenUtils.recoveryAddressAsExecutor(address(token), clientJP, lostWallet, newWallet, investorOnchainID);
+        tokenUtils.forcedRecoverTokensAsExecutor(address(token), clientJP, newWallet, lostWallet);
     }
 
     function test_SupportsInterface_Custodian() public {
