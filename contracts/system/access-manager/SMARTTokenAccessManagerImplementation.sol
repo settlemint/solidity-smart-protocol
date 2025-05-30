@@ -18,7 +18,7 @@ import { ISMARTTokenAccessManager } from "../../extensions/access-managed/ISMART
 ///         This promotes consistency, simplifies role management (as roles are managed in one place),
 ///         and can save gas by deploying this logic once and reusing it.
 /// @dev This contract inherits from OpenZeppelin's `AccessControlUpgradeable` to get robust
-///      role-based access control features (like granting, revoking, renouncing roles) and 
+///      role-based access control features (like granting, revoking, renouncing roles) and
 ///      `ERC2771ContextUpgradeable` to support meta-transactions.
 ///      It is designed to be upgradeable using a Transparent Proxy Pattern.
 ///      Meta-transactions allow users to interact with contracts without needing ETH for gas fees,

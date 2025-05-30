@@ -10,27 +10,27 @@
  * formatDecimals(1500000n, 6) // "1.5"
  */
 export function formatDecimals(amount: bigint, decimals: number): string {
-	if (decimals < 0) {
-		throw new Error("Decimals cannot be negative");
-	}
+  if (decimals < 0) {
+    throw new Error("Decimals cannot be negative");
+  }
 
-	if (decimals === 0) {
-		return amount.toString();
-	}
+  if (decimals === 0) {
+    return amount.toString();
+  }
 
-	const divisor = BigInt(10 ** decimals);
-	const quotient = amount / divisor;
-	const remainder = amount % divisor;
+  const divisor = BigInt(10 ** decimals);
+  const quotient = amount / divisor;
+  const remainder = amount % divisor;
 
-	if (remainder === 0n) {
-		return quotient.toString();
-	}
+  if (remainder === 0n) {
+    return quotient.toString();
+  }
 
-	// Pad remainder with leading zeros if necessary
-	const remainderStr = remainder.toString().padStart(decimals, "0");
+  // Pad remainder with leading zeros if necessary
+  const remainderStr = remainder.toString().padStart(decimals, "0");
 
-	// Remove trailing zeros from decimal part
-	const trimmedRemainder = remainderStr.replace(/0+$/, "");
+  // Remove trailing zeros from decimal part
+  const trimmedRemainder = remainderStr.replace(/0+$/, "");
 
-	return `${quotient}.${trimmedRemainder}`;
+  return `${quotient}.${trimmedRemainder}`;
 }

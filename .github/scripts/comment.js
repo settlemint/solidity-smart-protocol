@@ -10,7 +10,7 @@ module.exports = async ({ github, context, header, body }) => {
   const botComment = comments.find(
     (comment) =>
       // github-actions bot user
-      comment.user.id === 41898282 && comment.body.startsWith(header)
+      comment.user.id === 41898282 && comment.body.startsWith(header),
   );
 
   const commentFn = botComment ? "updateComment" : "createComment";

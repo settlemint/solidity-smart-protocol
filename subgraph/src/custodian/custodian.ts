@@ -19,7 +19,7 @@ export function handleAddressFrozen(event: AddressFrozen): void {
   freezeOrUnfreezeTokenBalance(
     token,
     event.params.userAddress,
-    event.params.isFrozen
+    event.params.isFrozen,
   );
 }
 
@@ -29,7 +29,7 @@ export function handleRecoverySuccess(event: RecoverySuccess): void {
   moveTokenBalanceToNewAccount(
     token,
     event.params.lostWallet,
-    event.params.newWallet
+    event.params.newWallet,
   );
 }
 

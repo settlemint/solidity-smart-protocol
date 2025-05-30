@@ -62,7 +62,6 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         assertTrue(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), admin));
         assertTrue(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), user1));
         assertTrue(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), user2));
-
     }
 
     function test_InitializeWithEmptyAdmins() public {
@@ -77,7 +76,6 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         // Verify no one has admin role
         assertFalse(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), admin));
         assertFalse(IAccessControl(address(newManager)).hasRole(newImpl.DEFAULT_ADMIN_ROLE(), user1));
-
     }
 
     function test_CannotInitializeTwice() public {
@@ -108,7 +106,6 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user1));
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user2));
         assertTrue(accessManager.hasRole(TEST_ROLE_1, user3));
-
     }
 
     function test_BatchGrantRoleRequiresAdminRole() public {
@@ -126,7 +123,6 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
 
         vm.prank(admin);
         accessManager.batchGrantRole(TEST_ROLE_1, emptyAccounts);
-
     }
 
     function test_BatchRevokeRoleSuccess() public {
@@ -159,7 +155,6 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user1));
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user2));
         assertFalse(accessManager.hasRole(TEST_ROLE_1, user3));
-
     }
 
     function test_BatchRevokeRoleRequiresAdminRole() public {
@@ -177,7 +172,6 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
 
         vm.prank(admin);
         accessManager.batchRevokeRole(TEST_ROLE_1, emptyAccounts);
-
     }
 
     function test_BatchRevokeNonExistentRole() public {
@@ -217,7 +211,6 @@ contract SMARTTokenAccessManagerImplementationTest is Test {
         // Test unsupported interface
         assertFalse(IERC165(address(accessManager)).supportsInterface(bytes4(keccak256("unsupported()"))));
     }
-
 
     function test_DirectCallToImplementation() public {
         // Test calling initialize directly on implementation (should fail due to _disableInitializers)

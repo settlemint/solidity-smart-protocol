@@ -20,7 +20,7 @@ export function handleTokenAssetCreated(event: TokenAssetCreated): void {
 }
 
 export function handleTokenImplementationUpdated(
-  event: TokenImplementationUpdated
+  event: TokenImplementationUpdated,
 ): void {
   fetchEvent(event, "TokenImplementationUpdated");
 }

@@ -7,40 +7,40 @@ import { encodeClaimData } from "../../utils/claim-scheme-utils";
 import { waitForSuccess } from "../../utils/wait-for-success";
 
 export const issueIsinClaim = async (
-	tokenIdentityAddress: Address,
-	isin: string
+  tokenIdentityAddress: Address,
+  isin: string,
 ) => {
-	const encodedIsinData = encodeClaimData(SMARTTopic.isin, [isin]);
+  const encodedIsinData = encodeClaimData(SMARTTopic.isin, [isin]);
 
-	const {
-		data: isinClaimData,
-		signature: isinClaimSignature,
-		topicId,
-	} = await claimIssuer.createClaim(
-		tokenIdentityAddress,
-		SMARTTopic.isin,
-		encodedIsinData
-	);
+  const {
+    data: isinClaimData,
+    signature: isinClaimSignature,
+    topicId,
+  } = await claimIssuer.createClaim(
+    tokenIdentityAddress,
+    SMARTTopic.isin,
+    encodedIsinData,
+  );
 
-	const tokenIdentityContract = owner.getContractInstance({
-		address: tokenIdentityAddress,
-		abi: SMARTContracts.tokenIdentity,
-	});
+  const tokenIdentityContract = owner.getContractInstance({
+    address: tokenIdentityAddress,
+    abi: SMARTContracts.tokenIdentity,
+  });
 
-	const claimIssuerIdentity = await claimIssuer.getIdentity();
+  const claimIssuerIdentity = await claimIssuer.getIdentity();
 
-	const transactionHash = await tokenIdentityContract.write.addClaim([
-		topicId,
-		BigInt(1), // ECDSA
-		claimIssuerIdentity,
-		isinClaimSignature,
-		isinClaimData,
-		"",
-	]);
+  const transactionHash = await tokenIdentityContract.write.addClaim([
+    topicId,
+    BigInt(1), // ECDSA
+    claimIssuerIdentity,
+    isinClaimSignature,
+    isinClaimData,
+    "",
+  ]);
 
-	await waitForSuccess(transactionHash);
+  await waitForSuccess(transactionHash);
 
-	console.log(
-		`[ISIN claim] issued for token identity ${tokenIdentityAddress} with ISIN ${isin}.`
-	);
+  console.log(
+    `[ISIN claim] issued for token identity ${tokenIdentityAddress} with ISIN ${isin}.`,
+  );
 };

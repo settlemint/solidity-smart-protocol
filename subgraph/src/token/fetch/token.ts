@@ -27,7 +27,7 @@ export function fetchToken(address: Address): Token {
       token,
       "totalSupply",
       tokenContract.totalSupply(),
-      token.decimals
+      token.decimals,
     );
 
     token.save();

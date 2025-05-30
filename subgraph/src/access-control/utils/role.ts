@@ -47,7 +47,7 @@ export const Roles = [
   new RoleConfig("TOKEN_IDENTITY_ISSUER_ROLE", "tokenIdentityIssuer"),
   new RoleConfig(
     "TOKEN_IDENTITY_ISSUER_ADMIN_ROLE",
-    "tokenIdentityIssuerAdmin"
+    "tokenIdentityIssuerAdmin",
   ),
   new RoleConfig("TOKEN_DEPLOYER_ROLE", "tokenDeployer"),
   new RoleConfig("STORAGE_MODIFIER_ROLE", "storageModifier"),

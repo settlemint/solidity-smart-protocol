@@ -4,23 +4,25 @@ import { smartProtocolDeployer } from "../services/deployer";
 import { topicManager } from "../services/topic-manager";
 import { waitForSuccess } from "../utils/wait-for-success";
 export const addTrustedIssuer = async (
-	trustedIssuerIdentity: Address,
-	claimTopics: bigint[] = [
-		topicManager.getTopicId(SMARTTopic.kyc),
-		topicManager.getTopicId(SMARTTopic.aml),
-		topicManager.getTopicId(SMARTTopic.collateral),
-	]
+  trustedIssuerIdentity: Address,
+  claimTopics: bigint[] = [
+    topicManager.getTopicId(SMARTTopic.kyc),
+    topicManager.getTopicId(SMARTTopic.aml),
+    topicManager.getTopicId(SMARTTopic.collateral),
+  ],
 ) => {
-	// Set up the claim issuer as a trusted issuer
-	const trustedIssuersRegistry =
-		smartProtocolDeployer.getTrustedIssuersRegistryContract();
+  // Set up the claim issuer as a trusted issuer
+  const trustedIssuersRegistry =
+    smartProtocolDeployer.getTrustedIssuersRegistryContract();
 
-	const transactionHash = await trustedIssuersRegistry.write.addTrustedIssuer([
-		trustedIssuerIdentity,
-		claimTopics,
-	]);
+  const transactionHash = await trustedIssuersRegistry.write.addTrustedIssuer([
+    trustedIssuerIdentity,
+    claimTopics,
+  ]);
 
-	await waitForSuccess(transactionHash);
+  await waitForSuccess(transactionHash);
 
-	console.log(`[Add trusted issuer] ${trustedIssuerIdentity} added to registry`);
+  console.log(
+    `[Add trusted issuer] ${trustedIssuerIdentity} added to registry`,
+  );
 };

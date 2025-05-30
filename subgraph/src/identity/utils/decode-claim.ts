@@ -4,9 +4,13 @@ import { convertEthereumValue } from "../../event/fetch/event";
 import { fetchTopicScheme } from "../../topic-scheme-registry/fetch/topic-scheme";
 import { fetchIdentityClaimValue } from "../fetch/identity-claim-value";
 
-export function decodeClaimValues(claim: IdentityClaim, topicId: BigInt, data: Bytes): void {
+export function decodeClaimValues(
+  claim: IdentityClaim,
+  topicId: BigInt,
+  data: Bytes,
+): void {
   const topicScheme = fetchTopicScheme(topicId);
-  
+
   // Set the claim name from the topic scheme
   claim.name = topicScheme.name;
   claim.save();
