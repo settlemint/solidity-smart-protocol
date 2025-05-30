@@ -27,19 +27,19 @@ export function handleComplianceAdded(event: ComplianceAdded): void {
 }
 
 export function handleComplianceModuleAdded(
-  event: ComplianceModuleAdded
+  event: ComplianceModuleAdded,
 ): void {
   fetchEvent(event, "ComplianceModuleAdded");
 }
 
 export function handleComplianceModuleRemoved(
-  event: ComplianceModuleRemoved
+  event: ComplianceModuleRemoved,
 ): void {
   fetchEvent(event, "ComplianceModuleRemoved");
 }
 
 export function handleIdentityRegistryAdded(
-  event: IdentityRegistryAdded
+  event: IdentityRegistryAdded,
 ): void {
   fetchEvent(event, "IdentityRegistryAdded");
 }
@@ -52,13 +52,13 @@ export function handleMintCompleted(event: MintCompleted): void {
 }
 
 export function handleModuleParametersUpdated(
-  event: ModuleParametersUpdated
+  event: ModuleParametersUpdated,
 ): void {
   fetchEvent(event, "ModuleParametersUpdated");
 }
 
 export function handleRequiredClaimTopicsUpdated(
-  event: RequiredClaimTopicsUpdated
+  event: RequiredClaimTopicsUpdated,
 ): void {
   fetchEvent(event, "RequiredClaimTopicsUpdated");
 }
@@ -71,7 +71,7 @@ export function handleTransferCompleted(event: TransferCompleted): void {
 }
 
 export function handleUpdatedTokenInformation(
-  event: UpdatedTokenInformation
+  event: UpdatedTokenInformation,
 ): void {
   fetchEvent(event, "UpdatedTokenInformation");
   const token = fetchToken(event.address);

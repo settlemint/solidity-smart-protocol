@@ -6,27 +6,27 @@ import { toDecimals } from "../../utils/to-decimals";
 import { waitForSuccess } from "../../utils/wait-for-success";
 
 export const transfer = async (
-	tokenAddress: Address,
-	from: AbstractActor,
-	to: AbstractActor,
-	amount: bigint,
-	decimals: number
+  tokenAddress: Address,
+  from: AbstractActor,
+  to: AbstractActor,
+  amount: bigint,
+  decimals: number,
 ) => {
-	const tokenContract = from.getContractInstance({
-		address: tokenAddress,
-		abi: SMARTContracts.ismart,
-	});
+  const tokenContract = from.getContractInstance({
+    address: tokenAddress,
+    abi: SMARTContracts.ismart,
+  });
 
-	const tokenAmount = toDecimals(amount, decimals);
+  const tokenAmount = toDecimals(amount, decimals);
 
-	const transactionHash = await tokenContract.write.transfer([
-		to.address,
-		tokenAmount,
-	]);
+  const transactionHash = await tokenContract.write.transfer([
+    to.address,
+    tokenAmount,
+  ]);
 
-	await waitForSuccess(transactionHash);
+  await waitForSuccess(transactionHash);
 
-	console.log(
-		`[Transfer] ${formatDecimals(tokenAmount, decimals)} tokens from ${from.name} (${from.address}) to ${to.name} (${to.address})`
-	);
+  console.log(
+    `[Transfer] ${formatDecimals(tokenAmount, decimals)} tokens from ${from.name} (${from.address}) to ${to.name} (${to.address})`,
+  );
 };

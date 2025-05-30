@@ -7,26 +7,26 @@ import { toDecimals } from "../../utils/to-decimals";
 import { waitForSuccess } from "../../utils/wait-for-success";
 
 export const mint = async (
-	tokenAddress: Address,
-	to: AbstractActor,
-	amount: bigint,
-	decimals: number
+  tokenAddress: Address,
+  to: AbstractActor,
+  amount: bigint,
+  decimals: number,
 ) => {
-	const tokenContract = owner.getContractInstance({
-		address: tokenAddress,
-		abi: SMARTContracts.ismart,
-	});
+  const tokenContract = owner.getContractInstance({
+    address: tokenAddress,
+    abi: SMARTContracts.ismart,
+  });
 
-	const tokenAmount = toDecimals(amount, decimals);
+  const tokenAmount = toDecimals(amount, decimals);
 
-	const transactionHash = await tokenContract.write.mint([
-		to.address,
-		tokenAmount,
-	]);
+  const transactionHash = await tokenContract.write.mint([
+    to.address,
+    tokenAmount,
+  ]);
 
-	await waitForSuccess(transactionHash);
+  await waitForSuccess(transactionHash);
 
-	console.log(
-		`[Mint] ${formatDecimals(tokenAmount, decimals)} tokens to ${to.name} (${to.address})`
-	);
+  console.log(
+    `[Mint] ${formatDecimals(tokenAmount, decimals)} tokens to ${to.name} (${to.address})`,
+  );
 };

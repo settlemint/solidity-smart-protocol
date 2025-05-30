@@ -5,30 +5,35 @@ The SMART Protocol subgraph provides comprehensive indexing of all on-chain even
 ## Features
 
 ### Identity Management
+
 - **Identity Registry**: Complete indexing of identity registries with linked storage contracts
 - **On-Chain Claims**: Structured indexing of ERC-735 claims with topic scheme decoding
 - **Identity Storage**: Full integration with identity registry storage for efficient data retrieval
 - **Claim Issuers**: Tracking of trusted issuers and their claim validation capabilities
 
 ### Compliance & Regulatory
+
 - **Compliance Modules**: Real-time updates to compliance rules and module configurations
 - **Transfer Validation**: Complete audit trail of compliance checks for all token transfers
 - **Country Restrictions**: Indexing of jurisdiction-specific allow/block lists
 - **Required Claims**: Topic-based requirements tracking for different asset types
 
 ### Token Operations
+
 - **ERC-20 Transfers**: Full transfer history with compliance context and validation results
 - **Token Lifecycle**: Mint, burn, and redemption events with regulatory annotations
 - **Balance Snapshots**: Historical balance tracking for governance and reporting
 - **Yield Distribution**: Automated indexing of dividend and yield payment events
 
 ### Access Control
+
 - **Role Management**: Complete tracking of role assignments and revocations
 - **Permission Changes**: Real-time updates to access control modifications
 - **Token Access**: Specialized indexing for token-specific access management
 - **Administrative Actions**: Audit trail of all system administrative changes
 
 ### Advanced Features
+
 - **Topic Scheme Registry**: Structured claim data with automatic decoding support
 - **Cross-Contract Relationships**: Linked data between tokens, identities, and compliance
 - **Event Aggregation**: Efficient querying of related events across multiple contracts

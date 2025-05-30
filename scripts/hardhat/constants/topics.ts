@@ -6,9 +6,9 @@
  */
 
 export enum SMARTTopic {
-	kyc = "kyc",
-	aml = "aml",
-	collateral = "collateral",
-	isin = "isin",
-	assetClassification = "assetClassification",
+  kyc = "kyc",
+  aml = "aml",
+  collateral = "collateral",
+  isin = "isin",
+  assetClassification = "assetClassification",
 }

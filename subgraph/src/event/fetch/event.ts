@@ -92,7 +92,7 @@ export function fetchEvent(event: ethereum.Event, eventType: string): Event {
     const entryValue = new EventValue(
       event.transaction.hash
         .concatI32(event.logIndex.toI32())
-        .concat(Bytes.fromUTF8(name))
+        .concat(Bytes.fromUTF8(name)),
     );
     entryValue.name = name;
     entryValue.value = value;

@@ -16,7 +16,8 @@ interface ISMARTRedeemable {
     /// sender's address.
     /// @param sender The address of the token holder who redeemed their tokens. This address initiated the redeem
     /// transaction.
-    /// @param amount The quantity of tokens that were redeemed and thus burned. This is the amount by which the sender's
+    /// @param amount The quantity of tokens that were redeemed and thus burned. This is the amount by which the
+    /// sender's
     /// balance and the total supply decreased.
     event Redeemed(address indexed sender, uint256 amount);
 

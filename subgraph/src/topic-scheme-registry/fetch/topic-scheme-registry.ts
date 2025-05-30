@@ -5,7 +5,7 @@ import { fetchAccessControl } from "../../access-control/fetch/accesscontrol";
 import { fetchAccount } from "../../account/fetch/account";
 
 export function fetchTopicSchemeRegistry(
-  address: Address
+  address: Address,
 ): TopicSchemeRegistry {
   let topicSchemeRegistry = TopicSchemeRegistry.load(address);
 
