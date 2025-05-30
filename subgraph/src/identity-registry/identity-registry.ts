@@ -42,7 +42,7 @@ export function handleIdentityStorageSet(event: IdentityStorageSet): void {
   fetchEvent(event, "IdentityStorageSet");
   const identityRegistry = fetchIdentityRegistry(event.address);
   const identityRegistryStorage = fetchIdentityRegistryStorage(
-    event.params._identityStorage
+    event.params._identityStorage,
   );
   identityRegistry.identityRegistryStorage = identityRegistryStorage.id;
   identityRegistry.save();
@@ -64,23 +64,23 @@ export function handleIdentityUpdated(event: IdentityUpdated): void {
 }
 
 export function handleTopicSchemeRegistrySet(
-  event: TopicSchemeRegistrySet
+  event: TopicSchemeRegistrySet,
 ): void {
   fetchEvent(event, "TopicSchemeRegistrySet");
   const identityRegistry = fetchIdentityRegistry(event.address);
   identityRegistry.topicSchemeRegistry = fetchTopicSchemeRegistry(
-    event.params._topicSchemeRegistry
+    event.params._topicSchemeRegistry,
   ).id;
   identityRegistry.save();
 }
 
 export function handleTrustedIssuersRegistrySet(
-  event: TrustedIssuersRegistrySet
+  event: TrustedIssuersRegistrySet,
 ): void {
   fetchEvent(event, "TrustedIssuersRegistrySet");
   const identityRegistry = fetchIdentityRegistry(event.address);
   identityRegistry.trustedIssuersRegistry = fetchTrustedIssuersRegistry(
-    event.params._trustedIssuersRegistry
+    event.params._trustedIssuersRegistry,
   ).id;
   identityRegistry.save();
 }

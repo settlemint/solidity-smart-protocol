@@ -4,7 +4,7 @@ import { fetchAccessControl } from "../../access-control/fetch/accesscontrol";
 import { fetchAccount } from "../../account/fetch/account";
 
 export function fetchIdentityRegistryStorage(
-  address: Address
+  address: Address,
 ): IdentityRegistryStorage {
   let identityRegistryStorage = IdentityRegistryStorage.load(address);
 

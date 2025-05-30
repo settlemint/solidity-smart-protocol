@@ -37,7 +37,7 @@ export function handleRoleGranted(event: RoleGranted): void {
   if (!found) {
     accessControl.set(
       roleConfig.fieldName,
-      Value.fromBytesArray(newValue.concat([roleHolder.id]))
+      Value.fromBytesArray(newValue.concat([roleHolder.id])),
     );
   }
   accessControl.save();

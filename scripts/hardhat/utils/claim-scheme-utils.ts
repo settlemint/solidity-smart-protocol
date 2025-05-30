@@ -1,8 +1,8 @@
 import {
-	type Hex,
-	decodeAbiParameters,
-	encodeAbiParameters,
-	parseAbiParameters,
+  type Hex,
+  decodeAbiParameters,
+  encodeAbiParameters,
+  parseAbiParameters,
 } from "viem";
 import type { SMARTTopic } from "../constants/topics";
 import { topicManager } from "../services/topic-manager";
@@ -14,23 +14,23 @@ import { topicManager } from "../services/topic-manager";
  * @returns The decoded claim data
  */
 export function decodeClaimData(
-	claimTopic: bigint,
-	encodedData: Hex,
+  claimTopic: bigint,
+  encodedData: Hex,
 ): readonly unknown[] {
-	// Ensure topic manager is initialized
-	if (!topicManager.isInitialized()) {
-		throw new Error(
-			"TopicManager is not initialized. Call topicManager.initialize() first.",
-		);
-	}
+  // Ensure topic manager is initialized
+  if (!topicManager.isInitialized()) {
+    throw new Error(
+      "TopicManager is not initialized. Call topicManager.initialize() first.",
+    );
+  }
 
-	const signature = topicManager.getTopicSignatureById(claimTopic);
+  const signature = topicManager.getTopicSignatureById(claimTopic);
 
-	if (!signature) {
-		throw new Error(`Unknown claim topic: ${claimTopic}`);
-	}
+  if (!signature) {
+    throw new Error(`Unknown claim topic: ${claimTopic}`);
+  }
 
-	return decodeAbiParameters(parseAbiParameters(signature), encodedData);
+  return decodeAbiParameters(parseAbiParameters(signature), encodedData);
 }
 
 /**
@@ -40,35 +40,35 @@ export function decodeClaimData(
  * @returns The encoded claim data as hex string
  */
 export function encodeClaimData(
-	claimTopic: SMARTTopic | bigint,
-	values: readonly unknown[],
+  claimTopic: SMARTTopic | bigint,
+  values: readonly unknown[],
 ): Hex {
-	let topicId: bigint;
+  let topicId: bigint;
 
-	if (typeof claimTopic === "bigint") {
-		topicId = claimTopic;
-	} else {
-		// Ensure topic manager is initialized
-		if (!topicManager.isInitialized()) {
-			throw new Error(
-				"TopicManager is not initialized. Call topicManager.initialize() first.",
-			);
-		}
-		topicId = topicManager.getTopicId(claimTopic);
-	}
+  if (typeof claimTopic === "bigint") {
+    topicId = claimTopic;
+  } else {
+    // Ensure topic manager is initialized
+    if (!topicManager.isInitialized()) {
+      throw new Error(
+        "TopicManager is not initialized. Call topicManager.initialize() first.",
+      );
+    }
+    topicId = topicManager.getTopicId(claimTopic);
+  }
 
-	// Ensure topic manager is initialized
-	if (!topicManager.isInitialized()) {
-		throw new Error(
-			"TopicManager is not initialized. Call topicManager.initialize() first.",
-		);
-	}
+  // Ensure topic manager is initialized
+  if (!topicManager.isInitialized()) {
+    throw new Error(
+      "TopicManager is not initialized. Call topicManager.initialize() first.",
+    );
+  }
 
-	const signature = topicManager.getTopicSignatureById(topicId);
+  const signature = topicManager.getTopicSignatureById(topicId);
 
-	if (!signature) {
-		throw new Error(`Unknown claim topic: ${topicId}`);
-	}
+  if (!signature) {
+    throw new Error(`Unknown claim topic: ${topicId}`);
+  }
 
-	return encodeAbiParameters(parseAbiParameters(signature), values);
+  return encodeAbiParameters(parseAbiParameters(signature), values);
 }

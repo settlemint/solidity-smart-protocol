@@ -3,7 +3,20 @@ services:
     image: ghcr.io/settlemint/btp-anvil-test-node:v7.7.5
     restart: always
     # No Gas network
-    entrypoint: ["anvil", "--host", "0.0.0.0",  "--chain-id", "31337", "--gas-limit", "5000000000000", "--gas-price", "0", "--block-base-fee-per-gas", "0"]
+    entrypoint:
+      [
+        "anvil",
+        "--host",
+        "0.0.0.0",
+        "--chain-id",
+        "31337",
+        "--gas-limit",
+        "5000000000000",
+        "--gas-price",
+        "0",
+        "--block-base-fee-per-gas",
+        "0",
+      ]
     ports:
       - "8545:8545" # Ethereum JSON-RPC
 
@@ -29,7 +42,7 @@ services:
       retries: 5
 
   graph-node:
-    image: graphprotocol/graph-node:v0.38.0
+    image: graphprotocol/graph-node:v0.39.0
     platform: linux/amd64
     ports:
       - "8000:8000" # GraphQL HTTP

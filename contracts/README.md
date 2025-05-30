@@ -13,7 +13,7 @@ graph TB
         A4[SMARTFund<br/>Investment Funds]
         A5[SMARTStableCoin<br/>Stable Value Tokens]
     end
-    
+
     subgraph "Extension Layer"
         E1[Core<br/>Base SMART Logic]
         E2[Burnable<br/>Token Burning]
@@ -25,7 +25,7 @@ graph TB
         E8[Historical Balances<br/>Governance Snapshots]
         E9[Access Managed<br/>External Access Control]
     end
-    
+
     subgraph "System Layer"
         S1[System<br/>Core Infrastructure]
         S2[IdentityRegistry<br/>ERC-734/735 Management]
@@ -34,13 +34,13 @@ graph TB
         S5[TrustedIssuersRegistry<br/>KYC/AML Providers]
         S6[TopicSchemeRegistry<br/>Claim Schemas]
     end
-    
+
     A1 --> E1
     A2 --> E1
     A3 --> E1
     A4 --> E1
     A5 --> E1
-    
+
     E1 --> S1
     E2 --> S1
     E3 --> S1
@@ -50,7 +50,7 @@ graph TB
     E7 --> S1
     E8 --> S1
     E9 --> S4
-    
+
     S1 --> S2
     S1 --> S3
     S1 --> S4
@@ -71,6 +71,7 @@ Contains the five core asset types with their interfaces, implementations, and f
 - **Stable Coin** (`/stable-coin/`): Regulatory-compliant stable value tokens
 
 Each asset type follows the proxy pattern:
+
 - `I[Asset].sol` - Interface definition
 - `[Asset]Implementation.sol` - Logic contract
 - `[Asset]Proxy.sol` - Upgradeable proxy
@@ -81,10 +82,12 @@ Each asset type follows the proxy pattern:
 Extensible features that can be mixed into any asset token:
 
 #### Core Extensions
+
 - **`/core/`**: Base SMART logic with compliance and identity verification
 - **`/common/`**: Shared utilities, contexts, and base contracts
 
 #### Feature Extensions
+
 - **`/burnable/`**: Token burning for both owner and self-burn scenarios
 - **`/custodian/`**: Address freezing, partial freezing, and forced transfers
 - **`/collateral/`**: Proof-of-collateral requirements for large transfers
@@ -96,6 +99,7 @@ Extensible features that can be mixed into any asset token:
 - **`/capped/`**: Supply cap enforcement
 
 Each extension follows the pattern:
+
 - `I[Extension].sol` - Interface
 - `[Extension].sol` - Standard implementation
 - `[Extension]Upgradeable.sol` - Upgradeable implementation
@@ -136,7 +140,7 @@ flowchart TD
     C --> D[System Creation]
     D --> E[Asset Factory Deployment]
     E --> F[Token Creation]
-    
+
     subgraph "Predeployed Components"
         C1[Compliance Implementation]
         C2[Identity Registry Implementation]
@@ -145,7 +149,7 @@ flowchart TD
         C5[Topic Scheme Registry]
         C6[Token Access Manager]
     end
-    
+
     subgraph "Asset Factories"
         E1[Bond Factory]
         E2[Equity Factory]
@@ -153,27 +157,27 @@ flowchart TD
         E4[Fund Factory]
         E5[Stablecoin Factory]
     end
-    
+
     subgraph "Script Integration"
         F1[Identity Setup]
         F2[Claim Issuance]
         F3[Registry Management]
         F4[Token Operations]
     end
-    
+
     C --> C1
     C --> C2
     C --> C3
     C --> C4
     C --> C5
     C --> C6
-    
+
     E --> E1
     E --> E2
     E --> E3
     E --> E4
     E --> E5
-    
+
     F --> F1
     F --> F2
     F --> F3
@@ -183,21 +187,25 @@ flowchart TD
 ### Ignition Modules (`/ignition/modules/`)
 
 #### Main Deployment (`main.ts`)
+
 - Orchestrates full protocol deployment
 - Deploys SystemFactory with all implementation contracts
 - Sets up asset factories for all five asset types
 
 #### Onboarding Setup (`onboarding.ts`)
+
 - Creates a complete working system instance
 - Bootstraps identity and compliance infrastructure
 - Deploys asset factories ready for token creation
 
 #### Predeployed Components (`/predeployed/`)
+
 - Individual modules for each system component
 - Implementation contracts that can be upgraded
 - Configured for immediate use in new systems
 
 #### Onboarding Assets (`/onboarding/assets/`)
+
 - Asset-specific factory deployments
 - Connected to the onboarded system instance
 - Ready for immediate token creation
@@ -207,6 +215,7 @@ flowchart TD
 The scripts folder provides runtime interaction with deployed contracts:
 
 #### Main Orchestration (`main.ts`)
+
 1. **System Setup**: Deploys and configures complete protocol
 2. **Actor Initialization**: Sets up owner, claim issuer, and investors
 3. **Topic Registration**: Configures claim schemas (KYC, AML, etc.)
@@ -215,16 +224,19 @@ The scripts folder provides runtime interaction with deployed contracts:
 6. **Asset Creation**: Demonstrates all five asset types
 
 #### Actor Management (`/actors/`)
+
 - **Owner**: Protocol administrator with governance rights
 - **Claim Issuer**: KYC/AML verification provider
 - **Investors**: End users with verified identities
 
 #### Asset Deployment (`/assets/`)
+
 - Asset-specific creation scripts
 - Demonstrates configuration options
 - Shows integration with compliance and identity systems
 
 #### Utility Functions (`/utils/`)
+
 - Contract interaction helpers
 - Event monitoring and parsing
 - Cross-chain compatibility utilities
@@ -232,15 +244,19 @@ The scripts folder provides runtime interaction with deployed contracts:
 ## Key Design Patterns
 
 ### Proxy Pattern (ERC-1822 UUPS)
+
 All system contracts use upgradeable proxies:
+
 - Logic contracts in `*Implementation.sol`
 - Proxy contracts in `*Proxy.sol`
 - Factory-based deployment for new instances
 
 ### Extension System
+
 Tokens inherit functionality through multiple inheritance:
+
 ```solidity
-contract MyToken is 
+contract MyToken is
     SMART,              // Core functionality
     SMARTBurnable,      // Burning capability
     SMARTYield,         // Dividend distribution
@@ -251,17 +267,20 @@ contract MyToken is
 ```
 
 ### Identity & Compliance Integration
+
 - All transfers check `isVerified()` via identity registry
 - Compliance modules validate transfers based on custom rules
 - Claim topics configurable per token (KYC, accredited investor, etc.)
 
 ### Meta-Transaction Support (ERC-2771)
+
 - All contracts support gasless transactions via trusted forwarders
 - Use `_msgSender()` instead of `msg.sender` throughout
 
 ## Development Workflow
 
 ### 1. Contract Development
+
 ```bash
 # Compile contracts
 npm run compile:forge
@@ -274,6 +293,7 @@ npm run coverage
 ```
 
 ### 2. Deployment
+
 ```bash
 # Deploy to local network with full setup
 npm run deploy:local:onboarding
@@ -286,6 +306,7 @@ npm run deploy:remote
 ```
 
 ### 3. Integration Testing
+
 ```bash
 # Run the main script (full protocol demonstration)
 npx hardhat run scripts/hardhat/main.ts --network localhost
@@ -294,16 +315,19 @@ npx hardhat run scripts/hardhat/main.ts --network localhost
 ## Security Considerations
 
 ### Access Control
+
 - Role-based permissions using ERC-5313
 - Multi-signature requirements for critical operations
 - Emergency pause functionality with time locks
 
 ### Compliance Integration
+
 - Automated KYC/AML verification
 - Jurisdiction-specific rule enforcement
 - Audit trail for all compliance decisions
 
 ### Upgrade Safety
+
 - UUPS proxy pattern with admin controls
 - Implementation upgrade requires governance approval
 - Storage layout compatibility verification
@@ -311,16 +335,19 @@ npx hardhat run scripts/hardhat/main.ts --network localhost
 ## Integration Points
 
 ### With Subgraph (`/subgraph/`)
+
 - Events indexed for off-chain querying
 - Real-time compliance monitoring
 - Historical data analysis
 
 ### With Frontend Applications
+
 - StandardContract ABIs generated automatically
 - Event monitoring for UI updates
 - Meta-transaction support for gasless UX
 
 ### With External Systems
+
 - ERC-3643 standard compliance
 - Integration with traditional KYC providers
 - Cross-chain bridge compatibility

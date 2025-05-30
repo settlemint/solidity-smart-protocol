@@ -4,7 +4,7 @@ import { setBigNumber } from "../../utils/bignumber";
 
 export function fetchTokenBalance(
   token: Token,
-  account: Account
+  account: Account,
 ): TokenBalance {
   const id = token.id.concat(account.id);
 

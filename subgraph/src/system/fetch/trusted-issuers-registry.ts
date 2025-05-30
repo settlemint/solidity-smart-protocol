@@ -4,7 +4,7 @@ import { fetchAccessControl } from "../../access-control/fetch/accesscontrol";
 import { fetchAccount } from "../../account/fetch/account";
 
 export function fetchTrustedIssuersRegistry(
-  address: Address
+  address: Address,
 ): TrustedIssuersRegistry {
   let trustedIssuersRegistry = TrustedIssuersRegistry.load(address);
 

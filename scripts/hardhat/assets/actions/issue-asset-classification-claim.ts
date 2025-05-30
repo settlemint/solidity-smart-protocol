@@ -16,44 +16,44 @@ import { waitForSuccess } from "../../utils/wait-for-success";
  * @param assetCategory The category of the asset.
  */
 export const issueAssetClassificationClaim = async (
-	tokenIdentityAddress: Address,
-	assetClass: string,
-	assetCategory: string
+  tokenIdentityAddress: Address,
+  assetClass: string,
+  assetCategory: string,
 ) => {
-	const encodedAssetClassificationData = encodeClaimData(
-		SMARTTopic.assetClassification,
-		[assetClass, assetCategory]
-	);
+  const encodedAssetClassificationData = encodeClaimData(
+    SMARTTopic.assetClassification,
+    [assetClass, assetCategory],
+  );
 
-	const {
-		data: assetClassificationClaimData,
-		signature: assetClassificationClaimSignature,
-		topicId,
-	} = await claimIssuer.createClaim(
-		tokenIdentityAddress,
-		SMARTTopic.assetClassification,
-		encodedAssetClassificationData
-	);
+  const {
+    data: assetClassificationClaimData,
+    signature: assetClassificationClaimSignature,
+    topicId,
+  } = await claimIssuer.createClaim(
+    tokenIdentityAddress,
+    SMARTTopic.assetClassification,
+    encodedAssetClassificationData,
+  );
 
-	const tokenIdentityContract = owner.getContractInstance({
-		address: tokenIdentityAddress,
-		abi: SMARTContracts.tokenIdentity,
-	});
+  const tokenIdentityContract = owner.getContractInstance({
+    address: tokenIdentityAddress,
+    abi: SMARTContracts.tokenIdentity,
+  });
 
-	const claimIssuerIdentityAddress = await claimIssuer.getIdentity();
+  const claimIssuerIdentityAddress = await claimIssuer.getIdentity();
 
-	const transactionHash = await tokenIdentityContract.write.addClaim([
-		topicId,
-		BigInt(1), // ECDSA
-		claimIssuerIdentityAddress,
-		assetClassificationClaimSignature,
-		assetClassificationClaimData,
-		"",
-	]);
+  const transactionHash = await tokenIdentityContract.write.addClaim([
+    topicId,
+    BigInt(1), // ECDSA
+    claimIssuerIdentityAddress,
+    assetClassificationClaimSignature,
+    assetClassificationClaimData,
+    "",
+  ]);
 
-	await waitForSuccess(transactionHash);
+  await waitForSuccess(transactionHash);
 
-	console.log(
-		`[Asset classification claim] issued for token identity ${tokenIdentityAddress} with class "${assetClass}" and category "${assetCategory}".`
-	);
+  console.log(
+    `[Asset classification claim] issued for token identity ${tokenIdentityAddress} with class "${assetClass}" and category "${assetCategory}".`,
+  );
 };

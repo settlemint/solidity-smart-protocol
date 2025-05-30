@@ -73,11 +73,20 @@ contract TestableOnChainIdentityWithRevocation is OnChainIdentityWithRevocation 
         return keysByPurpose[_purpose];
     }
 
-    function execute(address /* _to */, uint256 /* _value */, bytes calldata /* _data */) external payable override returns (uint256) {
+    function execute(
+        address, /* _to */
+        uint256, /* _value */
+        bytes calldata /* _data */
+    )
+        external
+        payable
+        override
+        returns (uint256)
+    {
         return 0; // Mock implementation
     }
 
-    function approve(uint256 /* _id */, bool /* _approve */) external pure override returns (bool) {
+    function approve(uint256, /* _id */ bool /* _approve */ ) external pure override returns (bool) {
         return true; // Mock implementation
     }
 

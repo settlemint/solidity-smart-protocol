@@ -394,7 +394,6 @@ contract SMARTTrustedIssuersRegistryImplementationTest is Test {
         assertNotEq(address(implementation), address(0));
     }
 
-
     function test_RemovalWithSwapAndPop() public {
         // Test the internal swap-and-pop logic by adding multiple issuers to same topic
         uint256[] memory topics = new uint256[](1);
