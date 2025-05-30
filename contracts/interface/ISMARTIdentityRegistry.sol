@@ -88,15 +88,27 @@ interface ISMARTIdentityRegistry is IERC165 {
     /// @param _country The new numeric country code (conforming to ISO 3166-1 alpha-2 standard, e.g., 840 for USA).
     event CountryUpdated(address indexed sender, address indexed _investorAddress, uint16 indexed _country);
 
-    /// @notice Emitted when an identity is successfully recovered, associating it with a new wallet
+    /// @notice Emitted when an identity is successfully recovered, associating a new wallet with a new identity
     ///         and marking the old wallet as lost.
     /// @param sender The address of the account (e.g., a registrar agent) that performed the recovery.
-    /// @param identityContract The IIdentity contract whose associated wallet was recovered. (Indexed)
+    /// @param lostWallet The previous wallet address that has now been marked as lost. (Indexed)
     /// @param newWallet The new active wallet address for the identity. (Indexed)
-    /// @param oldLostWallet The previous wallet address that has now been marked as lost. (Indexed)
+    /// @param newIdentityContract The new IIdentity contract for the new wallet. (Indexed)
+    /// @param oldIdentityContract The old IIdentity contract that was associated with the lost wallet.
     event IdentityRecovered(
-        address indexed sender, IIdentity indexed identityContract, address indexed newWallet, address oldLostWallet
+        address indexed sender,
+        address indexed lostWallet,
+        address indexed newWallet,
+        address newIdentityContract,
+        address oldIdentityContract
     );
+
+    /// @notice Emitted when a wallet recovery link is established between a lost wallet and its replacement.
+    /// @dev This event helps track the recovery chain for token reclaim purposes.
+    /// @param sender The address that performed the recovery operation.
+    /// @param lostWallet The lost wallet address.
+    /// @param newWallet The new replacement wallet address.
+    event WalletRecoveryLinked(address indexed sender, address indexed lostWallet, address indexed newWallet);
 
     // --- Configuration Setters (Typically Owner/Admin Restricted) ---
 
@@ -204,16 +216,16 @@ interface ISMARTIdentityRegistry is IERC165 {
     )
         external;
 
-    /// @notice Recovers an identity by associating an existing IIdentity contract with a new wallet address,
-    ///         and marking the old wallet address as lost.
-    /// @dev This function is typically restricted to registrar roles.
-    ///      It ensures the old wallet was indeed linked to the given identity and is not already lost.
-    ///      The new wallet must not be in use or marked as lost.
-    ///      The country code from the old wallet registration will be preserved for the new wallet.
-    /// @param identityContract The IIdentity contract to be associated with the new wallet.
-    /// @param newWallet The new wallet address to activate for the identity.
-    /// @param oldLostWallet The current wallet address associated with the identity that will be marked as lost.
-    function recoverIdentity(IIdentity identityContract, address newWallet, address oldLostWallet) external;
+    /// @notice Recovers an identity by creating a new wallet registration with a new identity contract,
+    ///         marking the old wallet as lost, and preserving the country code.
+    /// @dev This function handles the practical reality that losing wallet access often means losing
+    ///      access to the identity contract as well. It creates a fresh start while maintaining
+    ///      regulatory compliance data and recovery links for token reclaim.
+    ///      The function is typically restricted to registrar roles.
+    /// @param lostWallet The current wallet address to be marked as lost.
+    /// @param newWallet The new wallet address to be registered.
+    /// @param newOnchainId The new IIdentity contract address for the new wallet.
+    function recoverIdentity(address lostWallet, address newWallet, address newOnchainId) external;
 
     // --- Registry Consultation (View Functions) ---
 
@@ -288,14 +300,9 @@ interface ISMARTIdentityRegistry is IERC165 {
     /// @return True if the wallet is marked as lost, false otherwise.
     function isWalletLost(address userWallet) external view returns (bool);
 
-    /// @notice Checks if a wallet address has been marked as lost for a specific IIdentity contract.
-    /// @param identityContract The IIdentity contract.
-    /// @param userWallet The wallet address to check.
-    /// @return True if the wallet is marked as lost for the identity, false otherwise.
-    function isWalletLostForIdentity(IIdentity identityContract, address userWallet) external view returns (bool);
-
-    /// @notice Retrieves all wallet addresses that have been marked as lost for a specific IIdentity contract.
-    /// @param identityContract The IIdentity contract.
-    /// @return An array of lost wallet addresses.
-    function getLostWalletsForIdentity(IIdentity identityContract) external view returns (address[] memory);
+    /// @notice Gets the new wallet address that replaced a lost wallet during recovery.
+    /// @dev This is the key function for token recovery validation.
+    /// @param lostWallet The lost wallet address.
+    /// @return The new wallet address that replaced the lost wallet, or address(0) if not found.
+    function getRecoveredWallet(address lostWallet) external view returns (address);
 }

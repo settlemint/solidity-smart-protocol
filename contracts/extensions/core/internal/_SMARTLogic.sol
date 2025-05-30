@@ -183,7 +183,7 @@ abstract contract _SMARTLogic is _SMARTExtension {
     ///      It first checks if the lost wallet is a valid address and not the contract itself.
     ///      Then, it checks if the lost wallet has any tokens to recover.
     ///      It then checks if the new wallet is a valid address.
-    function _smart_recoverTokens(address newWallet, address lostWallet) internal {
+    function _smart_recoverTokens(address lostWallet, address newWallet) internal {
         if (lostWallet == address(0)) revert ZeroAddressNotAllowed();
         if (lostWallet == address(this)) revert CannotRecoverSelf();
 
@@ -191,9 +191,13 @@ abstract contract _SMARTLogic is _SMARTExtension {
         if (balance == 0) revert NoTokensToRecover();
 
         ISMARTIdentityRegistry registry = this.identityRegistry();
-        IIdentity identity = registry.identity(newWallet);
-        bool isLost = registry.isWalletLostForIdentity(identity, lostWallet);
-        if (!isLost) revert InvalidLostWallet();
+
+        // Check if the caller (newWallet) is the registered replacement for the lostWallet
+        address recoveredWallet = registry.getRecoveredWallet(lostWallet);
+        if (recoveredWallet != newWallet) revert InvalidLostWallet();
+
+        // Additional check: ensure lostWallet is actually marked as lost
+        if (!registry.isWalletLost(lostWallet)) revert InvalidLostWallet();
 
         _beforeRecoverTokens(lostWallet, newWallet);
         __isForcedUpdate = true;

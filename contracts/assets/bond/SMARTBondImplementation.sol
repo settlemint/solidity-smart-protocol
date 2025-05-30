@@ -462,7 +462,7 @@ contract SMARTBondImplementation is
         override
         onlyAccessManagerRole(SMARTRoles.CUSTODIAN_ROLE)
     {
-        _smart_recoverTokens(newWallet, lostWallet);
+        _smart_recoverTokens(lostWallet, newWallet);
     }
 
     // --- ISMARTPausable Implementation ---

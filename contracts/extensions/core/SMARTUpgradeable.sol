@@ -111,7 +111,7 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     ///      Delegates to `_smart_recoverTokens` from `_SMARTLogic` for execution.
     /// @param lostWallet The address of the lost wallet containing tokens to recover.
     function recoverTokens(address lostWallet) external virtual override {
-        _smart_recoverTokens(_smartSender(), lostWallet); // Uses the SMART logic's recover tokens helper
+        _smart_recoverTokens(lostWallet, _smartSender()); // Uses the SMART logic's recover tokens helper
     }
 
     // -- Internal Hook Implementations (Dependencies for _SMARTLogic) --

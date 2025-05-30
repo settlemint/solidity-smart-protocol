@@ -43,6 +43,12 @@ interface ISMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage {
         address indexed identityContract, address indexed userWallet, address indexed markedBy
     );
 
+    /// @notice Emitted when a wallet recovery link is established between a lost wallet and its replacement.
+    /// @param lostWallet The lost wallet address.
+    /// @param newWallet The new replacement wallet address.
+    /// @param establishedBy The address that established this recovery link.
+    event WalletRecoveryLinked(address indexed lostWallet, address indexed newWallet, address indexed establishedBy);
+
     // --- Lost Wallet Management ---
 
     /// @notice Marks a user wallet as lost for a specific identity contract in the storage.
@@ -52,6 +58,12 @@ interface ISMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage {
     /// @param userWallet The user wallet address to be marked as lost.
     function markWalletAsLost(address identityContract, address userWallet) external;
 
+    /// @notice Establishes a recovery link between a lost wallet and its replacement.
+    /// @dev This creates a bidirectional mapping for token recovery purposes.
+    /// @param lostWallet The lost wallet address.
+    /// @param newWallet The new replacement wallet address.
+    function linkWalletRecovery(address lostWallet, address newWallet) external;
+
     /// @notice Checks if a user wallet is globally marked as lost in the storage.
     /// @dev A "globally lost" wallet means it has been declared lost in the context of at least one identity
     ///      it was associated with.
@@ -59,20 +71,10 @@ interface ISMARTIdentityRegistryStorage is IERC3643IdentityRegistryStorage {
     /// @return True if the wallet has been marked as lost at least once, false otherwise.
     function isWalletMarkedAsLost(address userWallet) external view returns (bool);
 
-    /// @notice Checks if a user wallet is marked as lost for a specific IIdentity contract in the storage.
-    /// @param identityContract The IIdentity contract address.
-    /// @param userWallet The user wallet address to check.
-    /// @return True if the wallet has been marked as lost for the identity, false otherwise.
-    function isWalletMarkedAsLostForIdentity(
-        address identityContract,
-        address userWallet
-    )
-        external
-        view
-        returns (bool);
-
-    /// @notice Retrieves all wallet addresses that have been marked as lost for a specific IIdentity contract.
-    /// @param identityContract The IIdentity contract address.
-    /// @return An array of wallet addresses marked as lost for this identity.
-    function getLostWalletsForIdentityFromStorage(address identityContract) external view returns (address[] memory);
+    /// @notice Gets the new wallet address that replaced a lost wallet during recovery.
+    /// @dev This is the key function for token recovery - allows checking if caller is authorized to recover from
+    /// lostWallet.
+    /// @param lostWallet The lost wallet address.
+    /// @return The new wallet address that replaced the lost wallet, or address(0) if not found.
+    function getRecoveredWalletFromStorage(address lostWallet) external view returns (address);
 }

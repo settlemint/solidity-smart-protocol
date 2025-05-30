@@ -394,7 +394,7 @@ contract TokenUtils is Test {
         public
     {
         vm.startPrank(_platformAdmin);
-        _identityRegistry.recoverIdentity(IIdentity(investorOnchainID), newWallet, lostWallet);
+        _identityRegistry.recoverIdentity(lostWallet, newWallet, investorOnchainID);
         vm.stopPrank();
 
         vm.startPrank(executor);

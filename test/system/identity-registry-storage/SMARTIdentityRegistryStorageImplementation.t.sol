@@ -463,11 +463,6 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         storageContract.markWalletAsLost(address(identity1), lostWallet1);
 
         assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
-
-        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
-        assertEq(lostWallets.length, 1);
-        assertEq(lostWallets[0], lostWallet1);
     }
 
     function test_MarkWalletAsLost_InvalidWalletAddress_ShouldRevert() public {
@@ -546,11 +541,6 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         vm.stopPrank();
 
         assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
-
-        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
-        assertEq(lostWallets.length, 1);
-        assertEq(lostWallets[0], lostWallet1);
     }
 
     function test_MarkWalletAsLost_MultipleWalletsForSameIdentity() public {
@@ -565,13 +555,6 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
 
         assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
         assertTrue(storageContract.isWalletMarkedAsLost(lostWallet2));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet2));
-
-        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
-        assertEq(lostWallets.length, 2);
-        assertEq(lostWallets[0], lostWallet1);
-        assertEq(lostWallets[1], lostWallet2);
     }
 
     function test_MarkWalletAsLost_SameWalletForDifferentIdentities_NotPossible() public {
@@ -584,15 +567,6 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         vm.stopPrank();
 
         assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
-        assertFalse(storageContract.isWalletMarkedAsLostForIdentity(address(identity2), lostWallet1));
-
-        address[] memory lostWalletsIdentity1 = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
-        address[] memory lostWalletsIdentity2 = storageContract.getLostWalletsForIdentityFromStorage(address(identity2));
-
-        assertEq(lostWalletsIdentity1.length, 1);
-        assertEq(lostWalletsIdentity1[0], lostWallet1);
-        assertEq(lostWalletsIdentity2.length, 0);
     }
 
     function test_MarkWalletAsLost_BoundRegistryCanMark() public {
@@ -609,35 +583,10 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         storageContract.markWalletAsLost(address(identity1), lostWallet1);
 
         assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
     }
 
     function test_IsWalletMarkedAsLost_NotMarked() public view {
         assertFalse(storageContract.isWalletMarkedAsLost(lostWallet1));
-    }
-
-    function test_IsWalletMarkedAsLostForIdentity_NotMarked() public view {
-        assertFalse(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
-    }
-
-    function test_IsWalletMarkedAsLostForIdentity_MarkedForDifferentIdentity() public {
-        vm.startPrank(admin);
-        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
-        storageContract.markWalletAsLost(address(identity1), lostWallet1);
-        vm.stopPrank();
-
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
-        assertFalse(storageContract.isWalletMarkedAsLostForIdentity(address(identity2), lostWallet1));
-    }
-
-    function test_GetLostWalletsForIdentityFromStorage_EmptyArray() public view {
-        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
-        assertEq(lostWallets.length, 0);
-    }
-
-    function test_GetLostWalletsForIdentityFromStorage_ZeroAddressIdentity() public view {
-        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(0));
-        assertEq(lostWallets.length, 0);
     }
 
     function test_MarkWalletAsLost_AfterModifyingIdentity() public {
@@ -663,8 +612,6 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         vm.stopPrank();
 
         assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity2), lostWallet1));
-        assertFalse(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
     }
 
     function test_MarkWalletAsLost_AfterRemovingIdentity() public {
@@ -704,7 +651,6 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
 
         // Step 2: Verify wallet is marked as lost globally and for specific identity
         assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
 
         // Step 3: Mark another wallet for the same identity
         vm.prank(registry1);
@@ -713,23 +659,6 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         // Step 4: Verify all states
         assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
         assertTrue(storageContract.isWalletMarkedAsLost(lostWallet2));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet2));
-
-        // Step 5: Verify arrays
-        address[] memory lostWalletsIdentity1 = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
-
-        assertEq(lostWalletsIdentity1.length, 2);
-
-        // Check if arrays contain expected wallets (order might vary)
-        bool foundWallet1InIdentity1 = false;
-        bool foundWallet2InIdentity1 = false;
-        for (uint256 i = 0; i < lostWalletsIdentity1.length; i++) {
-            if (lostWalletsIdentity1[i] == lostWallet1) foundWallet1InIdentity1 = true;
-            if (lostWalletsIdentity1[i] == lostWallet2) foundWallet2InIdentity1 = true;
-        }
-        assertTrue(foundWallet1InIdentity1);
-        assertTrue(foundWallet2InIdentity1);
     }
 
     function testFuzz_MarkWalletAsLost_WithValidInputs(address userWallet) public {
@@ -745,10 +674,5 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         vm.stopPrank();
 
         assertTrue(storageContract.isWalletMarkedAsLost(userWallet));
-        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), userWallet));
-
-        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
-        assertEq(lostWallets.length, 1);
-        assertEq(lostWallets[0], userWallet);
     }
 }

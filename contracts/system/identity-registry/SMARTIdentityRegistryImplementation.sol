@@ -367,36 +367,33 @@ contract SMARTIdentityRegistryImplementation is
 
     /// @inheritdoc ISMARTIdentityRegistry
     function recoverIdentity(
-        IIdentity identityContract,
+        address lostWallet,
         address newWallet,
-        address oldLostWallet
+        address newOnchainId
     )
         external
         override
         onlyRole(SMARTSystemRoles.REGISTRAR_ROLE)
     {
         // Initial input validation
-        if (address(identityContract) == address(0)) revert InvalidIdentityAddress();
+        if (lostWallet == address(0)) revert InvalidUserAddress();
         if (newWallet == address(0)) revert InvalidUserAddress();
-        if (oldLostWallet == address(0)) revert InvalidUserAddress();
+        if (newOnchainId == address(0)) revert InvalidIdentityAddress();
 
-        // 1. Verify oldLostWallet is currently active and linked to the provided identityContract
-        IIdentity storedIdentityForOldWallet;
-        try _identityStorage.storedIdentity(oldLostWallet) returns (IIdentity id) {
-            storedIdentityForOldWallet = id;
+        // 1. Verify lostWallet is currently active and retrieve its associated identity
+        IIdentity oldIdentityContract;
+        try _identityStorage.storedIdentity(lostWallet) returns (IIdentity id) {
+            oldIdentityContract = id;
         } catch {
-            revert WalletNotRegisteredToThisIdentity(oldLostWallet, address(identityContract));
-        }
-        if (address(storedIdentityForOldWallet) != address(identityContract)) {
-            revert WalletNotRegisteredToThisIdentity(oldLostWallet, address(identityContract));
+            revert IdentityNotRegistered(lostWallet);
         }
 
-        // 2. Retrieve the existing country code from the old wallet before any modifications
-        uint16 existingCountryCode = _identityStorage.storedInvestorCountry(oldLostWallet);
+        // 2. Retrieve the existing country code from the lost wallet before any modifications
+        uint16 existingCountryCode = _identityStorage.storedInvestorCountry(lostWallet);
 
-        // 3. Check if oldLostWallet is already marked as lost
-        if (_identityStorage.isWalletMarkedAsLost(oldLostWallet)) {
-            revert WalletAlreadyMarkedAsLost(oldLostWallet);
+        // 3. Check if lostWallet is already marked as lost
+        if (_identityStorage.isWalletMarkedAsLost(lostWallet)) {
+            revert WalletAlreadyMarkedAsLost(lostWallet);
         }
 
         // 4. Verify newWallet is not already in use or marked as lost
@@ -413,17 +410,20 @@ contract SMARTIdentityRegistryImplementation is
             revert WalletAlreadyMarkedAsLost(newWallet);
         }
 
-        // 5. Mark oldLostWallet as lost in the storage layer
-        _identityStorage.markWalletAsLost(address(identityContract), oldLostWallet);
+        // 5. Mark lostWallet as lost in the storage layer (using the old identity contract)
+        _identityStorage.markWalletAsLost(address(oldIdentityContract), lostWallet);
 
-        // 6. Remove oldLostWallet's active registration from storage
-        _identityStorage.removeIdentityFromStorage(oldLostWallet);
+        // 6. Remove lostWallet's active registration from storage
+        _identityStorage.removeIdentityFromStorage(lostWallet);
 
-        // 7. Register the newWallet with the original identityContract and preserved country code
-        //    Internally, addIdentityToStorage should handle the emit for IdentityRegistered
-        _identityStorage.addIdentityToStorage(newWallet, identityContract, existingCountryCode);
+        // 7. Register the newWallet with the NEW identity contract and preserved country code
+        _identityStorage.addIdentityToStorage(newWallet, IIdentity(newOnchainId), existingCountryCode);
 
-        emit IdentityRecovered(_msgSender(), identityContract, newWallet, oldLostWallet);
+        // 8. Establish the recovery link between old and new wallets for token reclaim
+        _identityStorage.linkWalletRecovery(lostWallet, newWallet);
+
+        emit IdentityRecovered(_msgSender(), lostWallet, newWallet, newOnchainId, address(oldIdentityContract));
+        emit WalletRecoveryLinked(_msgSender(), lostWallet, newWallet);
     }
 
     // --- View Functions ---
@@ -636,25 +636,8 @@ contract SMARTIdentityRegistryImplementation is
     }
 
     /// @inheritdoc ISMARTIdentityRegistry
-    function isWalletLostForIdentity(
-        IIdentity identityContract,
-        address userWallet
-    )
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _identityStorage.isWalletMarkedAsLostForIdentity(address(identityContract), userWallet);
-    }
-
-    /// @inheritdoc ISMARTIdentityRegistry
-    function getLostWalletsForIdentity(IIdentity identityContract) external view override returns (address[] memory) {
-        if (address(identityContract) == address(0)) {
-            // Consider if reverting is better, but returning empty array is also acceptable.
-            return new address[](0);
-        }
-        return _identityStorage.getLostWalletsForIdentityFromStorage(address(identityContract));
+    function getRecoveredWallet(address lostWallet) external view override returns (address) {
+        return _identityStorage.getRecoveredWalletFromStorage(lostWallet);
     }
 
     // --- Internal Functions ---

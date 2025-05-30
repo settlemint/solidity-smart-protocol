@@ -226,7 +226,10 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
 
         // Mark the old wallet as lost and recover to new wallet
         vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(IIdentity(identityAddress), newWallet, lostWallet);
+        systemUtils.identityRegistry().recoverIdentity(lostWallet, newWallet, identityAddress);
+
+        // Verify the wallet is marked as lost (removed specific identity check since simplified)
+        assertTrue(systemUtils.identityRegistry().isWalletLost(lostWallet));
 
         // Perform the token recovery
         vm.expectEmit(true, true, true, true);
@@ -238,13 +241,6 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         // Verify balances after recovery
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet should have zero balance");
         assertEq(token.balanceOf(newWallet), initialBalance, "New wallet should have recovered balance");
-
-        // Verify that lost wallet is marked as lost in identity registry
-        assertTrue(systemUtils.identityRegistry().isWalletLost(lostWallet), "Lost wallet should be marked as lost");
-        assertTrue(
-            systemUtils.identityRegistry().isWalletLostForIdentity(IIdentity(identityAddress), lostWallet),
-            "Lost wallet should be marked as lost for the specific identity"
-        );
     }
 
     function test_Core_RecoverTokens_ZeroAddressLostWallet_Reverts() public {
@@ -281,7 +277,7 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         address identityAddress = identityUtils.getIdentity(lostWallet);
 
         vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(IIdentity(identityAddress), newWallet, lostWallet);
+        systemUtils.identityRegistry().recoverIdentity(lostWallet, newWallet, identityAddress);
 
         vm.expectRevert(abi.encodeWithSelector(NoTokensToRecover.selector));
         vm.prank(newWallet);
@@ -324,7 +320,7 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
 
         // Mark a different wallet as lost for a different identity
         vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(IIdentity(differentIdentity), newWallet, differentWallet);
+        systemUtils.identityRegistry().recoverIdentity(differentWallet, newWallet, differentIdentity);
 
         // Try to recover the BE wallet's tokens (which is not marked as lost for any identity)
         vm.expectRevert(abi.encodeWithSelector(InvalidLostWallet.selector));
@@ -346,7 +342,7 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         claimUtils.issueAllClaims(newWallet1);
 
         vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(IIdentity(identity1), newWallet1, lostWallet1);
+        systemUtils.identityRegistry().recoverIdentity(lostWallet1, newWallet1, identity1);
 
         vm.prank(newWallet1);
         token.recoverTokens(lostWallet1);
@@ -364,7 +360,7 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         claimUtils.issueAllClaims(newWallet2);
 
         vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(IIdentity(identity2), newWallet2, lostWallet2);
+        systemUtils.identityRegistry().recoverIdentity(lostWallet2, newWallet2, identity2);
 
         vm.prank(newWallet2);
         token.recoverTokens(lostWallet2);
@@ -398,7 +394,7 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         claimUtils.issueAllClaims(newWallet);
 
         vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(IIdentity(identityAddress), newWallet, lostWallet);
+        systemUtils.identityRegistry().recoverIdentity(lostWallet, newWallet, identityAddress);
 
         // Recover the remaining tokens
         vm.prank(newWallet);
@@ -427,7 +423,7 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         // Set up recovery
         address identityAddress = identityUtils.getIdentity(lostWallet);
         vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(IIdentity(identityAddress), newWallet, lostWallet);
+        systemUtils.identityRegistry().recoverIdentity(lostWallet, newWallet, identityAddress);
 
         // Recover tokens
         vm.prank(newWallet);
