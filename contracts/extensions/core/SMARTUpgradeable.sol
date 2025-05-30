@@ -233,10 +233,4 @@ abstract contract SMARTUpgradeable is Initializable, SMARTExtensionUpgradeable, 
     {
         return __smart_supportsInterface(interfaceId) || super.supportsInterface(interfaceId);
     }
-
-    // Note: The final contract inheriting SMARTUpgradeable MUST also inherit UUPSUpgradeable
-    // and implement the `_authorizeUpgrade(address newImplementation)` function to control
-    // who can upgrade the contract.
-    // Example: `function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}`
-    // if using OwnableUpgradeable.
 }

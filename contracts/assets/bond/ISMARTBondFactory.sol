@@ -15,6 +15,7 @@ interface ISMARTBondFactory is ISMARTTokenFactory {
     /// @param maturityDate_ The Unix timestamp representing the bond's maturity date.
     /// @param faceValue_ The face value of each bond token in the underlying asset's base units.
     /// @param underlyingAsset_ The address of the ERC20 token used as the underlying asset for the bond.
+
     /// @param requiredClaimTopics_ An array of claim topics required for interacting with the bond.
     /// @param initialModulePairs_ An array of initial compliance module and parameter pairs.
     /// @return deployedBondAddress The address of the newly deployed bond contract.
