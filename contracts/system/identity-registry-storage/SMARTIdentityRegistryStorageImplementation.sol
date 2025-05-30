@@ -172,6 +172,15 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @dev This error ensures that unbinding operations are only performed on currently bound registry contracts.
     error IdentityRegistryNotBound(address registryAddress);
 
+    // --- Lost Wallet Management Errors ---
+    /// @notice Error triggered when attempting to mark a wallet as lost for an identity that is not associated with
+    /// that wallet.
+    /// @param identityContract The identity contract address.
+    /// @param userWallet The wallet address that is not associated with the identity.
+    /// @dev This error ensures that wallets can only be marked as lost for identities they are actually associated
+    /// with.
+    error WalletNotAssociatedWithIdentity(address identityContract, address userWallet);
+
     // --- Constructor --- (Disable direct construction for upgradeable contract)
     /// @notice Constructor for the `SMARTIdentityRegistryStorageImplementation`.
     /// @dev This constructor is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
@@ -538,6 +547,11 @@ contract SMARTIdentityRegistryStorageImplementation is
     {
         if (userWallet == address(0)) revert InvalidIdentityWalletAddress();
         if (identityContract == address(0)) revert InvalidIdentityAddress();
+
+        // Check if the wallet is actually associated with this identity contract
+        if (_identities[userWallet].identityContract != identityContract) {
+            revert WalletNotAssociatedWithIdentity(identityContract, userWallet);
+        }
 
         _lostWallets[userWallet] = true;
 

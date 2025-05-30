@@ -24,11 +24,15 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
     address public forwarder;
     address public user1;
     address public user2;
+    address public user3;
+    address public lostWallet1;
+    address public lostWallet2;
     address public registry1;
     address public registry2;
 
     IIdentity public identity1;
     IIdentity public identity2;
+    IIdentity public identity3;
     uint16 public constant COUNTRY_US = 840;
     uint16 public constant COUNTRY_UK = 826;
 
@@ -38,6 +42,9 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
     event CountryModified(address indexed _identityWallet, uint16 _country);
     event IdentityRegistryBound(address indexed identityRegistry);
     event IdentityRegistryUnbound(address indexed identityRegistry);
+    event IdentityWalletMarkedAsLost(
+        address indexed identityContract, address indexed userWallet, address indexed markedBy
+    );
 
     function setUp() public {
         admin = makeAddr("admin");
@@ -45,6 +52,9 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         forwarder = makeAddr("forwarder");
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
+        user3 = makeAddr("user3");
+        lostWallet1 = makeAddr("lostWallet1");
+        lostWallet2 = makeAddr("lostWallet2");
         registry1 = makeAddr("registry1");
         registry2 = makeAddr("registry2");
 
@@ -63,6 +73,7 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
 
         identity1 = IIdentity(identityUtils.createIdentity(user1));
         identity2 = IIdentity(identityUtils.createIdentity(user2));
+        identity3 = IIdentity(identityUtils.createIdentity(user3));
     }
 
     function test_Constructor() public {
@@ -101,13 +112,17 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
 
     function test_AddIdentityToStorage_InvalidWalletAddress_ShouldRevert() public {
         vm.prank(admin);
-        vm.expectRevert(abi.encodeWithSignature("InvalidIdentityWalletAddress()"));
+        vm.expectRevert(
+            abi.encodeWithSelector(SMARTIdentityRegistryStorageImplementation.InvalidIdentityWalletAddress.selector)
+        );
         storageContract.addIdentityToStorage(address(0), identity1, COUNTRY_US);
     }
 
     function test_AddIdentityToStorage_InvalidIdentityAddress_ShouldRevert() public {
         vm.prank(admin);
-        vm.expectRevert(abi.encodeWithSignature("InvalidIdentityAddress()"));
+        vm.expectRevert(
+            abi.encodeWithSelector(SMARTIdentityRegistryStorageImplementation.InvalidIdentityAddress.selector)
+        );
         storageContract.addIdentityToStorage(user1, IIdentity(address(0)), COUNTRY_US);
     }
 
@@ -115,7 +130,9 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         vm.startPrank(admin);
         storageContract.addIdentityToStorage(user1, identity1, COUNTRY_US);
 
-        vm.expectRevert(abi.encodeWithSignature("IdentityAlreadyExists(address)", user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(SMARTIdentityRegistryStorageImplementation.IdentityAlreadyExists.selector, user1)
+        );
         storageContract.addIdentityToStorage(user1, identity2, COUNTRY_UK);
         vm.stopPrank();
     }
@@ -431,5 +448,307 @@ contract SMARTIdentityRegistryStorageImplementationTest is Test {
         storageContract.unbindIdentityRegistry(registry1);
 
         assertFalse(storageContract.hasRole(SMARTSystemRoles.STORAGE_MODIFIER_ROLE, registry1));
+    }
+
+    // --- Lost Wallet Management Tests ---
+
+    function test_MarkWalletAsLost() public {
+        // First, register the identity for the wallet
+        vm.prank(admin);
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+
+        vm.prank(admin);
+        vm.expectEmit(true, true, true, true);
+        emit IdentityWalletMarkedAsLost(address(identity1), lostWallet1, admin);
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+
+        assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
+
+        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
+        assertEq(lostWallets.length, 1);
+        assertEq(lostWallets[0], lostWallet1);
+    }
+
+    function test_MarkWalletAsLost_InvalidWalletAddress_ShouldRevert() public {
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(SMARTIdentityRegistryStorageImplementation.InvalidIdentityWalletAddress.selector)
+        );
+        storageContract.markWalletAsLost(address(identity1), address(0));
+    }
+
+    function test_MarkWalletAsLost_InvalidIdentityAddress_ShouldRevert() public {
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(SMARTIdentityRegistryStorageImplementation.InvalidIdentityAddress.selector)
+        );
+        storageContract.markWalletAsLost(address(0), lostWallet1);
+    }
+
+    function test_MarkWalletAsLost_WalletNotAssociatedWithIdentity_ShouldRevert() public {
+        // Try to mark a wallet as lost without first registering it with the identity
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SMARTIdentityRegistryStorageImplementation.WalletNotAssociatedWithIdentity.selector,
+                address(identity1),
+                lostWallet1
+            )
+        );
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+    }
+
+    function test_MarkWalletAsLost_WalletAssociatedWithDifferentIdentity_ShouldRevert() public {
+        // Register wallet with identity1
+        vm.prank(admin);
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+
+        // Try to mark it as lost for identity2
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SMARTIdentityRegistryStorageImplementation.WalletNotAssociatedWithIdentity.selector,
+                address(identity2),
+                lostWallet1
+            )
+        );
+        storageContract.markWalletAsLost(address(identity2), lostWallet1);
+    }
+
+    function test_MarkWalletAsLost_UnauthorizedCaller_ShouldRevert() public {
+        // First, register the identity for the wallet
+        vm.prank(admin);
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+
+        vm.prank(user1);
+        vm.expectRevert();
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+    }
+
+    function test_MarkWalletAsLost_MultipleTimes_ShouldBeIdempotent() public {
+        // First, register the identity for the wallet
+        vm.prank(admin);
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+
+        vm.startPrank(admin);
+
+        // Mark wallet as lost for the first time
+        vm.expectEmit(true, true, true, true);
+        emit IdentityWalletMarkedAsLost(address(identity1), lostWallet1, admin);
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+
+        // Mark the same wallet as lost again - should emit event but not duplicate in array
+        vm.expectEmit(true, true, true, true);
+        emit IdentityWalletMarkedAsLost(address(identity1), lostWallet1, admin);
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+
+        vm.stopPrank();
+
+        assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
+
+        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
+        assertEq(lostWallets.length, 1);
+        assertEq(lostWallets[0], lostWallet1);
+    }
+
+    function test_MarkWalletAsLost_MultipleWalletsForSameIdentity() public {
+        vm.startPrank(admin);
+        // Register both wallets with the same identity
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+        storageContract.addIdentityToStorage(lostWallet2, identity1, COUNTRY_UK);
+
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+        storageContract.markWalletAsLost(address(identity1), lostWallet2);
+        vm.stopPrank();
+
+        assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
+        assertTrue(storageContract.isWalletMarkedAsLost(lostWallet2));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet2));
+
+        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
+        assertEq(lostWallets.length, 2);
+        assertEq(lostWallets[0], lostWallet1);
+        assertEq(lostWallets[1], lostWallet2);
+    }
+
+    function test_MarkWalletAsLost_SameWalletForDifferentIdentities_NotPossible() public {
+        vm.startPrank(admin);
+        // Register wallet with identity1
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+
+        // Mark it as lost for identity1
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+        vm.stopPrank();
+
+        assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
+        assertFalse(storageContract.isWalletMarkedAsLostForIdentity(address(identity2), lostWallet1));
+
+        address[] memory lostWalletsIdentity1 = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
+        address[] memory lostWalletsIdentity2 = storageContract.getLostWalletsForIdentityFromStorage(address(identity2));
+
+        assertEq(lostWalletsIdentity1.length, 1);
+        assertEq(lostWalletsIdentity1[0], lostWallet1);
+        assertEq(lostWalletsIdentity2.length, 0);
+    }
+
+    function test_MarkWalletAsLost_BoundRegistryCanMark() public {
+        vm.prank(system);
+        storageContract.bindIdentityRegistry(registry1);
+
+        // First, register the identity for the wallet using admin
+        vm.prank(admin);
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+
+        vm.prank(registry1);
+        vm.expectEmit(true, true, true, true);
+        emit IdentityWalletMarkedAsLost(address(identity1), lostWallet1, registry1);
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+
+        assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
+    }
+
+    function test_IsWalletMarkedAsLost_NotMarked() public view {
+        assertFalse(storageContract.isWalletMarkedAsLost(lostWallet1));
+    }
+
+    function test_IsWalletMarkedAsLostForIdentity_NotMarked() public view {
+        assertFalse(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
+    }
+
+    function test_IsWalletMarkedAsLostForIdentity_MarkedForDifferentIdentity() public {
+        vm.startPrank(admin);
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+        vm.stopPrank();
+
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
+        assertFalse(storageContract.isWalletMarkedAsLostForIdentity(address(identity2), lostWallet1));
+    }
+
+    function test_GetLostWalletsForIdentityFromStorage_EmptyArray() public view {
+        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
+        assertEq(lostWallets.length, 0);
+    }
+
+    function test_GetLostWalletsForIdentityFromStorage_ZeroAddressIdentity() public view {
+        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(0));
+        assertEq(lostWallets.length, 0);
+    }
+
+    function test_MarkWalletAsLost_AfterModifyingIdentity() public {
+        vm.startPrank(admin);
+        // Register wallet with identity1
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+
+        // Modify the identity contract for the wallet
+        storageContract.modifyStoredIdentity(lostWallet1, identity2);
+
+        // Now marking as lost for identity1 should fail
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SMARTIdentityRegistryStorageImplementation.WalletNotAssociatedWithIdentity.selector,
+                address(identity1),
+                lostWallet1
+            )
+        );
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+
+        // But marking as lost for identity2 should work
+        storageContract.markWalletAsLost(address(identity2), lostWallet1);
+        vm.stopPrank();
+
+        assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity2), lostWallet1));
+        assertFalse(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
+    }
+
+    function test_MarkWalletAsLost_AfterRemovingIdentity() public {
+        vm.startPrank(admin);
+        // Register wallet with identity1
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+
+        // Remove the identity
+        storageContract.removeIdentityFromStorage(lostWallet1);
+
+        // Now marking as lost should fail
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SMARTIdentityRegistryStorageImplementation.WalletNotAssociatedWithIdentity.selector,
+                address(identity1),
+                lostWallet1
+            )
+        );
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+        vm.stopPrank();
+    }
+
+    function test_LostWalletWorkflow_EndToEnd() public {
+        // Setup: bind a registry
+        vm.prank(system);
+        storageContract.bindIdentityRegistry(registry1);
+
+        vm.startPrank(admin);
+        // Register wallets with identities
+        storageContract.addIdentityToStorage(lostWallet1, identity1, COUNTRY_US);
+        storageContract.addIdentityToStorage(lostWallet2, identity1, COUNTRY_UK);
+        vm.stopPrank();
+
+        // Step 1: Registry marks wallet as lost
+        vm.prank(registry1);
+        storageContract.markWalletAsLost(address(identity1), lostWallet1);
+
+        // Step 2: Verify wallet is marked as lost globally and for specific identity
+        assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
+
+        // Step 3: Mark another wallet for the same identity
+        vm.prank(registry1);
+        storageContract.markWalletAsLost(address(identity1), lostWallet2);
+
+        // Step 4: Verify all states
+        assertTrue(storageContract.isWalletMarkedAsLost(lostWallet1));
+        assertTrue(storageContract.isWalletMarkedAsLost(lostWallet2));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet1));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), lostWallet2));
+
+        // Step 5: Verify arrays
+        address[] memory lostWalletsIdentity1 = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
+
+        assertEq(lostWalletsIdentity1.length, 2);
+
+        // Check if arrays contain expected wallets (order might vary)
+        bool foundWallet1InIdentity1 = false;
+        bool foundWallet2InIdentity1 = false;
+        for (uint256 i = 0; i < lostWalletsIdentity1.length; i++) {
+            if (lostWalletsIdentity1[i] == lostWallet1) foundWallet1InIdentity1 = true;
+            if (lostWalletsIdentity1[i] == lostWallet2) foundWallet2InIdentity1 = true;
+        }
+        assertTrue(foundWallet1InIdentity1);
+        assertTrue(foundWallet2InIdentity1);
+    }
+
+    function testFuzz_MarkWalletAsLost_WithValidInputs(address userWallet) public {
+        vm.assume(userWallet != address(0));
+        vm.assume(userWallet != address(identity1)); // Avoid conflicts with existing addresses
+
+        vm.startPrank(admin);
+        // First register the wallet with an identity
+        storageContract.addIdentityToStorage(userWallet, identity1, COUNTRY_US);
+
+        // Then mark it as lost
+        storageContract.markWalletAsLost(address(identity1), userWallet);
+        vm.stopPrank();
+
+        assertTrue(storageContract.isWalletMarkedAsLost(userWallet));
+        assertTrue(storageContract.isWalletMarkedAsLostForIdentity(address(identity1), userWallet));
+
+        address[] memory lostWallets = storageContract.getLostWalletsForIdentityFromStorage(address(identity1));
+        assertEq(lostWallets.length, 1);
+        assertEq(lostWallets[0], userWallet);
     }
 }
