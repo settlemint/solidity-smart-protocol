@@ -405,7 +405,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         vm.prank(admin);
         identityRegistry.registerIdentity(user1, identity1, COUNTRY_US);
 
-        // Create a new wallet and new identity for recovery
+        // Create a new wallet and new identity for recovery (NOT pre-registered)
         address newWallet = makeAddr("newWallet");
         address newIdentityAddr = identityUtils.createIdentity(newWallet);
 
@@ -418,7 +418,7 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         // Verify old wallet is no longer registered
         assertFalse(identityRegistry.contains(user1));
 
-        // Verify new wallet is registered with the new identity and same country
+        // Verify new wallet is registered with the new identity and preserves the lost wallet's country
         assertTrue(identityRegistry.contains(newWallet));
         assertEq(address(identityRegistry.identity(newWallet)), newIdentityAddr);
         assertEq(identityRegistry.investorCountry(newWallet), COUNTRY_US);
@@ -484,6 +484,50 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         identityRegistry.recoverIdentity(user1, secondNewWallet, secondNewIdentity);
     }
 
+    function testRecoverIdentityWorksWhenNewWalletAlreadyRegisteredToCorrectIdentity() public {
+        // SPECIAL CASE: Test recovery when the new wallet is already pre-registered to the correct identity
+
+        // Setup: Register user1 with identity1
+        vm.prank(admin);
+        identityRegistry.registerIdentity(user1, identity1, COUNTRY_US);
+
+        address newWallet = makeAddr("newWallet");
+        address newIdentityAddr = identityUtils.createIdentity(newWallet);
+
+        // Pre-register the new wallet with the new identity
+        vm.prank(admin);
+        identityRegistry.registerIdentity(newWallet, IIdentity(newIdentityAddr), COUNTRY_UK);
+
+        // Verify pre-registration
+        assertTrue(identityRegistry.contains(newWallet));
+        assertEq(address(identityRegistry.identity(newWallet)), newIdentityAddr);
+        assertEq(identityRegistry.investorCountry(newWallet), COUNTRY_UK);
+
+        vm.expectEmit(true, true, true, false);
+        emit ISMARTIdentityRegistry.IdentityRecovered(admin, user1, newWallet, newIdentityAddr, address(identity1));
+
+        // This should succeed even though newWallet is already registered to the correct identity
+        vm.prank(admin);
+        identityRegistry.recoverIdentity(user1, newWallet, newIdentityAddr);
+
+        // Verify old wallet is no longer registered
+        assertFalse(identityRegistry.contains(user1));
+
+        // Verify new wallet is still registered with the new identity
+        assertTrue(identityRegistry.contains(newWallet));
+        assertEq(address(identityRegistry.identity(newWallet)), newIdentityAddr);
+
+        // Verify country code is preserved from the existing registration (UK) not overwritten by lost wallet's country
+        // (US)
+        assertEq(identityRegistry.investorCountry(newWallet), COUNTRY_UK);
+
+        // Verify old wallet is marked as lost
+        assertTrue(identityRegistry.isWalletLost(user1));
+
+        // Verify recovery link is established
+        assertEq(identityRegistry.getRecoveredWallet(user1), newWallet);
+    }
+
     function testRecoverIdentityRevertsWhenNewWalletAlreadyRegistered() public {
         // Setup: Register both users
         vm.startPrank(admin);
@@ -491,9 +535,11 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         identityRegistry.registerIdentity(user2, identity2, COUNTRY_UK);
         vm.stopPrank();
 
-        address newIdentityAddr = identityUtils.createIdentity(user2);
+        // Create a completely new identity for recovery attempt (not linked to user2)
+        address newWalletForRecovery = makeAddr("newWalletForRecovery");
+        address newIdentityAddr = identityUtils.createIdentity(newWalletForRecovery);
 
-        // Try to recover user1's identity to user2's wallet (already registered)
+        // Try to recover user1's identity to user2's wallet (already registered to different identity)
         vm.prank(admin);
         vm.expectRevert(
             abi.encodeWithSelector(SMARTIdentityRegistryImplementation.IdentityAlreadyRegistered.selector, user2)
@@ -515,7 +561,9 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         vm.prank(admin);
         identityRegistry.recoverIdentity(user2, firstNewWallet, firstNewIdentity);
 
-        address newIdentityForUser1 = identityUtils.createIdentity(user2);
+        // Create a new identity for the second recovery attempt
+        address secondRecoveryWallet = makeAddr("secondRecoveryWallet");
+        address newIdentityForUser1 = identityUtils.createIdentity(secondRecoveryWallet);
 
         // Now try to recover user1's identity to user2 (which is now marked as lost)
         vm.prank(admin);
@@ -568,10 +616,5 @@ contract SMARTIdentityRegistryImplementationTest is Test {
         // Verify recovery link is established instead of checking lost wallets array
         assertEq(identityRegistry.getRecoveredWallet(user1), newWallet);
         assertTrue(identityRegistry.isWalletLost(user1));
-    }
-
-    function testGetLostWalletsForIdentityWithZeroAddress() public view {
-        // Test removed since function no longer exists in simplified interface
-        // We no longer track lost wallets per identity, only global lost wallet status
     }
 }

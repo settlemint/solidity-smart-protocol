@@ -63,12 +63,10 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// @param country A numerical code (uint16) representing the user's country of residence or jurisdiction. This is
     /// often used for compliance checks, such as ensuring users from certain countries are eligible for specific
     /// services or assets.
-    /// @param isLost Whether this wallet has been marked as lost (bool).
     /// @param recoveredWallet If this wallet was lost, the address of the replacement wallet (address(0) if not lost).
     struct Identity {
         address identityContract;
         uint16 country;
-        bool isLost;
         address recoveredWallet; // Points to the new wallet if this one was lost
     }
 
@@ -77,7 +75,7 @@ contract SMARTIdentityRegistryStorageImplementation is
     /// The key (`address wallet`) is the public wallet address of the user (e.g., their MetaMask address).
     /// The value (`Identity identity`) is the struct containing the address of their `IIdentity` contract, their
     /// country code, and recovery information.
-    /// Example: `_identities[0xUserWalletAddress] = Identity(0xIdentityContractAddress, 840, false, address(0))` (840
+    /// Example: `_identities[0xUserWalletAddress] = Identity(0xIdentityContractAddress, 840, address(0))` (840
     /// for USA).
     mapping(address wallet => Identity identity) private _identities;
 
@@ -125,8 +123,9 @@ contract SMARTIdentityRegistryStorageImplementation is
     mapping(address registry => uint256 indexPlusOne) private _boundIdentityRegistriesIndex;
 
     // --- Storage Variables for Lost Wallet Management ---
-    // This mapping is no longer needed since we removed the getLostWalletsForIdentity functionality
-    // All lost wallet tracking is now done in the Identity struct itself
+    /// @notice Mapping to track which wallets have been marked as lost
+    /// @dev This provides a clean boolean check for wallet lost status without overloading other fields
+    mapping(address wallet => bool isLost) private _lostWallets;
 
     // --- Storage Variables for Wallet Recovery Tracking ---
     // Maps a lost wallet to its replacement wallet (lostWallet => newWallet)
@@ -284,7 +283,7 @@ contract SMARTIdentityRegistryStorageImplementation is
         if (_identities[_userAddress].identityContract != address(0)) revert IdentityAlreadyExists(_userAddress);
 
         // Store the new identity information.
-        _identities[_userAddress] = Identity(address(_identity), _country, false, address(0));
+        _identities[_userAddress] = Identity(address(_identity), _country, address(0));
         // Add the user's wallet address to the list of all identity wallets.
         _identityWallets.push(_userAddress);
         // Store the index (plus one, for 1-based indexing) in the `_identityWalletsIndex` map for O(1) removal later.
@@ -559,8 +558,8 @@ contract SMARTIdentityRegistryStorageImplementation is
         }
 
         // Only mark as lost if not already marked (for idempotency)
-        if (!_identities[userWallet].isLost) {
-            _identities[userWallet].isLost = true;
+        if (!_lostWallets[userWallet]) {
+            _lostWallets[userWallet] = true;
         }
 
         // The event is emitted regardless, as the intent is to mark/confirm it as lost.
@@ -587,7 +586,7 @@ contract SMARTIdentityRegistryStorageImplementation is
 
     /// @inheritdoc ISMARTIdentityRegistryStorage
     function isWalletMarkedAsLost(address userWallet) external view override returns (bool) {
-        return _identities[userWallet].isLost;
+        return _lostWallets[userWallet];
     }
 
     /// @inheritdoc ISMARTIdentityRegistryStorage

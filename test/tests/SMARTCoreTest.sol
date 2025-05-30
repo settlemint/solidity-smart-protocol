@@ -220,15 +220,14 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         address newWallet = makeAddr("NewWalletForBE");
         uint256 initialBalance = token.balanceOf(lostWallet);
 
-        // Get the identity associated with the lost wallet
-        address identityAddress = identityUtils.getIdentity(lostWallet);
-        require(identityAddress != address(0), "Identity not found for lost wallet");
+        // Create identity for new wallet but don't mark the lost wallet as lost
+        address newIdentity = identityUtils.createIdentity(newWallet);
+        claimUtils.issueAllClaims(newWallet);
 
         // Mark the old wallet as lost and recover to new wallet
-        vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(lostWallet, newWallet, identityAddress);
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
 
-        // Verify the wallet is marked as lost (removed specific identity check since simplified)
+        // Verify the wallet is marked as lost
         assertTrue(systemUtils.identityRegistry().isWalletLost(lostWallet));
 
         // Perform the token recovery
@@ -273,11 +272,11 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         tokenUtils.burnToken(address(token), tokenIssuer, lostWallet, currentBalance);
         assertEq(token.balanceOf(lostWallet), 0, "Lost wallet should have zero balance");
 
-        // Get the identity and set up recovery scenario
-        address identityAddress = identityUtils.getIdentity(lostWallet);
+        // Create identity for new wallet but don't mark the lost wallet as lost
+        address newIdentity = identityUtils.createIdentity(newWallet);
+        claimUtils.issueAllClaims(newWallet);
 
-        vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(lostWallet, newWallet, identityAddress);
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
 
         vm.expectRevert(abi.encodeWithSelector(NoTokensToRecover.selector));
         vm.prank(newWallet);
@@ -292,7 +291,7 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         address newWallet = makeAddr("NewWalletForBE");
 
         // Create identity for new wallet but don't mark the lost wallet as lost
-        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
+        identityUtils.createIdentity(newWallet);
         claimUtils.issueAllClaims(newWallet);
 
         // Try to recover without marking the wallet as lost in identity registry
@@ -310,17 +309,14 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         address differentWallet = makeAddr("DifferentWallet");
 
         // Create identities for both wallets
-        address lostWalletIdentity = identityUtils.getIdentity(lostWallet);
-        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
+        address newIdentity = identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
         claimUtils.issueAllClaims(newWallet);
 
         identityUtils.createClientIdentity(differentWallet, TestConstants.COUNTRY_CODE_JP);
         claimUtils.issueAllClaims(differentWallet);
-        address differentIdentity = identityUtils.getIdentity(differentWallet);
 
         // Mark a different wallet as lost for a different identity
-        vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(differentWallet, newWallet, differentIdentity);
+        identityUtils.recoverIdentity(differentWallet, newWallet, newIdentity);
 
         // Try to recover the BE wallet's tokens (which is not marked as lost for any identity)
         vm.expectRevert(abi.encodeWithSelector(InvalidLostWallet.selector));
@@ -337,12 +333,11 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         address newWallet1 = makeAddr("NewWallet1");
         uint256 balance1 = token.balanceOf(lostWallet1);
 
-        address identity1 = identityUtils.getIdentity(lostWallet1);
-        identityUtils.createClientIdentity(newWallet1, TestConstants.COUNTRY_CODE_BE);
+        // Create identity for new wallet but don't mark the lost wallet as lost
+        address newIdentity = identityUtils.createIdentity(newWallet1);
         claimUtils.issueAllClaims(newWallet1);
 
-        vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(lostWallet1, newWallet1, identity1);
+        identityUtils.recoverIdentity(lostWallet1, newWallet1, newIdentity);
 
         vm.prank(newWallet1);
         token.recoverTokens(lostWallet1);
@@ -355,12 +350,11 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         address newWallet2 = makeAddr("NewWallet2");
         uint256 balance2 = token.balanceOf(lostWallet2);
 
-        address identity2 = identityUtils.getIdentity(lostWallet2);
-        identityUtils.createClientIdentity(newWallet2, TestConstants.COUNTRY_CODE_JP);
+        // Create identity for new wallet but don't mark the lost wallet as lost
+        address newIdentity2 = identityUtils.createIdentity(newWallet2);
         claimUtils.issueAllClaims(newWallet2);
 
-        vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(lostWallet2, newWallet2, identity2);
+        identityUtils.recoverIdentity(lostWallet2, newWallet2, newIdentity2);
 
         vm.prank(newWallet2);
         token.recoverTokens(lostWallet2);
@@ -388,13 +382,11 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         uint256 remainingBalance = token.balanceOf(lostWallet);
         assertEq(remainingBalance, initialBalance - transferAmount, "Remaining balance incorrect");
 
-        // Set up recovery
-        address identityAddress = identityUtils.getIdentity(lostWallet);
-        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
+        // Create identity for new wallet but don't mark the lost wallet as lost
+        address newIdentity = identityUtils.createIdentity(newWallet);
         claimUtils.issueAllClaims(newWallet);
 
-        vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(lostWallet, newWallet, identityAddress);
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
 
         // Recover the remaining tokens
         vm.prank(newWallet);
@@ -413,7 +405,7 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         uint256 lostWalletBalance = token.balanceOf(lostWallet);
 
         // Set up new wallet with existing identity and tokens
-        identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
+        address newIdentity = identityUtils.createClientIdentity(newWallet, TestConstants.COUNTRY_CODE_BE);
         claimUtils.issueAllClaims(newWallet);
 
         // Mint some tokens to the new wallet first
@@ -421,9 +413,7 @@ abstract contract SMARTCoreTest is AbstractSMARTTest {
         tokenUtils.mintToken(address(token), tokenIssuer, newWallet, existingBalance);
 
         // Set up recovery
-        address identityAddress = identityUtils.getIdentity(lostWallet);
-        vm.prank(platformAdmin);
-        systemUtils.identityRegistry().recoverIdentity(lostWallet, newWallet, identityAddress);
+        identityUtils.recoverIdentity(lostWallet, newWallet, newIdentity);
 
         // Recover tokens
         vm.prank(newWallet);

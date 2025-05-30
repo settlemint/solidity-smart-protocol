@@ -81,6 +81,12 @@ contract IdentityUtils is Test {
         return issuerIdentityAddr; // Return the created identity address
     }
 
+    function recoverIdentity(address lostWallet, address newWallet, address identityAddress) public {
+        vm.startPrank(_platformAdmin);
+        _identityRegistry.recoverIdentity(lostWallet, newWallet, identityAddress);
+        vm.stopPrank();
+    }
+
     function getIdentity(address _wallet) public view returns (address) {
         return _identityFactory.getIdentity(_wallet);
     }

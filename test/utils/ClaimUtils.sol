@@ -154,7 +154,7 @@ contract ClaimUtils is Test {
         internal
     {
         // 1. Get client's identity contract
-        IIdentity clientIdentity = _identityRegistry.identity(clientWalletAddress_);
+        IIdentity clientIdentity = IIdentity(_identityFactory.getIdentity(clientWalletAddress_));
         address clientIdentityAddr = address(clientIdentity);
         require(clientIdentityAddr != address(0), "ClaimUtils: Client identity not found");
 
