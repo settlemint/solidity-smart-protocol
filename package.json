@@ -47,7 +47,7 @@
     "hardhat:abi-typings": "node --experimental-strip-types scripts/generate-abi-typings.ts",
     "hardhat:check-types": "npm run hardhat:abi-typings && npx tsc",
     "test": "forge test -vvv",
-    "coverage": "forge coverage --ir-minimum",
+    "coverage": "forge coverage --ir-minimum --no-match-coverage \"test/*\"",
     "subgraph:codegen": "settlemint scs subgraph codegen",
     "subgraph:build": "settlemint scs subgraph build",
     "subgraph:deploy:local": "bash ./scripts/graph-deploy.sh --local",
