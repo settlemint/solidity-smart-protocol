@@ -64,15 +64,18 @@ contract SMARTYieldToken is SMARTToken, ISMARTYield {
         return _yieldToken;
     }
 
-    // Override _beforeMint to add yield schedule check
-    function _beforeMint(address to, uint256 amount) internal override(SMARTToken) {
-        // Check yield schedule active before mint
+    // Modifier to ensure minting is only allowed before yield schedule starts
+    modifier onlyBeforeYieldStart() {
         if (yieldSchedule != address(0)) {
             if (ISMARTYieldSchedule(yieldSchedule).startDate() <= block.timestamp) {
                 revert YieldScheduleActive();
             }
         }
+        _;
+    }
 
+    // Override _beforeMint to add yield schedule check
+    function _beforeMint(address to, uint256 amount) internal override(SMARTToken) onlyBeforeYieldStart {
         super._beforeMint(to, amount);
     }
 
