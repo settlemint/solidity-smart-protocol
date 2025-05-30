@@ -282,17 +282,15 @@ contract SMARTCappedToken is
         _smart_batchForcedTransfer(fromList, toList, amounts);
     }
 
-    function recoveryAddress(
+    function forcedRecoverTokens(
         address lostWallet,
-        address newWallet,
-        address investorOnchainID
+        address newWallet
     )
         external
         override
         onlyAccessManagerRole(RECOVERY_ROLE)
-        returns (bool)
     {
-        return _smart_recoveryAddress(lostWallet, newWallet, investorOnchainID);
+        _smart_recoverTokens(newWallet, lostWallet);
     }
 
     // --- ISMARTPausable Implementation ---
@@ -384,6 +382,17 @@ contract SMARTCappedToken is
         override(SMART, SMARTHistoricalBalances, SMARTHooks)
     {
         super._afterBurn(from, amount);
+    }
+
+    function _afterRecoverTokens(
+        address lostWallet,
+        address newWallet
+    )
+        internal
+        virtual
+        override(SMARTCustodian, SMARTHooks)
+    {
+        super._afterRecoverTokens(lostWallet, newWallet);
     }
 
     function _update(address from, address to, uint256 value) internal virtual override(SMART, SMARTPausable, ERC20) {

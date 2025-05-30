@@ -2,15 +2,15 @@
 pragma solidity 0.8.28;
 
 import { Test } from "forge-std/Test.sol";
-import { ISMARTHistoricalBalances } from "../../contracts/extensions/historical-balances/ISMARTHistoricalBalances.sol";
+import { ISMARTHistoricalBalances } from "../contracts/extensions/historical-balances/ISMARTHistoricalBalances.sol";
 import { _SMARTHistoricalBalancesLogic } from
-    "../../contracts/extensions/historical-balances/internal/_SMARTHistoricalBalancesLogic.sol";
-import { FutureLookup } from "../../contracts/extensions/historical-balances/SMARTHistoricalBalancesErrors.sol";
+    "../contracts/extensions/historical-balances/internal/_SMARTHistoricalBalancesLogic.sol";
+import { FutureLookup } from "../contracts/extensions/historical-balances/SMARTHistoricalBalancesErrors.sol";
 import { console } from "forge-std/Test.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SMARTComplianceModuleParamPair } from "../../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
-import { ISMARTCompliance } from "../../contracts/interface/ISMARTCompliance.sol";
-import { ISMARTIdentityRegistry } from "../../contracts/interface/ISMARTIdentityRegistry.sol";
+import { SMARTComplianceModuleParamPair } from "../contracts/interface/structs/SMARTComplianceModuleParamPair.sol";
+import { ISMARTCompliance } from "../contracts/interface/ISMARTCompliance.sol";
+import { ISMARTIdentityRegistry } from "../contracts/interface/ISMARTIdentityRegistry.sol";
 
 // Concrete test implementation of the historical balances logic
 contract TestHistoricalBalancesToken is ERC20, _SMARTHistoricalBalancesLogic {
@@ -26,6 +26,10 @@ contract TestHistoricalBalancesToken is ERC20, _SMARTHistoricalBalancesLogic {
     // Public burn function for testing
     function burn(address from, uint256 amount) public {
         _burn(from, amount);
+    }
+
+    function recoverTokens(address) external pure override {
+        revert("Not implemented");
     }
 
     // Override _update to add historical balance tracking

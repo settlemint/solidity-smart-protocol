@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { AbstractSMARTTest } from "./AbstractSMARTTest.sol";
-import { SMARTYieldHelpers, MockERC20 } from "./SMARTYieldHelpers.sol";
+import { SMARTYieldHelpers, MockERC20 } from "./../utils/SMARTYieldHelpers.sol";
 import { SMARTFixedYieldScheduleFactory } from
     "../../contracts/extensions/yield/schedules/fixed/SMARTFixedYieldScheduleFactory.sol";
 
@@ -23,7 +23,7 @@ abstract contract SMARTYieldBaseTest is AbstractSMARTTest, SMARTYieldHelpers {
 
         // Deploy yield schedule factory
         yieldScheduleFactory = new SMARTFixedYieldScheduleFactory(address(0));
-        
+
         // Start at a high block number that can accommodate timestamps as block numbers
         _ensureBlockAlignment();
     }

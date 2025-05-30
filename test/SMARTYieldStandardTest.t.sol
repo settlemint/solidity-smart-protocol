@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { SMARTYieldTest } from "./tests/SMARTYieldTest.sol";
-import { MockERC20 } from "./tests/SMARTYieldHelpers.sol";
+import { MockERC20 } from "./utils/SMARTYieldHelpers.sol";
 import { ISMART } from "../contracts/interface/ISMART.sol";
 import { SMARTYieldToken } from "./examples/SMARTYieldToken.sol";
 import { SMARTTopics } from "../contracts/system/SMARTTopics.sol";
