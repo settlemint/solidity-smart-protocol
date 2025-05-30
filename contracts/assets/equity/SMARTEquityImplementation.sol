@@ -52,6 +52,8 @@ contract SMARTEquityImplementation is
     /// @param name_ The name of the token.
     /// @param symbol_ The symbol of the token.
     /// @param decimals_ The number of decimals the token uses.
+    /// @param onchainID_ Optional address of an existing onchain identity contract. Pass address(0) to create a new
+    /// one.
     /// @param requiredClaimTopics_ An array of claim topics required for token interaction.
     /// @param initialModulePairs_ Initial compliance module configurations.
     /// @param identityRegistry_ The address of the Identity Registry contract.
@@ -61,6 +63,7 @@ contract SMARTEquityImplementation is
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
+        address onchainID_,
         uint256[] memory requiredClaimTopics_,
         SMARTComplianceModuleParamPair[] memory initialModulePairs_,
         address identityRegistry_,
@@ -75,7 +78,7 @@ contract SMARTEquityImplementation is
             name_,
             symbol_,
             decimals_,
-            address(0),
+            onchainID_,
             identityRegistry_,
             compliance_,
             requiredClaimTopics_,

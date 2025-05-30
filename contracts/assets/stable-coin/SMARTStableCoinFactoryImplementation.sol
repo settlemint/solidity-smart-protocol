@@ -73,12 +73,15 @@ contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, Abstra
         // Create the access manager for the token
         ISMARTTokenAccessManager accessManager = _createAccessManager(salt);
 
+        address tokenIdentityAddress = _predictTokenIdentityAddress(name_, symbol_, decimals_, address(accessManager));
+
         // ABI encode constructor arguments for SMARTStableCoinProxy
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
             symbol_,
             decimals_,
+            tokenIdentityAddress,
             _collateralClaimTopicId,
             requiredClaimTopics_,
             initialModulePairs_,
@@ -91,7 +94,13 @@ contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, Abstra
         bytes memory proxyBytecode = type(SMARTStableCoinProxy).creationCode;
 
         // Deploy using the helper from the abstract contract
-        deployedStableCoinAddress = _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
+        address deployedTokenIdentityAddress;
+        (deployedStableCoinAddress, deployedTokenIdentityAddress) =
+            _deployToken(proxyBytecode, constructorArgs, salt, address(accessManager));
+
+        if (deployedTokenIdentityAddress != tokenIdentityAddress) {
+            revert TokenIdentityAddressMismatch(deployedTokenIdentityAddress, tokenIdentityAddress);
+        }
 
         return deployedStableCoinAddress;
     }
@@ -124,11 +133,13 @@ contract SMARTStableCoinFactoryImplementation is ISMARTStableCoinFactory, Abstra
     {
         bytes memory salt = _buildSaltInput(name_, symbol_, decimals_);
         address accessManagerAddress_ = _predictAccessManagerAddress(salt);
+        address tokenIdentityAddress = _predictTokenIdentityAddress(name_, symbol_, decimals_, accessManagerAddress_);
         bytes memory constructorArgs = abi.encode(
             address(this),
             name_,
             symbol_,
             decimals_,
+            tokenIdentityAddress,
             _collateralClaimTopicId,
             requiredClaimTopics_,
             initialModulePairs_,
